@@ -1,0 +1,298 @@
+{
+ "schema": "strain_tree_v1",
+ "id": "strain_gelato",
+ "name": "Gelato",
+ "name_norm": "gelato",
+ "tier": {
+  "tier": "catalogue",
+  "reason": "has non-lab data",
+  "families": [
+   "listing",
+   "effects",
+   "flavours",
+   "grow",
+   "origin",
+   "award",
+   "review",
+   "lineage",
+   "base_of_other_names",
+   "lab_chemistry",
+   "lab_sample",
+   "facts",
+   "observations"
+  ]
+ },
+ "evidence": {
+  "chemistry": {
+   "n": 5114,
+   "top_terpenes": [
+    "caryophyllene",
+    "limonene",
+    "humulene",
+    "beta_myrcene",
+    "trans_nerolidol",
+    "alpha_bisabolol",
+    "alpha_pinene",
+    "linalool"
+   ],
+   "lab_potency": {
+    "name_norm": "gelato",
+    "thc_n": 3013,
+    "thc_lo": 15.212,
+    "thc_hi": 29.548,
+    "thc_median": 21.311,
+    "thc_basis": "p10_p90_of_flower_lab_samples",
+    "cbd_n": 2362,
+    "cbd_lo": 0.0,
+    "cbd_hi": 0.088,
+    "cbd_median": 0.0,
+    "cbd_basis": "p10_p90_of_flower_lab_samples"
+   }
+  },
+  "aliases": [
+   {
+    "alias": "gelato",
+    "alias_norm": "gelato",
+    "source_id": "seedfinder_strain_slug"
+   },
+   {
+    "alias": "barneys-farm/gelato",
+    "alias_norm": "barneys farm gelato",
+    "source_id": "seedfinder_breeder_strain_slug"
+   },
+   {
+    "alias": "gelato-1",
+    "alias_norm": "gelato 1",
+    "source_id": "seedfinder_strain_slug"
+   },
+   {
+    "alias": "spliff-seeds/gelato-1",
+    "alias_norm": "spliff seeds gelato 1",
+    "source_id": "seedfinder_breeder_strain_slug"
+   },
+   {
+    "alias": "apeorigin/gelato",
+    "alias_norm": "apeorigin gelato",
+    "source_id": "seedfinder_breeder_strain_slug"
+   },
+   {
+    "alias": "aztech-genetics/gelato",
+    "alias_norm": "aztech genetics gelato",
+    "source_id": "seedfinder_breeder_strain_slug"
+   },
+   {
+    "alias": "blim-burn-seeds/gelato",
+    "alias_norm": "blim burn seeds gelato",
+    "source_id": "seedfinder_breeder_strain_slug"
+   },
+   {
+    "alias": "dr-blaze/gelato",
+    "alias_norm": "dr blaze gelato",
+    "source_id": "seedfinder_breeder_strain_slug"
+   }
+  ],
+  "lineage": {
+   "parents": [
+    {
+     "kind": "strain_canonical",
+     "id": "blue sunset sherbert",
+     "source": "strain_fact:alchimia,master",
+     "confidence": 1.0,
+     "sources": [
+      "strain_fact:alchimia,master"
+     ],
+     "n_sources": 1
+    },
+    {
+     "kind": "strain_canonical",
+     "id": "blue sunset sherbet",
+     "source": "strain_fact:multiverse,seedfinder",
+     "confidence": 1.0,
+     "sources": [
+      "strain_fact:multiverse,seedfinder"
+     ],
+     "n_sources": 1
+    },
+    {
+     "kind": "strain_canonical",
+     "id": "girl scout cookies",
+     "source": "strain_fact:alchimia,master,seedfinder",
+     "confidence": 1.0,
+     "sources": [
+      "strain_fact:alchimia,master,seedfinder"
+     ],
+     "n_sources": 1
+    },
+    {
+     "kind": "strain_canonical",
+     "id": "girl scout cookies thin mint pheno",
+     "source": "strain_fact:seedfinder",
+     "confidence": 0.6,
+     "sources": [
+      "strain_fact:seedfinder"
+     ],
+     "n_sources": 1
+    },
+    {
+     "kind": "strain_canonical",
+     "id": "sherbert",
+     "source": "leafly_children_slugs",
+     "confidence": 1.0,
+     "sources": [
+      "leafly_children_slugs"
+     ],
+     "n_sources": 1
+    },
+    {
+     "kind": "strain_canonical",
+     "id": "sunset sherbert",
+     "source": "strain_fact:alchimia,seedfinder",
+     "confidence": 1.0,
+     "sources": [
+      "strain_fact:alchimia,seedfinder"
+     ],
+     "n_sources": 1
+    },
+    {
+     "kind": "strain_canonical",
+     "id": "sunset sherbet",
+     "source": "seedfinder",
+     "confidence": 1.0,
+     "sources": [
+      "seedfinder"
+     ],
+     "n_sources": 1
+    },
+    {
+     "kind": "strain_canonical",
+     "id": "thin mint",
+     "source": "strain_fact:seedfinder",
+     "confidence": 0.6,
+     "sources": [
+      "strain_fact:seedfinder"
+     ],
+     "n_sources": 1
+    },
+    {
+     "kind": "strain_canonical",
+     "id": "thin mint cookies",
+     "source": "seedfinder",
+     "confidence": 1.0,
+     "sources": [
+      "seedfinder"
+     ],
+     "n_sources": 1
+    },
+    {
+     "kind": "strain_canonical",
+     "id": "thin mint girl scout cookie",
+     "source": "strain_fact:seedfinder",
+     "confidence": 0.6,
+     "sources": [
+      "strain_fact:seedfinder"
+     ],
+     "n_sources": 1
+    },
+    {
+     "kind": "strain_canonical",
+     "id": "thin mint girl scout cookies",
+     "source": "strain_fact:allbud,multiverse,seedfinder",
+     "confidence": 1.0,
+     "sources": [
+      "strain_fact:allbud,multiverse,seedfinder"
+     ],
+     "n_sources": 1
+    },
+    {
+     "kind": "strain_canonical",
+     "id": "thin mint gsc",
+     "source": "strain_fact:alchimia,bank_azarius_seeds,hytiva",
+     "confidence": 1.0,
+     "sources": [
+      "strain_fact:alchimia,bank_azarius_seeds,hytiva"
+     ],
+     "n_sources": 1
+    },
+    {
+     "kind": "strain_canonical",
+     "id": "wedding cake",
+     "source": "seedfinder",
+     "confidence": 1.0,
+     "sources": [
+      "seedfinder"
+     ],
+     "n_sources": 1
+    }
+   ],
+   "children_n": 477,
+   "children_sample": [
+    {
+     "kind": "strain_canonical",
+     "id": "zunami",
+     "source": "alchimia",
+     "confidence": 1.0
+    },
+    {
+     "kind": "strain_canonical",
+     "id": "extraction guava seeds",
+     "source": "herbies",
+     "confidence": 1.0
+    },
+    {
+     "kind": "strain_canonical",
+     "id": "gelato fast seeds",
+     "source": "herbies",
+     "confidence": 1.0
+    },
+    {
+     "kind": "strain_canonical",
+     "id": "gelato fast version herbies seeds",
+     "source": "herbies",
+     "confidence": 1.0
+    },
+    {
+     "kind": "strain_canonical",
+     "id": "gelato x girl scout cookies herbies seeds",
+     "source": "herbies",
+     "confidence": 1.0
+    }
+   ],
+   "subtype_of": null,
+   "subtypes_n": 32,
+   "phenotype_of": null,
+   "phenotypes_n": 11,
+   "parse_note": "derived from entity_link"
+  },
+  "genetics": {
+   "dna_sampled": true,
+   "n_samples": 3,
+   "datasets": [
+    {
+     "dataset": "phylos_prjeb49958_tsca",
+     "dataset_name": "Phylos Public Genotype Data (ENA PRJEB49958, tsca)",
+     "citation": "Phylos Public Genotype Data (ENA PRJEB49958, tsca)",
+     "url": "https://www.ebi.ac.uk/ena/browser/view/PRJEB49958",
+     "metric": "ibs_distance",
+     "n_samples": 3
+    }
+   ]
+  },
+  "media": {
+   "n": 36,
+   "sample": [
+    {
+     "id": "04f6901ca95cc8e030ac2fbcd542758c7cacf0c9",
+     "kind": "bank_product_photo",
+     "source_url": "https://multiversebeans.com/wp-content/uploads/2024/05/gelato-canuk-seeds1.webp",
+     "author_credit": null,
+     "license_type": "unknown_bank_copyright",
+     "verified": false,
+     "taxonomy": [],
+     "entity_kind": "strain_canonical",
+     "entity_id": "gelato",
+     "rights": "shown_with_credit_copyright_unverified"
+    }
+   ]
+  }
+ }
+}
