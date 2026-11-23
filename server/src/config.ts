@@ -68,9 +68,17 @@ export function parseKeyRing(raw: string): Map<number, Buffer> {
   return ring;
 }
 
+/** Setzt ein separat (als Secret-Datei) übergebenes Passwort in die Verbindungs-URL ein. */
+function withPassword(url: string | undefined, password: string | undefined): string | undefined {
+  if (!url || !password) return url;
+  const u = new URL(url);
+  u.password = encodeURIComponent(password);
+  return u.toString();
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const mode = (env.NODE_ENV === 'production' ? 'production' : env.NODE_ENV === 'test' ? 'test' : 'development') as Config['env'];
-  const databaseUrl = readSecret('DATABASE_URL', env);
+  const databaseUrl = withPassword(readSecret('DATABASE_URL', env), readSecret('DATABASE_PASSWORD', env));
   if (!databaseUrl) throw new Error('DATABASE_URL (oder DATABASE_URL_FILE) fehlt');
   const keysRaw = readSecret('MASTER_KEYS', env);
   if (!keysRaw) throw new Error('MASTER_KEYS (oder MASTER_KEYS_FILE) fehlt – siehe docs/DEPLOYMENT.md');
@@ -94,7 +102,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     host: env.HOST ?? '0.0.0.0',
     publicOrigin,
     databaseUrl,
-    migrateDatabaseUrl: readSecret('DATABASE_MIGRATE_URL', env) ?? databaseUrl,
+    migrateDatabaseUrl: withPassword(readSecret('DATABASE_MIGRATE_URL', env), readSecret('DATABASE_MIGRATE_PASSWORD', env)) ?? databaseUrl,
     masterKeys,
     masterKeyCurrent,
     hmacSecret,

@@ -156,3 +156,24 @@ describe.skipIf(!hasDb)('Synchronisation', () => {
     expect(n.rows[0].dek_key_version).toBe(2);
   });
 });
+
+describe.skipIf(!hasDb)('Integritätsprüfung (verify-data)', () => {
+  it('entschlüsselt alles mit richtigem Schlüssel und meldet falschen Schlüssel/fehlende Dateien', async () => {
+    const { verifyData } = await import('../src/verify.js');
+    const env = await setup();
+    try {
+      const c = new Client(env.app);
+      await c.register('verify_user');
+      await c.post('/api/sync/push', { changes: [{ store: 'grows', id: 'g', baseVersion: 0, data: { id: 'g' } }] });
+      await c.req('PUT', '/api/files/photo/p/full', PNG, { 'content-type': 'image/png' });
+      const ok = await verifyData(env.ctx.db, env.ctx.keys, env.fileDir);
+      expect(ok).toMatchObject({ users: 1, records: 1, files: 1, errors: [] });
+      const wrong = await verifyData(env.ctx.db, new KeyRing(new Map([[1, Buffer.alloc(32, 9)]]), 1), env.fileDir);
+      expect(wrong.errors[0]).toMatch(/Datenschlüssel/);
+      const missing = await verifyData(env.ctx.db, env.ctx.keys, '/nonexistent');
+      expect(missing.errors[0]).toMatch(/fehlt/);
+    } finally {
+      await env.close();
+    }
+  });
+});

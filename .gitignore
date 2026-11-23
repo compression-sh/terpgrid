@@ -4,3 +4,9 @@ dist
 .DS_Store
 coverage
 *.tsbuildinfo
+deploy/.env
+deploy/secrets/
+deploy/state/
+deploy/backup/backup.env
+.sandbox-ca.crt
+*.sandbox

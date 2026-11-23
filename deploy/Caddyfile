@@ -1,0 +1,74 @@
+# TERPGRID – Caddy-Konfiguration
+# TERPGRID_DOMAIN: öffentliche Domain (automatisches HTTPS via Let's Encrypt).
+# Für lokale Tests „localhost“ (interne Zertifizierungsstelle).
+{
+	admin off
+	servers {
+		protocols h1 h2 h3
+	}
+}
+
+# Interner Healthcheck (nur im Container, nicht veröffentlicht)
+http://127.0.0.1:8081 {
+	bind 127.0.0.1
+	respond "ok" 200
+}
+
+{$TERPGRID_DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		Permissions-Policy "camera=(self), microphone=(), geolocation=(), interest-cohort=()"
+		Cross-Origin-Opener-Policy "same-origin"
+		# Nur die eigene Instanz: externe Sortendaten laufen über den Proxy der API
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'"
+		-Server
+	}
+
+	# API (internes Netz). Die API begrenzt selbst (JSON 1 MB, Sync 8 MB, Uploads MAX_UPLOAD_MB).
+	@api path /api/*
+	handle @api {
+		request_body {
+			max_size 25MB
+		}
+		reverse_proxy api:8080 {
+			header_up X-Forwarded-For {remote_host}
+			transport http {
+				read_timeout 60s
+				write_timeout 60s
+			}
+		}
+	}
+
+	# Statische Dateien mit Hash im Namen: lange cachebar
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+	# Einstieg und Service Worker nie cachen (Updates sofort)
+	@entry path / /index.html /sw.js /manifest.webmanifest
+	header @entry Cache-Control "no-cache"
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+
+	log {
+		output stdout
+		format json
+		# Keine Cookies/Authorization in Logs
+		format filter {
+			wrap json
+			fields {
+				request>headers>Cookie delete
+				request>headers>Authorization delete
+				request>headers>X-Csrf-Token delete
+				resp_headers>Set-Cookie delete
+			}
+		}
+	}
+}

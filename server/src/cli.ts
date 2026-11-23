@@ -8,6 +8,7 @@ import { loadConfig } from './config.js';
 import { KeyRing, hmac, randomToken, subkey } from './crypto.js';
 import { createPool } from './db.js';
 import { rotateKeys } from './keys.js';
+import { verifyData } from './verify.js';
 import { migrate } from './migrate.js';
 
 const [cmd, ...args] = process.argv.slice(2);
@@ -21,11 +22,14 @@ function help(): never {
   invite [tage] [notiz]       Einladungslink erzeugen (Standard 7 Tage)
   promote <kennung>           Konto zur Administration machen
   demote <kennung>            Administrationsrechte entziehen
-  bench-argon2                Argon2id-Laufzeit mit den aktuellen Parametern messen`);
+  bench-argon2                Argon2id-Laufzeit mit den aktuellen Parametern messen
+  verify-data                 Alle Datensätze und Dateien testweise entschlüsseln (z. B. nach Restore)
+  cleanup                     Abgelaufene Sessions löschen`);
   process.exit(cmd ? 1 : 0);
 }
 
 async function main() {
+  if (!cmd || cmd === 'help' || cmd === '--help') help();
   switch (cmd) {
     case 'generate-key':
       console.log(randomBytes(32).toString('base64'));
@@ -78,6 +82,18 @@ async function main() {
         if (r.rowCount === 0) throw new Error('Konto nicht gefunden');
         await db.query('DELETE FROM sessions WHERE user_id = (SELECT id FROM users WHERE login_name = $1)', [login]);
         console.log(`${login}: Rolle ${cmd === 'promote' ? 'admin' : 'user'} gesetzt (Sessions beendet, bitte neu anmelden).`);
+        return;
+      }
+      case 'verify-data': {
+        const r = await verifyData(db, new KeyRing(c.masterKeys, c.masterKeyCurrent), c.fileDir);
+        console.log(`Konten: ${r.users} · Datensätze entschlüsselt: ${r.records} · Dateien entschlüsselt: ${r.files} · Fehler: ${r.errors.length}`);
+        for (const e of r.errors.slice(0, 50)) console.log(`  ✗ ${e}`);
+        if (r.errors.length) process.exitCode = 2;
+        return;
+      }
+      case 'cleanup': {
+        const r = await db.query('DELETE FROM sessions WHERE expires_at < now() OR last_seen_at < now() - make_interval(mins => $1)', [c.sessionIdleMinutes]);
+        console.log(`${r.rowCount ?? 0} abgelaufene Sessions gelöscht.`);
         return;
       }
       default:
