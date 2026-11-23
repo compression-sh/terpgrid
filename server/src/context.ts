@@ -10,7 +10,7 @@ export interface AppContext {
   keys: KeyRing;
   hasher: PasswordHasher;
   /** HMAC-Schlüssel je Zweck (aus HMAC_SECRET abgeleitet) */
-  macKeys: { recovery: Buffer; invite: Buffer; ip: Buffer };
+  macKeys: { recovery: Buffer; invite: Buffer; ip: Buffer; account: Buffer };
   limits: {
     loginIp: WindowLimiter;
     loginAccount: LoginBackoff;
@@ -37,6 +37,7 @@ export function createContext(config: Config, opts: { db?: Db; fetchImpl?: typeo
       recovery: subkey(config.hmacSecret, 'recovery-codes'),
       invite: subkey(config.hmacSecret, 'invitations'),
       ip: subkey(config.hmacSecret, 'ip-tags'),
+      account: subkey(config.hmacSecret, 'account-key'),
     },
     limits: {
       loginIp: new WindowLimiter(30, 15 * 60_000),
@@ -57,4 +58,13 @@ export function createContext(config: Config, opts: { db?: Db; fetchImpl?: typeo
 /** Pseudonymisierter IP-Bezug für Logs (nicht umkehrbar ohne Secret, gekürzt). */
 export function ipTag(ctx: AppContext, ip: string): string {
   return hmac(ctx.macKeys.ip, ip).subarray(0, 8).toString('hex');
+}
+
+/**
+ * Stabiler, nicht umkehrbarer Kontoschlüssel für den Client (Name der lokalen
+ * Konto-Datenbank). Verrät nicht die interne Benutzer-ID; ein neu angelegtes
+ * Konto mit gleichem Namen erhält einen anderen Schlüssel.
+ */
+export function accountKey(ctx: AppContext, userId: string): string {
+  return hmac(ctx.macKeys.account, userId).subarray(0, 12).toString('hex');
 }

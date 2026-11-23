@@ -3,7 +3,7 @@ import fp from '../plugin.js';
 import * as OTPAuth from 'otpauth';
 import QRCode from 'qrcode';
 import { audit } from '../audit.js';
-import type { AppContext } from '../context.js';
+import { type AppContext, accountKey } from '../context.js';
 import { decrypt, encrypt, hmac, randomToken, totpAad } from '../crypto.js';
 import { tx } from '../db.js';
 import { HttpError, requireReauth, requireSession, throttle } from '../http.js';
@@ -63,7 +63,7 @@ export function authRoutes(ctx: AppContext) {
       setSessionCookie(ctx, reply, token);
       await ctx.db.query('UPDATE users SET last_login_at = now() WHERE id = $1', [userId]);
       const { rows } = await ctx.db.query('SELECT login_name, login_kind, display_name, role, totp_enabled FROM users WHERE id = $1', [userId]);
-      return { user: publicUser(rows[0]), csrfToken };
+      return { user: { ...publicUser(rows[0]), accountKey: accountKey(ctx, userId) }, csrfToken };
     }
 
     async function validInvite(token: string | undefined) {
@@ -226,7 +226,7 @@ export function authRoutes(ctx: AppContext) {
       const s = req.session;
       if (!s) return reply.code(401).send({ error: 'Nicht angemeldet' });
       return {
-        user: sessionPayload(s),
+        user: { ...sessionPayload(s), accountKey: accountKey(ctx, s.userId) },
         csrfToken: s.csrfToken,
         reauthUntil: s.reauthAt ? new Date(s.reauthAt.getTime() + ctx.config.reauthMinutes * 60_000).toISOString() : null,
         session: { handle: s.handle, createdAt: s.createdAt.toISOString() },

@@ -161,7 +161,7 @@ export function catalogRoutes(ctx: AppContext) {
 
     app.get<{ Params: { id: string } }>('/api/catalog/cannalib/v1/catalogs/strains/:id', async (req, reply) => {
       const s = requireSession(req);
-      if (!/^[A-Za-z0-9_-]{1,80}$/.test(req.params.id)) throw new HttpError(400, 'Ungültige Kennung');
+      if (!/^[A-Za-z0-9_-]{1,160}$/.test(req.params.id)) throw new HttpError(400, 'Ungültige Kennung');
       const url = `${CANNALIB}/v1/catalogs/strains/${req.params.id}`;
       return proxy(reply, url, 'json', s.userId, cannalib());
     });

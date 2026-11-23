@@ -30,6 +30,18 @@ describe.skipIf(!hasDb)('Authentifizierung (echte PostgreSQL-DB)', () => {
     expect(s.json.user.loginName).toBe('alice_1');
   });
 
+  it('liefert einen stabilen, kontospezifischen accountKey ohne interne ID', async () => {
+    const a = new Client(env.app);
+    const l1 = await a.post('/api/auth/login', { login: 'alice_1', password: PW });
+    const s = await a.get('/api/auth/session');
+    expect(l1.json.user.accountKey).toMatch(/^[a-f0-9]{24}$/);
+    expect(s.json.user.accountKey).toBe(l1.json.user.accountKey);
+    const { rows } = await env.ctx.db.query("SELECT id FROM users WHERE login_name = 'alice_1'");
+    expect(JSON.stringify(s.json)).not.toContain(rows[0].id);
+    const other = await new Client(env.app).post('/api/auth/register', { mode: 'generated', password: PW, ageConfirmed: true });
+    expect(other.json.user.accountKey).not.toBe(l1.json.user.accountKey);
+  });
+
   it('speichert kein Klartext-Passwort, sondern Argon2id; Recovery-Codes nur als HMAC', async () => {
     const { rows } = await env.ctx.db.query("SELECT password_hash FROM users WHERE login_name = 'alice_1'");
     expect(rows[0].password_hash).toMatch(/^\$argon2id\$v=19\$m=19456,t=2,p=1\$/);
