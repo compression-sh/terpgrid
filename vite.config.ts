@@ -2,7 +2,7 @@
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
 
@@ -41,8 +41,25 @@ function cspPlugin(): Plugin {
 // Entwicklung mit lokalem Backend: TERPGRID_API_PROXY=http://127.0.0.1:8080 npm run dev
 const apiProxy = process.env.TERPGRID_API_PROXY ? { '/api': { target: process.env.TERPGRID_API_PROXY, changeOrigin: false } } : undefined;
 
+/** Versioniert den Service Worker je Build (alter Cache wird beim Aktivieren gelöscht). */
+function swVersionPlugin(): Plugin {
+  return {
+    name: 'sw-version',
+    apply: 'build',
+    writeBundle(options) {
+      const file = `${options.dir ?? 'dist'}/sw.js`;
+      try {
+        const src = readFileSync(file, 'utf8');
+        writeFileSync(file, src.replace('__TERPGRID_SW_VERSION__', `${pkg.version}-${Date.now().toString(36)}`));
+      } catch {
+        /* kein Service Worker im Build */
+      }
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), tailwindcss(), cspPlugin()],
+  plugins: [react(), tailwindcss(), cspPlugin(), swVersionPlugin()],
   server: { proxy: apiProxy },
   preview: { proxy: apiProxy },
   base: './',

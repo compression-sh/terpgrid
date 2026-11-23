@@ -1,0 +1,17 @@
+{
+  "name": "TERPGRID",
+  "short_name": "TERPGRID",
+  "description": "Persönliches Cannabis-Dashboard: Growlogs, Fotos, Sorten, Journal und THC-Rechner.",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07090a",
+  "theme_color": "#07090a",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

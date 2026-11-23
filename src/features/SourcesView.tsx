@@ -1,3 +1,4 @@
+import { useIsServerMode } from '../app/auth';
 import { BookOpen, ExternalLink, FunctionSquare, Lock } from 'lucide-react';
 import { Callout } from '../components/ui/Callout';
 import { Card } from '../components/ui/Card';
@@ -19,6 +20,7 @@ const ASSUMPTIONS = [
 ];
 
 export function SourcesView() {
+  const server = useIsServerMode();
   return (
     <div className="space-y-5">
       <Card title="Formeln" subtitle="So rechnet die App – alle Berechnungen laufen lokal im Browser" icon={<FunctionSquare className="size-4" />}>
@@ -92,9 +94,9 @@ export function SourcesView() {
         </Callout>
         <Callout tone="ok" title="Datenschutz">
           <span className="inline-flex items-center gap-1">
-            <Lock className="size-3" /> Keine Konten, kein Tracking, keine Cookies. Berechnungen laufen lokal.
+            <Lock className="size-3" /> Kein Tracking. Berechnungen laufen lokal im Browser.
           </span>{' '}
-          Eingaben und gespeicherte Berechnungen bleiben im lokalen Speicher dieses Browsers.
+          {server ? 'Eingaben bleiben auf diesem Gerät; gespeicherte Berechnungen werden mit deinem Konto synchronisiert.' : 'Eingaben und gespeicherte Berechnungen bleiben im lokalen Speicher dieses Browsers.'}
         </Callout>
       </div>
     </div>

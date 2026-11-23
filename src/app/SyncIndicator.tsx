@@ -117,3 +117,42 @@ export function LegacyBanner({ account }: { account: LastAccount | null }) {
     </div>
   );
 }
+
+/** Dezenter Hinweis auf der Übersicht: 2FA noch nicht aktiv (ausblendbar). */
+export function SecurityNudge() {
+  const { state } = useAuth();
+  const [hidden, setHidden] = useState(() => {
+    try {
+      return localStorage.getItem('terpgrid.nudge.totp') === '1';
+    } catch {
+      return false;
+    }
+  });
+  if (state.kind !== 'authenticated' || state.offline || state.user.totpEnabled || hidden) return null;
+  return (
+    <div className="mb-5 flex flex-col gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-[13px] text-ink-300 sm:flex-row sm:items-center sm:justify-between">
+      <span className="flex items-start gap-2">
+        <ShieldCheck className="mt-0.5 size-4 shrink-0 text-leaf-400" /> Schütze dein Konto zusätzlich mit Zwei-Faktor-Authentifizierung.
+      </span>
+      <span className="flex shrink-0 gap-2">
+        <a href={href('account')} className="btn-primary py-1.5">
+          2FA einrichten
+        </a>
+        <button
+          type="button"
+          className="btn-ghost py-1.5"
+          onClick={() => {
+            try {
+              localStorage.setItem('terpgrid.nudge.totp', '1');
+            } catch {
+              /* ignorieren */
+            }
+            setHidden(true);
+          }}
+        >
+          Später
+        </button>
+      </span>
+    </div>
+  );
+}

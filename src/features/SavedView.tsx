@@ -1,3 +1,4 @@
+import { useIsServerMode } from '../app/auth';
 import { Bookmark, Download, FolderOpen, Trash2, Upload } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Callout } from '../components/ui/Callout';
@@ -20,16 +21,23 @@ interface Props {
 }
 
 export function SavedView({ items, onOpen, onDelete, onClear, onImport }: Props) {
+  const server = useIsServerMode();
   const fileRef = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState<{ tone: 'ok' | 'warn'; text: string } | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
 
   return (
     <div className="space-y-5">
-      <Callout tone="ok" title="Nur auf diesem Gerät gespeichert">
-        Gespeicherte Berechnungen liegen ausschließlich im lokalen Speicher dieses Browsers. Es werden keine Daten an einen Server übertragen.
-        Beim Löschen der Browserdaten gehen sie verloren – für eine Sicherung die JSON-Exportfunktion nutzen.
-      </Callout>
+      {server ? (
+        <Callout tone="ok" title="Mit deinem Konto synchronisiert">
+          Gespeicherte Berechnungen gehören zu deinem Konto und werden verschlüsselt auf deinem TERPGRID-Server gespeichert. Die aktuellen Eingabefelder bleiben auf diesem Gerät.
+        </Callout>
+      ) : (
+        <Callout tone="ok" title="Nur auf diesem Gerät gespeichert">
+          Gespeicherte Berechnungen liegen ausschließlich im lokalen Speicher dieses Browsers. Es werden keine Daten an einen Server übertragen.
+          Beim Löschen der Browserdaten gehen sie verloren – für eine Sicherung die JSON-Exportfunktion nutzen.
+        </Callout>
+      )}
 
       <Card
         title="Gespeicherte Berechnungen"

@@ -2,7 +2,8 @@ import { AlertTriangle, Loader2 } from 'lucide-react';
 import { type ReactNode, Suspense, lazy } from 'react';
 import { AuthProvider, useAuth } from './app/auth';
 import { ConfirmProvider } from './app/Confirm';
-import { LegacyBanner } from './app/SyncIndicator';
+import { LegacyBanner, SecurityNudge } from './app/SyncIndicator';
+import { ReauthProvider } from './app/reauth';
 import { currentDatabaseName } from './lib/db/database';
 import { AuthScreen } from './pages/auth/AuthScreen';
 import { DataProvider, useData } from './app/DataProvider';
@@ -35,6 +36,8 @@ const CompareStudio = lazy(() => import('./pages/discover/CompareStudio').then((
 const VisualExplorer = lazy(() => import('./pages/discover/VisualExplorer').then((m) => ({ default: m.VisualExplorer })));
 const KnowledgeHub = lazy(() => import('./pages/discover/KnowledgeHub').then((m) => ({ default: m.KnowledgeHub })));
 const LabInsights = lazy(() => import('./pages/LabInsights').then((m) => ({ default: m.LabInsights })));
+const AccountPage = lazy(() => import('./pages/account/AccountPage').then((m) => ({ default: m.AccountPage })));
+const AdminPage = lazy(() => import('./pages/account/AdminPage').then((m) => ({ default: m.AdminPage })));
 const SyncPage = lazy(() => import('./pages/account/SyncPage').then((m) => ({ default: m.SyncPage })));
 const ImportPage = lazy(() => import('./pages/account/ImportPage').then((m) => ({ default: m.ImportPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
@@ -121,7 +124,12 @@ function Routes() {
       break;
     case 'account':
       if (b === 'import') page = <ImportPage />;
-      else page = <SyncPage />;
+      else if (b === 'sync') page = <SyncPage />;
+      else if (!b) page = <AccountGate />;
+      else page = <NotFound />;
+      break;
+    case 'admin':
+      page = <AdminPage />;
       break;
     case 'register':
       page = <Dashboard />;
@@ -142,7 +150,7 @@ function Gate({ children }: { children: ReactNode }) {
           title="Lokaler Speicher nicht verfügbar"
           text={
             <>
-              {error} TERPGRID speichert Daten ausschließlich in IndexedDB dieses Browsers. Im privaten Modus oder bei blockierter Website-Speicherung ist das nicht
+              {error} TERPGRID benötigt IndexedDB in diesem Browser (im Servermodus als Arbeitskopie für Offline-Nutzung und Synchronisation). Im privaten Modus oder bei blockierter Website-Speicherung ist das nicht
               möglich. Das THC Lab funktioniert trotzdem.
             </>
           }
@@ -191,11 +199,13 @@ function AuthGate() {
   const dbKey = currentDatabaseName();
   return (
     <DataProvider key={dbKey}>
+      <ReauthProvider>
       <CompareProvider>
         <QuickActionsProvider>
           <CatalogSync />
           <Shell>
             {state.kind === 'authenticated' && !isLab && route.path[0] !== 'account' && <LegacyBanner account={auth.lastAccount} />}
+            {route.path.length === 0 && <SecurityNudge />}
             {isLab ? (
               <LabGate />
             ) : (
@@ -206,8 +216,17 @@ function AuthGate() {
           </Shell>
         </QuickActionsProvider>
       </CompareProvider>
+      </ReauthProvider>
     </DataProvider>
   );
+}
+
+/** Konto-Seite nur im Servermodus (im Lokalmodus gibt es kein Konto). */
+function AccountGate() {
+  const { state } = useAuth();
+  if (state.kind !== 'authenticated')
+    return <EmptyState title="Lokalmodus" text="Diese Installation läuft ohne Server. Daten liegen nur in diesem Browser – es gibt kein Konto." action={<a href={href('data')} className="btn-primary">Daten & Backup</a>} />;
+  return <AccountPage />;
 }
 
 function LabGate() {

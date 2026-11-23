@@ -1,3 +1,4 @@
+import { useIsServerMode } from '../app/auth';
 import {
   ArrowDown,
   ArrowRight,
@@ -135,6 +136,7 @@ export function GrowCard({ grow, compact }: { grow: GrowProject; compact?: boole
 }
 
 export function Dashboard() {
+  const server = useIsServerMode();
   const { data, settings, updateSettings, ready } = useData();
   const lookup = useLookup();
   const quick = useQuickActions();
@@ -436,13 +438,25 @@ export function Dashboard() {
               <ShieldCheck className="size-6 text-leaf-400" />
               <h3 className="mt-3 text-[14px] font-semibold text-ink-100">Privat by Design</h3>
               <ul className="mt-3 space-y-2 text-[13px] text-ink-400">
-                <li>• Kein Konto, kein Tracking – persönliche Daten ohne Server</li>
-                <li>• Daten & Fotos bleiben in diesem Browser</li>
+                {server ? (
+                  <>
+                    <li>• Self-hosted: Daten liegen auf deinem eigenen Server</li>
+                    <li>• Dort verschlüsselt gespeichert (Betreiber könnte technisch entschlüsseln)</li>
+                    <li>• Kein Tracking, keine Analyse-Dienste</li>
+                  </>
+                ) : (
+                  <>
+                    <li>• Kein Konto, kein Tracking – persönliche Daten ohne Server</li>
+                    <li>• Daten & Fotos bleiben in diesem Browser</li>
+                  </>
+                )}
                 <li>• Standortdaten werden aus Fotos entfernt</li>
                 <li>• Vollständiger Export jederzeit möglich</li>
                 <li>• Online-Sortendaten (Discover) kommen von externen Quellen</li>
               </ul>
-              <p className="hint mt-4">Browser-Daten sind gerätegebunden und können beim Löschen der Browserdaten verloren gehen.</p>
+              <p className="hint mt-4">
+                {server ? 'Eine Kopie liegt zusätzlich unverschlüsselt in diesem Browser – auf gemeinsam genutzten Geräten beim Abmelden löschen.' : 'Browser-Daten sind gerätegebunden und können beim Löschen der Browserdaten verloren gehen.'}
+              </p>
             </div>
           </div>
         </Card>

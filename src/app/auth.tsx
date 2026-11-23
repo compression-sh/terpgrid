@@ -250,3 +250,9 @@ export async function pendingChanges(): Promise<number> {
     return 0;
   }
 }
+
+/** true im Servermodus (angemeldet, auch offline) – für korrekte Datenschutz-Hinweise. */
+export function useIsServerMode(): boolean {
+  const { state } = useAuth();
+  return state.kind === 'authenticated';
+}

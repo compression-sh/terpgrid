@@ -1,10 +1,11 @@
-import { Lock, MoreHorizontal, Plus, X } from 'lucide-react';
+import { Lock, MoreHorizontal, Plus, Search, X } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { LogoMark, Wordmark } from '../components/brand/Logo';
 import { MOBILE_NAV_IDS, type NavItem, PRIMARY_NAV, SECONDARY_NAV, isActive } from './nav';
 import { useQuickActions } from './QuickActions';
 import { useAuth } from './auth';
 import { AccountFooter, SyncPill } from './SyncIndicator';
+import { CommandPalette } from './CommandPalette';
 import { href, useRoute } from './router';
 
 function SideLink({ item, active }: { item: NavItem; active: boolean }) {
@@ -92,8 +93,16 @@ export function Shell({ children }: { children: ReactNode }) {
           <LogoMark className="size-9 shrink-0" />
           <Wordmark />
         </a>
-        <div className="px-4 pb-3">
+        <div className="space-y-2 px-4 pb-3">
           <QuickAddMenu align="left" />
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event('terpgrid:palette'))}
+            className="flex w-full items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-[12.5px] text-ink-400 hover:border-white/[0.12] hover:text-ink-200"
+          >
+            <Search className="size-3.5" /> Suchen …
+            <kbd className="ml-auto rounded border border-white/10 px-1 text-[10px]">Strg K</kbd>
+          </button>
         </div>
         <nav aria-label="Hauptnavigation" className="flex-1 space-y-6 overflow-y-auto px-4 py-2">
           <div className="space-y-0.5">
@@ -120,6 +129,9 @@ export function Shell({ children }: { children: ReactNode }) {
           <Wordmark withTagline={false} />
         </a>
         <div className="flex items-center gap-2">
+          <button type="button" className="btn-ghost p-1.5" aria-label="Suchen" onClick={() => window.dispatchEvent(new Event('terpgrid:palette'))}>
+            <Search className="size-4" />
+          </button>
           <SyncPill compact />
           <div className="w-24">
             <QuickAddMenu />
@@ -127,6 +139,7 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
+      <CommandPalette />
       <main id="main" className="mx-auto w-full max-w-6xl px-4 pt-5 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-10 lg:pt-9 lg:pb-16">
         {children}
       </main>
