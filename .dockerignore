@@ -1,0 +1,9 @@
+node_modules
+dist
+server
+deploy/secrets
+deploy/state
+deploy/.env
+coverage
+*.log
+.git

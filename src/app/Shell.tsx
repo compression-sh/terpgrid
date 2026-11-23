@@ -1,8 +1,11 @@
-import { Lock, MoreHorizontal, Plus, X } from 'lucide-react';
+import { Lock, MoreHorizontal, Plus, Search, X } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { LogoMark, Wordmark } from '../components/brand/Logo';
 import { MOBILE_NAV_IDS, type NavItem, PRIMARY_NAV, SECONDARY_NAV, isActive } from './nav';
 import { useQuickActions } from './QuickActions';
+import { useAuth } from './auth';
+import { AccountFooter, SyncPill } from './SyncIndicator';
+import { CommandPalette } from './CommandPalette';
 import { href, useRoute } from './router';
 
 function SideLink({ item, active }: { item: NavItem; active: boolean }) {
@@ -69,6 +72,8 @@ function QuickAddMenu({ align = 'right' }: { align?: 'right' | 'left' }) {
 
 export function Shell({ children }: { children: ReactNode }) {
   const route = useRoute();
+  const { state } = useAuth();
+  const modeLine = state.kind === 'local' ? 'Lokalmodus: Daten nur auf diesem Gerät' : 'Konto & Datenschutz · Self-hosted';
   const [moreOpen, setMoreOpen] = useState(false);
   const mobileItems = MOBILE_NAV_IDS.map((id) => PRIMARY_NAV.find((n) => n.id === id)!);
   const moreItems = [...PRIMARY_NAV.filter((n) => !MOBILE_NAV_IDS.includes(n.id)), ...SECONDARY_NAV];
@@ -88,8 +93,16 @@ export function Shell({ children }: { children: ReactNode }) {
           <LogoMark className="size-9 shrink-0" />
           <Wordmark />
         </a>
-        <div className="px-4 pb-3">
+        <div className="space-y-2 px-4 pb-3">
           <QuickAddMenu align="left" />
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event('terpgrid:palette'))}
+            className="flex w-full items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-[12.5px] text-ink-400 hover:border-white/[0.12] hover:text-ink-200"
+          >
+            <Search className="size-3.5" /> Suchen …
+            <kbd className="ml-auto rounded border border-white/10 px-1 text-[10px]">Strg K</kbd>
+          </button>
         </div>
         <nav aria-label="Hauptnavigation" className="flex-1 space-y-6 overflow-y-auto px-4 py-2">
           <div className="space-y-0.5">
@@ -106,12 +119,7 @@ export function Shell({ children }: { children: ReactNode }) {
             </div>
           </div>
         </nav>
-        <div className="flex items-start gap-2 border-t border-white/[0.05] px-5 py-4 text-[11px] leading-snug text-ink-500">
-          <Lock className="mt-0.5 size-3 shrink-0 text-leaf-500" />
-          <span>
-            Persönliche Daten lokal gespeichert · Online-Sortendaten von externen Quellen
-          </span>
-        </div>
+        <AccountFooter />
       </aside>
 
       {/* Mobile Kopfzeile */}
@@ -120,11 +128,18 @@ export function Shell({ children }: { children: ReactNode }) {
           <LogoMark className="size-8 shrink-0" />
           <Wordmark withTagline={false} />
         </a>
-        <div className="w-24">
-          <QuickAddMenu />
+        <div className="flex items-center gap-2">
+          <button type="button" className="btn-ghost p-1.5" aria-label="Suchen" onClick={() => window.dispatchEvent(new Event('terpgrid:palette'))}>
+            <Search className="size-4" />
+          </button>
+          <SyncPill compact />
+          <div className="w-24">
+            <QuickAddMenu />
+          </div>
         </div>
       </header>
 
+      <CommandPalette />
       <main id="main" className="mx-auto w-full max-w-6xl px-4 pt-5 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-10 lg:pt-9 lg:pb-16">
         {children}
       </main>
@@ -194,9 +209,9 @@ export function Shell({ children }: { children: ReactNode }) {
                 );
               })}
             </div>
-            <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-ink-500">
-              <Lock className="size-3" /> Persönliche Daten lokal · Online-Sortendaten von externen Quellen
-            </p>
+            <a href={href('account')} onClick={() => setMoreOpen(false)} className="mt-3 flex items-center justify-center gap-1.5 rounded-xl border border-white/[0.06] py-2.5 text-[12px] text-ink-300">
+              <Lock className="size-3.5" /> {modeLine}
+            </a>
           </div>
         </div>
       )}

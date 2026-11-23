@@ -1,0 +1,7 @@
+[Unit]
+Description=TERPGRID Restore-Test in isolierter Umgebung
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/terpgrid/deploy/backup/restore-test.sh

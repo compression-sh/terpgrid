@@ -36,7 +36,16 @@ async function makeJpeg(page, color) {
   const p = await ctx.newPage();
   const errors = [];
   p.on('pageerror', (e) => errors.push(e.message));
-  p.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  // Erwartet im Lokalmodus: Die Modus-Erkennung fragt /api/auth/config ab; ohne Backend antwortet der Preview-Server mit 404.
+  let expected404 = 0;
+  p.on('response', (r) => {
+    if (r.url().endsWith('/api/auth/config') && r.status() === 404) expected404++;
+  });
+  p.on('console', (m) => {
+    if (m.type() !== 'error') return;
+    if (expected404 > 0 && /status of 404/.test(m.text())) return void expected404--;
+    errors.push(m.text());
+  });
   // Persönliche Bereiche dürfen keine externen Anfragen auslösen (Discover wird hier nicht besucht).
   p.on('request', (r) => {
     const u = r.url();

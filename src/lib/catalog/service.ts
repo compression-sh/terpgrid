@@ -1,3 +1,4 @@
+import { cannalibBase } from './endpoint';
 /**
  * Katalog-Service: verbindet Provider-Adapter, höflichen HTTP-Client und
  * lokalen API-Cache (IndexedDB, Store `apiCache`).
@@ -227,7 +228,7 @@ export class CatalogService {
   }
 
   cannalibBlockedFor(): number {
-    return this.cl.blockedFor(CL.CANNALIB_BASE);
+    return this.cl.blockedFor(cannalibBase());
   }
 }
 

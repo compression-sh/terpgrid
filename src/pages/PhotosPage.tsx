@@ -1,3 +1,4 @@
+import { useIsServerMode } from '../app/auth';
 import { Camera, Clapperboard, Columns2, Grid3x3, Images, ShieldCheck } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useData } from '../app/DataProvider';
@@ -44,6 +45,7 @@ function PhotoPicker({ photos, value, onChange, label }: { photos: Photo[]; valu
 }
 
 export function PhotosPage() {
+  const server = useIsServerMode();
   const { data } = useData();
   const route = useRoute();
   const quick = useQuickActions();
@@ -181,7 +183,7 @@ export function PhotosPage() {
 
           <div className="flex gap-2.5 rounded-xl border border-white/[0.05] bg-white/[0.015] p-3 text-xs leading-relaxed text-ink-400">
             <ShieldCheck className="mt-0.5 size-4 shrink-0 text-leaf-400" />
-            Alle Bilder liegen ausschließlich im Speicher dieses Browsers. Beim Import werden eingebettete Metadaten (inkl. GPS) durch Neu-Kodierung entfernt. Bilder, die der
+            {server ? 'Bilder werden verschlüsselt auf deinem Server gespeichert und auf anderen Geräten bei Bedarf geladen.' : 'Alle Bilder liegen ausschließlich im Speicher dieses Browsers.'} Beim Import werden eingebettete Metadaten (inkl. GPS) durch Neu-Kodierung entfernt. Bilder, die der
             Browser nicht lesen kann (z. B. HEIC in manchen Browsern), werden abgelehnt.
           </div>
         </div>

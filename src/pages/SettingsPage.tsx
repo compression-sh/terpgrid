@@ -1,3 +1,4 @@
+import { useIsServerMode } from '../app/auth';
 import { ArrowDown, ArrowUp, Eye, EyeOff, Globe, Info, LayoutDashboard, Lock, Settings, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { catalog } from '../lib/catalog/service';
@@ -27,6 +28,7 @@ const WIDGET_LABEL: Record<DashboardWidget, string> = {
 const CURRENCIES = ['EUR', 'CHF', 'USD', 'GBP', 'CAD'];
 
 export function SettingsPage() {
+  const server = useIsServerMode();
   const { settings, updateSettings } = useData();
   const toast = useToast();
   const order = settings.dashboardOrder;
@@ -109,11 +111,22 @@ export function SettingsPage() {
           <OnlineCard />
           <Card title="Datenschutz" icon={<Lock className="size-4" />}>
             <ul className="space-y-1.5 text-[13px] text-ink-300">
-              <li>• Persönliche Daten lokal gespeichert · Online-Sortendaten von externen Quellen.</li>
-              <li>• Keine Konten, keine Analyse- oder Tracking-Dienste. Growlogs, Fotos, Journal und Sammlung werden nie an Anbieter gesendet.</li>
-              <li>• Netzwerkzugriffe sind per Content-Security-Policy auf StrainAPI und CannaLib beschränkt – und nur, wenn du Discover nutzt.</li>
-              <li>• Fotos werden beim Import neu kodiert; eingebettete Metadaten wie GPS entfallen.</li>
-              <li>• Daten sind nicht verschlüsselt und nicht synchronisiert – Sicherung per Backup-Datei.</li>
+              {server ? (
+                <>
+                  <li>• Self-hosted · Private Daten geschützt: Daten liegen auf deinem TERPGRID-Server, dort AES-256-GCM-verschlüsselt (keine Ende-zu-Ende-Verschlüsselung).</li>
+                  <li>• Keine Analyse- oder Tracking-Dienste. Persönliche Daten werden nie an Sortendaten-Anbieter gesendet; Discover läuft über deinen Server.</li>
+                  <li>• Fotos werden beim Import neu kodiert; eingebettete Metadaten wie GPS entfallen.</li>
+                  <li>• Eine Arbeitskopie liegt unverschlüsselt in diesem Browser. Details im Datenschutz-Center.</li>
+                </>
+              ) : (
+                <>
+                  <li>• Lokalmodus: Persönliche Daten nur in diesem Browser · Online-Sortendaten von externen Quellen.</li>
+                  <li>• Keine Konten, keine Analyse- oder Tracking-Dienste. Growlogs, Fotos, Journal und Sammlung werden nie an Anbieter gesendet.</li>
+                  <li>• Netzwerkzugriffe sind per Content-Security-Policy auf StrainAPI und CannaLib beschränkt – und nur, wenn du Discover nutzt.</li>
+                  <li>• Fotos werden beim Import neu kodiert; eingebettete Metadaten wie GPS entfallen.</li>
+                  <li>• Daten sind nicht verschlüsselt und nicht synchronisiert – Sicherung per Backup-Datei.</li>
+                </>
+              )}
             </ul>
             <a href={href('data')} className="btn-ghost mt-4 py-1.5 text-xs">
               Daten & Backup verwalten

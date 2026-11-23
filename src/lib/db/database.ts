@@ -23,6 +23,31 @@ import type {
   Strain,
 } from './types';
 
+/** Ausstehende Änderung (Sync-Outbox). Inhalt wird beim Hochladen frisch gelesen. */
+export interface OutboxEntry {
+  key: string;
+  store: StoreName;
+  id: string;
+  queuedAt: number;
+}
+/** Zuletzt vom Server bestätigte Version je Datensatz. */
+export interface SyncStateRow {
+  key: string;
+  version?: number;
+  value?: unknown;
+}
+/** Konflikt: lokale und Server-Version liegen beide vor, bis der Nutzer entscheidet. */
+export interface SyncConflict {
+  key: string;
+  store: StoreName;
+  id: string;
+  kind: 'conflict' | 'rejected';
+  local: unknown | null;
+  server: { version: number; deleted: boolean; data: unknown | null } | null;
+  error?: string;
+  detectedAt: number;
+}
+
 export const DB_NAME = 'terpgrid';
 
 export interface StoreMap {
@@ -41,6 +66,9 @@ export interface StoreMap {
   labReports: LabReport;
   labDocs: LabDocument;
   apiCache: ApiCacheEntry;
+  outbox: OutboxEntry;
+  syncState: SyncStateRow;
+  syncConflicts: SyncConflict;
 }
 export type StoreName = keyof StoreMap;
 
@@ -60,13 +88,23 @@ export const STORE_NAMES: StoreName[] = [
   'labReports',
   'labDocs',
   'apiCache',
+  'outbox',
+  'syncState',
+  'syncConflicts',
 ];
 
 /** Stores, die in einem Backup als JSON landen (photoData wird separat als Dateien exportiert). */
-export const RECORD_STORES = STORE_NAMES.filter((s) => s !== 'photoData' && s !== 'settings' && s !== 'labDocs' && s !== 'apiCache') as Exclude<
+const NON_RECORD = new Set<StoreName>(['photoData', 'settings', 'labDocs', 'apiCache', 'outbox', 'syncState', 'syncConflicts']);
+export const RECORD_STORES = STORE_NAMES.filter((s) => !NON_RECORD.has(s)) as Exclude<
   StoreName,
-  'photoData' | 'settings' | 'labDocs' | 'apiCache'
+  'photoData' | 'settings' | 'labDocs' | 'apiCache' | 'outbox' | 'syncState' | 'syncConflicts'
 >[];
+
+/** Mit dem Server synchronisierte Bereiche: Datensätze inkl. Einstellungen sowie Binärdaten. */
+export const SYNC_RECORD_STORES: StoreName[] = [...RECORD_STORES, 'settings'];
+export const SYNC_FILE_STORES: StoreName[] = ['photoData', 'labDocs'];
+const TRACKED = new Set<StoreName>([...SYNC_RECORD_STORES, ...SYNC_FILE_STORES]);
+export const keyOf = (store: StoreName, value: unknown): string => String((value as Record<string, unknown>)[store === 'settings' ? 'key' : 'id']);
 
 type Migration = (db: IDBDatabase, tx: IDBTransaction) => void;
 
@@ -102,6 +140,12 @@ export const SCHEMA_MIGRATIONS: Migration[] = [
     lab.createIndex('strainId', 'strainId', { unique: false });
     db.createObjectStore('labDocs', { keyPath: 'id' });
   },
+  // v2 → v3: Synchronisation (Outbox, bestätigte Versionen, Konflikte) – additiv
+  (db) => {
+    db.createObjectStore('outbox', { keyPath: 'key' });
+    db.createObjectStore('syncState', { keyPath: 'key' });
+    db.createObjectStore('syncConflicts', { keyPath: 'key' });
+  },
 ];
 
 export const DB_VERSION = SCHEMA_MIGRATIONS.length;
@@ -110,12 +154,22 @@ export const DB_VERSION = SCHEMA_MIGRATIONS.length;
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 let dbName = DB_NAME;
+/** Im Servermodus aktiv: jede lokale Änderung landet zusätzlich in der Outbox. */
+let tracking = false;
 
-/** Nur für Tests: andere Datenbank verwenden. */
+/** Wählt die Datenbank (Lokalmodus: `terpgrid`, Servermodus: eine Datenbank je Konto). */
 export function useDatabaseName(name: string): void {
+  if (name !== dbName) {
+    dbPromise?.then((d) => d.close()).catch(() => {});
+    dbPromise = null;
+  }
   dbName = name;
-  dbPromise = null;
 }
+export const currentDatabaseName = () => dbName;
+export function setSyncTracking(on: boolean): void {
+  tracking = on;
+}
+export const isSyncTracking = () => tracking;
 
 export function isIndexedDbAvailable(): boolean {
   try {
@@ -225,11 +279,7 @@ export async function count(store: StoreName): Promise<number> {
 }
 
 export async function putOne<S extends StoreName>(store: S, value: StoreMap[S]): Promise<StoreMap[S]> {
-  const db = await openDatabase();
-  const tx = db.transaction(store, 'readwrite');
-  tx.objectStore(store).put(value);
-  await txDone(tx);
-  notify(store);
+  await writeBatch({ put: { [store]: [value] } as WriteBatch['put'] });
   return value;
 }
 
@@ -243,23 +293,44 @@ export interface WriteBatch {
   clear?: StoreName[];
 }
 
-export async function writeBatch(batch: WriteBatch): Promise<void> {
+export async function writeBatch(batch: WriteBatch, opts: { fromSync?: boolean } = {}): Promise<void> {
   const stores = new Set<StoreName>([
     ...((Object.keys(batch.put ?? {}) as StoreName[]) ?? []),
     ...((Object.keys(batch.delete ?? {}) as StoreName[]) ?? []),
     ...(batch.clear ?? []),
   ]);
   if (stores.size === 0) return;
+  // Änderungen aus der Synchronisation selbst erzeugen keine neuen Outbox-Einträge
+  const track = tracking && !opts.fromSync && [...stores].some((s) => TRACKED.has(s));
+  if (track) stores.add('outbox');
   const db = await openDatabase();
   const tx = db.transaction([...stores], 'readwrite');
-  for (const s of batch.clear ?? []) tx.objectStore(s).clear();
+  const queuedAt = Date.now();
+  const outbox = track ? tx.objectStore('outbox') : null;
+  const queue = (store: StoreName, id: string) => outbox?.put({ key: `${store}:${id}`, store, id, queuedAt } satisfies OutboxEntry);
+  for (const s of batch.clear ?? []) {
+    if (outbox && TRACKED.has(s)) {
+      // Vor dem Leeren alle Schlüssel als Löschung vormerken (Reihenfolge innerhalb der Transaktion ist garantiert)
+      const req = tx.objectStore(s).getAllKeys();
+      req.onsuccess = () => {
+        for (const k of req.result) queue(s, String(k));
+      };
+    }
+    tx.objectStore(s).clear();
+  }
   for (const [s, keys] of Object.entries(batch.delete ?? {}) as [StoreName, string[]][]) {
     const os = tx.objectStore(s);
-    for (const k of keys) os.delete(k);
+    for (const k of keys) {
+      os.delete(k);
+      if (TRACKED.has(s)) queue(s, k);
+    }
   }
   for (const [s, values] of Object.entries(batch.put ?? {}) as [StoreName, unknown[]][]) {
     const os = tx.objectStore(s);
-    for (const v of values) os.put(v);
+    for (const v of values) {
+      os.put(v);
+      if (TRACKED.has(s)) queue(s, keyOf(s, v));
+    }
   }
   await txDone(tx);
   notify(...stores);
@@ -303,4 +374,16 @@ export async function requestPersistentStorage(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Rohe Transaktion für die Sync-Engine (z. B. „Outbox-Eintrag nur entfernen,
+ * wenn er seit dem Hochladen nicht erneut geändert wurde“). Löst keine Outbox-Einträge aus.
+ */
+export async function transact(stores: StoreName[], fn: (tx: IDBTransaction) => void, notifyStores: StoreName[] = stores): Promise<void> {
+  const db = await openDatabase();
+  const tx = db.transaction(stores, 'readwrite');
+  fn(tx);
+  await txDone(tx);
+  if (notifyStores.length) notify(...notifyStores);
 }

@@ -1,3 +1,4 @@
+import { useIsServerMode } from '../app/auth';
 import { Archive, Database, FileJson, HardDrive, Images, Loader2, ShieldAlert, ShieldCheck, Trash2, Upload } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useConfirm } from '../app/Confirm';
@@ -51,6 +52,7 @@ function download(bytes: Uint8Array | string, name: string, mime: string) {
 }
 
 export function DataPage() {
+  const server = useIsServerMode();
   const { data, settings, updateSettings } = useData();
   const toast = useToast();
   const confirm = useConfirm();
@@ -134,7 +136,10 @@ export function DataPage() {
 
   return (
     <div>
-      <PageHeader title="Daten & Backup" subtitle="Alles liegt lokal in diesem Browser. Hier sicherst, überträgst und löschst du deine Daten." />
+      <PageHeader
+        title="Daten & Backup"
+        subtitle={server ? 'Deine Daten liegen auf deinem Server und als Arbeitskopie in diesem Browser. Hier sicherst, überträgst und löschst du sie.' : 'Alles liegt lokal in diesem Browser. Hier sicherst, überträgst und löschst du deine Daten.'}
+      />
 
       {(lastBackupDays === undefined || lastBackupDays > 30) && data.grows.length + data.photos.length + data.journal.length > 0 && (
         <div className="mb-5">
@@ -262,10 +267,11 @@ export function DataPage() {
         </Card>
 
         <div className="lg:col-span-2">
-          <Card title="Alle lokalen Daten löschen" icon={<ShieldAlert className="size-4" />} className="border-rose-400/15">
+          <Card title={server ? 'Alle Daten dieses Kontos löschen' : 'Alle lokalen Daten löschen'} icon={<ShieldAlert className="size-4" />} className="border-rose-400/15">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="max-w-2xl text-[13px] leading-relaxed text-ink-300">
-                Entfernt sämtliche TERPGRID-Daten aus diesem Browser: Grows, Pflanzen, Fotos, Sorten, Journal, Sammlung, Kalender, Berechnungen, Einstellungen sowie die alten
+                {server && <strong className="text-rose-200">Im Servermodus werden die Löschungen synchronisiert – die Daten verschwinden auch vom Server und von deinen anderen Geräten. </strong>}
+                Entfernt sämtliche TERPGRID-Daten {server ? 'dieses Kontos' : 'aus diesem Browser'}: Grows, Pflanzen, Fotos, Sorten, Journal, Sammlung, Kalender, Berechnungen, Einstellungen sowie die alten
                 THC-Rechner-Eingaben. Dies kann nicht rückgängig gemacht werden.
               </p>
               <button type="button" className="btn shrink-0 border border-rose-400/30 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20" onClick={() => setDeleteOpen(true)}>
@@ -278,8 +284,18 @@ export function DataPage() {
 
       <div className="mt-5 flex gap-2.5 rounded-xl border border-white/[0.05] bg-white/[0.015] p-3 text-xs leading-relaxed text-ink-400">
         <Database className="mt-0.5 size-4 shrink-0 text-leaf-400" />
-        Datenspeicherung: IndexedDB (Datensätze & Fotos) und localStorage (Eingaben des THC Lab). Daten sind an diesen Browser auf diesem Gerät gebunden, werden nicht
-        synchronisiert, nicht verschlüsselt gespeichert und nie an einen Server gesendet. Ausnahme sind Suchanfragen im Bereich Discover: Sie gehen an die externen Sortendaten-Anbieter; zwischengespeicherte Antworten liegen lokal und sind nicht Teil des Backups.
+        {server ? (
+          <span>
+            Datenspeicherung: Auf deinem TERPGRID-Server (verschlüsselt, AES-256-GCM – der Betreiber könnte technisch entschlüsseln) und als Arbeitskopie in IndexedDB dieses Browsers
+            (unverschlüsselt, je Konto getrennt). Eingaben des THC Lab bleiben in localStorage dieses Geräts. Discover-Anfragen laufen über deinen Server; die Anbieter erhalten keine
+            persönlichen Daten. Ein vollständiger Export ist unter Konto → Daten möglich.
+          </span>
+        ) : (
+          <span>
+            Datenspeicherung: IndexedDB (Datensätze & Fotos) und localStorage (Eingaben des THC Lab). Daten sind an diesen Browser auf diesem Gerät gebunden, werden nicht
+            synchronisiert, nicht verschlüsselt gespeichert und nie an einen Server gesendet. Ausnahme sind Suchanfragen im Bereich Discover: Sie gehen an die externen Sortendaten-Anbieter; zwischengespeicherte Antworten liegen lokal und sind nicht Teil des Backups.
+          </span>
+        )}
       </div>
 
       {parsed && (

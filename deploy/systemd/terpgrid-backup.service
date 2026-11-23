@@ -1,0 +1,11 @@
+[Unit]
+Description=TERPGRID verschlüsseltes Backup (restic)
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+# Pfad an den Installationsort anpassen
+ExecStart=/opt/terpgrid/deploy/backup/backup.sh
+Nice=10
+IOSchedulingClass=idle

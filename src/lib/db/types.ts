@@ -1,6 +1,6 @@
 /**
- * Datenmodell von TERPGRID. Alle Datensätze liegen ausschließlich lokal
- * (IndexedDB). Datumswerte sind ISO-Strings:
+ * Datenmodell von TERPGRID. Datensätze liegen in IndexedDB (Lokalmodus) bzw. zusätzlich verschlüsselt auf dem eigenen Server (Servermodus)
+ * Datumswerte sind ISO-Strings:
  * - `DateString`:     "YYYY-MM-DD" (Kalendertag, ohne Zeitzone)
  * - `DateTimeString`: lokale Zeit "YYYY-MM-DDTHH:mm" (wie <input type="datetime-local">)
  * - `Timestamp`:      vollständiger ISO-Zeitstempel (createdAt/updatedAt)

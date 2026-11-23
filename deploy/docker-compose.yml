@@ -1,0 +1,138 @@
+# TERPGRID – Self-Hosting mit Docker Compose
+# Start:  ./install.sh  (erzeugt Secrets und .env)  →  docker compose up -d --build
+# Doku:   ../docs/DEPLOYMENT.md
+name: terpgrid
+
+x-hardening: &hardening
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "5" }
+
+x-api-env: &api-env
+  PUBLIC_ORIGIN: https://${TERPGRID_DOMAIN:?TERPGRID_DOMAIN fehlt in .env}
+  DATABASE_URL: postgres://terpgrid_app@db:5432/terpgrid
+  DATABASE_PASSWORD_FILE: /run/secrets/db_app_password
+  MASTER_KEYS_FILE: /run/secrets/master_keys
+  MASTER_KEY_CURRENT: ${MASTER_KEY_CURRENT:-1}
+  HMAC_SECRET_FILE: /run/secrets/hmac_secret
+  INVITE_ONLY: ${INVITE_ONLY:-true}
+  USER_QUOTA_MB: ${USER_QUOTA_MB:-2048}
+  MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-20}
+  CATALOG_PROXY_ENABLED: ${CATALOG_PROXY_ENABLED:-true}
+  BACKUP_STATUS_FILE: /run/terpgrid/backup-status.json
+  APP_VERSION: ${TERPGRID_VERSION:-local}
+  TRUST_PROXY: uniquelocal
+  # Argon2id: über dem OWASP-Minimum (19 MiB, t=2); Messung: docs/SECURITY.md
+  ARGON2_MEMORY_KIB: ${ARGON2_MEMORY_KIB:-65536}
+  ARGON2_TIME_COST: ${ARGON2_TIME_COST:-3}
+
+services:
+  db:
+    <<: *hardening
+    image: postgres:16.10-alpine3.22
+    user: "70:70"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: terpgrid
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --data-checksums"
+    secrets: [postgres_password, db_owner_password, db_app_password]
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./db-init:/docker-entrypoint-initdb.d:ro
+    tmpfs: [/var/run/postgresql, /tmp]
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d terpgrid -h 127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    shm_size: 128m
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 512M, pids: 200 }
+
+  migrate:
+    <<: *hardening
+    image: terpgrid-api:${TERPGRID_VERSION:-local}
+    build: ../server
+    restart: "no"
+    command: ["node", "dist/cli.js", "migrate"]
+    environment:
+      <<: *api-env
+      # Nur der Migrations-Job erhält die Owner-Rolle; die laufende API nicht
+      DATABASE_MIGRATE_URL: postgres://terpgrid_owner@db:5432/terpgrid
+      DATABASE_MIGRATE_PASSWORD_FILE: /run/secrets/db_owner_password
+    secrets: [db_owner_password, db_app_password, master_keys, hmac_secret]
+    networks: [backend]
+    depends_on:
+      db: { condition: service_healthy }
+
+  api:
+    <<: *hardening
+    image: terpgrid-api:${TERPGRID_VERSION:-local}
+    environment:
+      <<: *api-env
+    secrets: [db_app_password, master_keys, hmac_secret]
+    volumes:
+      - api-files:/data/files
+      - ./state:/run/terpgrid:ro
+    tmpfs: [/tmp]
+    # backend: Datenbank (intern, ohne Internet) · egress: nur für den Katalog-Proxy
+    networks: [backend, egress]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    deploy:
+      resources:
+        limits: { cpus: "1.5", memory: 768M, pids: 200 }
+
+  caddy:
+    <<: *hardening
+    image: terpgrid-web:${TERPGRID_VERSION:-local}
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+    cap_add: [NET_BIND_SERVICE]
+    environment:
+      TERPGRID_DOMAIN: ${TERPGRID_DOMAIN}
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+      - "${HTTPS_PORT:-443}:443/udp"
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    tmpfs: [/tmp]
+    networks: [egress]
+    depends_on: [api]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8081/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 256M, pids: 200 }
+
+networks:
+  backend:
+    internal: true
+  egress: {}
+
+volumes:
+  db-data:
+  api-files:
+  caddy-data:
+  caddy-config:
+
+# Secrets liegen als Dateien in ./secrets (Verzeichnis 0700, nie im Git, nie im Image)
+secrets:
+  postgres_password: { file: ./secrets/postgres_password }
+  db_owner_password: { file: ./secrets/db_owner_password }
+  db_app_password: { file: ./secrets/db_app_password }
+  master_keys: { file: ./secrets/master_keys }
+  hmac_secret: { file: ./secrets/hmac_secret }

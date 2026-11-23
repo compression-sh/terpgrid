@@ -1,3 +1,4 @@
+import { imageSrc } from '../../lib/catalog/endpoint';
 import { useState } from 'react';
 import type { CatalogImage } from '../../lib/catalog/types';
 
@@ -57,7 +58,7 @@ export function StrainVisual({ image, name, className = '', eager, fit = 'cover'
     <div className={`relative overflow-hidden bg-ink-900 ${className}`}>
       {!loaded && <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-ink-800 to-ink-900" aria-hidden />}
       <img
-        src={image.url}
+        src={imageSrc(image.url)}
         alt={image.alt || `${name} (Bild laut StrainAPI)`}
         width={image.width}
         height={image.height}
