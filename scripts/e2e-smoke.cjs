@@ -37,6 +37,7 @@ async function makeJpeg(page, color) {
   const errors = [];
   p.on('pageerror', (e) => errors.push(e.message));
   p.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  // Persönliche Bereiche dürfen keine externen Anfragen auslösen (Discover wird hier nicht besucht).
   p.on('request', (r) => {
     const u = r.url();
     if (!u.startsWith(BASE) && !u.startsWith('blob:') && !u.startsWith('data:')) errors.push('Externer Request: ' + u);
@@ -93,7 +94,7 @@ async function makeJpeg(page, color) {
   const m = await browser.newContext({ viewport: { width: 375, height: 812 } });
   const mp = await m.newPage();
   mp.on('pageerror', (e) => errors.push('Mobil: ' + e.message));
-  const routes = ['', 'grows', 'photos', 'strains', 'journal', 'collection', 'calendar', 'analytics', 'tools', 'data', 'settings', 'lab/edibles', 'lab/smoking', 'lab/dosage', 'lab/timeline', 'lab/tools', 'lab/compare', 'lab/saved', 'lab/sources'];
+  const routes = ['', 'grows', 'photos', 'strains', 'discover', 'discover/genetics', 'discover/terpenes', 'discover/terpenes/limonene', 'discover/compare', 'discover/gallery', 'discover/learn', 'discover/learn/toleranz', 'lab-reports', 'journal', 'collection', 'calendar', 'analytics', 'tools', 'data', 'settings', 'lab/edibles', 'lab/smoking', 'lab/dosage', 'lab/timeline', 'lab/tools', 'lab/compare', 'lab/saved', 'lab/sources'];
   for (const r of routes) {
     await mp.goto(`${BASE}/#/${r}`);
     await mp.waitForTimeout(350);

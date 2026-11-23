@@ -185,8 +185,22 @@ export interface Terpene {
   source: ClaimSource;
 }
 
+/** Verknüpfung einer persönlichen Sorte mit einem externen Katalogeintrag. */
+export interface ExternalStrainRef {
+  provider: 'strainapi' | 'cannalib';
+  id: string;
+  name: string;
+  breeder?: string;
+  url?: string;
+  linkedAt: Timestamp;
+}
+
 export interface Strain extends BaseRecord {
   name: string;
+  /** Externe Quelle (verhindert Duplikate: höchstens ein Eintrag je provider:id) */
+  external?: ExternalStrainRef;
+  /** "provider:id" – indiziert */
+  externalKey?: string;
   breeder?: string;
   genetics?: string;
   /** Angegebener Typ laut Quelle (z. B. Hersteller) – keine Wirkungsaussage. */
@@ -277,6 +291,66 @@ export interface AppSettings {
   currency: string;
   showHarmReduction: boolean;
   lastBackupAt?: Timestamp;
+  /** Online-Sortendaten (StrainAPI) abrufen */
+  onlineCatalog: boolean;
+  /** Optionale CannaLib-Anreicherung (nur auf Klick) */
+  cannalibEnabled: boolean;
+  discoverNoticeSeen: boolean;
+  /** Cannabis 101: gemerkte Artikel und Lesefortschritt (0–1) */
+  kbFavorites: string[];
+  kbProgress: Record<string, number>;
+}
+
+/* ───────────── Laborberichte ───────────── */
+
+export type ConcentrationUnit = '%' | 'mg/g';
+
+/**
+ * Herkunft der Werte:
+ * - document: aus beigefügtem Originaldokument übertragen (vom Nutzer)
+ * - manual:   manuell eingetragen, ohne Dokument
+ * - unverified: ungeprüfte Angabe (z. B. Verpackung)
+ */
+export type LabValueOrigin = 'document' | 'manual' | 'unverified';
+
+export interface LabReport extends BaseRecord {
+  title: string;
+  strainId?: string;
+  labName?: string;
+  batchId?: string;
+  testDate?: DateString;
+  sampleType?: string;
+  unit: ConcentrationUnit;
+  origin: LabValueOrigin;
+  /** Cannabinoide in `unit`; fehlend = nicht berichtet */
+  thc?: number;
+  thca?: number;
+  cbd?: number;
+  cbda?: number;
+  cbg?: number;
+  cbn?: number;
+  /** Im Bericht ausgewiesene Gesamtwerte (falls angegeben) */
+  declaredTotalThc?: number;
+  declaredTotalCbd?: number;
+  terpenes: { name: string; value: number }[];
+  documentId?: string;
+  documentName?: string;
+  documentMime?: string;
+  notes: string;
+}
+
+export interface LabDocument {
+  id: string;
+  data: ArrayBuffer;
+  mime: string;
+  name: string;
+  size: number;
+}
+
+export interface ApiCacheEntry {
+  key: string;
+  fetchedAt: Timestamp;
+  data: unknown;
 }
 
 export interface SettingRow {

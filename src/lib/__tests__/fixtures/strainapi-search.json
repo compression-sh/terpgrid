@@ -1,0 +1,992 @@
+{
+ "data": [
+  {
+   "id": 5668,
+   "name": "Churro Gelato",
+   "slug": "churro-gelato",
+   "url": "https://www.strainapi.com/churro-gelato/",
+   "excerpt": "Churro Gelato is a modern dessert-profile hybrid crossing Gelato with Churro or Chapo Churro genetics, celebrated for its pastry-like cinnamon-cream aroma and balanced physical relaxation.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Churro-Gelato-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Churro Gelato cannabis strain"
+   },
+   "breeder": null,
+   "genetics": "Churro (or Chapo Churro) x Gelato",
+   "type": "Hybrid",
+   "indica_percent": null,
+   "sativa_percent": null,
+   "seed_type": null,
+   "thc": {
+    "value": null,
+    "min": 22,
+    "max": 26,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "terpenes": [
+    "Caryophyllene",
+    "Linalool",
+    "Myrcene",
+    "Limonene"
+   ],
+   "flowering": {
+    "min_days": 56,
+    "max_days": 63
+   },
+   "aroma": [
+    "Cinnamon sugar, vanilla cream, fried dough, toasted nuts"
+   ],
+   "flavor": [
+    "Warm cinnamon, sweet pastry cream, nutty undertones, earth"
+   ],
+   "updated_at": "2026-11-23T12:31:19+00:00"
+  },
+  {
+   "id": 5653,
+   "name": "New Yorker",
+   "slug": "new-yorker",
+   "url": "https://www.strainapi.com/new-yorker/",
+   "excerpt": "Bred by Wizard Trees, New Yorker is a high-potency hybrid pairing the renowned 'Riri' cut of Sour Diesel with Lemon Cherry Gelato, delivering pungent fuel, garlic funk, and sweet candied citrus.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/New-Yorker-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "New Yorker cannabis strain"
+   },
+   "breeder": "Wizard Trees",
+   "genetics": "\"Riri\" Sour Diesel x Lemon Cherry Gelato",
+   "type": "Hybrid",
+   "indica_percent": null,
+   "sativa_percent": null,
+   "seed_type": null,
+   "thc": {
+    "value": null,
+    "min": 27.37,
+    "max": 37.1,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": null,
+    "max": 0.1,
+    "unit": "%"
+   },
+   "terpenes": [
+    "Beta-Myrcene, Limonene, Beta-Caryophyllene, Linalool"
+   ],
+   "flowering": {
+    "min_days": null,
+    "max_days": null
+   },
+   "aroma": [
+    "Sour diesel, garlic, skunk, sweet citrus, candy"
+   ],
+   "flavor": [
+    "Diesel fuel, tart lemon, earth, sweet candy, black pepper"
+   ],
+   "updated_at": "2026-11-23T07:30:42+00:00"
+  },
+  {
+   "id": 5647,
+   "name": "Street Tartz",
+   "slug": "street-tartz",
+   "url": "https://www.strainapi.com/street-tartz/",
+   "excerpt": "Bred by Oakland's Purple City Genetics, Street Tartz is an indica-leaning hybrid crossing Guava Tart and Street Guru, celebrated for deep purple coloration, sweet pastry-and-gas aromatics, and heavy trichome development.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Street-Tartz-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Street Tartz cannabis strain"
+   },
+   "breeder": "Purple City Genetics",
+   "genetics": "Guava Tart × Street Guru",
+   "type": "Indica-dominant hybrid",
+   "indica_percent": null,
+   "sativa_percent": null,
+   "seed_type": "Feminized",
+   "thc": {
+    "value": null,
+    "min": 25,
+    "max": 30,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": 0.1,
+    "max": 0.13,
+    "unit": "%"
+   },
+   "terpenes": [
+    "Beta-Caryophyllene",
+    "D-Limonene",
+    "Alpha-Humulene",
+    "Myrcene"
+   ],
+   "flowering": {
+    "min_days": 56,
+    "max_days": 63
+   },
+   "aroma": [
+    "Sweet tropical fruit, pungent diesel gas, pastry dough, earthy musk"
+   ],
+   "flavor": [
+    "Tart guava, sweet citrus candy, creamy dough, sharp diesel"
+   ],
+   "updated_at": "2026-11-23T05:30:56+00:00"
+  },
+  {
+   "id": 5641,
+   "name": "Guelah Papaya",
+   "slug": "guelah-papaya",
+   "url": "https://www.strainapi.com/guelah-papaya/",
+   "excerpt": "Guelah Papaya is an indica-leaning cultivar bred by Farmhouse Studio Genetics, pairing the tropical sweetness of Papaya with the savory, resin-heavy complexity of JOMO.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Guelah-Papaya-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Guelah Papaya cannabis strain"
+   },
+   "breeder": "Farmhouse Studio Genetics (Shwale)",
+   "genetics": "Papaya (BA Botanicals cut) × JOMO",
+   "type": "Indica-dominant hybrid",
+   "indica_percent": null,
+   "sativa_percent": null,
+   "seed_type": "Regular",
+   "thc": {
+    "value": null,
+    "min": 22.74,
+    "max": 31.81,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": 0,
+    "max": 0.06,
+    "unit": "%"
+   },
+   "terpenes": [
+    "Beta-Myrcene",
+    "Limonene",
+    "Linalool",
+    "Beta-Caryophyllene"
+   ],
+   "flowering": {
+    "min_days": 49,
+    "max_days": 56
+   },
+   "aroma": [
+    "Ripe papaya, cantaloupe, savory garlic, and chemical funk"
+   ],
+   "flavor": [
+    "Tropical fruit, citrus zest, floral spice, and peppery hash"
+   ],
+   "updated_at": "2026-11-23T03:31:16+00:00"
+  },
+  {
+   "id": 5628,
+   "name": "Khalifa Candy",
+   "slug": "khalifa-candy",
+   "url": "https://www.strainapi.com/khalifa-candy/",
+   "excerpt": "Khalifa Candy is an indica-dominant hybrid cultivar celebrated for its confectionary sweetness, tart citrus, and heavy Kush gas, with documented lineages tracing to either OG Kush × Candyland or Khalifa Mints × Grape Gasoline.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Khalifa-Candy-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Khalifa Candy cannabis strain"
+   },
+   "breeder": null,
+   "genetics": null,
+   "type": "Indica-dominant hybrid",
+   "indica_percent": null,
+   "sativa_percent": null,
+   "seed_type": null,
+   "thc": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "terpenes": [],
+   "flowering": {
+    "min_days": null,
+    "max_days": null
+   },
+   "aroma": [
+    "Sweet candy, tart lemon, deep grape, pungent gasoline, earthy pine"
+   ],
+   "flavor": [
+    "Sugary candy, candied lemon drop, dark fruit gas, smooth fuel"
+   ],
+   "updated_at": "2026-11-19T09:55:18+00:00"
+  },
+  {
+   "id": 5622,
+   "name": "Marshmallow Puff",
+   "slug": "marshmallow-puff",
+   "url": "https://www.strainapi.com/marshmallow-puff/",
+   "excerpt": "Marshmallow Puff is a dessert-leaning cannabis cultivar known for its confectionary aroma of vanilla frosting and toasted sugar, marked by an uplifting head buzz and soothing body relaxation.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Marshmallow-Puff-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Marshmallow Puff cannabis strain"
+   },
+   "breeder": null,
+   "genetics": null,
+   "type": "Hybrid / Sativa-leaning (Disputed)",
+   "indica_percent": null,
+   "sativa_percent": null,
+   "seed_type": null,
+   "thc": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "terpenes": [
+    "Limonene, Beta-Caryophyllene, Beta-Myrcene, Alpha-Pinene, Linalool, Humulene"
+   ],
+   "flowering": {
+    "min_days": null,
+    "max_days": null
+   },
+   "aroma": [
+    "Vanilla frosting, toasted sugar, creamy marshmallow, subtle citrus, sugary gas"
+   ],
+   "flavor": [
+    "Sweet marshmallow, vanilla cream, subtle citrus, soft spice, light earth"
+   ],
+   "updated_at": "2026-11-19T06:55:52+00:00"
+  },
+  {
+   "id": 5616,
+   "name": "Gyat",
+   "slug": "gyat",
+   "url": "https://www.strainapi.com/gyat/",
+   "excerpt": "Bred by Exotic Genetix, Gyat is a balanced hybrid combining Purple Pineapple and Blueberry Bang Bang, celebrated for its tropical berry profile and dense trichome production.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Gyat-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Gyat cannabis strain"
+   },
+   "breeder": "Exotic Genetix",
+   "genetics": "Purple Pineapple x Blueberry Bang Bang",
+   "type": "Hybrid",
+   "indica_percent": 50,
+   "sativa_percent": 50,
+   "seed_type": "Feminized photoperiod",
+   "thc": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "terpenes": [],
+   "flowering": {
+    "min_days": 56,
+    "max_days": 63
+   },
+   "aroma": [
+    "Blueberry jam, sweet pineapple, earthy, fuel"
+   ],
+   "flavor": [
+    "Sweet pineapple, blueberry, citrus, creamy vanilla"
+   ],
+   "updated_at": "2026-11-19T04:54:36+00:00"
+  },
+  {
+   "id": 5595,
+   "name": "Rock And Rye Gelato",
+   "slug": "rock-and-rye-gelato",
+   "url": "https://www.strainapi.com/rock-and-rye-gelato/",
+   "excerpt": "Rock And Rye Gelato is an indica-leaning hybrid developed through a collaboration between Tiki Madman and Sherbinskis, selecting a standout cut of Lemon Cherry Sherbert.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Rock-And-Rye-Gelato-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Rock And Rye Gelato cannabis strain"
+   },
+   "breeder": "Tiki Madman & Sherbinskis",
+   "genetics": "Lemon Cherry Gelato x Sunset Sherbert BX",
+   "type": "Hybrid",
+   "indica_percent": null,
+   "sativa_percent": null,
+   "seed_type": "Clone-only",
+   "thc": {
+    "value": null,
+    "min": 24,
+    "max": 29.51,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "terpenes": [
+    "Beta-Caryophyllene",
+    "Linalool",
+    "Limonene",
+    "Nerolidol",
+    "Beta-Myrcene"
+   ],
+   "flowering": {
+    "min_days": 56,
+    "max_days": 56
+   },
+   "aroma": [
+    "Tart citrus",
+    "Cherry",
+    "Sweet berries",
+    "Earthy pine",
+    "Vanilla cream"
+   ],
+   "flavor": [
+    "Sour lemon",
+    "Cherry",
+    "Sweet cream",
+    "Spicy undertones"
+   ],
+   "updated_at": "2026-11-18T21:55:41+00:00"
+  },
+  {
+   "id": 5580,
+   "name": "Couch Rider",
+   "slug": "couch-rider",
+   "url": "https://www.strainapi.com/couch-rider/",
+   "excerpt": "Bred and cultivated by California's Fig Farms, Couch Rider is a potent indica-dominant hybrid combining (Blue Face x Figment 5) with Zeclair #9, known for its distinctive notes of industrial grease, solvent, and ripe tropical fruit.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Couch-Rider-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Couch Rider cannabis strain"
+   },
+   "breeder": "Fig Farms",
+   "genetics": "(Blue Face x Figment #5) x Zeclair #9",
+   "type": "Indica-dominant hybrid",
+   "indica_percent": null,
+   "sativa_percent": null,
+   "seed_type": null,
+   "thc": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "terpenes": [],
+   "flowering": {
+    "min_days": null,
+    "max_days": null
+   },
+   "aroma": [
+    "Industrial grease",
+    "Ripe mango",
+    "Nail salon solvent",
+    "Lychee",
+    "Diesel"
+   ],
+   "flavor": [
+    "Diesel fuel",
+    "Ripe mango",
+    "Sweet dough",
+    "Lychee",
+    "Sour biscotti"
+   ],
+   "updated_at": "2026-11-18T16:58:08+00:00"
+  },
+  {
+   "id": 5571,
+   "name": "Star World",
+   "slug": "star-world",
+   "url": "https://www.strainapi.com/star-world/",
+   "excerpt": "Star World is a modern sativa-dominant hybrid bred by ALTVM through the cross of Slapz and Bada Bing, renowned for its pungent diesel aroma, zesty citrus-pine flavor, and uplifting terpene profile led by terpinolene and beta-caryophyllene.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Star-World-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Star World cannabis strain"
+   },
+   "breeder": "ALTVM",
+   "genetics": "Slapz x Bada Bing",
+   "type": "Sativa-dominant hybrid",
+   "indica_percent": 30,
+   "sativa_percent": 70,
+   "seed_type": null,
+   "thc": {
+    "value": null,
+    "min": 22.67,
+    "max": 31.6,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": 0.05,
+    "max": 0.3,
+    "unit": "%"
+   },
+   "terpenes": [
+    "terpinolene",
+    "beta-caryophyllene",
+    "limonene",
+    "beta-myrcene",
+    "cis-ocimene"
+   ],
+   "flowering": {
+    "min_days": null,
+    "max_days": null
+   },
+   "aroma": [
+    "diesel",
+    "citrus",
+    "pine",
+    "cracked pepper",
+    "earthy"
+   ],
+   "flavor": [
+    "diesel",
+    "citrus",
+    "pine",
+    "sweet pepper"
+   ],
+   "updated_at": "2026-11-18T13:54:36+00:00"
+  },
+  {
+   "id": 5549,
+   "name": "Rainbow Zelato",
+   "slug": "rainbow-zelato",
+   "url": "https://www.strainapi.com/rainbow-zelato/",
+   "excerpt": "Rainbow Zelato is a modern hybrid cultivar renowned for its sweet citrus, tropical fruit, and dessert-like terpene profile, dense flower structure, and potent resin production.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Rainbow-Zelato-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Rainbow Zelato cannabis strain"
+   },
+   "breeder": null,
+   "genetics": "Original Z x Do-Si-Dos",
+   "type": "Hybrid",
+   "indica_percent": null,
+   "sativa_percent": null,
+   "seed_type": null,
+   "thc": {
+    "value": null,
+    "min": 24.05,
+    "max": 25.87,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": null,
+    "max": 0.24,
+    "unit": "%"
+   },
+   "terpenes": [
+    "beta-Caryophyllene",
+    "Limonene",
+    "Linalool",
+    "Humulene",
+    "Myrcene",
+    "Terpinolene"
+   ],
+   "flowering": {
+    "min_days": null,
+    "max_days": null
+   },
+   "aroma": [
+    "sweet citrus",
+    "tropical fruit",
+    "pear",
+    "brown sugar",
+    "pine",
+    "cedar",
+    "herbaceous gas"
+   ],
+   "flavor": [
+    "creamy fruit sherbet",
+    "ripe pear",
+    "citrus",
+    "spice",
+    "vanilla",
+    "earth"
+   ],
+   "updated_at": "2026-11-18T05:56:03+00:00"
+  },
+  {
+   "id": 5540,
+   "name": "Polar Lights",
+   "slug": "polar-lights",
+   "url": "https://www.strainapi.com/polar-lights/",
+   "excerpt": "Polar Lights is an indica-dominant hybrid bred by Deadpanhead, pairing the modern dessert profile of Ice Cream Cake with a vintage Northern Lights cross.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Polar-Lights-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Polar Lights cannabis strain"
+   },
+   "breeder": "Deadpanhead",
+   "genetics": "Ice Cream Cake x Vintage Northern Lights (NL #5 x '89 NL #1)",
+   "type": "Indica-dominant hybrid",
+   "indica_percent": 70,
+   "sativa_percent": 30,
+   "seed_type": "Regular",
+   "thc": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "terpenes": [],
+   "flowering": {
+    "min_days": 49,
+    "max_days": 63
+   },
+   "aroma": [
+    "Sweet and sour, astringent floral"
+   ],
+   "flavor": [
+    "Sweet and sour citrus, creamy dough, floral spice"
+   ],
+   "updated_at": "2026-11-18T02:54:39+00:00"
+  },
+  {
+   "id": 5528,
+   "name": "Time Change",
+   "slug": "time-change",
+   "url": "https://www.strainapi.com/time-change/",
+   "excerpt": "Time Change is an indica-leaning cannabis cultivar primarily known through regulated commercial releases combining Gelato #41 and Jealousy genetics, distinguished by grape candy aromas, floral fuel notes, and tested THC levels between 17.62% and 20.73%.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Time-Change-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Time Change cannabis strain"
+   },
+   "breeder": null,
+   "genetics": null,
+   "type": "Indica",
+   "indica_percent": null,
+   "sativa_percent": null,
+   "seed_type": null,
+   "thc": {
+    "value": null,
+    "min": 17.62,
+    "max": 20.73,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "terpenes": [
+    "Limonene",
+    "Beta-Caryophyllene",
+    "Linalool",
+    "Humulene",
+    "Nerolidol"
+   ],
+   "flowering": {
+    "min_days": null,
+    "max_days": null
+   },
+   "aroma": [
+    "Grape candy",
+    "Gas",
+    "Floral"
+   ],
+   "flavor": [
+    "Grape candy",
+    "Gas",
+    "Floral"
+   ],
+   "updated_at": "2026-11-17T22:56:56+00:00"
+  },
+  {
+   "id": 5519,
+   "name": "Pluto 85",
+   "slug": "pluto-85",
+   "url": "https://www.strainapi.com/pluto-85/",
+   "excerpt": "Pluto 85, also known as P85, is an indica-leaning hybrid bred by Oakland Seed Co. crossing Pluto with Grandiflora's E85, renowned for heavy resin, dark purple coloration, and pungent fuel-and-sweetness terpene profiles.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Pluto-85-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Pluto 85 cannabis strain"
+   },
+   "breeder": "Oakland Seed Co.",
+   "genetics": "Pluto x E85",
+   "type": "Indica-dominant hybrid",
+   "indica_percent": null,
+   "sativa_percent": null,
+   "seed_type": null,
+   "thc": {
+    "value": null,
+    "min": 25,
+    "max": 29,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "terpenes": [
+    "Ocimene",
+    "Humulene",
+    "Bisabolol"
+   ],
+   "flowering": {
+    "min_days": 58,
+    "max_days": 63
+   },
+   "aroma": [
+    "Diesel",
+    "Candied fruit",
+    "Creamy dough",
+    "Earthy spice"
+   ],
+   "flavor": [
+    "Sweet fruit",
+    "Industrial fuel",
+    "Herbal earth"
+   ],
+   "updated_at": "2026-11-17T19:54:44+00:00"
+  },
+  {
+   "id": 5513,
+   "name": "Candy Caviar",
+   "slug": "candy-caviar",
+   "url": "https://www.strainapi.com/candy-caviar/",
+   "excerpt": "Candy Caviar is a contemporary hybrid cannabis strain recognized for its confectionery sweetness, fruity flavor profile, and reported THC levels between 24.16% and 28.01% in commercial flower batches.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Candy-Caviar-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Candy Caviar cannabis strain"
+   },
+   "breeder": null,
+   "genetics": null,
+   "type": "Hybrid",
+   "indica_percent": null,
+   "sativa_percent": null,
+   "seed_type": null,
+   "thc": {
+    "value": null,
+    "min": 24.16,
+    "max": 28.01,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "terpenes": [
+    "Bisabolol",
+    "Beta-Caryophyllene",
+    "Humulene"
+   ],
+   "flowering": {
+    "min_days": null,
+    "max_days": null
+   },
+   "aroma": [
+    "Sweet",
+    "Candy",
+    "Fruity"
+   ],
+   "flavor": [
+    "Candy",
+    "Sweet",
+    "Fruity"
+   ],
+   "updated_at": "2026-11-17T17:55:52+00:00"
+  },
+  {
+   "id": 5510,
+   "name": "LCG Bx1",
+   "slug": "lcg-bx1",
+   "url": "https://www.strainapi.com/lcg-bx1/",
+   "excerpt": "LCG Bx1 (Lemon Cherry Gelato Bx1) is a dessert-leaning hybrid backcross developed independently in distinct lines by LIT Farms and Seed Junky Genetics, recognized for sweet citrus-cherry terpene profiles and dense, trichome-encrusted bracts.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Lcg-Bx1-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Lcg Bx1 cannabis strain"
+   },
+   "breeder": "LIT Farms / Seed Junky Genetics (Disputed)",
+   "genetics": "Lemon Cherry Gelato backcross lines",
+   "type": "Hybrid",
+   "indica_percent": 60,
+   "sativa_percent": 40,
+   "seed_type": null,
+   "thc": {
+    "value": null,
+    "min": 24,
+    "max": 28,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "terpenes": [
+    "Limonene, beta-Caryophyllene, Linalool, Myrcene"
+   ],
+   "flowering": {
+    "min_days": 55,
+    "max_days": 65
+   },
+   "aroma": [
+    "Sweet candied cherry, tart lemon zest, vanilla cream, subtle fuel"
+   ],
+   "flavor": [
+    "Cherry candy, sweet citrus, creamy sherbet, earthy spice"
+   ],
+   "updated_at": "2026-11-17T16:55:06+00:00"
+  },
+  {
+   "id": 5507,
+   "name": "54 Coffinz",
+   "slug": "54-coffinz",
+   "url": "https://www.strainapi.com/54-coffinz/",
+   "excerpt": "54 Coffinz is an indica-dominant hybrid born from Studio 54 and Coffin Candy, celebrated for its layered candy sweetness, zesty lime bite, subtle fuel undertones, and deeply relaxing body effects.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/54-Coffinz-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "54 Coffinz cannabis strain"
+   },
+   "breeder": "Doja Seeds",
+   "genetics": "Studio 54 x Coffin Candy",
+   "type": "Indica-dominant hybrid",
+   "indica_percent": null,
+   "sativa_percent": null,
+   "seed_type": "Regular",
+   "thc": {
+    "value": null,
+    "min": 20.74,
+    "max": 22,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "terpenes": [
+    "Myrcene",
+    "Caryophyllene",
+    "Limonene"
+   ],
+   "flowering": {
+    "min_days": 56,
+    "max_days": 65
+   },
+   "aroma": [
+    "Sweet berry candy, citrus lime zest, and subtle fuel"
+   ],
+   "flavor": [
+    "Fruity confection, sweet berries, tart lime, and mild gas"
+   ],
+   "updated_at": "2026-11-17T15:56:23+00:00"
+  },
+  {
+   "id": 5504,
+   "name": "Spritzer",
+   "slug": "spritzer",
+   "url": "https://www.strainapi.com/spritzer/",
+   "excerpt": "Bred by Cannarado Genetics, Spritzer is a balanced hybrid combining Runtz with a Grape Pie and MAC cross, renowned for its effervescent candied grape aroma and heavy resin production.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Spritzer-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Spritzer cannabis strain"
+   },
+   "breeder": "Cannarado Genetics",
+   "genetics": "Runtz x (Grape Pie x MAC)",
+   "type": "Hybrid",
+   "indica_percent": 50,
+   "sativa_percent": 50,
+   "seed_type": "Clone and feminized seed",
+   "thc": {
+    "value": null,
+    "min": 27,
+    "max": 36,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "terpenes": [
+    "beta-Caryophyllene",
+    "Limonene",
+    "Linalool"
+   ],
+   "flowering": {
+    "min_days": 56,
+    "max_days": 63
+   },
+   "aroma": [
+    "Grape soda, citrus, wild berries, light gas, floral earth"
+   ],
+   "flavor": [
+    "Candied grape, tart citrus, creamy dough, black pepper"
+   ],
+   "updated_at": "2026-11-17T14:54:45+00:00"
+  },
+  {
+   "id": 5501,
+   "name": "Pave",
+   "slug": "pave",
+   "url": "https://www.strainapi.com/pave/",
+   "excerpt": "Bred by Compound Genetics in collaboration with Cookies and Quavo, Pavé is a potent hybrid crossing Paris OG with The Menthol, celebrated for intense resin production, fuel and mint terpenes, and balanced physical potency.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Pave-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Pave cannabis strain"
+   },
+   "breeder": "Compound Genetics",
+   "genetics": "Paris OG x The Menthol",
+   "type": "Hybrid",
+   "indica_percent": null,
+   "sativa_percent": null,
+   "seed_type": "Feminized",
+   "thc": {
+    "value": null,
+    "min": 20,
+    "max": 30,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": null,
+    "max": 1,
+    "unit": "%"
+   },
+   "terpenes": [
+    "beta-Caryophyllene, D-Limonene, alpha-Humulene, beta-Myrcene"
+   ],
+   "flowering": {
+    "min_days": 56,
+    "max_days": 70
+   },
+   "aroma": [
+    "Pungent diesel, cool menthol, damp earth, sweet cream, dark fruit"
+   ],
+   "flavor": [
+    "Crisp mint, peppery gas, sweet cream, citrus, herbal pine"
+   ],
+   "updated_at": "2026-11-17T13:55:00+00:00"
+  },
+  {
+   "id": 5495,
+   "name": "Garlic Cherry Gelato",
+   "slug": "garlic-cherry-gelato",
+   "url": "https://www.strainapi.com/garlic-cherry-gelato/",
+   "excerpt": "Garlic Cherry Gelato is an indica-leaning hybrid cultivated by Fade Co., known for combining pungent garlic gas with sweet cherry gelato, elevated THCa levels, and deeply relaxing evening effects.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Garlic-Cherry-Gelato-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Garlic Cherry Gelato cannabis strain"
+   },
+   "breeder": "Fade Co.",
+   "genetics": "Garlic Juice x Cherry Gelato (also reported as GMO x Lemon Cherry Gelato)",
+   "type": "Indica-leaning hybrid",
+   "indica_percent": 60,
+   "sativa_percent": 40,
+   "seed_type": null,
+   "thc": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "terpenes": [
+    "Limonene",
+    "Beta-Caryophyllene",
+    "Myrcene",
+    "Humulene",
+    "Linalool"
+   ],
+   "flowering": {
+    "min_days": null,
+    "max_days": null
+   },
+   "aroma": [
+    "garlic funk",
+    "diesel fuel",
+    "sweet cherry",
+    "earthy spice"
+   ],
+   "flavor": [
+    "savory garlic",
+    "sweet cherry",
+    "creamy vanilla",
+    "peppery gas"
+   ],
+   "updated_at": "2026-11-17T11:56:56+00:00"
+  }
+ ],
+ "pagination": {
+  "page": 1,
+  "per_page": 20,
+  "total": 221,
+  "total_pages": 12
+ }
+}

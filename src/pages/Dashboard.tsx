@@ -436,10 +436,11 @@ export function Dashboard() {
               <ShieldCheck className="size-6 text-leaf-400" />
               <h3 className="mt-3 text-[14px] font-semibold text-ink-100">Privat by Design</h3>
               <ul className="mt-3 space-y-2 text-[13px] text-ink-400">
-                <li>• Kein Konto, kein Server, kein Tracking</li>
+                <li>• Kein Konto, kein Tracking – persönliche Daten ohne Server</li>
                 <li>• Daten & Fotos bleiben in diesem Browser</li>
                 <li>• Standortdaten werden aus Fotos entfernt</li>
                 <li>• Vollständiger Export jederzeit möglich</li>
+                <li>• Online-Sortendaten (Discover) kommen von externen Quellen</li>
               </ul>
               <p className="hint mt-4">Browser-Daten sind gerätegebunden und können beim Löschen der Browserdaten verloren gehen.</p>
             </div>

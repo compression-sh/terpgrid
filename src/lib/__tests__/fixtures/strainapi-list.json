@@ -1,0 +1,204 @@
+{
+ "data": [
+  {
+   "id": 5677,
+   "name": "Peach Destiny",
+   "slug": "peach-destiny",
+   "url": "https://www.strainapi.com/peach-destiny/",
+   "excerpt": "Peach Destiny is an indica-dominant hybrid bred from Blue Peaches and White Truffle Cheese, known for its distinctive blend of ripe stone-fruit aromatics, savory truffle undertones, and resin-coated flowers.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Peach-Destiny-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Peach Destiny cannabis strain"
+   },
+   "breeder": "Fresh Coast Genetics",
+   "genetics": "Blue Peaches × White Truffle Cheese",
+   "type": "Indica-dominant hybrid",
+   "indica_percent": null,
+   "sativa_percent": null,
+   "seed_type": null,
+   "thc": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "terpenes": [
+    "beta-Myrcene",
+    "Limonene",
+    "Linalool",
+    "beta-Caryophyllene"
+   ],
+   "flowering": {
+    "min_days": null,
+    "max_days": null
+   },
+   "aroma": [
+    "Peach",
+    "Stone fruit",
+    "Citrus",
+    "Savory",
+    "Truffle",
+    "Cheese"
+   ],
+   "flavor": [
+    "Sweet peach",
+    "Creamy citrus",
+    "Earthy",
+    "Savory truffle"
+   ],
+   "updated_at": "2026-11-23T15:31:21+00:00"
+  },
+  {
+   "id": 5674,
+   "name": "Granny Candy",
+   "slug": "granny-candy",
+   "url": "https://www.strainapi.com/granny-candy/",
+   "excerpt": "Granny Candy is an 80/20 sativa-dominant hybrid bred by Humboldt Seed Company from Mountaintop Mint and White Runtz Muffin, noted for sour strawberry candy terpenes and fast 50–55 day flowering.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Granny-Candy-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Granny Candy cannabis strain"
+   },
+   "breeder": "Humboldt Seed Company",
+   "genetics": "Mountaintop Mint x White Runtz Muffin",
+   "type": "Sativa-dominant hybrid",
+   "indica_percent": 20,
+   "sativa_percent": 80,
+   "seed_type": "Feminized photoperiod",
+   "thc": {
+    "value": null,
+    "min": 25,
+    "max": 30,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "terpenes": [
+    "Limonene, beta-Caryophyllene, Linalool, beta-Myrcene"
+   ],
+   "flowering": {
+    "min_days": 50,
+    "max_days": 55
+   },
+   "aroma": [
+    "Sour strawberry, pineapple hard candy, mint, diesel fuel"
+   ],
+   "flavor": [
+    "Sour strawberry candy, sweet pineapple, mint, subtle fuel"
+   ],
+   "updated_at": "2026-11-23T14:32:06+00:00"
+  },
+  {
+   "id": 5671,
+   "name": "Slimeade",
+   "slug": "slimeade",
+   "url": "https://www.strainapi.com/slimeade/",
+   "excerpt": "Slimeade, also circulated as Cherry Slimeade, is a balanced hybrid bred by Swamp Donkey Seeds crossing Golden Ticket (Slymer cut) with Cherry Mountain, prized for its tart lime and cherry profile.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Slimeade-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Slimeade cannabis strain"
+   },
+   "breeder": "Swamp Donkey Seeds",
+   "genetics": "Golden Ticket (Slymer cut) x Cherry Mountain",
+   "type": "Hybrid",
+   "indica_percent": 50,
+   "sativa_percent": 50,
+   "seed_type": "Regular",
+   "thc": {
+    "value": null,
+    "min": 18,
+    "max": 25,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": 0.4,
+    "max": 0.5,
+    "unit": "%"
+   },
+   "terpenes": [
+    "Terpinolene, Beta-Caryophyllene, Beta-Myrcene, Limonene"
+   ],
+   "flowering": {
+    "min_days": null,
+    "max_days": null
+   },
+   "aroma": [
+    "Lime juice, sour cherries, citrus, rubber, earth"
+   ],
+   "flavor": [
+    "Tart lime soda, sweet cherry, tropical citrus, herbal spice"
+   ],
+   "updated_at": "2026-11-23T13:32:11+00:00"
+  },
+  {
+   "id": 5668,
+   "name": "Churro Gelato",
+   "slug": "churro-gelato",
+   "url": "https://www.strainapi.com/churro-gelato/",
+   "excerpt": "Churro Gelato is a modern dessert-profile hybrid crossing Gelato with Churro or Chapo Churro genetics, celebrated for its pastry-like cinnamon-cream aroma and balanced physical relaxation.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Churro-Gelato-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Churro Gelato cannabis strain"
+   },
+   "breeder": null,
+   "genetics": "Churro (or Chapo Churro) x Gelato",
+   "type": "Hybrid",
+   "indica_percent": null,
+   "sativa_percent": null,
+   "seed_type": null,
+   "thc": {
+    "value": null,
+    "min": 22,
+    "max": 26,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": null,
+    "max": null,
+    "unit": "%"
+   },
+   "terpenes": [
+    "Caryophyllene",
+    "Linalool",
+    "Myrcene",
+    "Limonene"
+   ],
+   "flowering": {
+    "min_days": 56,
+    "max_days": 63
+   },
+   "aroma": [
+    "Cinnamon sugar, vanilla cream, fried dough, toasted nuts"
+   ],
+   "flavor": [
+    "Warm cinnamon, sweet pastry cream, nutty undertones, earth"
+   ],
+   "updated_at": "2026-11-23T12:31:19+00:00"
+  }
+ ],
+ "pagination": {
+  "page": 1,
+  "per_page": 20,
+  "total": 700,
+  "total_pages": 35
+ }
+}

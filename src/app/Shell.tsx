@@ -106,8 +106,11 @@ export function Shell({ children }: { children: ReactNode }) {
             </div>
           </div>
         </nav>
-        <div className="flex items-center gap-2 border-t border-white/[0.05] px-5 py-4 text-[11px] text-ink-500">
-          <Lock className="size-3 text-leaf-500" /> 100 % lokal · keine Konten
+        <div className="flex items-start gap-2 border-t border-white/[0.05] px-5 py-4 text-[11px] leading-snug text-ink-500">
+          <Lock className="mt-0.5 size-3 shrink-0 text-leaf-500" />
+          <span>
+            Persönliche Daten lokal gespeichert · Online-Sortendaten von externen Quellen
+          </span>
         </div>
       </aside>
 
@@ -192,7 +195,7 @@ export function Shell({ children }: { children: ReactNode }) {
               })}
             </div>
             <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-ink-500">
-              <Lock className="size-3" /> Alle Daten bleiben auf diesem Gerät.
+              <Lock className="size-3" /> Persönliche Daten lokal · Online-Sortendaten von externen Quellen
             </p>
           </div>
         </div>

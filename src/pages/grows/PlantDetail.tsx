@@ -98,9 +98,16 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
                 <h1 className="truncate text-2xl font-semibold tracking-tight text-ink-50">{plant.name}</h1>
                 <div className="mt-1 text-[13px] text-ink-400">
                   {strain ? (
-                    <a href={href(`strains/${strain.id}`)} className="text-leaf-300 hover:underline">
-                      {strain.name}
-                    </a>
+                    <>
+                      <a href={href(`strains/${strain.id}`)} className="text-leaf-300 hover:underline">
+                        {strain.name}
+                      </a>
+                      {strain.external?.provider === 'strainapi' && (
+                        <a href={href(`discover/strain/${strain.external.id}`)} className="ml-1.5 rounded border border-white/[0.08] px-1.5 py-px text-[10px] text-ink-300 hover:text-ink-50">
+                          Online-Profil
+                        </a>
+                      )}
+                    </>
                   ) : (
                     plant.strainName || 'Sorte nicht angegeben'
                   )}

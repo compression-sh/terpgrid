@@ -1,0 +1,96 @@
+{
+ "data": {
+  "id": 5677,
+  "name": "Peach Destiny",
+  "display_title": "Peach Destiny Cannabis Strain",
+  "slug": "peach-destiny",
+  "url": "https://www.strainapi.com/peach-destiny/",
+  "excerpt": "Peach Destiny is an indica-dominant hybrid bred from Blue Peaches and White Truffle Cheese, known for its distinctive blend of ripe stone-fruit aromatics, savory truffle undertones, and resin-coated flowers.",
+  "image": {
+   "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Peach-Destiny-strain.jpg",
+   "width": 1024,
+   "height": 1024,
+   "alt": "Peach Destiny cannabis strain"
+  },
+  "breeder": "Fresh Coast Genetics",
+  "genetics": "Blue Peaches × White Truffle Cheese",
+  "type": "Indica-dominant hybrid",
+  "indica_percent": null,
+  "sativa_percent": null,
+  "seed_type": null,
+  "thc": {
+   "value": null,
+   "min": null,
+   "max": null,
+   "unit": "%"
+  },
+  "cbd": {
+   "value": null,
+   "min": null,
+   "max": null,
+   "unit": "%"
+  },
+  "terpenes": [
+   "beta-Myrcene",
+   "Limonene",
+   "Linalool",
+   "beta-Caryophyllene"
+  ],
+  "flowering": {
+   "min_days": null,
+   "max_days": null
+  },
+  "outdoor_harvest": null,
+  "plant_structure": null,
+  "yield": null,
+  "aroma": [
+   "Peach",
+   "Stone fruit",
+   "Citrus",
+   "Savory",
+   "Truffle",
+   "Cheese"
+  ],
+  "flavor": [
+   "Sweet peach",
+   "Creamy citrus",
+   "Earthy",
+   "Savory truffle"
+  ],
+  "effects": {
+   "mental": [
+    "Clear-headed calm",
+    "Mood elevation",
+    "Stress relief"
+   ],
+   "body": [
+    "Full-body relaxation",
+    "Tension relief",
+    "Gentle sedation"
+   ]
+  },
+  "evidence": {
+   "breeder": "supported",
+   "genetics": "supported",
+   "type": "reported",
+   "indica_sativa_ratio": "insufficient_data",
+   "seed_type": "insufficient_data",
+   "thc": "reported",
+   "cbd": "reported",
+   "terpenes": "supported",
+   "flowering_time": "insufficient_data",
+   "outdoor_harvest": "insufficient_data",
+   "plant_structure": "reported",
+   "yield": "insufficient_data",
+   "aroma": "supported",
+   "flavor": "supported",
+   "mental_effects": "reported",
+   "body_effects": "reported",
+   "resin_extraction": "supported"
+  },
+  "published_at": "2026-11-23T15:31:21+00:00",
+  "updated_at": "2026-11-23T15:31:21+00:00",
+  "description": "Peach Destiny is an indica-dominant hybrid cultivar celebrated for its unusual terpene profile that marries sweet, candied stone fruit with deep, savory earthiness. Developed by Fresh Coast Genetics (frequently distributed as an elite clone cut in collaboration with Aficionado Seeds), the cultivar is a cross between Blue Peaches and White Truffle Cheese. Its high resin production, intensely fragrant calyxes, and mellow, full-body properties have made it a favored selection among craft cultivators and boutique extractors.\n\nStrain Profile & Genetics\n\nBreeder: Fresh Coast Genetics (Fresh Coast Se",
+  "content_html": "<p>Peach Destiny is an indica-dominant hybrid cultivar celebrated for its unusual terpene profile that marries sweet, candied stone fruit with deep, savory earthiness. Developed by Fresh Coast Genetics (frequently distributed as an elite clone cut in collaboration with Aficionado Seeds), the cultivar is a cross between Blue Peaches and White Truffle Cheese. Its high resin production, intensely fragrant calyxes, and mellow, full-body properties have made it a favored selection among craft cultivators and boutique extractors.</p>\n<h2>Strain Profile &amp; Genetics</h2>\n<ul>\n<li><strong>Breeder:</"
+ }
+}

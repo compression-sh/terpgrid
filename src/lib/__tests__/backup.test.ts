@@ -59,6 +59,30 @@ describe('Backup Export/Import', () => {
     expect(((await getOne('settings', 'app'))?.value as { dashboardHidden: string[] }).dashboardHidden).toEqual(['strains']);
   });
 
+  it('Laborberichte samt Originaldokument im Roundtrip (Format 2)', async () => {
+    const { createRecord: cr } = await import('../db/repo');
+    const { writeBatch } = await import('../db/database');
+    await writeBatch({ put: { labDocs: [{ id: 'doc1', data: new Uint8Array([37, 80, 68, 70]).buffer, mime: 'application/pdf', name: 'coa.pdf', size: 4 }] } });
+    await cr('labReports', { title: 'COA', unit: '%', origin: 'document', thca: 20, terpenes: [{ name: 'Limonen', value: 0.5 }], documentId: 'doc1', documentName: 'coa.pdf', documentMime: 'application/pdf', notes: '' });
+    const { bytes, manifest } = await createFullBackup();
+    expect(manifest.format).toBe(2);
+    expect(manifest.docFiles).toHaveLength(1);
+    await deleteAllLocalData();
+    const parsed = parseBackupZip(bytes);
+    expect(parsed.errors).toEqual([]);
+    await restoreBackup(parsed, 'replace');
+    expect(await count('labReports')).toBe(1);
+    expect(new Uint8Array((await getOne('labDocs', 'doc1'))!.data)).toEqual(new Uint8Array([37, 80, 68, 70]));
+  });
+
+  it('Format-1-Sicherungen bleiben importierbar', () => {
+    const manifest = { app: 'TERPGRID', format: 1, schemaVersion: 1, data: { strains: [{ id: 's', name: 'Alt' }] }, photoFiles: [] };
+    const parsed = parseBackupZip(zipSync({ 'manifest.json': strToU8(JSON.stringify(manifest)) }));
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.manifest.data.strains).toHaveLength(1);
+    expect(parsed.manifest.data.labReports).toEqual([]);
+  });
+
   it('Zusammenführen ergänzt statt zu ersetzen', async () => {
     await seed();
     const { bytes } = await createFullBackup();

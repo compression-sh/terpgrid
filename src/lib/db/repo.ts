@@ -21,9 +21,10 @@ import {
   DASHBOARD_WIDGETS,
   type Photo,
   type Reminder,
+  type Strain,
 } from './types';
 
-type EntityStore = Exclude<StoreName, 'settings' | 'photoData'>;
+type EntityStore = Exclude<StoreName, 'settings' | 'photoData' | 'labDocs' | 'apiCache'>;
 type Entity<S extends EntityStore> = StoreMap[S];
 export type NewRecord<T extends BaseRecord> = Omit<T, 'id' | 'createdAt' | 'updatedAt'> & { id?: string };
 
@@ -140,11 +141,12 @@ export async function deletePlant(plantId: string): Promise<void> {
 /** Sorte löschen; Pflanzen/Journal/Inventar behalten den Namen als Freitext. */
 export async function deleteStrain(strainId: string): Promise<void> {
   const strain = await getOne('strains', strainId);
-  const [plants, journal, inventory, photos] = await Promise.all([
+  const [plants, journal, inventory, photos, labReports] = await Promise.all([
     getAllByIndex('plants', 'strainId', strainId),
     getAllByIndex('journal', 'strainId', strainId),
     getAll('inventory'),
     getAllByIndex('photos', 'strainId', strainId),
+    getAllByIndex('labReports', 'strainId', strainId),
   ]);
   const now = nowIso();
   const name = strain?.name;
@@ -158,6 +160,7 @@ export async function deleteStrain(strainId: string): Promise<void> {
       journal: journal.map((j) => ({ ...j, strainId: undefined, strainName: j.strainName || name, updatedAt: now })),
       inventory: inventory.filter((i) => i.strainId === strainId).map((i) => ({ ...i, strainId: undefined, updatedAt: now })),
       photos: sharedPhotos,
+      labReports: labReports.map((l) => ({ ...l, strainId: undefined, updatedAt: now })),
     },
   };
   await photoReferenceCleanup(new Set(ids(ownPhotos)), batch, { strains: new Set([strainId]) });
@@ -208,6 +211,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
   dashboardHidden: [],
   currency: 'EUR',
   showHarmReduction: true,
+  onlineCatalog: true,
+  cannalibEnabled: true,
+  discoverNoticeSeen: false,
+  kbFavorites: [],
+  kbProgress: {},
 };
 
 export function normalizeSettings(raw: unknown): AppSettings {
@@ -222,6 +230,14 @@ export function normalizeSettings(raw: unknown): AppSettings {
     currency: typeof s.currency === 'string' && /^[A-Z]{3}$/.test(s.currency) ? s.currency : 'EUR',
     showHarmReduction: typeof s.showHarmReduction === 'boolean' ? s.showHarmReduction : true,
     lastBackupAt: typeof s.lastBackupAt === 'string' ? s.lastBackupAt : undefined,
+    onlineCatalog: typeof s.onlineCatalog === 'boolean' ? s.onlineCatalog : true,
+    cannalibEnabled: typeof s.cannalibEnabled === 'boolean' ? s.cannalibEnabled : true,
+    discoverNoticeSeen: s.discoverNoticeSeen === true,
+    kbFavorites: Array.isArray(s.kbFavorites) ? s.kbFavorites.filter((x): x is string => typeof x === 'string').slice(0, 200) : [],
+    kbProgress:
+      s.kbProgress && typeof s.kbProgress === 'object' && !Array.isArray(s.kbProgress)
+        ? Object.fromEntries(Object.entries(s.kbProgress).filter(([k, v]) => typeof k === 'string' && typeof v === 'number' && v >= 0 && v <= 1))
+        : {},
   };
 }
 
@@ -234,4 +250,64 @@ export async function saveSettings(patch: Partial<AppSettings>): Promise<AppSett
   const next = normalizeSettings({ ...(await loadSettings()), ...patch });
   await putOne('settings', { key: 'app', value: next });
   return next;
+}
+
+/* ───────────── Laborberichte ───────────── */
+
+export async function deleteLabReport(id: string): Promise<void> {
+  const r = await getOne('labReports', id);
+  await writeBatch({ delete: { labReports: [id], labDocs: r?.documentId ? [r.documentId] : [] } });
+}
+
+/* ───────────── Externe Sorten (Online-Katalog) ───────────── */
+
+export interface ExternalStrainSeed {
+  provider: 'strainapi' | 'cannalib';
+  id: string;
+  name: string;
+  breeder?: string;
+  genetics?: string;
+  url?: string;
+  reportedType?: Strain['reportedType'];
+  thc?: { value: number };
+  cbd?: { value: number };
+  terpenes?: string[];
+  aromas?: string[];
+}
+
+export const externalKey = (provider: string, id: string) => `${provider}:${id}`;
+
+export async function findByExternal(provider: string, id: string): Promise<Strain | undefined> {
+  const rows = await getAllByIndex('strains', 'externalKey', externalKey(provider, id));
+  return rows[0];
+}
+
+/**
+ * Persönliche Sorte für einen externen Katalogeintrag holen oder anlegen.
+ * Höchstens EIN Eintrag je provider:id – keine Duplikate.
+ * Übernommene Werte werden als „Herstellerangabe/Quelle“ gekennzeichnet.
+ */
+export async function ensureStrainForExternal(seed: ExternalStrainSeed, patch: Partial<Strain> = {}): Promise<Strain> {
+  const existing = await findByExternal(seed.provider, seed.id);
+  if (existing) {
+    if (Object.keys(patch).length === 0) return existing;
+    return updateRecord('strains', existing.id, patch);
+  }
+  const now = nowIso();
+  return createRecord('strains', {
+    name: seed.name,
+    breeder: seed.breeder,
+    genetics: seed.genetics,
+    reportedType: seed.reportedType,
+    thc: seed.thc ? { value: seed.thc.value, source: 'reported' } : undefined,
+    cbd: seed.cbd ? { value: seed.cbd.value, source: 'reported' } : undefined,
+    terpenes: (seed.terpenes ?? []).map((name) => ({ name, source: 'reported' as const })),
+    aromas: seed.aromas ?? [],
+    flavorNotes: '',
+    observations: '',
+    favorite: false,
+    external: { provider: seed.provider, id: seed.id, name: seed.name, breeder: seed.breeder, url: seed.url, linkedAt: now },
+    externalKey: externalKey(seed.provider, seed.id),
+    ...patch,
+  });
 }

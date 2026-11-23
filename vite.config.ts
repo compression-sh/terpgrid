@@ -8,17 +8,20 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 
 /**
  * Strikte Content-Security-Policy nur im Produktions-Build:
- * `connect-src 'none'` verhindert jede Netzwerkverbindung aus der App heraus –
- * alle Berechnungen und Speicherungen bleiben im Browser.
+ * Netzwerkverbindungen sind nur zu den öffentlichen Sortendaten-APIs
+ * (StrainAPI, CannaLib) erlaubt; Bilder nur von StrainAPI. Persönliche Daten
+ * werden ausschließlich lokal gespeichert.
  */
 function cspPlugin(): Plugin {
   const csp = [
     "default-src 'self'",
     "script-src 'self'",
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob:",
+    "img-src 'self' data: blob: https://www.strainapi.com",
     "font-src 'self' data:",
-    "connect-src 'none'",
+    // Ausschließlich die dokumentierten Sortendaten-APIs – keine Analyse-/Tracking-Dienste.
+    "connect-src https://www.strainapi.com https://api.cannalib.org",
+    "frame-src blob:",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'none'",

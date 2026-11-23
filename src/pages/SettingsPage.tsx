@@ -1,4 +1,7 @@
-import { ArrowDown, ArrowUp, Eye, EyeOff, Info, LayoutDashboard, Lock, Settings } from 'lucide-react';
+import { ArrowDown, ArrowUp, Eye, EyeOff, Globe, Info, LayoutDashboard, Lock, Settings, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { catalog } from '../lib/catalog/service';
+import { fmtDateTime, nowLocal } from '../lib/dates';
 import { useData } from '../app/DataProvider';
 import { useToast } from '../app/Toasts';
 import { href } from '../app/router';
@@ -103,10 +106,12 @@ export function SettingsPage() {
               </div>
             </div>
           </Card>
+          <OnlineCard />
           <Card title="Datenschutz" icon={<Lock className="size-4" />}>
             <ul className="space-y-1.5 text-[13px] text-ink-300">
-              <li>• Keine Konten, kein Server, keine Analyse- oder Tracking-Dienste.</li>
-              <li>• Die App lädt keine externen Ressourcen; der Produktions-Build verbietet Netzwerkverbindungen per Content-Security-Policy.</li>
+              <li>• Persönliche Daten lokal gespeichert · Online-Sortendaten von externen Quellen.</li>
+              <li>• Keine Konten, keine Analyse- oder Tracking-Dienste. Growlogs, Fotos, Journal und Sammlung werden nie an Anbieter gesendet.</li>
+              <li>• Netzwerkzugriffe sind per Content-Security-Policy auf StrainAPI und CannaLib beschränkt – und nur, wenn du Discover nutzt.</li>
               <li>• Fotos werden beim Import neu kodiert; eingebettete Metadaten wie GPS entfallen.</li>
               <li>• Daten sind nicht verschlüsselt und nicht synchronisiert – Sicherung per Backup-Datei.</li>
             </ul>
@@ -130,5 +135,52 @@ export function SettingsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function OnlineCard() {
+  const { settings, updateSettings } = useData();
+  const toast = useToast();
+  const [info, setInfo] = useState<{ entries: number; oldest?: string; newest?: string }>();
+  const refresh = () => catalog.cacheInfo().then(setInfo).catch(() => setInfo(undefined));
+  useEffect(() => {
+    refresh();
+  }, []);
+  return (
+    <Card title="Online-Sortendaten" icon={<Globe className="size-4" />}>
+      <div className="space-y-5">
+        <Toggle
+          label="Discover: Daten von StrainAPI laden"
+          checked={settings.onlineCatalog}
+          onChange={(v) => updateSettings({ onlineCatalog: v })}
+          hint="Aus: Discover zeigt nur noch lokal zwischengespeicherte Einträge. Gesendet werden ausschließlich Suchbegriffe und Sortenkennungen."
+        />
+        <Toggle
+          label="CannaLib-Forschungsdaten erlauben"
+          checked={settings.cannalibEnabled}
+          onChange={(v) => updateSettings({ cannalibEnabled: v })}
+          hint="Nur auf ausdrücklichen Klick; übertragen wird der Sortenname. Anonymes Kontingent der Quelle ca. 20/Std."
+        />
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.05] pt-4">
+          <div className="text-[12px] text-ink-400">
+            Zwischenspeicher: <span className="font-mono text-ink-200">{info?.entries ?? '–'}</span> Antworten
+            {info?.newest && ` · zuletzt ${fmtDateTime(nowLocal(new Date(info.newest)))}`}
+            <div className="hint">Wird nach spätestens 7 Tagen verworfen, nicht ins Backup übernommen.</div>
+          </div>
+          <button
+            type="button"
+            className="btn-ghost py-1.5 text-xs"
+            onClick={() =>
+              catalog.clearCache().then(() => {
+                toast('Zwischenspeicher geleert');
+                refresh();
+              })
+            }
+          >
+            <Trash2 className="size-3.5" /> Leeren
+          </button>
+        </div>
+      </div>
+    </Card>
   );
 }

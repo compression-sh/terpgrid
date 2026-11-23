@@ -5,6 +5,7 @@ import { DataProvider, useData } from './app/DataProvider';
 import { QuickActionsProvider } from './app/QuickActions';
 import { Shell } from './app/Shell';
 import { ToastProvider } from './app/Toasts';
+import { CompareProvider, useCatalogOnlineSync } from './app/catalog';
 import { href, useRoute } from './app/router';
 import { EmptyState } from './components/ui/EmptyState';
 import { Dashboard } from './pages/Dashboard';
@@ -22,6 +23,14 @@ const CalendarPage = lazy(() => import('./pages/CalendarPage').then((m) => ({ de
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })));
 const UtilitiesPage = lazy(() => import('./pages/UtilitiesPage').then((m) => ({ default: m.UtilitiesPage })));
 const DataPage = lazy(() => import('./pages/DataPage').then((m) => ({ default: m.DataPage })));
+const DiscoverPage = lazy(() => import('./pages/discover/DiscoverPage').then((m) => ({ default: m.DiscoverPage })));
+const StrainProfile = lazy(() => import('./pages/discover/StrainProfile').then((m) => ({ default: m.StrainProfile })));
+const GeneticsExplorer = lazy(() => import('./pages/discover/GeneticsExplorer').then((m) => ({ default: m.GeneticsExplorer })));
+const TerpeneAtlas = lazy(() => import('./pages/discover/TerpeneAtlas').then((m) => ({ default: m.TerpeneAtlas })));
+const CompareStudio = lazy(() => import('./pages/discover/CompareStudio').then((m) => ({ default: m.CompareStudio })));
+const VisualExplorer = lazy(() => import('./pages/discover/VisualExplorer').then((m) => ({ default: m.VisualExplorer })));
+const KnowledgeHub = lazy(() => import('./pages/discover/KnowledgeHub').then((m) => ({ default: m.KnowledgeHub })));
+const LabInsights = lazy(() => import('./pages/LabInsights').then((m) => ({ default: m.LabInsights })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
 
 function Loading() {
@@ -88,6 +97,19 @@ function Routes() {
     case 'data':
       page = <DataPage />;
       break;
+    case 'discover':
+      if (b === 'strain' && c) page = <StrainProfile key={c} slug={c} />;
+      else if (b === 'genetics') page = <GeneticsExplorer key={c ?? ''} slug={c} />;
+      else if (b === 'terpenes') page = <TerpeneAtlas terpeneId={c} />;
+      else if (b === 'compare') page = <CompareStudio />;
+      else if (b === 'gallery') page = <VisualExplorer />;
+      else if (b === 'learn') page = <KnowledgeHub articleId={c} />;
+      else if (!b) page = <DiscoverPage />;
+      else page = <NotFound />;
+      break;
+    case 'lab-reports':
+      page = <LabInsights />;
+      break;
     case 'settings':
       page = <SettingsPage />;
       break;
@@ -132,9 +154,12 @@ export default function App() {
     <ToastProvider>
       <ConfirmProvider>
         <DataProvider>
-          <QuickActionsProvider>
-            <Shell>{isLab ? <LabGate /> : <Gate><Routes /></Gate>}</Shell>
-          </QuickActionsProvider>
+          <CompareProvider>
+            <QuickActionsProvider>
+              <CatalogSync />
+              <Shell>{isLab ? <LabGate /> : <Gate><Routes /></Gate>}</Shell>
+            </QuickActionsProvider>
+          </CompareProvider>
         </DataProvider>
       </ConfirmProvider>
     </ToastProvider>
@@ -145,4 +170,9 @@ function LabGate() {
   const { ready, error } = useData();
   if (!ready && !error) return <Loading />;
   return <Routes />;
+}
+
+function CatalogSync() {
+  useCatalogOnlineSync();
+  return null;
 }

@@ -7,6 +7,9 @@
  */
 import type {
   Activity,
+  ApiCacheEntry,
+  LabDocument,
+  LabReport,
   CalculationRecord,
   Expense,
   GrowProject,
@@ -35,6 +38,9 @@ export interface StoreMap {
   expenses: Expense;
   calculations: CalculationRecord;
   settings: SettingRow;
+  labReports: LabReport;
+  labDocs: LabDocument;
+  apiCache: ApiCacheEntry;
 }
 export type StoreName = keyof StoreMap;
 
@@ -51,12 +57,15 @@ export const STORE_NAMES: StoreName[] = [
   'expenses',
   'calculations',
   'settings',
+  'labReports',
+  'labDocs',
+  'apiCache',
 ];
 
 /** Stores, die in einem Backup als JSON landen (photoData wird separat als Dateien exportiert). */
-export const RECORD_STORES = STORE_NAMES.filter((s) => s !== 'photoData' && s !== 'settings') as Exclude<
+export const RECORD_STORES = STORE_NAMES.filter((s) => s !== 'photoData' && s !== 'settings' && s !== 'labDocs' && s !== 'apiCache') as Exclude<
   StoreName,
-  'photoData' | 'settings'
+  'photoData' | 'settings' | 'labDocs' | 'apiCache'
 >[];
 
 type Migration = (db: IDBDatabase, tx: IDBTransaction) => void;
@@ -84,6 +93,14 @@ export const SCHEMA_MIGRATIONS: Migration[] = [
     make('expenses', ['growId', 'date']);
     make('calculations', ['kind']);
     make('settings', [], 'key');
+  },
+  // v1 → v2: Online-Katalog (externe Sortenverknüpfung, API-Cache) und Laborberichte
+  (db, tx) => {
+    tx.objectStore('strains').createIndex('externalKey', 'externalKey', { unique: false });
+    db.createObjectStore('apiCache', { keyPath: 'key' }).createIndex('fetchedAt', 'fetchedAt', { unique: false });
+    const lab = db.createObjectStore('labReports', { keyPath: 'id' });
+    lab.createIndex('strainId', 'strainId', { unique: false });
+    db.createObjectStore('labDocs', { keyPath: 'id' });
   },
 ];
 

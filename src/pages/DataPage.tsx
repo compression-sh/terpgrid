@@ -35,6 +35,7 @@ const STORE_LABEL: Record<RecordStore, string> = {
   inventory: 'Sammlung',
   expenses: 'Ausgaben',
   calculations: 'Berechnungen',
+  labReports: 'Laborberichte',
 };
 
 function download(bytes: Uint8Array | string, name: string, mime: string) {
@@ -278,7 +279,7 @@ export function DataPage() {
       <div className="mt-5 flex gap-2.5 rounded-xl border border-white/[0.05] bg-white/[0.015] p-3 text-xs leading-relaxed text-ink-400">
         <Database className="mt-0.5 size-4 shrink-0 text-leaf-400" />
         Datenspeicherung: IndexedDB (Datensätze & Fotos) und localStorage (Eingaben des THC Lab). Daten sind an diesen Browser auf diesem Gerät gebunden, werden nicht
-        synchronisiert, nicht verschlüsselt gespeichert und nie an einen Server gesendet.
+        synchronisiert, nicht verschlüsselt gespeichert und nie an einen Server gesendet. Ausnahme sind Suchanfragen im Bereich Discover: Sie gehen an die externen Sortendaten-Anbieter; zwischengespeicherte Antworten liegen lokal und sind nicht Teil des Backups.
       </div>
 
       {parsed && (

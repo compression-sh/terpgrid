@@ -10,10 +10,11 @@
 import { strFromU8, strToU8, unzipSync, zipSync, type Zippable } from 'fflate';
 import { DB_VERSION, RECORD_STORES, type StoreMap, getAll, getOne, writeBatch } from './db/database';
 import { normalizeSettings } from './db/repo';
-import type { AppSettings, PhotoData } from './db/types';
+import type { AppSettings, LabDocument, PhotoData } from './db/types';
 
 export const BACKUP_APP = 'TERPGRID';
-export const BACKUP_FORMAT = 1;
+/** Format 2: zusätzlich Laborberichte inkl. Originaldokumente (Format 1 bleibt importierbar). */
+export const BACKUP_FORMAT = 2;
 
 export type RecordStore = (typeof RECORD_STORES)[number];
 export type BackupData = { [S in RecordStore]: StoreMap[S][] };
@@ -27,11 +28,13 @@ export interface BackupManifest {
   settings?: AppSettings;
   data: BackupData;
   photoFiles: { id: string; full: string; thumb: string; mime: string }[];
+  docFiles?: { id: string; path: string; mime: string; name: string }[];
 }
 
 export interface ParsedBackup {
   manifest: BackupManifest;
   photoData: Map<string, PhotoData>;
+  docData: Map<string, LabDocument>;
   issues: string[];
   /** Schwerwiegende Fehler – Import nicht möglich. */
   errors: string[];
@@ -52,7 +55,7 @@ export async function readAllData(): Promise<BackupData> {
   return Object.fromEntries(entries) as unknown as BackupData;
 }
 
-export function buildManifest(data: BackupData, photoData: PhotoData[], settings?: AppSettings, exportedAt = new Date()): BackupManifest {
+export function buildManifest(data: BackupData, photoData: PhotoData[], settings?: AppSettings, exportedAt = new Date(), docs: LabDocument[] = []): BackupManifest {
   return {
     app: BACKUP_APP,
     format: BACKUP_FORMAT,
@@ -67,10 +70,11 @@ export function buildManifest(data: BackupData, photoData: PhotoData[], settings
       thumb: `photos/thumbs/${p.id}.${ext(p.mime)}`,
       mime: p.mime,
     })),
+    docFiles: docs.map((d) => ({ id: d.id, path: `documents/${d.id}`, mime: d.mime, name: d.name })),
   };
 }
 
-export function zipBackup(manifest: BackupManifest, photoData: PhotoData[]): Uint8Array {
+export function zipBackup(manifest: BackupManifest, photoData: PhotoData[], docs: LabDocument[] = []): Uint8Array {
   const files: Zippable = { 'manifest.json': strToU8(JSON.stringify(manifest, null, 2)) };
   const byId = new Map(photoData.map((p) => [p.id, p]));
   for (const f of manifest.photoFiles) {
@@ -79,6 +83,11 @@ export function zipBackup(manifest: BackupManifest, photoData: PhotoData[]): Uin
     // Bilder sind bereits komprimiert → speichern statt deflate (level 0) spart Zeit.
     files[f.full] = [toU8(p.full), { level: 0 }];
     files[f.thumb] = [toU8(p.thumb), { level: 0 }];
+  }
+  const docById = new Map(docs.map((d) => [d.id, d]));
+  for (const f of manifest.docFiles ?? []) {
+    const d = docById.get(f.id);
+    if (d) files[f.path] = [toU8(d.data), { level: 6 }];
   }
   files['LIESMICH.txt'] = strToU8(
     [
@@ -99,8 +108,9 @@ export async function createFullBackup(options: { includePhotos?: boolean } = {}
   const data = await readAllData();
   const settingsRow = await getOne('settings', 'app');
   const photoData = options.includePhotos === false ? [] : await getAll('photoData');
-  const manifest = buildManifest(data, photoData, normalizeSettings(settingsRow?.value));
-  return { bytes: zipBackup(manifest, photoData), manifest };
+  const docs = options.includePhotos === false ? [] : await getAll('labDocs');
+  const manifest = buildManifest(data, photoData, normalizeSettings(settingsRow?.value), new Date(), docs);
+  return { bytes: zipBackup(manifest, photoData, docs), manifest };
 }
 
 /** Nur strukturierte Daten als JSON (ohne Bilder). */
@@ -147,6 +157,7 @@ const REQUIRED: Record<RecordStore, string[]> = {
   inventory: ['name', 'category'],
   expenses: ['date', 'category'],
   calculations: ['kind', 'name'],
+  labReports: ['title', 'unit', 'origin'],
 };
 
 /**
@@ -177,6 +188,7 @@ export function checkIntegrity(data: BackupData, photoIdsWithData?: Set<string>)
   }
   for (const j of data.journal) if (j.strainId && !strains.has(j.strainId)) issues.push(`Journal-Eintrag vom ${j.date.slice(0, 10)} verweist auf eine fehlende Sorte.`);
   for (const p of data.plants) if (p.strainId && !strains.has(p.strainId)) issues.push(`Pflanze „${p.name}“ verweist auf eine fehlende Sorte.`);
+  for (const l of data.labReports ?? []) if (l.strainId && !strains.has(l.strainId)) issues.push(`Laborbericht „${l.title}“ verweist auf eine fehlende Sorte.`);
   for (const r of data.reminders) if (r.growId && !grows.has(r.growId)) issues.push(`Erinnerung „${r.title}“ verweist auf einen fehlenden Grow.`);
   for (const e of data.expenses) if (e.growId && !grows.has(e.growId)) issues.push('Eine Ausgabe verweist auf einen fehlenden Grow.');
   const covers: { label: string; rows: { coverPhotoId?: string }[] }[] = [
@@ -239,6 +251,7 @@ export function sanitizeData(data: BackupData, photoIdsWithData?: Set<string>): 
       }),
     ),
     expenses: data.expenses.map((e) => ({ ...e, growId: e.growId && grows.has(e.growId) ? e.growId : undefined })),
+    labReports: (data.labReports ?? []).map((l) => ({ ...l, strainId: l.strainId && strains.has(l.strainId) ? l.strainId : undefined })),
   };
 }
 
@@ -291,6 +304,9 @@ export function validateManifest(raw: unknown): { manifest?: BackupManifest; err
       settings: raw.settings ? normalizeSettings(raw.settings) : undefined,
       data,
       photoFiles,
+      docFiles: Array.isArray(raw.docFiles)
+        ? (raw.docFiles as unknown[]).filter((f): f is NonNullable<BackupManifest['docFiles']>[number] => isObj(f) && isStr(f.id) && isStr(f.path) && isStr(f.mime) && isStr(f.name))
+        : [],
     },
     errors,
     issues,
@@ -302,19 +318,24 @@ export function parseBackupZip(bytes: Uint8Array): ParsedBackup {
   try {
     files = unzipSync(bytes);
   } catch {
-    return { manifest: undefined as never, photoData: new Map(), issues: [], errors: ['Die Datei ist kein gültiges ZIP-Archiv.'] };
+    return { manifest: undefined as never, photoData: new Map(), docData: new Map(), issues: [], errors: ['Die Datei ist kein gültiges ZIP-Archiv.'] };
   }
   const manifestFile = files['manifest.json'];
-  if (!manifestFile) return { manifest: undefined as never, photoData: new Map(), issues: [], errors: ['manifest.json fehlt im Archiv.'] };
+  if (!manifestFile) return { manifest: undefined as never, photoData: new Map(), docData: new Map(), issues: [], errors: ['manifest.json fehlt im Archiv.'] };
   let raw: unknown;
   try {
     raw = JSON.parse(strFromU8(manifestFile));
   } catch {
-    return { manifest: undefined as never, photoData: new Map(), issues: [], errors: ['manifest.json ist beschädigt.'] };
+    return { manifest: undefined as never, photoData: new Map(), docData: new Map(), issues: [], errors: ['manifest.json ist beschädigt.'] };
   }
   const { manifest, errors, issues } = validateManifest(raw);
   const photoData = new Map<string, PhotoData>();
+  const docData = new Map<string, LabDocument>();
   if (manifest) {
+    for (const f of manifest.docFiles ?? []) {
+      const bytes = files[f.path];
+      if (bytes) docData.set(f.id, { id: f.id, data: toBuf(bytes), mime: f.mime, name: f.name, size: bytes.byteLength });
+    }
     for (const f of manifest.photoFiles) {
       const full = files[f.full];
       const thumb = files[f.thumb] ?? full;
@@ -322,7 +343,7 @@ export function parseBackupZip(bytes: Uint8Array): ParsedBackup {
     }
     issues.push(...checkIntegrity(manifest.data, new Set(photoData.keys())));
   }
-  return { manifest: manifest as BackupManifest, photoData, issues, errors };
+  return { manifest: manifest as BackupManifest, photoData, docData, issues, errors };
 }
 
 /* ───────────── Wiederherstellen ───────────── */
@@ -357,11 +378,13 @@ export async function restoreBackup(parsed: ParsedBackup, mode: RestoreMode): Pr
     data = sanitizeData(data, new Set(parsed.photoData.keys()));
   }
   const photoRows = data.photos.map((p) => parsed.photoData.get(p.id)).filter((p): p is PhotoData => !!p);
+  const docRows = (data.labReports ?? []).map((l) => (l.documentId ? parsed.docData?.get(l.documentId) : undefined)).filter((d): d is LabDocument => !!d);
   await writeBatch({
-    clear: mode === 'replace' ? [...RECORD_STORES, 'photoData'] : undefined,
+    clear: mode === 'replace' ? [...RECORD_STORES, 'photoData', 'labDocs'] : undefined,
     put: {
       ...(data as unknown as Partial<{ [S in RecordStore]: StoreMap[S][] }>),
       photoData: photoRows,
+      labDocs: docRows,
       ...(mode === 'replace' && parsed.manifest.settings ? { settings: [{ key: 'app', value: parsed.manifest.settings }] } : {}),
     },
   });
@@ -370,7 +393,7 @@ export async function restoreBackup(parsed: ParsedBackup, mode: RestoreMode): Pr
 
 /** Löscht ALLE lokalen TERPGRID-Daten inkl. der alten THC-Rechner-Schlüssel. */
 export async function deleteAllLocalData(): Promise<void> {
-  await writeBatch({ clear: [...RECORD_STORES, 'photoData', 'settings'] });
+  await writeBatch({ clear: [...RECORD_STORES, 'photoData', 'settings', 'labDocs', 'apiCache'] });
   try {
     const keys: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {

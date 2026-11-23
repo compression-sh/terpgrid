@@ -1,0 +1,112 @@
+{
+ "kind": "strains",
+ "q": "gelato",
+ "count": 10,
+ "capped": true,
+ "items": [
+  {
+   "id": "strain_gelato",
+   "name_norm": "gelato",
+   "name": "Gelato",
+   "type": "indica dominant hybrid",
+   "breeder": "Bog Seeds",
+   "source": "sqlite",
+   "has_chemistry": true,
+   "top_terpenes": [
+    "beta-Caryophyllene",
+    "delta-Limonene",
+    "Linalool"
+   ],
+   "thc_range": [
+    15.212,
+    29.548
+   ],
+   "cbd_range": [
+    0.0,
+    0.088
+   ],
+   "thc_basis": {
+    "basis": "p10_p90_of_flower_lab_samples",
+    "lab_samples": 3013
+   },
+   "cbd_basis": {
+    "basis": "p10_p90_of_flower_lab_samples",
+    "lab_samples": 2362
+   },
+   "want": null,
+   "height_cm": 200.0,
+   "height_band": "Medium",
+   "flowering_days": [
+    56,
+    70
+   ],
+   "curated": false,
+   "matched_via": "name"
+  },
+  {
+   "id": "strain_33rd_degree",
+   "name_norm": "33rd degree",
+   "name": "33rd Degree",
+   "type": "hybrid",
+   "breeder": "In House Genetics",
+   "source": "sqlite",
+   "has_chemistry": true,
+   "top_terpenes": [],
+   "thc_range": [
+    23.627000000000002,
+    23.627000000000002
+   ],
+   "cbd_range": [
+    0.0,
+    1.0
+   ],
+   "thc_basis": null,
+   "cbd_basis": null,
+   "want": null,
+   "height_cm": null,
+   "height_band": "medium",
+   "flowering_days": [
+    60,
+    75
+   ],
+   "curated": false,
+   "matched_via": "fts"
+  },
+  {
+   "id": "strain_5g",
+   "name_norm": "5g",
+   "name": "5G",
+   "type": "indica dominant hybrid",
+   "breeder": "Soma Seeds",
+   "source": "sqlite",
+   "has_chemistry": true,
+   "top_terpenes": [
+    "myrcene",
+    "caryophyllene",
+    "pinene"
+   ],
+   "thc_range": [
+    15.0,
+    15.0
+   ],
+   "cbd_range": [
+    0.0,
+    0.0
+   ],
+   "thc_basis": null,
+   "cbd_basis": null,
+   "want": null,
+   "height_cm": [
+    80.0,
+    120.0
+   ],
+   "height_band": null,
+   "flowering_days": [
+    56,
+    70
+   ],
+   "curated": false,
+   "matched_via": "fts"
+  }
+ ]
+}

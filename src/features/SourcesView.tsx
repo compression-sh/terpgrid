@@ -81,7 +81,7 @@ export function SourcesView() {
           ))}
         </ol>
         <p className="hint mt-5">
-          Externe Links öffnen sich nur auf Klick in einem neuen Tab. Die App selbst stellt keine Netzwerkverbindungen her.
+          Externe Links öffnen sich nur auf Klick in einem neuen Tab. Die Rechner des THC Lab arbeiten vollständig lokal; nur der Bereich Discover lädt Online-Sortendaten von externen Quellen.
         </p>
       </Card>
 
@@ -92,7 +92,7 @@ export function SourcesView() {
         </Callout>
         <Callout tone="ok" title="Datenschutz">
           <span className="inline-flex items-center gap-1">
-            <Lock className="size-3" /> Keine Konten, kein Tracking, keine Cookies, keine Serverkommunikation.
+            <Lock className="size-3" /> Keine Konten, kein Tracking, keine Cookies. Berechnungen laufen lokal.
           </span>{' '}
           Eingaben und gespeicherte Berechnungen bleiben im lokalen Speicher dieses Browsers.
         </Callout>

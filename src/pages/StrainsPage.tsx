@@ -1,4 +1,5 @@
-import { BadgeCheck, BookOpenText, Camera, Heart, Leaf, Package, Pencil, Plus, Search, Sprout, Trash2 } from 'lucide-react';
+import { BadgeCheck, BookOpenText, Camera, Compass, Dna, FlaskRound, GitCompare, Globe, Heart, Leaf, Package, Pencil, Plus, Search, Sprout, Trash2 } from 'lucide-react';
+import { useCompare } from '../app/catalog';
 import { useMemo, useState } from 'react';
 import { useConfirm } from '../app/Confirm';
 import { useData } from '../app/DataProvider';
@@ -63,7 +64,10 @@ function StrainCard({ strain }: { strain: Strain }) {
           <PhotoImg photoId={cover} alt={strain.name} className="h-full w-full transition-transform duration-500 group-hover:scale-[1.03]" />
           <div className="absolute inset-0 bg-gradient-to-t from-ink-950/90 to-transparent" />
           <div className="absolute bottom-2 left-3 right-10">
-            <h3 className="truncate text-[15px] font-semibold text-white">{strain.name}</h3>
+            <h3 className="flex items-center gap-1.5 truncate text-[15px] font-semibold text-white">
+              {strain.name}
+              {strain.external && <Globe className="size-3.5 shrink-0 text-leaf-300" aria-label="Mit Online-Katalog verknüpft" />}
+            </h3>
             <div className="truncate text-[11px] text-ink-300">{strain.breeder || 'Breeder unbekannt'}</div>
           </div>
         </div>
@@ -125,12 +129,17 @@ export function StrainsPage(_props: { strainId?: string }) {
   return (
     <div>
       <PageHeader
-        title="Sorten"
-        subtitle="Deine persönliche Sorten-Bibliothek – nur eigene Notizen und Angaben."
+        title="Meine Sorten"
+        subtitle="Persönliche Favoriten, Notizen und Verknüpfungen. Öffentliche Sorten entdeckst du in Discover."
         actions={
-          <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
-            <Plus className="size-4" /> Neue Sorte
-          </button>
+          <>
+            <a href={href('discover')} className="btn-ghost">
+              <Compass className="size-4" /> Discover
+            </a>
+            <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
+              <Plus className="size-4" /> Eigene Sorte
+            </button>
+          </>
         }
       />
       {data.strains.length === 0 ? (
@@ -213,6 +222,7 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
   const toast = useToast();
   const confirm = useConfirm();
   const [modal, setModal] = useState<'edit' | 'photo' | 'journal' | 'inventory' | null>(null);
+  const compare = useCompare();
   const strain = data.strains.find((s) => s.id === strainId);
   const photos = useMemo(() => data.photos.filter((p) => p.strainId === strainId), [data.photos, strainId]);
   if (!strain) return <EmptyState title="Sorte nicht gefunden" action={<a href={href('strains')} className="btn-primary">Zur Bibliothek</a>} />;
@@ -246,7 +256,7 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
   return (
     <div>
       <PageHeader
-        crumbs={[{ label: 'Sorten', to: 'strains' }, { label: strain.name }]}
+        crumbs={[{ label: 'Meine Sorten', to: 'strains' }, { label: strain.name }]}
         title={strain.name}
         subtitle={[strain.breeder, strain.genetics].filter(Boolean).join(' · ') || 'Keine Herkunftsangaben'}
         meta={
@@ -258,6 +268,25 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
         }
         actions={
           <>
+            {strain.external?.provider === 'strainapi' && (
+              <>
+                <a href={href(`discover/strain/${strain.external.id}`)} className="btn-ghost">
+                  <Globe className="size-4" /> Online-Profil
+                </a>
+                <a href={href(`discover/genetics/${strain.external.id}`)} className="btn-ghost">
+                  <Dna className="size-4" /> Genetik
+                </a>
+              </>
+            )}
+            {(() => {
+              const key = strain.external?.provider === 'strainapi' ? `strainapi:${strain.external.id}` : `mine:${strain.id}`;
+              const on = compare.has(key);
+              return (
+                <button type="button" className={`btn-ghost ${on ? 'border-sky-400/30 text-sky-200' : ''}`} aria-pressed={on} onClick={() => compare.toggle(key)}>
+                  <GitCompare className="size-4" /> {on ? 'Im Vergleich' : 'Vergleichen'}
+                </button>
+              );
+            })()}
             <button type="button" className="btn-ghost" onClick={() => setModal('photo')}>
               <Camera className="size-4" /> Foto
             </button>
@@ -282,6 +311,13 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
             </div>
             <p className="hint mt-3">Angaben auf Verpackungen weichen in Untersuchungen häufig vom tatsächlichen Gehalt ab.</p>
           </Card>
+          {strain.external && (
+            <Card title="Quelle" icon={<Globe className="size-4" />}>
+              <p className="text-[13px] text-ink-300">
+                Verknüpft mit dem Online-Katalog ({strain.external.provider === 'strainapi' ? 'StrainAPI' : 'CannaLib'}) seit {new Date(strain.external.linkedAt).toLocaleDateString('de-DE')}. Übernommene Werte sind als „Herstellerangabe“ gekennzeichnet; eigene Notizen bleiben lokal.
+              </p>
+            </Card>
+          )}
           <Card title="Terpene">
             {strain.terpenes.length === 0 ? (
               <p className="hint">Keine Terpene erfasst.</p>
@@ -398,6 +434,32 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
                     <span className="font-mono text-ink-400">{i.quantity !== undefined ? `${fmt(i.quantity)} ${i.unit}` : '–'}</span>
                   </li>
                 ))}
+              </ul>
+            )}
+          </Card>
+          <Card
+            title="Laborberichte"
+            icon={<FlaskRound className="size-4" />}
+            actions={
+              <a href={href(`lab-reports?strain=${strain.id}`)} className="btn-ghost py-1.5 text-xs">
+                <Plus className="size-3.5" /> Bericht
+              </a>
+            }
+          >
+            {data.labReports.filter((r) => r.strainId === strain.id).length === 0 ? (
+              <p className="hint">Keine Laborberichte verknüpft.</p>
+            ) : (
+              <ul className="space-y-1.5 text-[13px]">
+                {data.labReports
+                  .filter((r) => r.strainId === strain.id)
+                  .map((r) => (
+                    <li key={r.id} className="flex justify-between">
+                      <a href={href(`lab-reports?report=${r.id}`)} className="text-ink-100 hover:text-leaf-200">
+                        {r.title}
+                      </a>
+                      <span className="text-[11px] text-ink-500">{r.testDate ? new Date(r.testDate).toLocaleDateString('de-DE') : ''}</span>
+                    </li>
+                  ))}
               </ul>
             )}
           </Card>
