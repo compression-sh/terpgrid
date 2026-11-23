@@ -14,6 +14,11 @@ import { fileRoutes } from './routes/files.js';
 import { syncRoutes } from './routes/sync.js';
 import { loadSession, sessionCookieName } from './sessions.js';
 
+/** Entfernt Query-Strings und Geheimnisse im Pfad (Einladungs-Token) aus Log-Ausgaben. */
+export function redactUrl(url: string): string {
+  return url.split('?')[0]!.replace(/^\/api\/auth\/invite\/[^/]+/, '/api/auth/invite/[geschwärzt]');
+}
+
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 /** Schreibende Endpunkte ohne Session (Login etc.) – nur mit Origin-Prüfung + Custom-Header */
 const PRE_AUTH = new Set(['/api/auth/login', '/api/auth/login/mfa', '/api/auth/register', '/api/auth/recover']);
@@ -35,7 +40,8 @@ export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
             // Keine Zugangsdaten, Cookies oder Tokens in Logs
             redact: { paths: ['req.headers.cookie', 'req.headers["x-csrf-token"]', 'req.headers.authorization', 'res.headers["set-cookie"]'], remove: true },
             serializers: {
-              req: (r) => ({ method: r.method, url: (r.url as string).split('?')[0], ip: undefined }),
+              // Ohne Query-String; Einladungs-Token im Pfad wird geschwärzt
+              req: (r) => ({ method: r.method, url: redactUrl(r.url as string), ip: undefined }),
             },
           },
   });
@@ -55,6 +61,8 @@ export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
     reply.header('Cache-Control', 'no-store');
 
     if (!req.url.startsWith('/api/')) return;
+    // API-Antworten (JSON, Dateien, Proxy-Bilder) werden nie als Dokument mit Skripten ausgeführt
+    reply.header('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'; sandbox");
     const limited = ctx.limits.api.take(`ip:${req.ip}`);
     if (limited) return sendError(reply, new HttpError(429, 'Zu viele Anfragen', { retryAfter: limited }, limited));
 

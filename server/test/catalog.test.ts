@@ -7,6 +7,7 @@ describe.skipIf(!hasDb)('Katalog-Proxy', () => {
   const calls: { url: string; init: RequestInit }[] = [];
   const fakeFetch = (async (url: string, init: RequestInit) => {
     calls.push({ url, init });
+    if (url.includes('fake.jpg')) return new Response('<svg onload=alert(1)>', { headers: { 'content-type': 'image/jpeg' } });
     if (url.includes('/wp-content/uploads/')) return new Response(Buffer.from([0xff, 0xd8, 0xff, 0x00]), { headers: { 'content-type': 'image/jpeg' } });
     if (url.includes('evil')) return new Response('<html>', { headers: { 'content-type': 'text/html' } });
     return new Response(JSON.stringify({ data: [{ slug: 'og-kush' }] }), { headers: { 'content-type': 'application/json', 'x-wp-total': '1', 'set-cookie': 'tracking=1' } });
@@ -58,6 +59,17 @@ describe.skipIf(!hasDb)('Katalog-Proxy', () => {
     expect(ok.status).toBe(200);
     expect(ok.headers['content-type']).toBe('image/jpeg');
     expect(calls.at(-1)!.url).toBe('https://www.strainapi.com/wp-content/uploads/2024/05/og-kush.jpg');
+  });
+
+  it('liefert keine als Bild getarnten Nicht-Bilder aus (Magic Bytes)', async () => {
+    const r = await c.get(`/api/catalog/image?u=${encodeURIComponent('https://www.strainapi.com/wp-content/uploads/fake.jpg')}`);
+    expect(r.status).toBe(502);
+  });
+
+  it('schwärzt Einladungs-Token in Log-URLs', async () => {
+    const { redactUrl } = await import('../src/app.js');
+    expect(redactUrl('/api/auth/invite/abcDEF123_-xyz?x=1')).toBe('/api/auth/invite/[geschwärzt]');
+    expect(redactUrl('/api/sync/changes?since=5')).toBe('/api/sync/changes');
   });
 
   it('teilt das CannaLib-Kontingent instanzweit', async () => {

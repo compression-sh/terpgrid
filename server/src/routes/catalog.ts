@@ -7,6 +7,7 @@
  */
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import type { AppContext } from '../context.js';
+import { sniffMime } from '../files.js';
 import { HttpError, requireSession, throttle } from '../http.js';
 import fp from '../plugin.js';
 import { WindowLimiter } from '../ratelimit.js';
@@ -108,6 +109,8 @@ export function catalogRoutes(ctx: AppContext) {
         if (kind === 'image' && (!res.ok || !/^image\/(jpeg|png|webp)$/.test(type))) throw new HttpError(502, 'Bild nicht verfügbar');
         if (kind === 'json' && res.ok && type !== 'application/json') throw new HttpError(502, 'Unerwartete Antwort der Quelle');
         const body = await readLimited(res, kind === 'json' ? MAX_JSON : MAX_IMAGE);
+        // Bild nur ausliefern, wenn die Signatur zum erlaubten Typ passt (nicht nur der Header)
+        if (kind === 'image' && !['image/jpeg', 'image/png', 'image/webp'].includes(sniffMime(body) ?? '')) throw new HttpError(502, 'Bild nicht verfügbar');
         const headers: Record<string, string> = {};
         for (const h of PASS_HEADERS) {
           const v = res.headers.get(h);

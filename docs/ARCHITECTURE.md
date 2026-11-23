@@ -1,6 +1,6 @@
 # TERPGRID – Architektur (Phase 3: Private Cloud & Multiuser)
 
-Stand: 23.11.2026 · gilt für den Code in diesem Repository.
+Stand: 23.11.2026 · gilt für den Code in diesem Repository (Version 3.0.0, Phase 3 umgesetzt).
 
 ## 1. Bestandsaufnahme (Audit vor Phase 3)
 
@@ -46,10 +46,10 @@ Generisches, eigentümergebundenes Datensatzmodell statt 13 einzelner Tabellen: 
 | --- | --- |
 | `users` | interne UUID, `login_name` (Benutzername **oder** generierte Konto-ID, normalisiert, eindeutig), `display_name`, `role`, `status`, Argon2id-PHC-Hash, verschlüsselter TOTP-Schlüssel, verpackter Daten-Schlüssel (DEK) + Key-Version, Altersbestätigung |
 | `sessions` | SHA-256 des Session-Tokens (Token selbst nie gespeichert), CSRF-Secret, Ablauf (absolut/idle), Re-Auth-Zeitpunkt, gekürzter User-Agent |
-| `recovery_codes` | HMAC-SHA-256 je Code (Pepper aus Secret), `used_at` |
-| `invitations` | SHA-256 des Tokens, Ablauf, Nutzung, Widerruf |
+| `recovery_codes` | HMAC-SHA-256 je Code (Schlüssel aus HMAC_SECRET), `used_at` |
+| `invitations` | HMAC-SHA-256 des Tokens (Schlüssel aus HMAC_SECRET), Ablauf, Nutzung, Widerruf |
 | `records` | `(user_id, store, id)` PK, `version`, `seq` (globale Sequenz für Pull), `deleted`, `payload` (AES-256-GCM), `payload_mac` (HMAC für idempotenten Import) |
-| `files` | `(user_id, id, variant)` PK, Größe, MIME (geprüft), Key-Version – Inhalt verschlüsselt im Dateisystem unter zufälligem Namen |
+| `files` | `(user_id, kind, id, variant)` PK, Größe, MIME (per Magic Bytes geprüft) – Inhalt mit dem Konto-DEK verschlüsselt im Dateisystem unter zufälligem 48-Hex-Namen |
 | `audit_events` | Typ, Zeit, Benutzer, gekürzter IP-HMAC, Metadaten **ohne** Secrets/Inhalte |
 | `schema_migrations` | versionierte SQL-Migrationen |
 
@@ -75,5 +75,23 @@ StrainAPI und CannaLib laufen im Servermodus über einen **festen** Proxy (`/api
 
 * **Servermodus** (Standard bei Self-Hosting): Login erforderlich.
 * **Lokalmodus** (Fallback, wenn kein Backend erreichbar ist, z. B. reine Vite-Entwicklung): bisheriges Verhalten mit der alten lokalen Datenbank – ausdrücklich als „nur auf diesem Gerät“ gekennzeichnet.
+
+## 8. Umsetzung im Repository
+
+| Teil | Ort |
+| --- | --- |
+| API (Fastify, Routen, Hooks) | `server/src/app.ts`, `server/src/routes/{auth,account,sync,files,catalog,admin}.ts` |
+| Sessions, Passwörter, Ratenbegrenzung | `server/src/sessions.ts`, `passwords.ts`, `ratelimit.ts` |
+| Kryptografie, Schlüsselrotation, Integritätsprüfung | `server/src/crypto.ts`, `keys.ts`, `verify.ts` |
+| Schema + RLS | `server/migrations/001_init.sql` |
+| CLI | `server/src/cli.ts` (`migrate`, `invite`, `promote`, `rotate-keys`, `verify-data`, `bench-argon2`, …) |
+| Frontend-Auth, Konto-DB, Sync | `src/app/auth.tsx`, `src/lib/server/api.ts`, `src/lib/sync/engine.ts`, `src/lib/db/database.ts` (Schema v3) |
+| Altdaten-Übernahme | `src/lib/sync/legacy.ts`, `src/pages/account/ImportPage.tsx` |
+| Konto, Admin, Sync-Status | `src/pages/account/*` |
+| Deployment | `deploy/` (Compose, Caddyfile, Skripte, systemd) |
+
+### Request-Fluss (schreibend)
+
+Browser → Caddy (TLS, Header) → API `onRequest`: Sicherheits-Header → API-Ratenlimit → Session aus Cookie (SHA-256-Lookup, Ablauf, Status) → Origin-Prüfung → Pre-Auth-Header bzw. CSRF-Token → Schema-Validierung → Handler → `withUser()` (Transaktion, `app.user_id`, RLS) → Verschlüsselung mit dem Konto-DEK → PostgreSQL.
 
 Weitere Dokumente: [THREAT-MODEL.md](THREAT-MODEL.md) · [E2EE-DECISION.md](E2EE-DECISION.md) · [SECURITY.md](SECURITY.md) · [DEPLOYMENT.md](DEPLOYMENT.md) · [BACKUP.md](BACKUP.md)

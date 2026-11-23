@@ -25,7 +25,8 @@ http://127.0.0.1:8081 {
 		Permissions-Policy "camera=(self), microphone=(), geolocation=(), interest-cohort=()"
 		Cross-Origin-Opener-Policy "same-origin"
 		# Nur die eigene Instanz: externe Sortendaten laufen über den Proxy der API
-		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'"
+		# Nur setzen, wenn die Antwort keine eigene (strengere) CSP hat – die API sendet "sandbox"
+		?Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'"
 		-Server
 	}
 
@@ -68,6 +69,7 @@ http://127.0.0.1:8081 {
 				request>headers>Authorization delete
 				request>headers>X-Csrf-Token delete
 				resp_headers>Set-Cookie delete
+				request>uri regexp "/api/auth/invite/[^/?]+" "/api/auth/invite/[geschwaerzt]"
 			}
 		}
 	}

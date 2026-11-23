@@ -26,6 +26,9 @@ x-api-env: &api-env
   BACKUP_STATUS_FILE: /run/terpgrid/backup-status.json
   APP_VERSION: ${TERPGRID_VERSION:-local}
   TRUST_PROXY: uniquelocal
+  # Argon2id: über dem OWASP-Minimum (19 MiB, t=2); Messung: docs/SECURITY.md
+  ARGON2_MEMORY_KIB: ${ARGON2_MEMORY_KIB:-65536}
+  ARGON2_TIME_COST: ${ARGON2_TIME_COST:-3}
 
 services:
   db:

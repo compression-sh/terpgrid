@@ -6,7 +6,7 @@
 
 * **Algorithmus:** AES-256-GCM (Node `crypto`, OpenSSL), 96-Bit-Zufalls-Nonce je Verschlüsselung, 128-Bit-Tag.
 * **Envelope:** Jeder Benutzer hat einen zufälligen 256-Bit-Daten-Schlüssel (DEK). Der DEK wird mit dem Master-Key (KEK) per AES-256-GCM verpackt und mit KEK-Version in `users` gespeichert.
-* **Gebundene Metadaten (AAD):** Datensätze `rec|v1|<userId>|<store>|<id>`, Dateien `file|v1|<userId>|<fileId>|<variant>`, DEK `dek|v1|<userId>`. Ein Chiffrat kann daher nicht unbemerkt einem anderen Benutzer/Datensatz untergeschoben werden.
+* **Gebundene Metadaten (AAD):** Datensätze `rec|v1|<userId>|<store>|<id>`, Dateien `file|v1|<userId>|<kind>|<fileId>|<variant>`, TOTP-Schlüssel `totp|v1|<userId>`, DEK `dek|v1|<userId>`. Ein Chiffrat kann daher nicht unbemerkt einem anderen Benutzer/Datensatz untergeschoben werden.
 * **Format:** `0x01 ‖ nonce(12) ‖ tag(16) ‖ ciphertext` (versioniert).
 * **Master-Key:** 32 Byte, als Datei (Docker Secret, read-only) – **nicht** in der Datenbank, **nicht** im Image, **nicht** im Git. Mehrere Versionen möglich (`1:…,2:…`), aktuelle Version konfigurierbar; `npm run keys:rotate` verpackt alle DEKs neu.
 * **Verschlüsselt:** alle Datensatzinhalte (Growlogs, Pflanzen, Aktivitäten, Fotos-Metadaten, Journal, Sorten, Sammlung, Ausgaben, Erinnerungen, Berechnungen, Laborberichte, Einstellungen), alle Dateien (Fotos, Vorschaubilder, Laborberichtsdokumente), TOTP-Schlüssel.

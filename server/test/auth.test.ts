@@ -42,6 +42,16 @@ describe.skipIf(!hasDb)('Authentifizierung (echte PostgreSQL-DB)', () => {
     expect(other.json.user.accountKey).not.toBe(l1.json.user.accountKey);
   });
 
+  it('setzt Sicherheits-Header auf API-Antworten', async () => {
+    const r = await new Client(env.app).get('/api/auth/config');
+    expect(r.headers['content-security-policy']).toContain("default-src 'none'");
+    expect(r.headers['x-content-type-options']).toBe('nosniff');
+    expect(r.headers['cache-control']).toBe('no-store');
+    expect(r.headers['x-frame-options']).toBe('DENY');
+    expect(r.headers['referrer-policy']).toBe('no-referrer');
+    expect(r.headers['x-powered-by']).toBeUndefined();
+  });
+
   it('speichert kein Klartext-Passwort, sondern Argon2id; Recovery-Codes nur als HMAC', async () => {
     const { rows } = await env.ctx.db.query("SELECT password_hash FROM users WHERE login_name = 'alice_1'");
     expect(rows[0].password_hash).toMatch(/^\$argon2id\$v=19\$m=19456,t=2,p=1\$/);
@@ -352,6 +362,15 @@ describe.skipIf(!hasDb)('Einladungen (invite-only)', () => {
     // Token liegt nur gehasht in der DB
     const { rows } = await env.ctx.db.query('SELECT token_hash FROM invitations');
     expect(JSON.stringify(rows)).not.toContain(inv0.json.token);
+  });
+
+  it('das letzte Administrationskonto kann sich nicht selbst löschen oder sperren', async () => {
+    const admin = new Client(env.app);
+    await admin.post('/api/auth/login', { login: 'root_user', password: PW });
+    expect((await admin.req('DELETE', '/api/account', { confirm: 'root_user' })).status).toBe(409);
+    const users = await admin.get('/api/admin/users');
+    const self = users.json.users.find((u: any) => u.login_name === 'root_user');
+    expect((await admin.post(`/api/admin/users/${self.id}/status`, { status: 'suspended' })).status).toBe(409);
   });
 
   it('Admin sieht nur Metadaten, keine Inhalte; Sperre beendet Sessions', async () => {
