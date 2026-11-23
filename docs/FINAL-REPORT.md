@@ -175,4 +175,4 @@ Ein externer Penetrationstest oder eine unabhängige Prüfung hat **nicht** stat
 | `58e4724` | Build-Cache nicht versionieren |
 | `37825f4` | M5: Docker Compose, Caddy, restic-Backups mit Restore-Test |
 | `526b581` | M6: Konto- und Datenschutz-Center, Admin, Befehlspalette, PWA |
-| *(dieser Commit)* | M7: Härtung aus dem Review, SECURITY.md, aktualisierte Doku, Abschlussbericht |
+| `66f5c57` | M7: Härtung aus dem Review, SECURITY.md, aktualisierte Doku, Abschlussbericht |
