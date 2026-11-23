@@ -5,8 +5,9 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { hash } from '@node-rs/argon2';
 import { loadConfig } from './config.js';
-import { KeyRing, hmac, randomToken, subkey, unwrapDek, wrapDek } from './crypto.js';
-import { createPool, tx } from './db.js';
+import { KeyRing, hmac, randomToken, subkey } from './crypto.js';
+import { createPool } from './db.js';
+import { rotateKeys } from './keys.js';
 import { migrate } from './migrate.js';
 
 const [cmd, ...args] = process.argv.slice(2);
@@ -53,15 +54,7 @@ async function main() {
     switch (cmd) {
       case 'rotate-keys': {
         const ring = new KeyRing(c.masterKeys, c.masterKeyCurrent);
-        const n = await tx(db, async (t) => {
-          const { rows } = await t.query('SELECT id, dek_wrapped, dek_key_version FROM users WHERE dek_key_version <> $1 FOR UPDATE', [ring.current]);
-          for (const r of rows) {
-            const dek = unwrapDek(ring.get(r.dek_key_version), r.dek_wrapped, r.id);
-            await t.query('UPDATE users SET dek_wrapped = $2, dek_key_version = $3 WHERE id = $1', [r.id, wrapDek(ring.currentKey(), dek, r.id), ring.current]);
-            dek.fill(0);
-          }
-          return rows.length;
-        });
+        const n = await rotateKeys(db, ring);
         console.log(`${n} Datenschlüssel auf Version ${ring.current} umgestellt. Alte Versionen können danach aus MASTER_KEYS entfernt werden.`);
         return;
       }

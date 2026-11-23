@@ -33,6 +33,7 @@ export interface TestEnv {
   dbName: string;
   appUrl: string;
   ownerUrl: string;
+  superDbUrl: string;
   fileDir: string;
   close(): Promise<void>;
 }
@@ -81,6 +82,7 @@ export async function setup(overrides: Record<string, string> = {}, opts: { fetc
     dbName,
     appUrl,
     ownerUrl,
+    superDbUrl: withDb(SUPER_URL, dbName),
     fileDir,
     async close() {
       await app.close();
