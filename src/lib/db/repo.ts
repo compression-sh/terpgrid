@@ -24,7 +24,7 @@ import {
   type Strain,
 } from './types';
 
-type EntityStore = Exclude<StoreName, 'settings' | 'photoData' | 'labDocs' | 'apiCache'>;
+type EntityStore = Exclude<StoreName, 'settings' | 'photoData' | 'labDocs' | 'apiCache' | 'outbox' | 'syncState' | 'syncConflicts'>;
 type Entity<S extends EntityStore> = StoreMap[S];
 export type NewRecord<T extends BaseRecord> = Omit<T, 'id' | 'createdAt' | 'updatedAt'> & { id?: string };
 

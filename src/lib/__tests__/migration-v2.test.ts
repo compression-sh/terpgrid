@@ -31,13 +31,14 @@ async function createV1(): Promise<void> {
   });
 }
 
-describe('Schema-Migration v1 → v2', () => {
+describe('Schema-Migration v1 → v3', () => {
   it('behält Bestandsdaten und legt neue Stores/Indizes an', async () => {
-    expect(DB_VERSION).toBe(2);
+    expect(DB_VERSION).toBe(3);
     await createV1();
     await closeDatabase();
     const db = await openDatabase();
-    expect(db.version).toBe(2);
+    expect(db.version).toBe(3);
+    expect([...db.objectStoreNames]).toEqual(expect.arrayContaining(['outbox', 'syncState', 'syncConflicts']));
     expect([...db.objectStoreNames]).toEqual(expect.arrayContaining(['labReports', 'labDocs', 'apiCache']));
     expect((await getOne('strains', 's1'))?.name).toBe('Alte Sorte');
     expect((await getOne('grows', 'g1'))?.name).toBe('Alter Grow');

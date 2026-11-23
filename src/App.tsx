@@ -1,6 +1,10 @@
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { type ReactNode, Suspense, lazy } from 'react';
+import { AuthProvider, useAuth } from './app/auth';
 import { ConfirmProvider } from './app/Confirm';
+import { LegacyBanner } from './app/SyncIndicator';
+import { currentDatabaseName } from './lib/db/database';
+import { AuthScreen } from './pages/auth/AuthScreen';
 import { DataProvider, useData } from './app/DataProvider';
 import { QuickActionsProvider } from './app/QuickActions';
 import { Shell } from './app/Shell';
@@ -31,6 +35,8 @@ const CompareStudio = lazy(() => import('./pages/discover/CompareStudio').then((
 const VisualExplorer = lazy(() => import('./pages/discover/VisualExplorer').then((m) => ({ default: m.VisualExplorer })));
 const KnowledgeHub = lazy(() => import('./pages/discover/KnowledgeHub').then((m) => ({ default: m.KnowledgeHub })));
 const LabInsights = lazy(() => import('./pages/LabInsights').then((m) => ({ default: m.LabInsights })));
+const SyncPage = lazy(() => import('./pages/account/SyncPage').then((m) => ({ default: m.SyncPage })));
+const ImportPage = lazy(() => import('./pages/account/ImportPage').then((m) => ({ default: m.ImportPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
 
 function Loading() {
@@ -113,6 +119,13 @@ function Routes() {
     case 'settings':
       page = <SettingsPage />;
       break;
+    case 'account':
+      if (b === 'import') page = <ImportPage />;
+      else page = <SyncPage />;
+      break;
+    case 'register':
+      page = <Dashboard />;
+      break;
     default:
       page = <NotFound />;
   }
@@ -147,22 +160,53 @@ function Gate({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
-  const route = useRoute();
-  // Das THC Lab funktioniert auch ohne IndexedDB (Eingaben im localStorage).
-  const isLab = route.path[0] === 'lab';
   return (
     <ToastProvider>
       <ConfirmProvider>
-        <DataProvider>
-          <CompareProvider>
-            <QuickActionsProvider>
-              <CatalogSync />
-              <Shell>{isLab ? <LabGate /> : <Gate><Routes /></Gate>}</Shell>
-            </QuickActionsProvider>
-          </CompareProvider>
-        </DataProvider>
+        <AuthProvider>
+          <AuthGate />
+        </AuthProvider>
       </ConfirmProvider>
     </ToastProvider>
+  );
+}
+
+/**
+ * Servermodus: ohne Anmeldung keine persönlichen Daten. Nach dem Login wird die
+ * Konto-Datenbank geöffnet; `key` erzwingt bei Kontowechsel einen frischen Datenzustand.
+ */
+function AuthGate() {
+  const auth = useAuth();
+  const route = useRoute();
+  const { state } = auth;
+  if (state.kind === 'checking')
+    return (
+      <div className="grid min-h-dvh place-items-center">
+        <Loading />
+      </div>
+    );
+  if (state.kind === 'anonymous') return <AuthScreen />;
+  // Das THC Lab funktioniert auch ohne IndexedDB (Eingaben im localStorage).
+  const isLab = route.path[0] === 'lab';
+  const dbKey = currentDatabaseName();
+  return (
+    <DataProvider key={dbKey}>
+      <CompareProvider>
+        <QuickActionsProvider>
+          <CatalogSync />
+          <Shell>
+            {state.kind === 'authenticated' && !isLab && route.path[0] !== 'account' && <LegacyBanner account={auth.lastAccount} />}
+            {isLab ? (
+              <LabGate />
+            ) : (
+              <Gate>
+                <Routes />
+              </Gate>
+            )}
+          </Shell>
+        </QuickActionsProvider>
+      </CompareProvider>
+    </DataProvider>
   );
 }
 

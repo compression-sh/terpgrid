@@ -3,6 +3,8 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { LogoMark, Wordmark } from '../components/brand/Logo';
 import { MOBILE_NAV_IDS, type NavItem, PRIMARY_NAV, SECONDARY_NAV, isActive } from './nav';
 import { useQuickActions } from './QuickActions';
+import { useAuth } from './auth';
+import { AccountFooter, SyncPill } from './SyncIndicator';
 import { href, useRoute } from './router';
 
 function SideLink({ item, active }: { item: NavItem; active: boolean }) {
@@ -69,6 +71,8 @@ function QuickAddMenu({ align = 'right' }: { align?: 'right' | 'left' }) {
 
 export function Shell({ children }: { children: ReactNode }) {
   const route = useRoute();
+  const { state } = useAuth();
+  const modeLine = state.kind === 'local' ? 'Lokalmodus: Daten nur auf diesem Gerät' : 'Konto & Datenschutz · Self-hosted';
   const [moreOpen, setMoreOpen] = useState(false);
   const mobileItems = MOBILE_NAV_IDS.map((id) => PRIMARY_NAV.find((n) => n.id === id)!);
   const moreItems = [...PRIMARY_NAV.filter((n) => !MOBILE_NAV_IDS.includes(n.id)), ...SECONDARY_NAV];
@@ -106,12 +110,7 @@ export function Shell({ children }: { children: ReactNode }) {
             </div>
           </div>
         </nav>
-        <div className="flex items-start gap-2 border-t border-white/[0.05] px-5 py-4 text-[11px] leading-snug text-ink-500">
-          <Lock className="mt-0.5 size-3 shrink-0 text-leaf-500" />
-          <span>
-            Persönliche Daten lokal gespeichert · Online-Sortendaten von externen Quellen
-          </span>
-        </div>
+        <AccountFooter />
       </aside>
 
       {/* Mobile Kopfzeile */}
@@ -120,8 +119,11 @@ export function Shell({ children }: { children: ReactNode }) {
           <LogoMark className="size-8 shrink-0" />
           <Wordmark withTagline={false} />
         </a>
-        <div className="w-24">
-          <QuickAddMenu />
+        <div className="flex items-center gap-2">
+          <SyncPill compact />
+          <div className="w-24">
+            <QuickAddMenu />
+          </div>
         </div>
       </header>
 
@@ -194,9 +196,9 @@ export function Shell({ children }: { children: ReactNode }) {
                 );
               })}
             </div>
-            <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-ink-500">
-              <Lock className="size-3" /> Persönliche Daten lokal · Online-Sortendaten von externen Quellen
-            </p>
+            <a href={href('account')} onClick={() => setMoreOpen(false)} className="mt-3 flex items-center justify-center gap-1.5 rounded-xl border border-white/[0.06] py-2.5 text-[12px] text-ink-300">
+              <Lock className="size-3.5" /> {modeLine}
+            </a>
           </div>
         </div>
       )}

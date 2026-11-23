@@ -8,6 +8,8 @@ import { stripTags } from './html';
 import type { LineageParent, ResearchMatch, ResearchProfile, ValueRange } from './types';
 import { CatalogError } from './types';
 
+import { cannalibBase } from './endpoint';
+
 export const CANNALIB_BASE = 'https://api.cannalib.org';
 export const CANNALIB_ATTRIBUTION = { provider: 'cannalib' as const, name: 'CannaLib', url: 'https://cannalib.org/' };
 
@@ -36,11 +38,11 @@ export function describeBasis(basis: string, samples?: number): string {
 }
 
 export function searchUrl(q: string): string {
-  return `${CANNALIB_BASE}/v1/catalogs/strains?q=${encodeURIComponent(q.trim().slice(0, 80))}`;
+  return `${cannalibBase()}/v1/catalogs/strains?q=${encodeURIComponent(q.trim().slice(0, 80))}`;
 }
 export function detailUrl(id: string): string {
   if (!/^[a-z0-9_-]{1,160}$/i.test(id)) throw new CatalogError('Ungültige CannaLib-Kennung.', 'bad_request');
-  return `${CANNALIB_BASE}/v1/catalogs/strains/${encodeURIComponent(id)}`;
+  return `${cannalibBase()}/v1/catalogs/strains/${encodeURIComponent(id)}`;
 }
 
 export function normalizeSearch(raw: unknown): ResearchMatch[] {

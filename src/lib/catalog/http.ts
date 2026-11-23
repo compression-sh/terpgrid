@@ -1,3 +1,4 @@
+import { catalogCredentials } from './endpoint';
 import { CatalogError, type RateInfo } from './types';
 
 /**
@@ -93,7 +94,7 @@ export class PoliteClient {
         res = await this.fetchImpl(url, {
           method: 'GET',
           headers: { Accept: 'application/json', ...opts.headers },
-          credentials: 'omit',
+          credentials: catalogCredentials(),
           referrerPolicy: 'no-referrer',
           mode: 'cors',
           signal: ctrl.signal,
