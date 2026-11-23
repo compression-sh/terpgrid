@@ -75,12 +75,12 @@ export function SmokingCalculator({ input, onChange, onSave, onShowTimeline }: P
     { label: 'Nicht konsumiert', value: r.theoreticalTotalMg - r.theoreticalConsumedMg, cls: 'bg-ink-600' },
     { label: 'Anteil anderer Personen', value: r.theoreticalConsumedMg - r.theoreticalPerPersonMg, cls: 'bg-ink-500' },
     { label: 'Verluste (Pyrolyse, Nebenstrom, ausgeatmet …)', value: r.theoreticalPerPersonMg - r.systemicPerPersonMg.high, cls: 'bg-rose-400/40' },
-    { label: 'Unsicherer Bereich', value: r.systemicPerPersonMg.high - r.systemicPerPersonMg.low, cls: 'bg-leaf-500/40' },
-    { label: 'Mindestens aufgenommen (grob)', value: r.systemicPerPersonMg.low, cls: 'bg-leaf-500' },
+    { label: 'Spanne der Annahme (oberer Teil)', value: r.systemicPerPersonMg.high - r.systemicPerPersonMg.low, cls: 'bg-leaf-500/40' },
+    { label: 'Unteres Ende der Annahme (kein garantiertes Minimum)', value: r.systemicPerPersonMg.low, cls: 'bg-leaf-500' },
   ];
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
       <div className="space-y-5">
         <Card title="Joint" subtitle="Menge, Gehalt und Konsum" icon={<Cigarette className="size-4" />}>
           <div className="space-y-5">
@@ -152,21 +152,29 @@ export function SmokingCalculator({ input, onChange, onSave, onShowTimeline }: P
             }
           >
             <div className="grid gap-3 sm:grid-cols-3">
-              <Stat label="THC im ganzen Joint" value={r.theoreticalTotalMg} unit="mg" theoretical />
+              <Stat step={1} label="Theoretischer THC-Gehalt" value={r.theoreticalTotalMg} unit="mg" theoretical hint="Gesamter Joint, rein rechnerisch aus Menge × Gehalt." />
               <Stat
-                label={input.people > 1 ? 'Theoretisch pro Person' : 'Theoretisch konsumiert'}
+                step={2}
+                label={input.people > 1 ? 'Theoretisch konsumiert (pro Person)' : 'Theoretisch konsumiert'}
                 value={r.theoreticalPerPersonMg}
                 unit="mg"
                 theoretical
+                hint={`${fmtPercent(input.fractionConsumed)} geraucht${input.people > 1 ? `, geteilt durch ${input.people}` : ''} – noch ohne Verluste.`}
               />
               <Stat
-                label="Systemisch aufgenommen"
+                step={3}
+                label="Geschätzte systemische Aufnahme"
                 range={r.systemicPerPersonMg}
+                rangeOnly
                 unit="mg"
                 emphasis
-                hint={`Annahme ${fmtPercent(r.bioavailability.low)}–${fmtPercent(r.bioavailability.high)} Bioverfügbarkeit`}
+                hint={`Sehr grobe Spanne aus ${fmtPercent(r.bioavailability.low)}–${fmtPercent(r.bioavailability.high)} Bioverfügbarkeit (Literatur). Auch Werte außerhalb sind möglich.`}
               />
             </div>
+            <p className="hint mt-3">
+              Die drei Werte beschreiben unterschiedliche Dinge und dürfen nicht gleichgesetzt werden. Selbst das untere Ende der Spanne ist kein garantiertes Minimum –
+              individuelle Aufnahme kann darunter oder darüber liegen.
+            </p>
 
             <div className="mt-6">
               <h3 className="mb-2 text-[13px] font-medium text-ink-200">Wohin geht das THC? (pro Person, grob)</h3>

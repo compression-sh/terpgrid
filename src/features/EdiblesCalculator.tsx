@@ -1,5 +1,5 @@
 import { Cookie, FlaskConical, Scale, Sprout, Target } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Area, CartesianGrid, ComposedChart, Line, ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Callout } from '../components/ui/Callout';
 import { Card } from '../components/ui/Card';
@@ -80,9 +80,35 @@ export function EdiblesCalculator({ input, onChange, onSave }: Props) {
   const result = useMemo(() => calculateEdibles(input), [input]);
   const valid = issues.length === 0;
   const assessment = assessEdibleDose(result.perPortionMg.mid, result.perPortionMg.low, result.perPortionMg.high);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const [resultsVisible, setResultsVisible] = useState(true);
+  useEffect(() => {
+    const el = resultsRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(([e]) => setResultsVisible(!!e?.isIntersecting), { rootMargin: '0px 0px -30% 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+      {/* Mobil: Ergebnis immer erreichbar, solange das Formular im Blick ist */}
+      {valid && !resultsVisible && (
+        <button
+          type="button"
+          onClick={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          className="no-print fixed inset-x-3 bottom-[calc(4.6rem+env(safe-area-inset-bottom))] z-30 flex items-center justify-between gap-3 rounded-2xl border border-leaf-500/25 bg-ink-850/95 px-4 py-3 text-left shadow-2xl backdrop-blur-xl animate-fade-up lg:hidden"
+          aria-label="Zum Ergebnis springen"
+        >
+          <span className="min-w-0">
+            <span className="block text-[11px] text-ink-400">THC pro Portion · Schätzung</span>
+            <span className="block font-mono text-[15px] tabular text-ink-50">
+              ca. {fmt(result.perPortionMg.mid)} mg <span className="text-xs text-ink-400">({fmt(result.perPortionMg.low)}–{fmt(result.perPortionMg.high)})</span>
+            </span>
+          </span>
+          <span className="shrink-0 text-xs font-medium text-leaf-300">Ergebnis ↓</span>
+        </button>
+      )}
       {/* Eingaben */}
       <div className="space-y-5">
         <Card title="Ausgangsmaterial" subtitle="Cannabis-Menge und Wirkstoffgehalt" icon={<Sprout className="size-4" />}>
@@ -240,7 +266,7 @@ export function EdiblesCalculator({ input, onChange, onSave }: Props) {
             </ul>
           </Callout>
         )}
-        <div className={valid ? '' : 'pointer-events-none opacity-40 blur-[1px]'} aria-hidden={!valid}>
+        <div id="edible-results" ref={resultsRef} className={`scroll-mt-28 ${valid ? '' : 'pointer-events-none opacity-40 blur-[1px]'}`} aria-hidden={!valid}>
           <EdibleResults input={input} result={result} onSave={onSave} assessment={assessment} />
         </div>
         <ReverseCalculator input={input} />

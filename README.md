@@ -1,65 +1,70 @@
-# THC-Rechner – Edibles, Cannabutter & Wirkung
+# TERPGRID
 
-Responsive Web-App (Dark Mode) zur **Abschätzung** von THC-Mengen bei Edibles, Cannabutter und Joints – mit Unsicherheitsbereichen, Zeitachsen, Referenzbereichen und Quellen.
-Alle Berechnungen laufen **ausschließlich lokal im Browser**. Es gibt keinen Server, kein Tracking und keine Cookies. Der Produktions-Build setzt eine CSP mit `connect-src 'none'`.
+**Your personal cannabis space.** Privates, lokales Dashboard für Growlogs, Fotos, Sorten, ein persönliches Journal, die eigene Sammlung und den THC-Rechner (THC Lab).
 
-> Ein Informationswerkzeug zur Schadensminimierung, keine medizinische Beratung und keine Dosierungsempfehlung.
+- Kein Konto, kein Server, kein Tracking. Alle Daten liegen in diesem Browser (IndexedDB + localStorage).
+- Der Produktions-Build setzt eine Content-Security-Policy mit `connect-src 'none'`, sodass die App keine Netzwerkverbindungen aufbauen kann.
+- Fotos werden beim Import verkleinert und neu kodiert. Dabei fallen alle eingebetteten Metadaten weg (inkl. GPS).
+- Ein Informationswerkzeug zur Dokumentation und Schadensminimierung, keine medizinische oder rechtliche Beratung.
 
-## Funktionen
+## Bereiche
 
 | Bereich | Inhalt |
 | --- | --- |
-| **Edibles** | Cannabis-Menge, Gesamt-THC oder THC + THCA getrennt (Faktor 0,877), Butter/Öl, Abseihverlust, Decarboxylierungs- und Extraktionsausbeute, Rezept (pro Rezept oder pro Portion), Portionen. Ergebnisse: theoretisches THC, THC nach Decarb, THC im Fett, mg/g, Rezept, Portion – jeweils mit Bereich. Dazu Verlustdarstellung, Dosiskurve und Umkehrrechner |
-| **Joint** | Theoretischer Gehalt, konsumierter Anteil, Teilen, grobe Spanne der systemischen Aufnahme je Profil (10–35 %, Extreme 2–56 %), Verluste, Wirkeintritt |
-| **Dosierung** | Potenz-Einordnung, Edible-Referenzbereiche (2,5 / 5 / 10 mg …), Warnungen, Toleranz, Edible ≠ Joint, Überdosierung |
-| **Zeitachse** | Interaktiver Wirkverlauf (Rauchen vs. Edibles) als Zeitbereiche nach Health Canada |
-| **Werkzeuge** | g ↔ mg ↔ %, Konzentrationen mischen/verdünnen, Cannabis-zu-Butter-Verhältnis, Umkehrrechner mg pro Portion |
-| **Vergleich** | Bis zu 6 hypothetische Rezepte mit Fehlerbalken |
-| **Gespeichert** | Lokale Speicherung (localStorage), JSON-Sicherung und -Import |
-| **Export** | CSV (Excel, `;`), JSON, Text, Drucken/PDF |
-| **Quellen** | Formeln, Annahmen und Literatur |
+| **Übersicht** | Aktive Grows mit Tageszähler und Phase, neueste Fotos, anstehende Erinnerungen, Journal, Berechnungen, Sorten und Aktivitätsverlauf, ausschließlich aus eigenen Daten. Schnellaktionen; Karten lassen sich sortieren und ausblenden. |
+| **Growlogs** | Projekte anlegen, bearbeiten, abschließen, archivieren und löschen. Meilensteine (Keimung … Abgeschlossen) mit berechneten Phasendauern. Projektseite mit Titelbild, Pflanzen, Foto-Zeitleiste, Verlauf, Messwert-Diagrammen, Kalender und Ausgaben. |
+| **Pflanzen** | Eigenes Profil je Pflanze: Sorte, Typ, eigene Meilensteine, Aktivitäten (Gießen, Düngen, Umtopfen, Messung, Problem …), Messwerte (Höhe, °C, rel. Feuchte, pH, EC, eigene Größen), Fotos und Ernteergebnis. |
+| **Fotos** | Mehrfach-Upload (Drag & Drop, Kamera/Galerie), Filter nach Grow, Pflanze, Phase und Datum, Vollbildansicht, Vorher/Nachher-Schieber, Nebeneinander-Ansicht, Zeitraffer-Diashow mit Geschwindigkeitsregler. |
+| **THC Lab** | Der bisherige THC-Rechner unverändert: Edibles, Joint, Dosierung, Zeitachse, Werkzeuge, Vergleich, Gespeichert und Quellen. |
+| **Sorten** | Eigene Bibliothek mit Herkunftskennzeichnung je Angabe (eigene Angabe / Herstellerangabe / Laborwert), Terpenen, Aroma, Bewertung und Verknüpfungen zu Grows, Journal und Sammlung. |
+| **Journal** | Optionale, private Einträge (Sorte, Konsumform, eigene Mengenangabe, Stimmung, Notizen) mit Listen- und Kalenderansicht, Suche, Filtern und einer rein beschreibenden Zusammenfassung. |
+| **Sammlung** | Inventar, Zubehör, Ausrüstung und Ausgaben. Mengen ändern sich nur nach Bestätigung. |
+| **Kalender** | Monats- und Wochenansicht mit Aktivitäten, Fotos, Meilensteinen und eigenen (wiederkehrenden) Erinnerungen, Erledigt-Status und ICS-Export. Keine Push-Benachrichtigungen. |
+| **Analysen** | Grow-Dauer, Ausgaben nach Kategorie und Grow, Messwert-Verläufe, Ernteergebnisse, Sorten-Bewertungen, Journal-Verlauf und Foto-Heatmap. |
+| **Werkzeuge** | Einheiten (°C/°F, g/oz, l/gal, cm/in), Stromkosten, Kostenüberschlag, Datum & Dauer, Foto-Vergleich. |
+| **Daten & Backup** | Speicherbelegung, ZIP-Backup (versioniertes `manifest.json` + Fotos), geprüfter Import (zusammenführen oder ersetzen), JSON- und Foto-Export, vollständiges Löschen. |
 
-## Rechenmodell (Kurzfassung)
+## Datenhaltung
 
-```
-THC_gesamt  = THC + 0,877 · THCA          (nur bei getrennter Angabe)
-mg_decarb   = g · 1000 · (THC_frei + THC_aus_THCA · η_decarb) / 100
-mg_Fett     = mg_decarb · η_extraktion
-c [mg/g]    = mg_Fett / g_Fett            (Abseihverlust ändert c nicht → keine Doppelzählung)
-mg_Portion  = c · g_Butter_im_Rezept / Portionen
-```
+- **IndexedDB** (`terpgrid`) mit versionierten Schema-Migrationen (`src/lib/db/database.ts`) und einmaligen Datenmigrationen (`src/lib/db/migrate.ts`).
+- **Migration der Altdaten:** Gespeicherte Berechnungen des THC-Rechners (`cannabisrechner.saved.v1`) werden beim ersten Start übernommen. Der alte Schlüssel bleibt als Sicherung erhalten.
+- **Eingaben des THC Lab** liegen weiterhin unter den bisherigen localStorage-Schlüsseln.
+- **Löschen mit Abhängigkeiten:** Löschoperationen räumen abhängige Datensätze in einer Transaktion auf (`src/lib/db/repo.ts`). Ein gelöschter Grow entfernt seine Pflanzen, Einträge, Fotos und Ausgaben; Inventar bleibt erhalten.
+- **Backups** werden vor dem Schreiben geprüft: Format, Version, Pflichtfelder und Verknüpfungen. Verwaiste Verweise werden gelöst (`src/lib/backup.ts`).
 
-Der Unsicherheitsbereich kombiniert die Etikett-Unsicherheit (± u relativ), η_decarb ± 10 Pp. und η_extraktion ± 15 Pp. als konservativen Worst/Best-Case.
-Details stehen in `src/lib/sources.ts` und im Tab „Quellen“.
+**Einschränkungen**
+
+- Daten sind an Browser und Gerät gebunden, werden nicht synchronisiert und sind nicht verschlüsselt. Regelmäßige Backups werden empfohlen.
+- Bilder im HEIC-Format werden nur angenommen, wenn der Browser sie dekodieren kann.
+- Metadaten werden durch Neu-Kodierung entfernt. Das Aufnahmedatum wird vorher aus EXIF gelesen; fehlt es, gilt das Dateidatum.
 
 ## Entwicklung
 
 ```bash
 npm install
 npm run dev        # Entwicklungsserver
-npm test           # Unit-Tests (Vitest)
-npm run build      # Typecheck + Produktions-Build nach dist/
-npm run preview    # Build lokal ansehen
+npm test           # Unit-Tests (Vitest, inkl. IndexedDB via fake-indexeddb)
+npm run build      # Typecheck + Produktions-Build
+npm run preview    # Build lokal ansehen (Port 4173)
+npm run e2e        # Browser-Smoke-Test gegen den Preview-Server (benötigt Playwright + Chromium)
 ```
 
 ## Architektur
 
 ```
 src/
-  lib/calc/      reine, UI-unabhängige Berechnungslogik (getestet)
-    constants.ts   Konstanten & dokumentierte Annahmen
-    potency.ts     THC/THCA, %, mg, Potenzeinordnung
-    edibles.ts     Cannabutter-Modell, Unsicherheit, Umkehrrechnung
-    smoking.ts     Joint-Modell, Bioverfügbarkeit, Verluste
-    dosage.ts      Edible-Referenzbereiche, Warnungen
-    timeline.ts    Wirkphasen als Zeitbereiche
-    conversions.ts Einheiten, Mischungen, Verhältnisse
-    compare.ts     Rezeptvergleich
-    validation.ts  Eingabevalidierung, Zahlen-Parsing (Dezimalkomma)
-  lib/           storage, exporters, format, guards, sources
-  lib/__tests__/ Unit-Tests
-  components/ui/ wiederverwendbare UI-Bausteine
-  features/      Ansichten der einzelnen Tabs
+  app/            Router (Hash), DataProvider, Shell/Navigation, Dialoge, Toasts, Schnellaktionen
+  pages/          Dashboard, Growlogs (Liste/Projekt/Pflanze), Fotos, Sorten, Journal,
+                  Sammlung, Kalender, Analysen, Werkzeuge, Daten, Einstellungen, THC Lab
+  features/       THC-Rechner-Ansichten (unverändert übernommen)
+  components/     ui/ (Card, Modal, Stat, …), forms/, grow/, photos/, brand/
+  lib/calc/       THC-Berechnungslogik (unverändert, getestet)
+  lib/db/         Datenmodell, IndexedDB-Schicht, Repository, Migrationen
+  lib/grow/       Phasen, Messreihen, Beschriftungen
+  lib/media/      EXIF-Leser, Bildverarbeitung
+  lib/            backup, calendar (inkl. ICS), analytics, dates, …
+  lib/__tests__/  Unit-Tests
+scripts/          Browser-Smoke-Test
 ```
 
-Stack: React 19, TypeScript, Vite, Tailwind CSS 4, Recharts und Vitest. Die Schriften Inter und JetBrains Mono werden lokal über Fontsource eingebunden.
+Stack: React 19, TypeScript, Vite, Tailwind CSS 4, Recharts, fflate (ZIP) und Vitest. Die Schriften werden lokal über Fontsource eingebunden.

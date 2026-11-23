@@ -95,7 +95,7 @@ export function NumberField({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between gap-2">
-        <label htmlFor={id} className="label flex items-center gap-2">
+        <label htmlFor={id} className="label flex min-w-0 items-center gap-2">
           {label}
           {badge && (
             <span className="rounded-full border border-amber-400/20 bg-amber-400/10 px-1.5 py-px text-[10px] font-medium uppercase tracking-wide text-amber-300">
@@ -103,7 +103,7 @@ export function NumberField({
             </span>
           )}
         </label>
-        <div className="relative w-[8rem] shrink-0">
+        <div className="relative w-[7.25rem] shrink-0 sm:w-[8rem]">
           <input
             id={id}
             inputMode={integer ? 'numeric' : 'decimal'}

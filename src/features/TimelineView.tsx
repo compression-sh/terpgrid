@@ -47,7 +47,7 @@ export function TimelineView() {
     <div className="space-y-5">
       <Card
         title="Wirkungsverlauf"
-        subtitle="Qualitative Darstellung typischer Zeitbereiche. Die Höhe ist relativ und keine Wirkstärke-Prognose."
+        subtitle="Schematische Darstellung typischer Zeitbereiche nach Health Canada. Die Kurvenhöhe ist relativ – keine Vorhersage der Wirkstärke."
         icon={<Clock className="size-4" />}
       >
         <div className="grid gap-4 sm:grid-cols-2">
@@ -94,7 +94,7 @@ export function TimelineView() {
                 tickLine={false}
                 axisLine={false}
               />
-              <YAxis domain={[0, 1]} ticks={[0, 0.5, 1]} tickFormatter={(v: number) => (v === 1 ? 'max' : v === 0 ? '0' : '')} tickLine={false} axisLine={false} />
+              <YAxis domain={[0, 1]} ticks={[0, 0.5, 1]} tickFormatter={() => ''} tickLine={false} axisLine={false} width={30} label={{ value: 'relativ', angle: -90, position: 'insideLeft', offset: 18, fill: '#5f6d68', fontSize: 10 }} />
               <Tooltip
                 contentStyle={{ background: '#0e1211', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, fontSize: 12 }}
                 labelFormatter={(m: number) => `${formatMinutes(m)} nach Konsum`}
@@ -109,6 +109,16 @@ export function TimelineView() {
               <ReferenceLine x={time} stroke="#f2f6f4" strokeDasharray="3 3" />
             </ComposedChart>
           </ResponsiveContainer>
+        </div>
+
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-ink-400">
+          {routes.map((r) => (
+            <span key={r} className="flex items-center gap-1.5">
+              <span className="h-2 w-4 rounded-sm" style={{ background: ROUTE_COLOR[r], opacity: 0.6 }} />
+              {TIMELINES[r].title}
+            </span>
+          ))}
+          <span className="text-ink-500">Band = Spanne zwischen frühem und spätem typischen Verlauf · schematisch, nicht individuell</span>
         </div>
 
         <div className="mt-4 space-y-1.5">
@@ -129,6 +139,13 @@ export function TimelineView() {
             style={{ ['--fill' as string]: `${(time / horizon) * 100}%` }}
             onChange={(e) => setT(Number(e.target.value))}
           />
+          <div className="flex flex-wrap gap-1.5 pt-1" role="group" aria-label="Zeitpunkt wählen">
+            {[15, 30, 60, 120, 240, 480, 720].filter((m) => m <= horizon).map((m) => (
+              <button key={m} type="button" onClick={() => setT(m)} aria-pressed={time === m} className={`rounded-md border px-2 py-1 font-mono text-[11px] ${time === m ? 'border-leaf-500/40 bg-leaf-500/15 text-leaf-200' : 'border-white/[0.08] text-ink-400 hover:text-ink-200'}`}>
+                {formatMinutes(m)}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className={`mt-5 grid gap-3 ${routes.length > 1 ? 'md:grid-cols-2' : ''}`}>
