@@ -115,7 +115,11 @@ Der größte Zuwachs kommt aus dem bereits lizenzierten Datensatz selbst (Parser
 ### CI
 Alle erforderlichen Checks auf dem ursprünglichen PR-Stand grün (2 Läufe): Frontend (Typecheck, Lint, Tests, Build, Audit),
 Backend (Typecheck, Migrationen, Integrations- und Isolationstests, Audit), Browser-Smoke-Test, Deployment-Konfiguration,
-Secret-Scan. Keine Reviews oder Kommentare. Branch konfliktfrei zu `main`. Ergebnisse für den neuen Stand: siehe PR.
+Secret-Scan. Keine Reviews oder Kommentare.
+
+**Hinweis zum Ablauf:** PR #6 wurde am 24.11.2026 um 18:49 UTC mit dem ursprünglichen Stand (`2157b6e`) gemergt, bevor die
+folgenden Korrekturen fertig waren. Sie kommen über einen eigenen, kleinen Folge-PR nach `main` (3 Commits, 24 Dateien,
+keine Überschneidung mit bereits gemergten Änderungen). CI für diesen Stand: grün (Läufe 25 und 26).
 
 ### Gefundene und behobene Fehler
 | # | Fehler | Auswirkung | Behebung |
@@ -180,11 +184,20 @@ Die folgenden Inhalte geben Studien bzw. Datenbanken wieder, wurden aber nicht v
    Stereochemie-Hinweise, Formulierung „vorläufig identifiziert“ (Janta & Vimolmangkang), Isomer-Gruppen.
 6. **Recht:** Hinweis zum rechtlichen Rahmen im Anbau-Überblick; Nutzungsbedingungen der Datenquellen vor produktiver Nutzung.
 
+### Nutzungsbedingungen StrainAPI (erneut geprüft am 24.11.2026)
+Die „API Terms of Use“ (https://www.strainapi.com/api-terms/, „Last updated: October 6, 2026“) sind gegenüber der ersten
+Prüfung unverändert. Erlaubt: Nutzung auch kommerziell, Caching „when reasonably necessary“; zwischengespeicherte Daten sollen
+„at reasonable intervals“ aktualisiert werden; unnötige wiederholte Anfragen sind zu vermeiden. Verlangt: Namensnennung
+„Data provided by StrainAPI“ mit Link. Verboten: im Wesentlichen vollständige Kopie, Weitergabe als konkurrierender Datensatz,
+Umgehen von Limits (keine festen Zahlen genannt). Der Refresh entspricht dem: höchstens alle 20 h, nur bei bald ablaufenden
+Angaben, gespeichert werden nur exakt zugeordnete Sorten (derzeit 37), 429-Antworten führen zu Pausen. **Restrisiko:** Der
+Verzeichnis-Abruf liest die öffentliche Liste (≈ 725 Einträge, 8 Anfragen) im Speicher; das ist sparsamer als Einzelsuchen,
+sollte aber bei geänderten Bedingungen neu bewertet werden. Der Timer bleibt deaktiviert, bis er bewusst eingeschaltet wird.
+
 ### Freigabe-Einschätzung
-Aus technischer Sicht ist PR #6 nach diesen Korrekturen mergebereit, sofern die CI auf dem neuen Stand grün ist: keine
-offenen Fehler, keine neuen Abhängigkeiten, Migration additiv, Backup/Restore geprüft. Vor einer **produktiven** Nutzung der
-Academy-Inhalte empfiehlt sich die oben genannte fachliche Begutachtung; vor Aktivierung der StrainAPI-Anreicherung auf einem
-Server sollten die Nutzungsbedingungen erneut geprüft werden. Merge und Deployment erfolgen nur nach deiner Freigabe.
+Aus technischer Sicht ist der Folge-PR mergebereit: CI grün, keine offenen Fehler, keine neuen Abhängigkeiten, keine
+Migration, Backup/Restore geprüft. Vor einer **produktiven** Nutzung der Academy-Inhalte empfiehlt sich die oben genannte
+fachliche Begutachtung. Merge und Deployment erfolgen nur nach deiner Freigabe.
 
 ## Screenshots
 
