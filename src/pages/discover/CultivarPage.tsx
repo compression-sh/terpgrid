@@ -465,6 +465,25 @@ export function CultivarPage({ id }: { id: string }) {
             </Card>
           )}
 
+          {(d.siblings?.length ?? 0) > 0 && (
+            <Card title="Gleiche Elternangaben" subtitle={`Andere Sorten, deren Quellen dieselben zwei Eltern nennen – Namensgleichheit der Eltern, keine geprüfte Verwandtschaft`}>
+              <MiniList items={d.siblings!} />
+            </Card>
+          )}
+
+          {(d.breederMore?.length ?? 0) > 0 && (
+            <Card
+              title={`Weitere Sorten von ${c.breeder.name}`}
+              actions={
+                <a href={href(`discover/breeders/${c.breeder.id}`)} className="btn-ghost py-1.5 text-xs">
+                  Alle
+                </a>
+              }
+            >
+              <MiniList items={d.breederMore!} />
+            </Card>
+          )}
+
           <Card title="Nachkommen im Katalog" subtitle={d.childCount ? `${fmt(d.childCount, 0)} Sorten nennen „${c.name}“ als Elternteil` : undefined} icon={<GitFork className="size-4" />}>
             {d.children.length ? (
               <>

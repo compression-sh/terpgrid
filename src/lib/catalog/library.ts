@@ -121,6 +121,10 @@ export interface LibCultivarDetail {
   children: LibCultivar[];
   childCount: number;
   sameName: LibCultivar[];
+  /** Sorten mit identischen dokumentierten Eltern (beide) */
+  siblings?: LibCultivar[];
+  /** Weitere Sorten desselben Breeders (meistgelistet zuerst) */
+  breederMore?: LibCultivar[];
   dataset?: { version: string; importedAt: string };
   attribution: LibAttribution;
 }
