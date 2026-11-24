@@ -2,7 +2,7 @@
 
 **Your personal cannabis space.** Persönliches Dashboard für Growlogs, Fotos, einen Online-Sortenkatalog (Discover), ein persönliches Journal, die eigene Sammlung, Laborberichte und den THC-Rechner (THC Lab).
 
-**Self-hosted · Private Daten geschützt · Kein Tracking.**
+**Self-hosted · Private Daten geschützt · Kein Tracking.** · Version 4.0.0-rc.1 (Release-Kandidat) · Änderungen: [CHANGELOG.md](CHANGELOG.md)
 
 TERPGRID läuft in zwei Modi:
 
@@ -10,7 +10,7 @@ TERPGRID läuft in zwei Modi:
 | --- | --- | --- |
 | Konten | Anonyme Konten (Benutzername oder generierte Konto-ID, keine E-Mail), Einladungen, 2FA, Passkeys, Recovery-Codes | keine |
 | Speicherort | Eigener Server (PostgreSQL + Dateispeicher), Arbeitskopie je Konto im Browser | nur dieser Browser |
-| Verschlüsselung | Inhalte auf dem Server AES-256-GCM (Envelope, Schlüssel je Konto). **Keine Ende-zu-Ende-Verschlüsselung** – der Server-Betreiber könnte technisch entschlüsseln | keine |
+| Verschlüsselung | Inhalte auf dem Server AES-256-GCM (Envelope, Schlüssel je Konto, rotierbar). **Keine Ende-zu-Ende-Verschlüsselung** – der Server-Betreiber könnte technisch entschlüsseln | keine |
 | Geräte | Synchronisation mit Drei-Wege-Merge und Konfliktauflösung, offline nutzbar, THC-Lab-Entwürfe geräteübergreifend | ein Gerät |
 | Sortendaten | über den Proxy deines Servers | direkt bei StrainAPI/CannaLib |
 
@@ -43,11 +43,11 @@ TERPGRID läuft in zwei Modi:
 | **Kalender** | Monats- und Wochenansicht mit Aktivitäten, Fotos, Meilensteinen und eigenen (wiederkehrenden) Erinnerungen, Erledigt-Status und ICS-Export. Keine Push-Benachrichtigungen. |
 | **Insights** | Kennzahlen mit Datengrundlage (aktive Grows, dokumentierte Grow-Dauer, Pflanzenalter, Foto-Häufigkeit, Messungen, Sorten, Journal, Ausgaben) – ohne Empfehlungen oder Vorhersagen, mit Hinweis bei zu wenig Daten. Dazu Grow-Dauer, Ausgaben nach Kategorie und Grow, Messwert-Verläufe, Ernteergebnisse, Sorten-Bewertungen, Journal-Verlauf und Foto-Heatmap. |
 | **Werkzeuge** | Einheiten (°C/°F, g/oz, l/gal, cm/in), Stromkosten, Kostenüberschlag, Datum & Dauer, Foto-Vergleich. |
-| **Konto & Datenschutz** | Sicherheitsstatus, Profil, Passwort, 2FA (TOTP), Passkeys (mehrere, umbenennen, entfernen), Recovery-Codes, aktive Sitzungen (einzeln/alle beenden), vollständiger Export, Kontolöschung, Datenschutz-Center mit ehrlicher Darstellung, was wo wie geschützt liegt. |
+| **Konto & Datenschutz** | Sicherheitsstatus, Gerätemodus („Geteiltes Gerät“: lokale Kopie beim Abmelden löschen), Verwaltung der lokalen Kopie, Profil, Passwort, 2FA (TOTP), Passkeys (mehrere, umbenennen, entfernen), Recovery-Codes, aktive Sitzungen (einzeln/alle beenden), vollständiger Export, Kontolöschung, Datenschutz-Center mit ehrlicher Darstellung, was wo wie geschützt liegt. |
 | **Synchronisation** | Status („synchronisiert“ erst nach Serverbestätigung), ausstehende Änderungen; Änderungen an verschiedenen Feldern werden automatisch zusammengeführt, echte Feldkonflikte erscheinen mit Feldvergleich (Meine Version / Server-Version); erneute Versuche mit wachsendem Abstand. |
 | **Verlauf** | Persönliche Zeitachse aus Meilensteinen, Pflege, Messwerten, Fotos, Journal, Sorten, Laborberichten und Kalender – aus vorhandenen Daten abgeleitet, filterbar, nach Tagen gruppiert. Kein Feed, nichts wird geteilt. |
 | **Datenübernahme** | Geführte Übernahme der bisherigen lokalen Daten in ein Konto: Vorschau, Sicherung, Zielkonto, Bestätigung, idempotenter Upload, Serverprüfung, Aufräumen erst danach. |
-| **Administration** | Konten (sperren/entsperren), Einladungen, Speicher, Backup-Status, Fehler, Sicherheitsereignisse – ohne Zugriff auf Inhalte. |
+| **Administration** | Konten (sperren/entsperren), Einladungen, Speicher, Backup-Status, System Health (Version, Schemastand, Laufzeit, Antwortzeiten, Fehlerraten – ohne personenbezogene Daten), Sicherheitsereignisse – ohne Zugriff auf Inhalte. |
 | **Befehlspalette** | Strg/⌘ + K: Navigation, Aktionen und Suche in den eigenen, lokal geladenen Daten (nichts wird gesendet). |
 | **Daten & Backup** | Speicherbelegung, ZIP-Backup (versioniertes `manifest.json` + Fotos), geprüfter Import (zusammenführen oder ersetzen), JSON- und Foto-Export, vollständiges Löschen. |
 
@@ -56,16 +56,16 @@ TERPGRID läuft in zwei Modi:
 - **Externe Datenquellen:** StrainAPI (öffentliche Read-only-API, Attribution „Data provided by StrainAPI“, angemessenes Caching laut API-Bedingungen) und optional CannaLib (anonym ca. 20 Anfragen/Std., 60/Tag – nur auf Klick, nur im Arbeitsspeicher, Bilder werden wegen ungeprüfter Rechte nicht angezeigt). Der Datensatz *ci-strains-pro* wurde geprüft, aber nicht eingebunden (StrainAPI deckt Bilder, Genetik und Evidenzstatus bereits ab; ein zusätzlicher Massendatensatz hätte nur den Bundle vergrößert).
 - **API-Cache:** IndexedDB-Store `apiCache` – Listen/Suche 30 Min., Details 6 Std. frisch; bis 7 Tage als gekennzeichneter Offline-Fallback; max. 400 Einträge; nicht Teil des Backups.
 - **Höflicher Client:** begrenzte Parallelität, Mindestabstand je Host, Abbruch veralteter Suchen, Retry-After/Rate-Limit-Header werden respektiert, keine Cookies, kein Referrer.
-- **IndexedDB** (`terpgrid`) mit versionierten Schema-Migrationen (`src/lib/db/database.ts`) und einmaligen Datenmigrationen (`src/lib/db/migrate.ts`).
+- **IndexedDB** (Lokalmodus `terpgrid`, Servermodus je Konto eine eigene Datenbank `terpgrid-u-<Konto>`) mit versionierten Schema-Migrationen (`src/lib/db/database.ts`) und einmaligen Datenmigrationen (`src/lib/db/migrate.ts`).
 - **Migration der Altdaten:** Gespeicherte Berechnungen des THC-Rechners (`cannabisrechner.saved.v1`) werden beim ersten Start übernommen. Der alte Schlüssel bleibt als Sicherung erhalten.
-- **Eingaben des THC Lab** liegen weiterhin unter den bisherigen localStorage-Schlüsseln.
+- **Eingaben des THC Lab:** Im Servermodus als Entwurf je Konto gespeichert und geräteübergreifend synchronisiert; im Lokalmodus unter den bisherigen localStorage-Schlüsseln.
 - **Löschen mit Abhängigkeiten:** Löschoperationen räumen abhängige Datensätze in einer Transaktion auf (`src/lib/db/repo.ts`). Ein gelöschter Grow entfernt seine Pflanzen, Einträge, Fotos und Ausgaben; Inventar bleibt erhalten.
 - **Backups** werden vor dem Schreiben geprüft: Format, Version, Pflichtfelder und Verknüpfungen. Verwaiste Verweise werden gelöst (`src/lib/backup.ts`).
 
 **Einschränkungen**
 
 - Lokalmodus: Daten sind an Browser und Gerät gebunden, werden nicht synchronisiert und sind nicht verschlüsselt. Regelmäßige Backups werden empfohlen.
-- Servermodus: Die Arbeitskopie im Browser ist unverschlüsselt (auf gemeinsam genutzten Geräten beim Abmelden löschen). Eingaben des THC Lab bleiben gerätebezogen. Passkeys sind vorbereitet dokumentiert, aber nicht umgesetzt.
+- Servermodus: Die Arbeitskopie im Browser ist unverschlüsselt (auf gemeinsam genutzten Geräten den Modus „Geteiltes Gerät“ nutzen). Die Verschlüsselung schützt Daten auf dem Datenträger und in Backups, nicht vor jemandem, der den laufenden Server kontrolliert (keine Ende-zu-Ende-Verschlüsselung, siehe [docs/E2EE-DECISION.md](docs/E2EE-DECISION.md)).
 - Bilder im HEIC-Format werden nur angenommen, wenn der Browser sie dekodieren kann.
 - Metadaten werden durch Neu-Kodierung entfernt. Das Aufnahmedatum wird vorher aus EXIF gelesen; fehlt es, gilt das Dateidatum.
 
@@ -76,6 +76,7 @@ npm install --legacy-peer-deps
 npm run dev        # Entwicklungsserver (Lokalmodus)
 TERPGRID_API_PROXY=http://127.0.0.1:8080 npm run dev   # mit lokalem Backend (server/)
 npm test           # Unit-Tests (Vitest, inkl. IndexedDB via fake-indexeddb)
+npm run lint       # ESLint
 npm run build      # Typecheck + Produktions-Build
 npm run preview    # Build lokal ansehen (Port 4173)
 npm run e2e        # Browser-Smoke-Test gegen den Preview-Server (benötigt Playwright + Chromium)
@@ -105,8 +106,9 @@ src/
   pages/auth/     Anmeldung, Registrierung, Wiederherstellung
   pages/account/  Konto & Datenschutz, Synchronisation, Datenübernahme, Administration
 server/           Backend (Node 22, Fastify, PostgreSQL) – siehe server/src, Tests in server/test
-deploy/           Docker Compose, Caddy, Installations-/Upgrade-/Backup-Skripte
+deploy/           Docker Compose, Caddy, preflight/install/upgrade/rollback, Backup (restic), systemd
 scripts/          Browser-Smoke-Test
+.github/          CI (Lint, Tests, Migrationen, Smoke-Test, Image-Builds, Secret-Scan)
 ```
 
 Backend-Tests (echte PostgreSQL-Datenbank nötig):
@@ -116,6 +118,8 @@ cd server && npm install --legacy-peer-deps
 TEST_PG_URL=postgres://postgres:<pw>@127.0.0.1:5432/postgres npm test
 ```
 
+Server-Verwaltung (im Container: `docker compose exec api node dist/cli.js <befehl>`): `invite`, `promote`/`demote`, `migrate`, `schema-status`, `verify-data`, `rotate-keys` (Server-Schlüssel), `rotate-user-keys`/`key-status`/`purge-retired-keys` (Schlüssel je Konto), `cleanup`. Details: [docs/RUNBOOK.md](docs/RUNBOOK.md).
+
 Tests verwenden gekürzte, echte API-Antworten als Fixtures (`src/lib/__tests__/fixtures`).
 
-Stack: React 19, TypeScript, Vite, Tailwind CSS 4, Recharts, fflate (ZIP) und Vitest; Backend: Node 22, Fastify 5, PostgreSQL 16, @node-rs/argon2, otpauth; Betrieb: Docker Compose, Caddy, restic. Die Schriften werden lokal über Fontsource eingebunden.
+Stack: React 19, TypeScript, Vite, Tailwind CSS 4, Recharts, fflate (ZIP) und Vitest; Backend: Node 22, Fastify 5, PostgreSQL 16, @node-rs/argon2, otpauth, @simplewebauthn (Passkeys); Betrieb: Docker Compose, Caddy, restic. Die Schriften werden lokal über Fontsource eingebunden.
