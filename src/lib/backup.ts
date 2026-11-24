@@ -227,7 +227,7 @@ export function sanitizeData(data: BackupData, photoIdsWithData?: Set<string>): 
   return {
     ...data,
     grows: data.grows.map(cover),
-    plants: plantsKept.map((p) => cover({ ...p, strainId: p.strainId && strains.has(p.strainId) ? p.strainId : undefined })),
+    plants: plantsKept.map((p) => cover({ ...p, strainId: p.strainId && strains.has(p.strainId) ? p.strainId : undefined, spaceId: p.spaceId && inventory.has(p.spaceId) ? p.spaceId : undefined })),
     activities: data.activities
       .filter((a) => grows.has(a.growId))
       .map((a) => ({
@@ -248,6 +248,7 @@ export function sanitizeData(data: BackupData, photoIdsWithData?: Set<string>): 
         ...i,
         growId: i.growId && grows.has(i.growId) ? i.growId : undefined,
         strainId: i.strainId && strains.has(i.strainId) ? i.strainId : undefined,
+        spaceId: i.spaceId && inventory.has(i.spaceId) && i.spaceId !== i.id ? i.spaceId : undefined,
       }),
     ),
     expenses: data.expenses.map((e) => ({ ...e, growId: e.growId && grows.has(e.growId) ? e.growId : undefined })),

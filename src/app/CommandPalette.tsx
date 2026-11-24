@@ -1,9 +1,14 @@
 /**
- * Befehlspalette (Strg/⌘ + K): Navigation, Aktionen und Suche in den eigenen Daten.
- * Die Suche läuft nur lokal auf bereits geladenen Daten des angemeldeten Kontos –
- * Suchbegriffe werden nie an Server oder Dritte gesendet.
+ * Befehlspalette (Strg/⌘ + K): Navigation, Aktionen und Suche.
+ * - Eigene Daten: nur lokal auf den geladenen Daten des angemeldeten Kontos.
+ * - Wissen: lokal (Cannabis-101-Artikel sind Teil der App).
+ * - Katalog/Breeder (nur Servermodus mit importiertem Katalog): Anfrage an die EIGENE
+ *   Instanz, nie an Dritte; persönliche Daten werden dabei nicht gesendet.
  */
-import { BookOpenText, CornerDownLeft, FlaskRound, Leaf, LogOut, Package, Plus, RefreshCw, Search, ShieldCheck, Sprout, Bell, UserRound, Users } from 'lucide-react';
+import { BookOpen, BookOpenText, CornerDownLeft, Dna, FlaskRound, Leaf, Loader2, LogOut, NotebookPen, Package, Plus, RefreshCw, Search, ShieldCheck, Sprout, Bell, UserRound, Users } from 'lucide-react';
+import { KB_ARTICLES } from '../lib/knowledge';
+import { type LibBreeder, type LibCultivar, library } from '../lib/catalog/library';
+import { useLibraryStatus } from './library';
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { searchRecords, type SearchHit, normalize } from '../lib/search';
 import { useAuth } from './auth';
@@ -16,7 +21,7 @@ import { logoutFlow } from './SyncIndicator';
 
 interface Item {
   id: string;
-  group: 'Deine Daten' | 'Aktionen' | 'Navigation';
+  group: 'Deine Daten' | 'Katalog' | 'Breeder' | 'Wissen' | 'Aktionen' | 'Navigation';
   label: string;
   hint?: string;
   icon: ReactNode;
@@ -45,6 +50,23 @@ export function CommandPalette() {
   const confirm = useConfirm();
   const server = auth.state.kind === 'authenticated';
   const admin = server && auth.state.kind === 'authenticated' && auth.state.user.role === 'admin';
+  const lib = useLibraryStatus();
+  const [remote, setRemote] = useState<{ q: string; cultivars: LibCultivar[]; breeders: LibBreeder[]; loading: boolean }>({ q: '', cultivars: [], breeders: [], loading: false });
+  useEffect(() => {
+    const term = q.trim();
+    if (!open || !lib || term.length < 2) return setRemote({ q: '', cultivars: [], breeders: [], loading: false });
+    const c = new AbortController();
+    setRemote((r) => ({ ...r, loading: true }));
+    const t = window.setTimeout(() => {
+      Promise.all([library.search({ q: term, perPage: 5 }, c.signal), library.breeders({ q: term, perPage: 3 }, c.signal)])
+        .then(([s, b]) => setRemote({ q: term, cultivars: s.items, breeders: b.items, loading: false }))
+        .catch(() => !c.signal.aborted && setRemote({ q: term, cultivars: [], breeders: [], loading: false }));
+    }, 220);
+    return () => {
+      window.clearTimeout(t);
+      c.abort();
+    };
+  }, [q, open, lib]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -85,6 +107,7 @@ export function CommandPalette() {
       if (admin) nav.push({ id: 'nav-admin', group: 'Navigation', label: 'Administration', icon: <Users className="size-4" />, run: close(() => navigate('admin')) });
     }
     const actions: Item[] = [
+      { id: 'a-log', group: 'Aktionen', label: 'Schnell-Log (Beobachtung, Messung)', icon: <NotebookPen className="size-4" />, run: close(() => quick({ kind: 'log' })) },
       { id: 'a-grow', group: 'Aktionen', label: 'Neuer Grow', icon: <Plus className="size-4" />, run: close(() => quick({ kind: 'grow' })) },
       { id: 'a-plant', group: 'Aktionen', label: 'Pflanze hinzufügen', icon: <Plus className="size-4" />, run: close(() => quick({ kind: 'plant' })) },
       { id: 'a-photo', group: 'Aktionen', label: 'Foto hochladen', icon: <Plus className="size-4" />, run: close(() => quick({ kind: 'photo' })) },
@@ -104,8 +127,12 @@ export function CommandPalette() {
       icon: KIND_ICON[h.kind],
       run: close(() => navigate(h.to)),
     }));
-    return [...records, ...actions.filter(match), ...nav.filter(match)];
-  }, [q, data, quick, auth, confirm, server, admin]);
+    const catalogItems: Item[] = remote.q && remote.q === q.trim() ? remote.cultivars.map((c) => ({ id: `c-${c.id}`, group: 'Katalog', label: c.version ? `${c.name} (${c.version})` : c.name, hint: c.breeder.name + (c.auto ? ' · Auto' : ''), icon: <Dna className="size-4" />, run: close(() => navigate(`discover/cultivar/${c.id}`)) })) : [];
+    if (catalogItems.length && remote.q) catalogItems.push({ id: 'c-all', group: 'Katalog', label: `Alle Treffer für „${remote.q}“ im Katalog`, icon: <Search className="size-4" />, run: close(() => navigate(`discover?q=${encodeURIComponent(remote.q)}`)) });
+    const breederItems: Item[] = remote.q && remote.q === q.trim() ? remote.breeders.map((b) => ({ id: `b-${b.id}`, group: 'Breeder', label: b.name, hint: `${b.cultivarCount} Sorten`, icon: <Users className="size-4" />, run: close(() => navigate(`discover/breeders/${b.id}`)) })) : [];
+    const knowledge: Item[] = query.length >= 2 ? KB_ARTICLES.filter((a) => normalize(`${a.title} ${a.summary}`).includes(query)).slice(0, 4).map((a) => ({ id: `k-${a.id}`, group: 'Wissen', label: a.title, hint: 'Cannabis 101', icon: <BookOpen className="size-4" />, run: close(() => navigate(`discover/learn/${a.id}`)) })) : [];
+    return [...records, ...catalogItems, ...breederItems, ...knowledge, ...actions.filter(match), ...nav.filter(match)];
+  }, [q, data, quick, auth, confirm, server, admin, remote]);
 
   useEffect(() => {
     setActive(0);
@@ -181,7 +208,10 @@ export function CommandPalette() {
           })}
         </ul>
         <div className="flex items-center justify-between border-t border-white/[0.05] px-4 py-2 text-[11px] text-ink-500">
-          <span>Suche nur in deinen lokal geladenen Daten – nichts wird gesendet.</span>
+          <span className="inline-flex items-center gap-1.5">
+            {remote.loading && <Loader2 className="size-3 animate-spin" />}
+            {lib ? 'Eigene Daten lokal · Katalog über deinen Server · nichts an Dritte' : 'Suche nur in deinen lokal geladenen Daten – nichts wird gesendet.'}
+          </span>
           <span className="hidden sm:inline">↑↓ wählen · ↵ öffnen</span>
         </div>
       </div>

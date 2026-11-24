@@ -32,6 +32,7 @@ Grundlage: OWASP ASVS 5.0 und die OWASP Cheat Sheets (Password Storage, Authenti
 | Admin | Rollenprüfung serverseitig, Re-Auth, nur Metadaten/Kennzahlen, keine Inhalte, letzter Admin nicht löschbar | `routes/admin.ts` | `auth.test.ts`, E2E |
 | Logs/Audit | Keine Passwörter, Tokens, Cookies, Inhalte; Einladungs-Token im Pfad geschwärzt (API + Caddy); IP nur als gekürzter HMAC; Audit 180 Tage | `audit.ts`, `app.ts`, `Caddyfile` | `auth.test.ts`, Stack-Logprüfung |
 | Browser | Kein Token in localStorage/URL; IndexedDB je Konto; Outbox nie kontoübergreifend; THC-Lab-Entwürfe je Konto (nie gerätweit); Service Worker cacht nie `/api/*`; Sitzungsablagen und Foto-Cache im Speicher beim Abmelden/Kontowechsel geleert; Modus „Geteiltes Gerät“ (lokale Kopie beim Abmelden immer gelöscht, keine gemerkte Kennung) | `src/app/auth.tsx`, `src/lib/device.ts`, `public/sw.js` | Frontend `sync.test.ts`, E2E (u. a. fremdes Konto auf demselben Gerät) |
+| Sortenkatalog (5.0) | Öffentliche Referenzdaten in eigenen Tabellen ohne Personenbezug; Import nur mit Owner-Rolle nach SHA-256-Prüfung (eine Transaktion); Laufzeitrolle nur `SELECT`; API nur angemeldet; Parameter per Allowlist/Regex, `LIKE`-Platzhalter maskiert, alle Abfragen parametrisiert | `catalog/*.ts`, `routes/library.ts`, Migration 005 | `library.test.ts` (Auth, Rechte der App-Rolle, `%`/SQL-Zeichen, fehlgeschlagener Import ändert nichts), `cisp.test.ts` |
 | Betrieb/Monitoring | Schema-Schutz beim Start (DB neuer als Programm → Start verweigert), Preflight, Upgrade mit Backup-Pflicht, Rollback mit Schemaprüfung, System Health ohne personenbezogene Daten (nur Admins) | `migrate.ts`, `metrics.ts`, `deploy/*.sh` | `auth.test.ts` (Schema, System Health), Stack-Tests (Upgrade 3.0→4.0, Rollback, Restore) |
 | CI | GitHub Actions mit `contents: read`, ohne Secrets, `pull_request` (nicht `pull_request_target`), Actions per SHA, Images per Digest; Lint, Tests, Audit, gitleaks über die gesamte Historie | `.github/workflows/ci.yml`, `.gitleaks.toml` | lokal ausgeführt (alle Schritte grün) |
 | Betrieb | Container nicht-root, read-only, `cap_drop: ALL`, `no-new-privileges`, Limits, kein Docker-Socket, DB ohne Port/Internet, Secrets als Dateien | `deploy/` | Stack-Prüfung (FINAL-REPORT) |
@@ -66,7 +67,7 @@ Branch-Schutz für `main`: Pull Requests verpflichtend, Status-Checks „Fronten
 
 ## 5. Abhängigkeiten
 
-`npm audit` vor jedem Release in beiden Paketen (Stand 4.0.0-rc.1: **0 Befunde**, Frontend und Server inkl. Dev-Abhängigkeiten; minimatch in der Lint-Kette per `overrides` auf die gepatchte 11.0.2 gesetzt). In der CI läuft `npm audit --audit-level=moderate`. Versionen sind exakt gepinnt; Lockfiles sind versioniert. Basis-Images mit fester Version (`node:22.21-alpine3.22`, `postgres:16.10-alpine3.22`, `caddy:2.10.2-alpine`) – bei Updates Changelog prüfen und `upgrade.sh` nutzen.
+`npm audit` vor jedem Release in beiden Paketen (Stand 5.0.0-rc.1: **0 Befunde**, Frontend und Server inkl. Dev-Abhängigkeiten; minimatch in der Lint-Kette per `overrides` auf die gepatchte 11.0.2 gesetzt). In der CI läuft `npm audit --audit-level=moderate`. Versionen sind exakt gepinnt; Lockfiles sind versioniert. Basis-Images mit fester Version (`node:22.21-alpine3.22`, `postgres:16.10-alpine3.22`, `caddy:2.10.2-alpine`) – bei Updates Changelog prüfen und `upgrade.sh` nutzen.
 
 ## 6. Bekannte Grenzen
 

@@ -129,6 +129,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     catalogEnabled: bool(env, 'CATALOG_PROXY_ENABLED', true),
     backupStatusFile: env.BACKUP_STATUS_FILE || undefined,
     webauthnRpId: env.WEBAUTHN_RP_ID || undefined,
-    version: env.APP_VERSION ?? '4.0.0-rc.1',
+    version: env.APP_VERSION ?? '5.0.0-rc.1',
   };
 }

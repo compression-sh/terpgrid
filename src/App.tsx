@@ -18,6 +18,7 @@ import { Dashboard } from './pages/Dashboard';
 const ThcLab = lazy(() => import('./pages/ThcLab').then((m) => ({ default: m.ThcLab })));
 const GrowList = lazy(() => import('./pages/grows/GrowList').then((m) => ({ default: m.GrowList })));
 const GrowDetail = lazy(() => import('./pages/grows/GrowDetail').then((m) => ({ default: m.GrowDetail })));
+const LabelsPage = lazy(() => import('./pages/grows/LabelsPage').then((m) => ({ default: m.LabelsPage })));
 const PlantDetail = lazy(() => import('./pages/grows/PlantDetail').then((m) => ({ default: m.PlantDetail })));
 const PhotosPage = lazy(() => import('./pages/PhotosPage').then((m) => ({ default: m.PhotosPage })));
 const StrainsPage = lazy(() => import('./pages/StrainsPage').then((m) => ({ default: m.StrainsPage })));
@@ -29,6 +30,10 @@ const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage').then((m) => ({ 
 const UtilitiesPage = lazy(() => import('./pages/UtilitiesPage').then((m) => ({ default: m.UtilitiesPage })));
 const DataPage = lazy(() => import('./pages/DataPage').then((m) => ({ default: m.DataPage })));
 const DiscoverPage = lazy(() => import('./pages/discover/DiscoverPage').then((m) => ({ default: m.DiscoverPage })));
+const DiscoverHome = lazy(() => import('./pages/discover/DiscoverHome').then((m) => ({ default: m.DiscoverHome })));
+const CultivarPage = lazy(() => import('./pages/discover/CultivarPage').then((m) => ({ default: m.CultivarPage })));
+const BreedersPage = lazy(() => import('./pages/discover/BreedersPage').then((m) => ({ default: m.BreedersPage })));
+const BreederProfile = lazy(() => import('./pages/discover/BreedersPage').then((m) => ({ default: m.BreederProfile })));
 const StrainProfile = lazy(() => import('./pages/discover/StrainProfile').then((m) => ({ default: m.StrainProfile })));
 const GeneticsExplorer = lazy(() => import('./pages/discover/GeneticsExplorer').then((m) => ({ default: m.GeneticsExplorer })));
 const TerpeneAtlas = lazy(() => import('./pages/discover/TerpeneAtlas').then((m) => ({ default: m.TerpeneAtlas })));
@@ -83,6 +88,9 @@ function Routes() {
       else if (c === 'plants' && d) page = <PlantDetail growId={b} plantId={d} />;
       else page = <GrowDetail growId={b} />;
       break;
+    case 'labels':
+      page = <LabelsPage />;
+      break;
     case 'photos':
       page = <PhotosPage />;
       break;
@@ -109,12 +117,15 @@ function Routes() {
       break;
     case 'discover':
       if (b === 'strain' && c) page = <StrainProfile key={c} slug={c} />;
+      else if (b === 'cultivar' && c) page = <CultivarPage key={c} id={c} />;
+      else if (b === 'breeders') page = c ? <BreederProfile key={c} id={c} /> : <BreedersPage />;
+      else if (b === 'live') page = <DiscoverPage />;
       else if (b === 'genetics') page = <GeneticsExplorer key={c ?? ''} slug={c} />;
       else if (b === 'terpenes') page = <TerpeneAtlas terpeneId={c} />;
       else if (b === 'compare') page = <CompareStudio />;
       else if (b === 'gallery') page = <VisualExplorer />;
       else if (b === 'learn') page = <KnowledgeHub articleId={c} />;
-      else if (!b) page = <DiscoverPage />;
+      else if (!b) page = <DiscoverHome />;
       else page = <NotFound />;
       break;
     case 'lab-reports':

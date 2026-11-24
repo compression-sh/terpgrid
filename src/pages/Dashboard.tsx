@@ -1,3 +1,6 @@
+import { fmt } from '../lib/format';
+import { METRICS, metricSeries } from '../lib/grow/series';
+import { CONTEXT_LABEL } from '../lib/grow/measure';
 import { useIsServerMode } from '../app/auth';
 import { type TimelineKind, buildTimeline } from '../lib/timeline';
 import {
@@ -23,8 +26,7 @@ import {
   Bell,
   Flag,
   FlaskRound,
-  Gauge,
-} from 'lucide-react';
+  Gauge, NotebookPen, Ruler } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useData, useLookup } from '../app/DataProvider';
 import { useQuickActions } from '../app/QuickActions';
@@ -49,6 +51,7 @@ const WIDGET_META: Record<DashboardWidget, { label: string; span: string }> = {
   reminders: { label: 'Anstehende Erinnerungen', span: 'lg:col-span-1' },
   photos: { label: 'Neueste Fotos', span: 'lg:col-span-2' },
   activity: { label: 'Letzte Aktivitäten', span: 'lg:col-span-1' },
+  measurements: { label: 'Letzte Messwerte', span: 'lg:col-span-1' },
   journal: { label: 'Journal', span: 'lg:col-span-1' },
   calculations: { label: 'Gespeicherte Berechnungen', span: 'lg:col-span-1' },
   strains: { label: 'Zuletzt bearbeitete Sorten', span: 'lg:col-span-1' },
@@ -140,6 +143,7 @@ export function GrowCard({ grow, compact }: { grow: GrowProject; compact?: boole
 }
 
 export function Dashboard() {
+  const activeGrowCount = useData().data.grows.filter((g) => g.status === 'active').length;
   const server = useIsServerMode();
   const { data, settings, updateSettings, ready } = useData();
   const lookup = useLookup();
@@ -186,6 +190,15 @@ export function Dashboard() {
     await updateSettings({ dashboardHidden: [...set] });
   }
 
+  const activeActs = data.activities.filter((a) => activeIds.has(a.growId));
+  const latestMeasures = METRICS.map((m) => {
+    const p = metricSeries(activeActs, m.key).at(-1);
+    const ctxKey = m.contextKey;
+    const c = p && ctxKey ? activeActs.find((a) => a.id === p.activityId)?.measurements?.[ctxKey] : undefined;
+    return p ? { m, p, ctx: c ? CONTEXT_LABEL[c] : undefined } : null;
+  })
+    .filter((x): x is NonNullable<typeof x> => !!x)
+    .slice(0, 6);
   const widgets: Record<DashboardWidget, ReactNode> = {
     stats: (
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -360,6 +373,25 @@ export function Dashboard() {
         )}
       </Card>
     ),
+    measurements: (
+      <Card title="Letzte Messwerte" subtitle="Aktive Grows – jeweils der jüngste erfasste Wert" icon={<Ruler className="size-4" />}>
+        {latestMeasures.length === 0 ? (
+          <EmptyState compact title="Noch keine Messwerte" text="pH, EC, Klima oder Höhe per Schnell-Log erfassen." action={activeGrows.length > 0 ? <button type="button" className="btn-ghost" onClick={() => quick({ kind: 'log' })}><NotebookPen className="size-4" /> Schnell-Log</button> : undefined} />
+        ) : (
+          <dl className="grid grid-cols-2 gap-2">
+            {latestMeasures.map(({ m, p, ctx }) => (
+              <div key={m.key} className="rounded-lg border border-white/[0.05] bg-white/[0.015] px-2.5 py-2">
+                <dt className="truncate text-[11px] text-ink-400">{m.label}{ctx ? ` · ${ctx}` : ''}</dt>
+                <dd className="font-mono text-[15px] tabular text-ink-50">
+                  {fmt(p.value)} <span className="text-[11px] text-ink-400">{m.unit}</span>
+                </dd>
+                <dd className="text-[10px] text-ink-500">{relativeDay(p.date.slice(0, 10), t)}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </Card>
+    ),
     strains: (
       <Card title="Sorten" icon={<Leaf className="size-4" />} actions={<a href={href('strains')} className="btn-ghost py-1.5 text-xs">Bibliothek</a>}>
         {recentStrains.length === 0 ? (
@@ -398,7 +430,8 @@ export function Dashboard() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+        {activeGrowCount > 0 && <QuickAction icon={NotebookPen} label="Schnell-Log" onClick={() => quick({ kind: 'log' })} />}
         <QuickAction icon={Sprout} label="Neuer Grow" onClick={() => quick({ kind: 'grow' })} />
         <QuickAction icon={Plus} label="Pflanze hinzufügen" onClick={() => quick({ kind: 'plant' })} disabled={data.grows.length === 0} hint={data.grows.length === 0 ? 'Erst einen Grow anlegen' : undefined} />
         <QuickAction icon={Camera} label="Foto hochladen" onClick={() => quick({ kind: 'photo' })} />

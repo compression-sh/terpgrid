@@ -1,4 +1,6 @@
-import { Camera, Clapperboard, Columns2, History, Images, Pencil, Plus, Ruler, Scale, Trash2 } from 'lucide-react';
+import { useQuickActions } from '../../app/QuickActions';
+import { externalLink } from '../../lib/catalog/links';
+import { Camera, Clapperboard, Columns2, History, Images, Pencil, Plus, Ruler, Scale, Trash2, QrCode, NotebookPen } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useConfirm } from '../../app/Confirm';
 import { useData } from '../../app/DataProvider';
@@ -7,6 +9,7 @@ import { href, navigate, setQuery, useRoute } from '../../app/router';
 import { ActivityFormModal, PlantFormModal } from '../../components/forms/GrowForms';
 import { ActivityTimeline } from '../../components/grow/ActivityTimeline';
 import { MeasurementCharts } from '../../components/grow/MeasurementCharts';
+import { ThresholdsModal } from '../../components/forms/ThresholdsModal';
 import { PhaseTimeline } from '../../components/grow/PhaseTimeline';
 import { PhotoGrid } from '../../components/photos/PhotoGrid';
 import { PhotoImg } from '../../components/photos/PhotoImg';
@@ -28,7 +31,8 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
   const route = useRoute();
   const toast = useToast();
   const confirm = useConfirm();
-  const [modal, setModal] = useState<'edit' | 'activity' | 'photo' | 'measure' | null>(null);
+  const quick = useQuickActions();
+  const [modal, setModal] = useState<'edit' | 'activity' | 'photo' | 'measure' | 'thresholds' | null>(null);
   const tab = (['log', 'photos', 'measurements', 'outcome'].includes(route.query.get('tab') ?? '') ? route.query.get('tab') : 'log') as Tab;
 
   const plant = data.plants.find((p) => p.id === plantId);
@@ -50,6 +54,7 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
   const cover = plant.coverPhotoId ?? sortedPhotos[0]?.id;
   const latest = METRICS.map((m) => ({ m, p: metricSeries(activities, m.key).at(-1) })).filter((x) => x.p);
   const o = plant.outcome;
+  const space = plant.spaceId ? data.inventory.find((i) => i.id === plant.spaceId) : undefined;
 
   async function remove() {
     const ok = await confirm({
@@ -102,9 +107,9 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
                       <a href={href(`strains/${strain.id}`)} className="text-leaf-300 hover:underline">
                         {strain.name}
                       </a>
-                      {strain.external?.provider === 'strainapi' && (
-                        <a href={href(`discover/strain/${strain.external.id}`)} className="ml-1.5 rounded border border-white/[0.08] px-1.5 py-px text-[10px] text-ink-300 hover:text-ink-50">
-                          Online-Profil
+                      {strain.external && externalLink(strain.external.provider, strain.external.id) && (
+                        <a href={href(externalLink(strain.external.provider, strain.external.id)!)} className="ml-1.5 rounded border border-white/[0.08] px-1.5 py-px text-[10px] text-ink-300 hover:text-ink-50">
+                          Katalogprofil
                         </a>
                       )}
                     </>
@@ -123,6 +128,10 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
               <PhaseChip phase={phase} />
               <Chip>{PLANT_TYPE_LABEL[plant.type]}</Chip>
               {!ownPhases && <Chip title="Diese Pflanze hat keine eigenen Meilensteine">Phasen vom Grow</Chip>}
+              {space && <Chip tone="sky">Standort: {space.name}</Chip>}
+              {(plant.tags ?? []).map((t) => (
+                <Chip key={t}>#{t}</Chip>
+              ))}
             </div>
             {latest.length > 0 && (
               <dl className="flex flex-wrap gap-x-5 gap-y-1">
@@ -137,7 +146,10 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
               </dl>
             )}
             <div className="mt-auto flex flex-wrap gap-2">
-              <button type="button" className="btn-primary" onClick={() => setModal('activity')}>
+              <button type="button" className="btn-primary" onClick={() => quick({ kind: 'log', plantId })}>
+                <NotebookPen className="size-4" /> Schnell-Log
+              </button>
+              <button type="button" className="btn-ghost" onClick={() => setModal('activity')}>
                 <Plus className="size-4" /> Eintrag
               </button>
               <button type="button" className="btn-ghost" onClick={() => setModal('measure')}>
@@ -149,6 +161,9 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
               <button type="button" className="btn-ghost" onClick={() => setModal('edit')}>
                 <Pencil className="size-4" /> Bearbeiten
               </button>
+              <a href={href(`labels?grow=${encodeURIComponent(growId)}&plants=${encodeURIComponent(plant.id)}`)} className="btn-ghost">
+                <QrCode className="size-4" /> Etikett
+              </a>
               <button type="button" className="btn-ghost text-rose-300/90 hover:text-rose-200" onClick={remove} aria-label="Pflanze löschen">
                 <Trash2 className="size-4" />
               </button>
@@ -206,7 +221,7 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
       )}
       {tab === 'measurements' && (
         <Card title="Messwerte" actions={<button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setModal('measure')}><Plus className="size-3.5" /> Messung</button>}>
-          <MeasurementCharts activities={activities} splitByPlant={false} />
+          <MeasurementCharts activities={activities} splitByPlant={false} thresholds={grow?.thresholds} onEditThresholds={grow ? () => setModal('thresholds') : undefined} fileName={`pflanze-${plant.name}`} />
         </Card>
       )}
       {tab === 'outcome' && (
@@ -236,6 +251,7 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
       )}
 
       {modal === 'edit' && <PlantFormModal open onClose={() => setModal(null)} plant={plant} growId={growId} />}
+      {modal === 'thresholds' && grow && <ThresholdsModal grow={grow} onClose={() => setModal(null)} />}
       {modal === 'activity' && <ActivityFormModal open onClose={() => setModal(null)} growId={growId} plantId={plantId} />}
       {modal === 'measure' && <ActivityFormModal open onClose={() => setModal(null)} growId={growId} plantId={plantId} defaultType="measurement" />}
       {modal === 'photo' && <PhotoUploadModal open onClose={() => setModal(null)} target={{ growId, plantId }} />}

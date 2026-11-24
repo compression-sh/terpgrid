@@ -48,6 +48,8 @@ export interface GrowProject extends BaseRecord {
   status: GrowStatus;
   completedDate?: DateString;
   phaseDates: PhaseDates;
+  /** Eigene Zielbereiche für Messwerte dieses Grows */
+  thresholds?: Thresholds;
 }
 
 export type PlantType = 'photoperiod' | 'autoflower' | 'unknown';
@@ -71,6 +73,9 @@ export interface Plant extends BaseRecord {
   notes: string;
   outcome?: PlantOutcome;
   coverPhotoId?: string;
+  /** Standort: Grow-Bereich (Zelt, Raum, Zone …) */
+  spaceId?: string;
+  tags?: string[];
 }
 
 export const ACTIVITY_TYPES = [
@@ -101,10 +106,40 @@ export interface Measurements {
   /** Relative Luftfeuchte in % */
   humidityPct?: number;
   ph?: number;
-  /** Elektrische Leitfähigkeit in mS/cm */
+  /** Elektrische Leitfähigkeit in mS/cm (kanonisch; Eingabe in µS/cm oder ppm wird umgerechnet) */
   ecMsCm?: number;
   custom?: CustomMeasurement[];
+  /** Messkontext pH bzw. EC (Gießwasser, Nährlösung, Drainage, Substrat …) */
+  phContext?: MeasureContext;
+  ecContext?: MeasureContext;
+  /** Ursprüngliche EC/TDS-Eingabe inkl. gewählter Einheit/Skala (Anzeige, Nachvollziehbarkeit) */
+  ecInput?: { value: number; unit: EcUnit };
+  /** Wassertemperatur in °C */
+  waterTempC?: number;
+  /** Substrattemperatur in °C */
+  substrateTempC?: number;
+  /** Substratfeuchte in % (Messgerät des Nutzers) */
+  substrateMoisturePct?: number;
+  /** CO₂ in ppm */
+  co2Ppm?: number;
+  /** Blatttemperatur in °C */
+  leafTempC?: number;
+  /** true = Blatttemperatur geschätzt, nicht gemessen */
+  leafTempEstimated?: boolean;
+  /** Photosynthetische Photonenflussdichte in µmol/m²/s */
+  ppfd?: number;
+  /** Lichtstunden pro Tag */
+  photoperiodH?: number;
+  /** Optional: Messgerät */
+  device?: string;
 }
+
+export const MEASURE_CONTEXTS = ['water', 'nutrient', 'runoff', 'substrate', 'other'] as const;
+export type MeasureContext = (typeof MEASURE_CONTEXTS)[number];
+export type EcUnit = 'mS/cm' | 'µS/cm' | 'ppm500' | 'ppm700';
+
+/** Eigene Zielbereiche je Messgröße (vom Nutzer festgelegt, keine Referenzwerte) */
+export type Thresholds = Partial<Record<string, { min?: number; max?: number }>>;
 
 export interface Activity extends BaseRecord {
   growId: string;
@@ -117,7 +152,12 @@ export interface Activity extends BaseRecord {
   volumeMl?: number;
   measurements?: Measurements;
   photoIds?: string[];
+  /** Strukturierte Beobachtung (Kategorien) – subjektiv, keine Diagnose */
+  observations?: ObservationKind[];
 }
+
+export const OBSERVATION_KINDS = ['appearance', 'leafColor', 'change', 'growth', 'symptom', 'environment', 'aroma', 'personal'] as const;
+export type ObservationKind = (typeof OBSERVATION_KINDS)[number];
 
 /* ───────────────────────── Fotos ───────────────────────── */
 
@@ -187,7 +227,7 @@ export interface Terpene {
 
 /** Verknüpfung einer persönlichen Sorte mit einem externen Katalogeintrag. */
 export interface ExternalStrainRef {
-  provider: 'strainapi' | 'cannalib';
+  provider: 'strainapi' | 'cannalib' | 'cisp';
   id: string;
   name: string;
   breeder?: string;
@@ -236,7 +276,9 @@ export interface JournalEntry extends BaseRecord {
 
 /* ───────────────────────── Sammlung ───────────────────────── */
 
-export const INVENTORY_CATEGORIES = ['cannabis', 'seeds', 'accessory', 'equipment', 'nutrients', 'other'] as const;
+export const INVENTORY_CATEGORIES = ['cannabis', 'seeds', 'accessory', 'equipment', 'space', 'nutrients', 'other'] as const;
+export const SPACE_KINDS = ['tent', 'room', 'greenhouse', 'outdoor', 'zone'] as const;
+export type SpaceKind = (typeof SPACE_KINDS)[number];
 export type InventoryCategory = (typeof INVENTORY_CATEGORIES)[number];
 
 export interface InventoryItem extends BaseRecord {
@@ -251,6 +293,21 @@ export interface InventoryItem extends BaseRecord {
   /** Optionale Verknüpfung, z. B. Ernte aus einem abgeschlossenen Grow. */
   growId?: string;
   coverPhotoId?: string;
+  /** Grow-Bereich (Kategorie „space“): Art und Maße */
+  spaceKind?: SpaceKind;
+  dimensions?: string;
+  /** Ausrüstung: Hersteller, Modell, Leistung, Laufzeit, Garantie, Standort */
+  manufacturer?: string;
+  model?: string;
+  powerW?: number;
+  /** Eigene Angabe: durchschnittliche Betriebsstunden pro Tag (für die Stromschätzung) */
+  hoursPerDay?: number;
+  warrantyUntil?: DateString;
+  /** Standort: ID eines Grow-Bereichs (Inventar-Eintrag der Kategorie „space“) */
+  spaceId?: string;
+  maintenanceLog?: { date: DateString; note: string }[];
+  tags?: string[];
+  archived?: boolean;
 }
 
 export const EXPENSE_CATEGORIES = ['equipment', 'seeds', 'nutrients', 'medium', 'electricity', 'water', 'other'] as const;
@@ -279,6 +336,7 @@ export const DASHBOARD_WIDGETS = [
   'reminders',
   'photos',
   'activity',
+  'measurements',
   'journal',
   'calculations',
   'strains',
@@ -299,6 +357,10 @@ export interface AppSettings {
   /** Cannabis 101: gemerkte Artikel und Lesefortschritt (0–1) */
   kbFavorites: string[];
   kbProgress: Record<string, number>;
+  /** Gemerkte Breeder des lokalen Katalogs (IDs) */
+  favoriteBreeders: string[];
+  /** Zuletzt angesehene Katalogsorten (neueste zuerst, max. 12) */
+  recentCultivars: { id: string; name: string; breeder: string }[];
 }
 
 /* ───────────── Laborberichte ───────────── */

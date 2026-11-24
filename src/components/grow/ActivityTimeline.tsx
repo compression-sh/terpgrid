@@ -21,8 +21,9 @@ import { href } from '../../app/router';
 import { fmtDateLong } from '../../lib/dates';
 import { deleteSimple } from '../../lib/db/repo';
 import { ACTIVITY_TYPES, type Activity, type ActivityType } from '../../lib/db/types';
-import { ACTIVITY_LABEL } from '../../lib/grow/labels';
+import { ACTIVITY_LABEL, OBSERVATION_LABEL } from '../../lib/grow/labels';
 import { METRICS } from '../../lib/grow/series';
+import { CONTEXT_LABEL, EC_UNITS } from '../../lib/grow/measure';
 import { fmt } from '../../lib/format';
 import { ActivityFormModal } from '../forms/GrowForms';
 import { PhotoImg } from '../photos/PhotoImg';
@@ -51,14 +52,19 @@ const TONE: Partial<Record<ActivityType, string>> = {
 
 function MeasurementPills({ a }: { a: Activity }) {
   const m = a.measurements;
-  if (!m && a.volumeMl === undefined) return null;
+  if (!m && a.volumeMl === undefined && !a.observations?.length) return null;
   const pills: string[] = [];
   if (a.volumeMl !== undefined) pills.push(`${fmt(a.volumeMl)} ml`);
   for (const d of METRICS) {
     const v = m?.[d.key];
-    if (typeof v === 'number') pills.push(`${d.label} ${fmt(v)}${d.unit ? ` ${d.unit}` : ''}`);
+    if (typeof v !== 'number') continue;
+    const ctx = d.contextKey && m?.[d.contextKey] ? ` · ${CONTEXT_LABEL[m[d.contextKey]!]}` : '';
+    const orig = d.key === 'ecMsCm' && m?.ecInput ? ` (${fmt(m.ecInput.value)} ${EC_UNITS.find((u) => u.id === m.ecInput!.unit)?.label})` : '';
+    const est = d.key === 'leafTempC' && m?.leafTempEstimated ? ' geschätzt' : '';
+    pills.push(`${d.label} ${fmt(v)}${d.unit ? ` ${d.unit}` : ''}${orig}${est}${ctx}`);
   }
   for (const c of m?.custom ?? []) pills.push(`${c.label} ${fmt(c.value)}${c.unit ? ` ${c.unit}` : ''}`);
+  for (const o of a.observations ?? []) pills.push(OBSERVATION_LABEL[o]);
   return (
     <div className="mt-2 flex flex-wrap gap-1.5">
       {pills.map((p) => (

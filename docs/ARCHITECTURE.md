@@ -1,6 +1,6 @@
 # TERPGRID – Architektur (Phase 3: Private Cloud & Multiuser)
 
-Stand: 24.11.2026 · gilt für den Code in diesem Repository (Version 4.0.0-rc.1, Phase 4).
+Stand: 24.11.2026 · gilt für den Code in diesem Repository (Version 5.0.0-rc.1, Phase 5).
 
 ## 1. Bestandsaufnahme (Audit vor Phase 3)
 
@@ -51,10 +51,11 @@ Generisches, eigentümergebundenes Datensatzmodell statt 13 einzelner Tabellen: 
 | `records` | `(user_id, store, id)` PK, `version`, `seq` (globale Sequenz für Pull), `deleted`, `payload` (AES-256-GCM), `payload_mac` (HMAC für idempotenten Import) |
 | `files` | `(user_id, kind, id, variant)` PK, Größe, MIME (per Magic Bytes geprüft) – Inhalt mit dem Konto-DEK verschlüsselt im Dateisystem unter zufälligem 48-Hex-Namen |
 | `audit_events` | Typ, Zeit, Benutzer, gekürzter IP-HMAC, Metadaten **ohne** Secrets/Inhalte |
-| `schema_migrations` | versionierte SQL-Migrationen (001 Basis, 002 Passkeys, 003 Schlüsselgenerationen + Datei-Papierkorb, 004 Leserecht der App-Rolle auf den Schemastand) |
+| `schema_migrations` | versionierte SQL-Migrationen (001 Basis, 002 Passkeys, 003 Schlüsselgenerationen + Datei-Papierkorb, 004 Leserecht der App-Rolle auf den Schemastand, 005 Sortenkatalog) |
 | `webauthn_credentials` | Passkeys: eindeutige Credential-ID, öffentlicher Schlüssel, Zähler, Name, Gerätetyp, Synchronisiert-Flag |
 | `user_keys` | DEK-Generationen je Konto (`active`/`retiring`/`retired`), mit Master-Key verpackt; `dek_gen` an `records`, `files` und TOTP |
 | `file_trash` | ersetzte/gelöschte Blobs bis zum Ablauf von `FILE_TRASH_DAYS` (Backup-Konsistenz) |
+| `catalog_imports`, `catalog_breeders`, `catalog_cultivars`, `catalog_listings` | Öffentlicher Sortenkatalog (CI-Strains-Pro, Migration 005): Importhistorie mit Qualitätsbericht, Breeder, Breeder-spezifische Sorten (gewichteter `tsvector`, Trigramm-Index), Seedbank-Angebote mit Quell-URL. Keine personenbezogenen Daten, daher ohne RLS; Schreiben nur durch die Owner-Rolle (Import), die App-Rolle hat nur `SELECT`. |
 
 **Row Level Security** auf `records` und `files`: Die App verbindet sich als Rolle `terpgrid_app` (kein Owner, kein `BYPASSRLS`); jede Anfrage mit Benutzerkontext setzt in einer Transaktion `SET LOCAL app.user_id`. Zusätzlich enthält **jede** Abfrage `user_id = $1` (Defense in Depth).
 
@@ -71,6 +72,8 @@ Generisches, eigentümergebundenes Datensatzmodell statt 13 einzelner Tabellen: 
 Nach dem Login erkennt die App die alte Datenbank `terpgrid` (Einzelnutzer). Vorschau mit Anzahl je Bereich → Hinweis, welches Konto die Daten erhält → ausdrückliche Bestätigung → Kopie in die Konto-Datenbank + Upload mit `mode: import` (idempotent über `payload_mac`) → Zählung/Prüfung → optionales Aufräumen erst nach Bestätigung. Ein lokales ZIP-Backup kann vorher erstellt werden.
 
 ## 6. Externe Daten
+
+**Lokaler Katalog (ab 5.0):** `/api/catalog/local/*` (Status, Suche, Sorte, Breeder-Liste/-Profil, Name→Sorten, Qualitätsbericht) liest nur aus den Katalogtabellen der eigenen Datenbank; angemeldet, keine Weitergabe an Dritte. Persönliche Verknüpfungen (Favoriten, gemerkte Breeder, zuletzt angesehen) liegen in den verschlüsselten Datensätzen bzw. Einstellungen des Kontos. Siehe [CATALOG.md](CATALOG.md).
 
 StrainAPI und CannaLib laufen im Servermodus über einen **festen** Proxy (`/api/catalog/...`): fester Zielhost, Pfad- und Parameter-Allowlist, Größen-/Zeitlimits, keine Weiterleitung von Cookies, Bild-Proxy nur für `www.strainapi.com/wp-content/uploads/…` mit MIME-Prüfung. Persönliche Daten werden nie an die Anbieter gesendet. CannaLib-Kontingent ist für alle Nutzer der Instanz gemeinsam.
 

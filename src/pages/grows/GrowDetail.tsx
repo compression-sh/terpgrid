@@ -15,8 +15,7 @@ import {
   Receipt,
   Ruler,
   Sprout,
-  Trash2,
-} from 'lucide-react';
+  Trash2, QrCode, NotebookPen } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useConfirm } from '../../app/Confirm';
 import { useData } from '../../app/DataProvider';
@@ -28,6 +27,7 @@ import { ReminderFormModal } from '../../components/forms/PersonalForms';
 import { ActivityTimeline } from '../../components/grow/ActivityTimeline';
 import { ExpenseList, money } from '../../components/grow/ExpenseList';
 import { MeasurementCharts } from '../../components/grow/MeasurementCharts';
+import { ThresholdsModal } from '../../components/forms/ThresholdsModal';
 import { type DayMarker, MonthCalendar } from '../../components/grow/MonthCalendar';
 import { PhaseTimeline } from '../../components/grow/PhaseTimeline';
 import { PhotoGrid } from '../../components/photos/PhotoGrid';
@@ -158,7 +158,7 @@ export function GrowDetail({ growId }: { growId: string }) {
   const route = useRoute();
   const quick = useQuickActions();
   const tab = (TABS.some((t) => t.id === route.query.get('tab')) ? route.query.get('tab') : 'overview') as Tab;
-  const [modal, setModal] = useState<'edit' | 'activity' | 'photo' | 'reminder' | null>(null);
+  const [modal, setModal] = useState<'edit' | 'activity' | 'photo' | 'reminder' | 'thresholds' | null>(null);
   const [month, setMonth] = useState(startOfMonth(today()));
   const [selectedDay, setSelectedDay] = useState<string>();
   const [photoPlant, setPhotoPlant] = useState('');
@@ -258,7 +258,10 @@ export function GrowDetail({ growId }: { growId: string }) {
 
       {/* Aktionen */}
       <div className="mb-5 flex flex-wrap items-center gap-2">
-        <button type="button" className="btn-primary" onClick={() => setModal('activity')}>
+        <button type="button" className="btn-primary" onClick={() => quick({ kind: 'log', growId })}>
+          <NotebookPen className="size-4" /> Schnell-Log
+        </button>
+        <button type="button" className="btn-ghost" onClick={() => setModal('activity')}>
           <Plus className="size-4" /> Eintrag
         </button>
         <button type="button" className="btn-ghost" onClick={() => setModal('photo')}>
@@ -388,9 +391,16 @@ export function GrowDetail({ growId }: { growId: string }) {
           title="Pflanzen"
           subtitle={`${plants.length} in diesem Grow`}
           actions={
-            <button type="button" className="btn-primary py-1.5" onClick={() => quick({ kind: 'plant', growId })}>
-              <Plus className="size-4" /> Pflanze
-            </button>
+            <div className="flex gap-2">
+              {plants.length > 0 && (
+                <a href={href(`labels?grow=${encodeURIComponent(growId)}`)} className="btn-ghost py-1.5">
+                  <QrCode className="size-4" /> Etiketten
+                </a>
+              )}
+              <button type="button" className="btn-primary py-1.5" onClick={() => quick({ kind: 'plant', growId })}>
+                <Plus className="size-4" /> Pflanze
+              </button>
+            </div>
           }
         >
           {plants.length === 0 ? (
@@ -452,7 +462,7 @@ export function GrowDetail({ growId }: { growId: string }) {
 
       {tab === 'measurements' && (
         <Card title="Messwerte" subtitle="Dokumentierte Werte je Pflanze bzw. für den ganzen Grow">
-          <MeasurementCharts activities={activities} />
+          <MeasurementCharts activities={activities} thresholds={grow.thresholds} onEditThresholds={() => setModal('thresholds')} fileName={`grow-${grow.name}`} />
         </Card>
       )}
 
@@ -511,6 +521,7 @@ export function GrowDetail({ growId }: { growId: string }) {
       )}
 
       {modal === 'edit' && <GrowFormModal open onClose={() => setModal(null)} grow={grow} />}
+      {modal === 'thresholds' && <ThresholdsModal grow={grow} onClose={() => setModal(null)} />}
       {modal === 'activity' && <ActivityFormModal open onClose={() => setModal(null)} growId={growId} />}
       {modal === 'photo' && <PhotoUploadModal open onClose={() => setModal(null)} target={{ growId }} selectable />}
       {modal === 'reminder' && <ReminderFormModal open onClose={() => setModal(null)} growId={growId} date={selectedDay && selectedDay >= t ? selectedDay : addDays(t, 0)} />}

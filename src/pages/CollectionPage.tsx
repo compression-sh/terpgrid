@@ -1,4 +1,8 @@
-import { Camera, Minus, Package, Pencil, Plus, Receipt, Search, Trash2 } from 'lucide-react';
+import { Camera, Minus, Package, Pencil, Plus, Receipt, Search, Trash2, Wrench, Zap } from 'lucide-react';
+import { MaintenanceModal } from '../components/forms/MaintenanceModal';
+import { spaceEnergy, spacePlants, warrantyState } from '../lib/grow/equipment';
+import { SPACE_KIND_LABEL } from '../lib/grow/labels';
+import { today } from '../lib/dates';
 import { useMemo, useState } from 'react';
 import { useConfirm } from '../app/Confirm';
 import { useData, useLookup } from '../app/DataProvider';
@@ -25,10 +29,14 @@ function ItemRow({ item }: { item: InventoryItem }) {
   const lookup = useLookup();
   const toast = useToast();
   const confirm = useConfirm();
-  const [modal, setModal] = useState<'edit' | 'photo' | null>(null);
+  const [modal, setModal] = useState<'edit' | 'photo' | 'maintenance' | null>(null);
   const cover = item.coverPhotoId ?? data.photos.find((p) => p.inventoryId === item.id)?.id;
   const strain = item.strainId ? lookup.strain.get(item.strainId) : undefined;
   const grow = item.growId ? lookup.grow.get(item.growId) : undefined;
+  const space = item.spaceId ? data.inventory.find((i) => i.id === item.spaceId) : undefined;
+  const energy = item.category === 'space' ? spaceEnergy(item.id, data.inventory) : undefined;
+  const plantsHere = item.category === 'space' ? spacePlants(item.id, data.plants) : [];
+  const warranty = warrantyState(item.warrantyUntil, today());
 
   async function adjust(delta: number) {
     const current = item.quantity ?? 0;
@@ -70,8 +78,37 @@ function ItemRow({ item }: { item: InventoryItem }) {
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="truncate text-[14px] font-medium text-ink-50">{item.name}</span>
-          <Chip>{INVENTORY_CATEGORY_LABEL[item.category]}</Chip>
+          <Chip>{item.category === 'space' && item.spaceKind ? SPACE_KIND_LABEL[item.spaceKind] : INVENTORY_CATEGORY_LABEL[item.category]}</Chip>
+          {item.archived && <Chip tone="amber">archiviert</Chip>}
+          {(item.tags ?? []).map((t) => (
+            <span key={t} className="rounded border border-white/[0.07] px-1.5 text-[10px] text-ink-400">
+              #{t}
+            </span>
+          ))}
         </div>
+        {(item.manufacturer || item.model || item.powerW !== undefined || warranty || space) && (
+          <div className="mt-0.5 flex flex-wrap gap-x-3 text-[11px] text-ink-400">
+            {(item.manufacturer || item.model) && <span>{[item.manufacturer, item.model].filter(Boolean).join(' ')}</span>}
+            {item.powerW !== undefined && (
+              <span className="font-mono tabular">
+                {fmt(item.powerW, 0)} W{item.hoursPerDay !== undefined ? ` · ${fmt(item.hoursPerDay)} h/Tag` : ''}
+              </span>
+            )}
+            {warranty && <span className={warranty === 'expired' ? 'text-ink-500' : warranty === 'soon' ? 'text-amber-300' : ''}>Garantie {warranty === 'expired' ? 'abgelaufen' : 'bis'} {fmtDate(item.warrantyUntil!)}</span>}
+            {space && <span>Standort: {space.name}</span>}
+          </div>
+        )}
+        {item.category === 'space' && (
+          <div className="mt-0.5 flex flex-wrap gap-x-3 text-[11px] text-ink-400">
+            {item.dimensions && <span>{item.dimensions}</span>}
+            <span>{plantsHere.length} {plantsHere.length === 1 ? 'Pflanze' : 'Pflanzen'}</span>
+            {energy && energy.devices > 0 && (
+              <span className="inline-flex items-center gap-1" title="Summe aus Leistung × Betriebsstunden deiner Geräte in diesem Bereich – Schätzung, keine Messung">
+                <Zap className="size-3" /> ≈ {fmt(energy.kWhPerDay)} kWh/Tag geschätzt ({energy.devices} Geräte{energy.missing ? `, ${energy.missing} ohne Leistung/Stunden` : ''})
+              </span>
+            )}
+          </div>
+        )}
         <div className="mt-0.5 flex flex-wrap gap-x-3 text-[11px] text-ink-500">
           {item.purchaseDate && <span>gekauft {fmtDate(item.purchaseDate)}</span>}
           {item.cost !== undefined && <span>{money(item.cost, settings.currency)}</span>}
@@ -102,6 +139,11 @@ function ItemRow({ item }: { item: InventoryItem }) {
             </button>
           </>
         )}
+        {item.category === 'equipment' && (
+          <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5" aria-label="Wartung" title={`Wartung (${item.maintenanceLog?.length ?? 0} Einträge)`} onClick={() => setModal('maintenance')}>
+            <Wrench className="size-3.5" />
+          </button>
+        )}
         <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5" aria-label="Bearbeiten" onClick={() => setModal('edit')}>
           <Pencil className="size-3.5" />
         </button>
@@ -110,6 +152,7 @@ function ItemRow({ item }: { item: InventoryItem }) {
         </button>
       </div>
       {modal === 'edit' && <InventoryFormModal open onClose={() => setModal(null)} item={item} />}
+      {modal === 'maintenance' && <MaintenanceModal item={item} onClose={() => setModal(null)} />}
       {modal === 'photo' && (
         <PhotoUploadModal
           open
@@ -128,14 +171,17 @@ export function CollectionPage() {
   const [creating, setCreating] = useState(false);
   const [category, setCategory] = useState('');
   const [q, setQ] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
 
   const items = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return data.inventory
       .filter((i) => !category || i.category === category)
-      .filter((i) => !needle || [i.name, i.notes].some((x) => x.toLowerCase().includes(needle)))
+      .filter((i) => showArchived || !i.archived)
+      .filter((i) => !needle || [i.name, i.notes, i.manufacturer ?? '', i.model ?? '', ...(i.tags ?? [])].some((x) => x.toLowerCase().includes(needle)))
       .sort((a, b) => a.name.localeCompare(b.name, 'de'));
-  }, [data.inventory, category, q]);
+  }, [data.inventory, category, q, showArchived]);
+  const archivedCount = data.inventory.filter((i) => i.archived).length;
 
   const purchaseTotal = data.inventory.reduce((s, i) => s + (i.cost ?? 0), 0);
   const expenseTotal = data.expenses.reduce((s, e) => s + e.amount, 0);
@@ -208,6 +254,11 @@ export function CollectionPage() {
                     <ItemRow key={i.id} item={i} />
                   ))}
                 </ul>
+              )}
+              {archivedCount > 0 && (
+                <label className="mt-3 flex items-center gap-2 text-[12px] text-ink-400">
+                  <input type="checkbox" className="accent-leaf-500" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} /> Archivierte anzeigen ({archivedCount})
+                </label>
               )}
               <p className="hint mt-4">Mengen werden nie automatisch angepasst. Änderungen über ± werden vorher bestätigt.</p>
             </>
