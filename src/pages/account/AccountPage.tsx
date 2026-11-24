@@ -717,17 +717,18 @@ function SecurityStatus({ ov, totp }: { ov: Overview; totp: boolean }) {
           <div className="text-[11.5px] text-ink-500">{secondFactor ? (codesOk ? 'Zweiter Faktor und Recovery-Codes vorhanden' : 'Neue Recovery-Codes empfohlen') : '2FA oder Passkey empfohlen'}</div>
         </div>
       </div>
-      <dl className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
         {items.map((i) => (
           <button key={i.label} type="button" onClick={() => document.getElementById(i.to)?.scrollIntoView({ behavior: 'smooth' })} className="rounded-lg border border-white/[0.05] bg-white/[0.015] px-3 py-2 text-left hover:border-white/[0.12]">
-            <dt className="text-[11px] text-ink-500">{i.label}</dt>
-            <dd className={`mt-0.5 flex items-center gap-1.5 text-[13px] ${i.ok ? 'text-ink-100' : 'text-amber-200'}`}>
+            <span className="block text-[11px] text-ink-500">{i.label}</span>
+            <span className={`mt-0.5 flex items-center gap-1.5 text-[13px] ${i.ok ? 'text-ink-100' : 'text-amber-200'}`}>
               <span className={`size-1.5 rounded-full ${i.ok ? 'bg-leaf-400' : 'bg-amber-300'}`} aria-hidden />
               {i.value}
-            </dd>
+              {!i.ok && <span className="sr-only">(empfohlen zu verbessern)</span>}
+            </span>
           </button>
         ))}
-      </dl>
+      </div>
     </div>
   );
 }

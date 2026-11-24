@@ -99,7 +99,7 @@ export function ActiveGrowRow({ grow }: { grow: GrowProject }) {
       </div>
       <div className="relative z-10 flex items-center justify-between gap-3 border-t border-white/[0.05] pt-2.5 sm:flex-col sm:items-end sm:border-0 sm:pt-0">
         <Sparkline values={heights.slice(-12).map((p) => p.value)} label={`Höhe: ${heights.length} Messungen`} />
-        <div className="flex items-center gap-1" title={doc.map((c) => `${c.label}: ${c.detail}`).join('\n')} aria-label={`Dokumentation: ${doc.map((c) => `${c.label} ${c.state === 'ok' ? 'vollständig' : c.state === 'partial' ? 'teilweise' : 'fehlt'}`).join(', ')}`}>
+        <div className="flex items-center gap-1" role="img" title={doc.map((c) => `${c.label}: ${c.detail}`).join('\n')} aria-label={`Dokumentation: ${doc.map((c) => `${c.label} ${c.state === 'ok' ? 'vollständig' : c.state === 'partial' ? 'teilweise' : 'fehlt'}`).join(', ')}`}>
           {doc.map((c) => (
             <span key={c.id} className={`size-1.5 rounded-full ${DOT[c.state]}`} />
           ))}
