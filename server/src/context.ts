@@ -2,6 +2,7 @@ import type { Config } from './config.js';
 import { KeyRing, hmac, subkey } from './crypto.js';
 import { type Db, createPool } from './db.js';
 import { PasswordHasher } from './passwords.js';
+import { Metrics } from './metrics.js';
 import { LoginBackoff, WindowLimiter } from './ratelimit.js';
 
 export interface AppContext {
@@ -32,6 +33,7 @@ export interface AppContext {
   fetchImpl: typeof fetch;
   /** Fehlgeschlagene Hintergrundaufgaben (für System Health; keine Inhalte) */
   tasks: { failures: Record<string, number>; lastFailure?: string; fail(name: string): void };
+  metrics: Metrics;
 }
 
 export function createContext(config: Config, opts: { db?: Db; fetchImpl?: typeof fetch } = {}): AppContext {
@@ -61,6 +63,7 @@ export function createContext(config: Config, opts: { db?: Db; fetchImpl?: typeo
     errors: { count: 0 },
     startedAt: new Date(),
     fetchImpl: opts.fetchImpl ?? fetch,
+    metrics: new Metrics(),
     tasks: {
       failures: {},
       fail(name: string) {

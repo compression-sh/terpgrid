@@ -12,7 +12,7 @@ import { verifyData } from './verify.js';
 import { createContext } from './context.js';
 import { purgeTrash } from './files.js';
 import { purgeRetiredKeys, rotateUserKey } from './rotation.js';
-import { migrate } from './migrate.js';
+import { migrate, schemaStatus } from './migrate.js';
 
 const [cmd, ...args] = process.argv.slice(2);
 
@@ -32,7 +32,8 @@ function help(): never {
   key-status                  Schlüsselgenerationen und laufende Rotationen anzeigen
   purge-retired-keys [--min-age-days N]
                               Ausgemusterte Schlüssel löschen (Standard 200 Tage; nur ohne Verwendung)
-  cleanup                     Abgelaufene Sessions löschen`);
+  cleanup                     Abgelaufene Sessions löschen, Datei-Papierkorb leeren
+  schema-status               Schemastand prüfen (Exit 0 = passend, 3 = DB neuer als Programm, 4 = Migration ausstehend)`);
   process.exit(cmd ? 1 : 0);
 }
 
@@ -97,6 +98,18 @@ async function main() {
         console.log(`Konten: ${r.users} · Datensätze entschlüsselt: ${r.records} · Dateien entschlüsselt: ${r.files} · Fehler: ${r.errors.length}`);
         for (const e of r.errors.slice(0, 50)) console.log(`  ✗ ${e}`);
         if (r.errors.length) process.exitCode = 2;
+        return;
+      }
+      case 'schema-status': {
+        const st = await schemaStatus(db);
+        console.log(`Angewendet: ${st.applied.join(', ') || '–'}\nDiese Version kennt: ${st.known.join(', ')}`);
+        if (st.unknown.length) {
+          console.log(`✗ Datenbank ist neuer als diese Version (unbekannt: ${st.unknown.join(', ')}) – Rollback nur mit Restore.`);
+          process.exitCode = 3;
+        } else if (st.pending.length) {
+          console.log(`• Ausstehend: ${st.pending.join(', ')}`);
+          process.exitCode = 4;
+        } else console.log('✓ Schema passt zu dieser Version.');
         return;
       }
       case 'rotate-user-keys': {

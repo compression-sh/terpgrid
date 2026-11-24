@@ -3,7 +3,7 @@
  * Fehlerbehandlung ohne Detailpreisgabe, Routen-Registrierung.
  */
 import cookie from '@fastify/cookie';
-import Fastify, { type FastifyInstance } from 'fastify';
+import Fastify, { type FastifyInstance, LogController } from 'fastify';
 import type { AppContext } from './context.js';
 import { HttpError, csrfValid, sendError } from './http.js';
 import { accountRoutes } from './routes/account.js';
@@ -32,7 +32,8 @@ export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
     bodyLimit: 1024 * 1024,
     requestTimeout: 30_000,
     connectionTimeout: 30_000,
-    disableRequestLogging: ctx.config.env === 'test',
+    // Request-Logs: nur Methode/Pfad (geschwärzt) und Status; in Tests aus
+    logController: new LogController({ disableRequestLogging: ctx.config.env === 'test' }),
     logger:
       ctx.config.env === 'test'
         ? false
@@ -80,6 +81,11 @@ export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
       return;
     }
     if (req.session && !csrfValid(req)) return sendError(reply, new HttpError(403, 'Sicherheitstoken ungültig – bitte Seite neu laden.'));
+  });
+
+  // Kennzahlen je Statusklasse (ohne IP, Benutzer oder Pfad)
+  app.addHook('onResponse', async (req, reply) => {
+    if (req.url.startsWith('/api/')) ctx.metrics.record(reply.statusCode, reply.elapsedTime);
   });
 
   app.setErrorHandler((err: unknown, req, reply) => {

@@ -1,5 +1,7 @@
 [Unit]
 Description=TERPGRID verschlüsseltes Backup (restic)
+# Bei Fehlschlag (auch Absturz des Skripts) Benachrichtigungs-Unit starten
+OnFailure=terpgrid-notify@%n.service
 Wants=network-online.target
 After=network-online.target docker.service
 

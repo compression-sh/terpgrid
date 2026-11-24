@@ -459,3 +459,34 @@ describe.skipIf(!hasDb)('IP-Ratenbegrenzung', () => {
     expect(st).toContain(429);
   });
 });
+
+describe.skipIf(!hasDb)('Schema-Schutz und System Health', () => {
+  let env: TestEnv;
+  beforeAll(async () => {
+    env = await setup();
+  });
+  afterAll(async () => env?.close());
+
+  it('erkennt passende, neuere und ausstehende Schemastände', async () => {
+    const { schemaStatus, assertSchemaCompatible } = await import('../src/migrate.js');
+    const ok = await schemaStatus(env.ctx.db);
+    expect(ok.pending).toEqual([]);
+    expect(() => assertSchemaCompatible(ok)).not.toThrow();
+    expect(() => assertSchemaCompatible({ ...ok, unknown: ['999_zukunft.sql'] })).toThrow(/neuer als diese TERPGRID-Version/);
+    expect(() => assertSchemaCompatible({ ...ok, pending: ['005_neu.sql'] })).toThrow(/Ausstehende/);
+  });
+
+  it('System Health nur für Admins, ohne personenbezogene Daten', async () => {
+    const u = new Client(env.app);
+    await u.register('health_user');
+    expect((await u.get('/api/admin/system')).status).toBe(403);
+    await env.ctx.db.query("UPDATE users SET role = 'admin' WHERE login_name = 'health_user'");
+    await u.post('/api/auth/login', { login: 'health_user', password: PW });
+    const r = await u.get('/api/admin/system');
+    expect(r.status).toBe(200);
+    expect(r.json.db.ok).toBe(true);
+    expect(r.json.http.requestsTotal).toBeGreaterThan(0);
+    expect(r.json.schema.pending).toEqual([]);
+    expect(JSON.stringify(r.json)).not.toMatch(/health_user|127\.0\.0\.1|login|password/);
+  });
+});

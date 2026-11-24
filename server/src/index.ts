@@ -3,10 +3,19 @@ import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
 import { createContext } from './context.js';
 import { purgeTrash } from './files.js';
+import { assertSchemaCompatible, schemaStatus } from './migrate.js';
 import { cleanupSessions } from './sessions.js';
 
 const config = loadConfig();
 const ctx = createContext(config);
+// Nur starten, wenn Datenbank und Programmversion zusammenpassen (Schutz vor Rollback ohne Restore)
+try {
+  assertSchemaCompatible(await schemaStatus(ctx.db));
+} catch (e) {
+  console.error(`TERPGRID startet nicht: ${(e as Error).message}`);
+  await ctx.db.end().catch(() => {});
+  process.exit(1);
+}
 const app = await buildApp(ctx);
 
 const timer = setInterval(() => {
