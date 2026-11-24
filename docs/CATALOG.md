@@ -136,6 +136,10 @@ Ohne Docker (Entwicklung): `DATABASE_MIGRATE_URL=… npx tsx src/cli.ts import-c
 - Breeder/Seedbank/Reseller sind nur so weit unterschieden, wie der Datensatz es erlaubt (Kennzeichen „auch Seedbank“, wenn
   der Breeder-Name einer der 19 Seedbanks entspricht).
 - Gleichnamige Elternangaben können sich auf verschiedene Linien beziehen; die Oberfläche zeigt sie als „mehrdeutig“.
-- Der Genetics Explorer (Graph) arbeitet weiterhin mit StrainAPI-Daten; Katalogsorten zeigen Eltern, Mehrdeutigkeit und
-  Nachkommen auf der Sortenseite.
+- Genetics Explorer (ab 5.1): Graph aus den Elternangaben (`/api/catalog/local/lineage/:id`, bis 4 Generationen,
+  max. 80 Knoten). Ein Elternname wird nur aufgelöst, wenn genau eine Sorte im Katalog so heißt. Gemessen über alle
+  21.794 Elternverweise: 2.914 (13 %) eindeutig, 9.391 (43 %) mehrdeutig (gleichnamige Sorten mehrerer Breeder),
+  9.489 (44 %) nicht als Sorte im Katalog. Die Graphen sind deshalb meist flach – das ist der ehrliche Datenstand.
+  Mehrdeutige Kandidaten lassen sich einzeln als neues Zentrum öffnen; abweichende Elternangaben anderer Seedbanks
+  erscheinen als gestrichelte Kanten.
 - Im Lokalmodus (ohne Server) steht der Katalog nicht zur Verfügung; Discover nutzt dort wie bisher StrainAPI.

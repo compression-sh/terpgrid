@@ -214,6 +214,11 @@ export function CultivarPage({ id }: { id: string }) {
             <button type="button" className={`btn-ghost ${inCompare ? 'border-sky-400/30 text-sky-200' : ''}`} aria-pressed={inCompare} onClick={() => compare.toggle(strain.key)}>
               <GitCompare className="size-4" /> {inCompare ? 'Im Vergleich' : 'Vergleichen'}
             </button>
+            {c.parents.length > 0 && (
+              <a href={href(`discover/genetics/c/${c.id}`)} className="btn-ghost">
+                <Dna className="size-4" /> Genetik-Graph
+              </a>
+            )}
             <button type="button" className="btn-ghost" onClick={() => setConnect('plant')}>
               <Link2 className="size-4" /> Mit Pflanze verknüpfen
             </button>

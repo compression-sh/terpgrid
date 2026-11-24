@@ -7,6 +7,13 @@ export function externalLink(provider: ProviderId, id: string): string | undefin
   return undefined;
 }
 
+/** Genetics Explorer für eine Katalogsorte. */
+export function geneticsLink(provider: ProviderId, id: string): string | undefined {
+  if (provider === 'strainapi') return `discover/genetics/${id}`;
+  if (provider === 'cisp') return `discover/genetics/c/${id}`;
+  return undefined;
+}
+
 export const strainLink = (s: Pick<CatalogStrain, 'provider' | 'id'>) => externalLink(s.provider, s.id) ?? 'discover';
 
 export const PROVIDER_LABEL: Record<ProviderId, string> = {

@@ -36,6 +36,8 @@ const BreedersPage = lazy(() => import('./pages/discover/BreedersPage').then((m)
 const BreederProfile = lazy(() => import('./pages/discover/BreedersPage').then((m) => ({ default: m.BreederProfile })));
 const StrainProfile = lazy(() => import('./pages/discover/StrainProfile').then((m) => ({ default: m.StrainProfile })));
 const GeneticsExplorer = lazy(() => import('./pages/discover/GeneticsExplorer').then((m) => ({ default: m.GeneticsExplorer })));
+const CatalogGenetics = lazy(() => import('./pages/discover/GeneticsExplorer').then((m) => ({ default: m.CatalogGenetics })));
+const GeneticsHome = lazy(() => import('./pages/discover/GeneticsExplorer').then((m) => ({ default: m.GeneticsHome })));
 const TerpeneAtlas = lazy(() => import('./pages/discover/TerpeneAtlas').then((m) => ({ default: m.TerpeneAtlas })));
 const CompareStudio = lazy(() => import('./pages/discover/CompareStudio').then((m) => ({ default: m.CompareStudio })));
 const VisualExplorer = lazy(() => import('./pages/discover/VisualExplorer').then((m) => ({ default: m.VisualExplorer })));
@@ -120,6 +122,9 @@ function Routes() {
       else if (b === 'cultivar' && c) page = <CultivarPage key={c} id={c} />;
       else if (b === 'breeders') page = c ? <BreederProfile key={c} id={c} /> : <BreedersPage />;
       else if (b === 'live') page = <DiscoverPage />;
+      else if (b === 'genetics' && c === 'c') page = <CatalogGenetics key={d ?? ''} id={d} />;
+      else if (b === 'genetics' && c === 'live') page = <GeneticsExplorer />;
+      else if (b === 'genetics' && !c) page = <GeneticsHome />;
       else if (b === 'genetics') page = <GeneticsExplorer key={c ?? ''} slug={c} />;
       else if (b === 'terpenes') page = <TerpeneAtlas terpeneId={c} />;
       else if (b === 'compare') page = <CompareStudio />;

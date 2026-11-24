@@ -110,6 +110,26 @@ export interface LibCultivarDetail {
   attribution: LibAttribution;
 }
 
+export interface LibLineageNode {
+  id: string;
+  kind: 'root' | 'strain' | 'ambiguous' | 'unresolved' | 'unknown';
+  label: string;
+  depth: number;
+  cultivar?: LibCultivar;
+  candidates?: LibCultivar[];
+  flags: string[];
+  expanded: boolean;
+}
+
+export interface LibLineage {
+  rootId: string;
+  nodes: LibLineageNode[];
+  edges: { from: string; to: string; kind: 'documented' | 'alternative' }[];
+  truncated: boolean;
+  maxDepth: number;
+  attribution: LibAttribution;
+}
+
 export interface LibBreeder {
   id: string;
   name: string;
@@ -177,6 +197,7 @@ export const library = {
   },
   search: (p: LibSearchParams, signal?: AbortSignal) => api<LibSearchResult>('GET', `/api/catalog/local/search${qs(p)}`, undefined, { signal }),
   cultivar: (id: string, signal?: AbortSignal) => api<LibCultivarDetail>('GET', `/api/catalog/local/cultivars/${encodeURIComponent(id)}`, undefined, { signal }),
+  lineage: (id: string, depth: number, signal?: AbortSignal) => api<LibLineage>('GET', `/api/catalog/local/lineage/${encodeURIComponent(id)}?depth=${depth}`, undefined, { signal }),
   byName: (slug: string, signal?: AbortSignal) => api<{ slug: string; items: LibCultivar[]; childCount: number }>('GET', `/api/catalog/local/by-name/${encodeURIComponent(slug)}`, undefined, { signal }),
   breeders: (p: { q?: string; letter?: string; sort?: 'name' | 'cultivars'; kind?: 'seedbank' | 'collab'; page?: number; perPage?: number }, signal?: AbortSignal) =>
     api<LibBreederList>('GET', `/api/catalog/local/breeders${qs(p)}`, undefined, { signal }),
