@@ -178,6 +178,29 @@ describe.skipIf(!hasDb)('Anreicherungslauf (Datenbank, Quelle simuliert)', () =>
     expect((await owner.query("SELECT provider_id, status, decided_by, cultivar_id FROM catalog_matches ORDER BY provider_id")).rows).toEqual(matches);
   });
 
+  it('Systemansicht zeigt Katalog- und Zwischenspeicher-Status ohne Personenbezug (nur Admins)', async () => {
+    const u = new Client(env.app);
+    await u.register('health_user');
+    expect((await u.get('/api/admin/system')).status).toBe(403);
+    const adm = new Client(env.app);
+    await adm.register('health_admin');
+    await owner.query("UPDATE users SET role = 'admin' WHERE login_name = 'health_admin'");
+    await adm.post('/api/auth/logout');
+    await adm.post('/api/auth/login', { login: 'health_admin', password: 'sehr-sicheres-passwort-42' });
+    const r = await adm.get('/api/admin/system');
+    expect(r.status).toBe(200);
+    expect(r.json.catalog.dataset.cultivars).toBeGreaterThan(0);
+    expect(r.json.catalog.status).toBe('ok');
+    expect(r.json.catalog.claims.active).toBeGreaterThan(0);
+    expect(r.json.catalog.lastRun).toMatchObject({ status: expect.any(String) });
+    expect(typeof r.json.storage.userFilesBytes).toBe('number');
+    // abgelaufene, nicht entfernte Angaben → „overdue“
+    await owner.query("UPDATE catalog_claims SET expires_at = now() - interval '1 minute' WHERE field = 'thc'");
+    expect((await adm.get('/api/admin/system')).json.catalog.status).toBe('overdue');
+    await owner.query("UPDATE catalog_claims SET expires_at = retrieved_at + interval '30 days' WHERE field = 'thc'");
+    expect(JSON.stringify(r.json.catalog)).not.toMatch(/health_|login|@/);
+  });
+
   it('Laufzeitrolle: Kernkatalog bleibt schreibgeschützt', async () => {
     const app = new pg.Client({ connectionString: env.appUrl });
     await app.connect();

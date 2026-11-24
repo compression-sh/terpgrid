@@ -79,6 +79,10 @@ export function adminRoutes(ctx: AppContext) {
       const schema = await schemaStatus(ctx.db);
       const trash = await ctx.db.query('SELECT count(*)::int AS n FROM file_trash');
       const rot = await ctx.db.query("SELECT count(DISTINCT user_id)::int AS n FROM user_keys WHERE state = 'retiring'");
+      // Gesamtbelegung durch Nutzerdateien (aggregiert, ohne Personenbezug)
+      // (files steht unter Row-Level-Security – die je Konto gepflegte Summe in users wird verwendet)
+      const files = (await ctx.db.query<{ bytes: string }>('SELECT coalesce(sum(storage_bytes), 0)::text AS bytes FROM users')).rows[0]!;
+      const catalog = await catalogHealth(ctx.db);
       const mem = process.memoryUsage();
       let disk: { freeBytes: number; totalBytes: number } | null = null;
       try {
@@ -94,7 +98,8 @@ export function adminRoutes(ctx: AppContext) {
         http: ctx.metrics.snapshot(),
         db,
         schema: { applied: schema.applied.length, pending: schema.pending, unknown: schema.unknown },
-        storage: { disk, trashBlobs: trash.rows[0].n },
+        storage: { disk, trashBlobs: trash.rows[0].n, userFilesBytes: Number(files.bytes) },
+        catalog,
         keys: { rotationsInProgress: rot.rows[0].n },
         tasks: { failures: ctx.tasks.failures, lastFailure: ctx.tasks.lastFailure ?? null },
         errors: ctx.errors,
@@ -163,4 +168,32 @@ export function adminRoutes(ctx: AppContext) {
       return { ok: true };
     });
   });
+}
+
+/**
+ * Zustand des Sortenkatalogs und der StrainAPI-Zwischenspeicherung für die Systemansicht.
+ * status: unused = keine Anreicherung genutzt · ok = nichts läuft in 7 Tagen ab · due = Angaben laufen bald ab ·
+ * overdue = abgelaufene Angaben noch nicht entfernt (Aktualisierung lief nicht).
+ */
+export async function catalogHealth(db: { query: AppContext['db']['query'] }) {
+  const imp = (await db.query<{ version: string; imported_at: Date; cultivars: number }>(
+    "SELECT version, imported_at, (SELECT count(*)::int FROM catalog_cultivars) AS cultivars FROM catalog_imports WHERE status = 'active' LIMIT 1",
+  )).rows[0];
+  const c = (await db.query<{ active: number; expiring: number; expired: number; next_expiry: Date | null }>(
+    `SELECT count(*) FILTER (WHERE expires_at IS NULL OR expires_at > now())::int AS active,
+            count(*) FILTER (WHERE expires_at > now() AND expires_at < now() + interval '7 days')::int AS expiring,
+            count(*) FILTER (WHERE expires_at <= now())::int AS expired,
+            min(expires_at) FILTER (WHERE expires_at > now()) AS next_expiry
+       FROM catalog_claims WHERE review_status = 'accepted'`,
+  )).rows[0]!;
+  const last = (await db.query<{ id: number; status: string; started_by: string; started_at: Date; finished_at: Date | null; errors: unknown[] }>(
+    'SELECT id, status, started_by, started_at, finished_at, errors FROM catalog_enrichment_runs WHERE NOT dry_run ORDER BY started_at DESC LIMIT 1',
+  )).rows[0];
+  const status = c.active + c.expired === 0 ? 'unused' : c.expired > 0 ? 'overdue' : c.expiring > 0 ? 'due' : 'ok';
+  return {
+    dataset: imp ? { version: imp.version, importedAt: imp.imported_at, cultivars: imp.cultivars } : null,
+    claims: { active: c.active, expiringIn7d: c.expiring, expired: c.expired, nextExpiry: c.next_expiry },
+    lastRun: last ? { id: last.id, status: last.status, startedBy: last.started_by, startedAt: last.started_at, finishedAt: last.finished_at, errors: Array.isArray(last.errors) ? last.errors.length : 0 } : null,
+    status,
+  };
 }
