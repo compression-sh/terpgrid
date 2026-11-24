@@ -1,5 +1,6 @@
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { type ReactNode, Suspense, lazy } from 'react';
+import { ErrorBoundary } from './app/ErrorBoundary';
 import { AuthProvider, useAuth } from './app/auth';
 import { ConfirmProvider } from './app/Confirm';
 import { LegacyBanner, SecurityNudge } from './app/SyncIndicator';
@@ -163,7 +164,11 @@ function Routes() {
     default:
       page = <NotFound />;
   }
-  return <Suspense fallback={<Loading />}>{page}</Suspense>;
+  return (
+    <ErrorBoundary resetKey={path.join('/')}>
+      <Suspense fallback={<Loading />}>{page}</Suspense>
+    </ErrorBoundary>
+  );
 }
 
 function Gate({ children }: { children: ReactNode }) {

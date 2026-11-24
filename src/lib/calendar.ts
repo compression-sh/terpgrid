@@ -10,12 +10,28 @@ export interface Occurrence {
 /** Sicherheitsgrenze gegen Endlosschleifen bei großen Zeiträumen. */
 const MAX_OCCURRENCES = 2000;
 
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Wiederholungsregel defensiv lesen: Datensätze aus Importen oder älteren Versionen können unvollständig
+ * oder in einem anderen Format vorliegen. Unbekanntes wird als „keine Wiederholung“ behandelt, statt
+ * die Ansicht mit ungültigen Datumswerten abstürzen zu lassen.
+ */
+export function safeRepeat(repeat: unknown): Reminder['repeat'] {
+  const r = repeat as { kind?: unknown; interval?: unknown; until?: unknown } | null | undefined;
+  if (!r || (r.kind !== 'daily' && r.kind !== 'weekly')) return { kind: 'none' };
+  const interval = typeof r.interval === 'number' && Number.isFinite(r.interval) && r.interval >= 1 ? r.interval : 1;
+  const until = typeof r.until === 'string' && DATE_RE.test(r.until) ? r.until : undefined;
+  return { kind: r.kind, interval, ...(until ? { until } : {}) };
+}
+
 /** Alle Vorkommen einer Erinnerung im Bereich [from, to] (inklusive). */
 export function occurrences(reminder: Reminder, from: string, to: string): Occurrence[] {
   const out: Occurrence[] = [];
-  const done = new Set(reminder.completedDates);
+  if (typeof reminder.date !== 'string' || !DATE_RE.test(reminder.date)) return out;
+  const done = new Set(Array.isArray(reminder.completedDates) ? reminder.completedDates : []);
   const push = (d: string) => out.push({ reminder, date: d, done: done.has(d) });
-  const r = reminder.repeat;
+  const r = safeRepeat(reminder.repeat);
   if (r.kind === 'none') {
     if (daysBetween(from, reminder.date) >= 0 && daysBetween(reminder.date, to) >= 0) push(reminder.date);
     return out;
@@ -97,10 +113,11 @@ export function remindersToIcs(reminders: Reminder[], stamp: Date = new Date()):
       lines.push(`DTSTART;VALUE=DATE:${compactDate(r.date)}`);
       lines.push(`DTEND;VALUE=DATE:${compactDate(addDays(r.date, 1))}`);
     }
-    if (r.repeat.kind !== 'none') {
-      const freq = r.repeat.kind === 'daily' ? 'DAILY' : 'WEEKLY';
-      const until = r.repeat.until ? `;UNTIL=${compactDate(r.repeat.until)}` : '';
-      lines.push(`RRULE:FREQ=${freq};INTERVAL=${Math.max(1, Math.round(r.repeat.interval))}${until}`);
+    const rep = safeRepeat(r.repeat);
+    if (rep.kind !== 'none') {
+      const freq = rep.kind === 'daily' ? 'DAILY' : 'WEEKLY';
+      const until = rep.until ? `;UNTIL=${compactDate(rep.until)}` : '';
+      lines.push(`RRULE:FREQ=${freq};INTERVAL=${Math.max(1, Math.round(rep.interval))}${until}`);
     }
     lines.push(`SUMMARY:${icsEscape(r.title)}`);
     if (r.notes) lines.push(`DESCRIPTION:${icsEscape(r.notes)}`);

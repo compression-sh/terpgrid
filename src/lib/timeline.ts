@@ -83,7 +83,7 @@ export function buildTimeline(d: TimelineData, opts: { today?: string } = {}): T
   const today = opts.today;
   for (const r of d.reminders) {
     for (const done of r.completedDates ?? []) out.push({ id: `r-${r.id}-${done}`, kind: 'reminder', at: done, title: `Erledigt: ${r.title}`, subtitle: growName(r.growId), to: 'calendar', growId: r.growId });
-    if (r.repeat.kind === 'none' && !(r.completedDates ?? []).includes(r.date) && (!today || r.date <= today))
+    if ((r.repeat?.kind ?? 'none') === 'none' && !(r.completedDates ?? []).includes(r.date) && (!today || r.date <= today))
       out.push({ id: `r-${r.id}`, kind: 'reminder', at: r.date, title: r.title, subtitle: growName(r.growId), to: 'calendar', growId: r.growId });
   }
   return out.filter((e) => /^\d{4}-\d{2}-\d{2}/.test(e.at)).sort((a, b) => b.at.localeCompare(a.at) || a.id.localeCompare(b.id));
