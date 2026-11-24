@@ -69,3 +69,14 @@ describe('Sammlung: Mengenverlauf', () => {
     expect(log![0]!.at).toBe('t10');
   });
 });
+
+describe('Journal: Monatsgruppen', () => {
+  it('gruppiert nach Monat mit deutschem Monatsnamen', async () => {
+    const { byMonth } = await import('../../pages/JournalPage');
+    const g = byMonth([{ date: '2026-11-20T10:00' }, { date: '2026-11-02T10:00' }, { date: '2026-10-30T10:00' }]);
+    expect(g.map(([k, l, e]) => [k, l, e.length])).toEqual([
+      ['2026-11', 'November 2026', 2],
+      ['2026-10', 'Oktober 2026', 1],
+    ]);
+  });
+});
