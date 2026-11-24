@@ -1,4 +1,5 @@
-import { Plus, Search, Sprout } from 'lucide-react';
+import { Columns3, Plus, Search, Sprout } from 'lucide-react';
+import { href } from '../../app/router';
 import { useMemo, useState } from 'react';
 import { useData } from '../../app/DataProvider';
 import { useQuickActions } from '../../app/QuickActions';
@@ -37,9 +38,16 @@ export function GrowList() {
         title="Growlogs"
         subtitle="Deine Grow-Projekte mit Pflanzen, Fotos, Messwerten und Ausgaben."
         actions={
-          <button type="button" className="btn-primary" onClick={() => quick({ kind: 'grow' })}>
-            <Plus className="size-4" /> Neuer Grow
-          </button>
+          <>
+            {data.grows.length >= 2 && (
+              <a href={href('grows/compare')} className="btn-ghost">
+                <Columns3 className="size-4" /> Vergleichen
+              </a>
+            )}
+            <button type="button" className="btn-primary" onClick={() => quick({ kind: 'grow' })}>
+              <Plus className="size-4" /> Neuer Grow
+            </button>
+          </>
         }
       />
       {data.grows.length === 0 ? (

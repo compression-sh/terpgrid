@@ -19,6 +19,9 @@ const ThcLab = lazy(() => import('./pages/ThcLab').then((m) => ({ default: m.Thc
 const GrowList = lazy(() => import('./pages/grows/GrowList').then((m) => ({ default: m.GrowList })));
 const GrowDetail = lazy(() => import('./pages/grows/GrowDetail').then((m) => ({ default: m.GrowDetail })));
 const LabelsPage = lazy(() => import('./pages/grows/LabelsPage').then((m) => ({ default: m.LabelsPage })));
+const GrowCompare = lazy(() => import('./pages/grows/GrowCompare').then((m) => ({ default: m.GrowCompare })));
+const GrowReport = lazy(() => import('./pages/grows/GrowReport').then((m) => ({ default: m.GrowReport })));
+const ExperimentsPage = lazy(() => import('./pages/grows/ExperimentsPage').then((m) => ({ default: m.ExperimentsPage })));
 const PlantDetail = lazy(() => import('./pages/grows/PlantDetail').then((m) => ({ default: m.PlantDetail })));
 const PhotosPage = lazy(() => import('./pages/PhotosPage').then((m) => ({ default: m.PhotosPage })));
 const StrainsPage = lazy(() => import('./pages/StrainsPage').then((m) => ({ default: m.StrainsPage })));
@@ -87,6 +90,9 @@ function Routes() {
       break;
     case 'grows':
       if (!b) page = <GrowList />;
+      else if (b === 'compare') page = <GrowCompare />;
+      else if (c === 'report') page = <GrowReport growId={b} />;
+      else if (c === 'experiments') page = <ExperimentsPage growId={b} />;
       else if (c === 'plants' && d) page = <PlantDetail growId={b} plantId={d} />;
       else page = <GrowDetail growId={b} />;
       break;

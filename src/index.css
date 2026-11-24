@@ -202,6 +202,30 @@ input[type='range'].slider:active::-webkit-slider-thumb {
     display: none !important;
   }
   /* Etikettendruck: nur die Etiketten, ohne Seitenränder der App */
+  /* Projektbericht: helle, druckfreundliche Darstellung */
+  body:has(.report) {
+    background: #fff !important;
+    background-image: none !important;
+  }
+  body:has(.report) main {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  .report-body,
+  .report-body * {
+    color: #111 !important;
+  }
+  .report-body .text-ink-300,
+  .report-body .text-ink-400 {
+    color: #555 !important;
+  }
+  .report-body .recharts-text {
+    fill: #444 !important;
+  }
+  .report-body section,
+  .report-body figure {
+    break-inside: avoid;
+  }
   body:has(.label-sheet) main {
     padding: 0 !important;
     max-width: none !important;

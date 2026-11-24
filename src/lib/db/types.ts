@@ -50,6 +50,33 @@ export interface GrowProject extends BaseRecord {
   phaseDates: PhaseDates;
   /** Eigene Zielbereiche für Messwerte dieses Grows */
   thresholds?: Thresholds;
+  /** Persönliche Experimente/Vergleiche innerhalb dieses Grows (keine Kausalaussagen) */
+  experiments?: Experiment[];
+}
+
+export interface Experiment {
+  id: string;
+  name: string;
+  purpose: string;
+  plantIds: string[];
+  startDate: DateString;
+  endDate?: DateString;
+  /** Messgrößen, die für dieses Experiment verglichen werden (Schlüssel aus METRICS) */
+  metrics: string[];
+  observations: string;
+  outcome: string;
+  notes: string;
+}
+
+/** Phänotyp-Notizen einer Pflanze – subjektive Beobachtungen, keine Genetik-Bestimmung */
+export interface PhenotypeNotes {
+  appearance?: string;
+  growth?: string;
+  leaves?: string;
+  variation?: string;
+  aroma?: string;
+  notes?: string;
+  updatedAt?: Timestamp;
 }
 
 export type PlantType = 'photoperiod' | 'autoflower' | 'unknown';
@@ -76,6 +103,7 @@ export interface Plant extends BaseRecord {
   /** Standort: Grow-Bereich (Zelt, Raum, Zone …) */
   spaceId?: string;
   tags?: string[];
+  phenotype?: PhenotypeNotes;
 }
 
 export const ACTIVITY_TYPES = [

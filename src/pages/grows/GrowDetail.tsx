@@ -15,7 +15,7 @@ import {
   Receipt,
   Ruler,
   Sprout,
-  Trash2, QrCode, NotebookPen } from 'lucide-react';
+  Trash2, QrCode, NotebookPen, FileText, FlaskConical } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useConfirm } from '../../app/Confirm';
 import { useData } from '../../app/DataProvider';
@@ -273,6 +273,12 @@ export function GrowDetail({ growId }: { growId: string }) {
         <button type="button" className="btn-ghost" onClick={() => setModal('edit')}>
           <Pencil className="size-4" /> Bearbeiten
         </button>
+        <a href={href(`grows/${growId}/report`)} className="btn-ghost">
+          <FileText className="size-4" /> Bericht
+        </a>
+        <a href={href(`grows/${growId}/experiments`)} className="btn-ghost">
+          <FlaskConical className="size-4" /> Experimente
+        </a>
         <div className="ml-auto">
           <StatusMenu grow={grow} />
         </div>
