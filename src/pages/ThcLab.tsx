@@ -12,7 +12,7 @@ import { SmokingCalculator } from '../features/SmokingCalculator';
 import { SourcesView } from '../features/SourcesView';
 import { TimelineView } from '../features/TimelineView';
 import { ToolsView } from '../features/ToolsView';
-import { useLocalState } from '../hooks/useLocalState';
+import { useLabDraft } from '../hooks/useLabDraft';
 import { type Recipe, newRecipe } from '../lib/calc/compare';
 import { type EdibleInput, defaultEdibleInput } from '../lib/calc/edibles';
 import { type SmokingInput, defaultSmokingInput } from '../lib/calc/smoking';
@@ -40,13 +40,15 @@ const isBool = (v: unknown): v is boolean => typeof v === 'boolean';
 
 /**
  * THC Lab – der bisherige THC-Rechner unverändert als Unterbereich.
- * Eingaben bleiben unter den bisherigen localStorage-Schlüsseln erhalten.
+ * Lokalmodus: Eingaben unter den bisherigen localStorage-Schlüsseln. Servermodus: je Konto
+ * getrennt und als Entwurf geräteübergreifend synchronisiert (siehe useLabDraft).
  */
 export function ThcLab() {
   const route = useRoute();
   const { data } = useData();
   const toast = useToast();
-  const [lastTab, setLastTab] = useLocalState<LabTab>('cannabisrechner.tab', () => 'edibles', isTab);
+  // Zuletzt genutzter Tab: kontobezogen, aber nur auf diesem Gerät (nicht synchronisiert)
+  const [lastTab, setLastTab] = useLabDraft<LabTab>('tab', 'cannabisrechner.tab', () => 'edibles', isTab, { sync: false });
   const tabParam = route.path[1];
   const tab: LabTab = isTab(tabParam) ? tabParam : lastTab;
 
@@ -55,14 +57,16 @@ export function ThcLab() {
     else if (tabParam !== lastTab) setLastTab(tabParam);
   }, [tabParam, lastTab, setLastTab]);
 
-  const [edible, setEdible] = useLocalState<EdibleInput>('cannabisrechner.edibles.v1', defaultEdibleInput, isEdibleInput);
-  const [smoking, setSmoking] = useLocalState<SmokingInput>('cannabisrechner.smoking.v1', defaultSmokingInput, isSmokingInput);
-  const [recipes, setRecipes] = useLocalState<Recipe[]>(
+  // Entwürfe je Rechner: im Servermodus kontobezogen und geräteübergreifend synchronisiert
+  const [edible, setEdible] = useLabDraft<EdibleInput>('edibles', 'cannabisrechner.edibles.v1', defaultEdibleInput, isEdibleInput);
+  const [smoking, setSmoking] = useLabDraft<SmokingInput>('smoking', 'cannabisrechner.smoking.v1', defaultSmokingInput, isSmokingInput);
+  const [recipes, setRecipes] = useLabDraft<Recipe[]>(
+    'compare',
     'cannabisrechner.compare.v1',
     () => [newRecipe(0), newRecipe(1, { cannabisGrams: 3.5, potency: { mode: 'total', thcPercent: 22 }, fatGrams: 200 })],
     isRecipeList,
   );
-  const [disclaimerSeen, setDisclaimerSeen] = useLocalState<boolean>('cannabisrechner.disclaimer.v1', () => false, isBool);
+  const [disclaimerSeen, setDisclaimerSeen] = useLabDraft<boolean>('disclaimer', 'cannabisrechner.disclaimer.v1', () => false, isBool, { sync: false });
 
   const saved: SavedCalculation[] = [...data.calculations].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 

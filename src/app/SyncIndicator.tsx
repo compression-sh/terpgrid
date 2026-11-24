@@ -19,18 +19,22 @@ export function SyncPill({ compact = false }: { compact?: boolean }) {
     tone = 'text-amber-200';
   } else if (sync.conflicts > 0) {
     icon = <AlertTriangle className="size-3.5 text-amber-300" />;
-    text = `${sync.conflicts} Konflikt${sync.conflicts === 1 ? '' : 'e'}`;
+    text = sync.conflicts === 1 ? 'Konflikt erkannt' : `${sync.conflicts} Konflikte erkannt`;
     tone = 'text-amber-200';
   } else if (sync.phase === 'syncing') {
     icon = <Loader2 className="size-3.5 animate-spin text-leaf-300" />;
     text = 'Synchronisiere …';
-  } else if (sync.phase === 'offline' || sync.phase === 'error') {
+  } else if (sync.phase === 'offline') {
     icon = <CloudOff className="size-3.5 text-amber-300" />;
-    text = sync.pending ? `${sync.pending} ausstehend` : 'Nicht verbunden';
+    text = sync.pending ? `Offline · ${sync.pending} ausstehend` : 'Offline';
     tone = 'text-amber-200';
+  } else if (sync.phase === 'error') {
+    icon = <AlertTriangle className="size-3.5 text-rose-300" />;
+    text = 'Synchronisierung fehlgeschlagen';
+    tone = 'text-rose-200';
   } else if (sync.pending > 0) {
     icon = <RefreshCw className="size-3.5 text-amber-300" />;
-    text = `${sync.pending} ausstehend`;
+    text = sync.pending === 1 ? '1 Änderung ausstehend' : `${sync.pending} Änderungen ausstehend`;
   }
   return (
     <a href={href('account/sync')} className={`inline-flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.02] px-2 py-1 text-[11px] font-medium hover:border-white/[0.14] ${tone}`} title="Synchronisation">

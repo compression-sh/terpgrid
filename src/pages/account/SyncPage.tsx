@@ -81,7 +81,8 @@ export function SyncPage() {
         <section className="space-y-3">
           <h2 className="text-sm font-semibold text-ink-100">Konflikte auflösen</h2>
           <p className="text-[13px] text-ink-400">
-            Diese Einträge wurden auf einem anderen Gerät geändert, während sie hier ebenfalls geändert wurden. TERPGRID überschreibt nichts automatisch – entscheide, welche Version gilt.
+            Diese Einträge wurden auf einem anderen Gerät am selben Feld geändert (hervorgehoben). Änderungen an verschiedenen Feldern führt TERPGRID automatisch zusammen; hier
+            wird nichts automatisch überschrieben – entscheide, welche Version gilt.
           </p>
           {conflicts.map((c) => {
             const d = c.kind === 'conflict' ? diff(c.local, c.server?.data) : [];
@@ -114,7 +115,7 @@ export function SyncPage() {
                         {c.local === null && <tr><td colSpan={3} className="py-1 text-ink-400">Hier gelöscht.</td></tr>}
                         {c.server?.deleted && <tr><td colSpan={3} className="py-1 text-ink-400">Auf dem Server gelöscht.</td></tr>}
                         {d.map((r) => (
-                          <tr key={r.key} className="border-t border-white/[0.04] align-top">
+                          <tr key={r.key} className={`border-t border-white/[0.04] align-top ${c.fields?.some((f) => f === r.key || f.startsWith(`${r.key}.`)) ? 'bg-amber-400/[0.06]' : ''}`}>
                             <td className="py-1.5 pr-3 font-mono text-[11.5px] text-ink-400">{r.key}</td>
                             <td className="py-1.5 pr-3 break-words text-ink-100">{r.mine}</td>
                             <td className="py-1.5 break-words text-ink-100">{r.theirs}</td>

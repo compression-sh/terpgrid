@@ -146,6 +146,48 @@ describe('Sync-Engine', () => {
     expect(engine.getStatus().conflicts).toBe(0);
   });
 
+  it('verschiedene Felder auf zwei Geräten geändert → automatisch zusammengeführt, ohne Konflikt', async () => {
+    await putOne('grows', { ...grow('m1', 'Basis'), notes: 'alt' });
+    await engine.syncNow();
+    server.remoteWrite('grows', 'm1', { ...grow('m1', 'Basis'), notes: 'vom Handy' });
+    await putOne('grows', { ...grow('m1', 'Neuer Name'), notes: 'alt' });
+    await engine.syncNow();
+    await engine.syncNow();
+    expect(engine.getStatus().conflicts).toBe(0);
+    expect(await getOne('grows', 'm1')).toMatchObject({ name: 'Neuer Name', notes: 'vom Handy' });
+    expect(server.rows.get('grows:m1')!.data).toMatchObject({ name: 'Neuer Name', notes: 'vom Handy' });
+    expect(await getAll('outbox')).toHaveLength(0);
+  });
+
+  it('echter Feldkonflikt nennt das betroffene Feld', async () => {
+    await putOne('grows', grow('m2', 'Basis'));
+    await engine.syncNow();
+    server.remoteWrite('grows', 'm2', grow('m2', 'Server'));
+    await putOne('grows', grow('m2', 'Lokal'));
+    await engine.syncNow();
+    const [c] = await getAll('syncConflicts');
+    expect(c!.fields).toEqual(['name']);
+  });
+
+  it('wiederholt fehlgeschlagene Synchronisation mit wachsendem Abstand und verliert nichts', async () => {
+    const delays: number[] = [];
+    const orig = engine.schedule.bind(engine);
+    engine.schedule = (d: number) => {
+      delays.push(d);
+    };
+    server.online = false;
+    await putOne('grows', grow('r1', 'X'));
+    await engine.syncNow();
+    await engine.syncNow();
+    await engine.syncNow();
+    expect(delays.filter((d) => d >= 5000)).toEqual([5000, 10000, 20000]);
+    expect(await getAll('outbox')).toHaveLength(1);
+    engine.schedule = orig;
+    server.online = true;
+    await engine.syncNow();
+    expect(engine.getStatus()).toMatchObject({ phase: 'idle', pending: 0 });
+  });
+
   it('„Server-Version übernehmen“ ersetzt die lokale Version', async () => {
     await putOne('grows', grow('g1', 'Basis'));
     await engine.syncNow();
