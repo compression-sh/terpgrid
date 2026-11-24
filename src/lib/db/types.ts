@@ -336,6 +336,7 @@ export const DASHBOARD_WIDGETS = [
   'reminders',
   'photos',
   'activity',
+  'measurements',
   'journal',
   'calculations',
   'strains',

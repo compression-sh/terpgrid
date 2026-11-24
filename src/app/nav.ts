@@ -28,7 +28,7 @@ export interface NavItem {
 
 export const PRIMARY_NAV: NavItem[] = [
   { id: 'dashboard', label: 'Übersicht', to: '', icon: LayoutDashboard, match: [''] },
-  { id: 'grows', label: 'Growlogs', to: 'grows', icon: Sprout, match: ['grows'] },
+  { id: 'grows', label: 'Growlogs', to: 'grows', icon: Sprout, match: ['grows', 'labels'] },
   { id: 'discover', label: 'Discover', to: 'discover', icon: Compass, match: ['discover'] },
   { id: 'lab', label: 'THC Lab', to: 'lab/edibles', icon: FlaskConical, match: ['lab'] },
   { id: 'strains', label: 'Meine Sorten', to: 'strains', icon: Leaf, match: ['strains'] },

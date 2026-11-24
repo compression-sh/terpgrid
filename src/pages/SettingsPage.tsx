@@ -20,6 +20,7 @@ const WIDGET_LABEL: Record<DashboardWidget, string> = {
   reminders: 'Erinnerungen',
   photos: 'Neueste Fotos',
   activity: 'Letzte Aktivitäten',
+  measurements: 'Letzte Messwerte',
   journal: 'Journal',
   calculations: 'Gespeicherte Berechnungen',
   strains: 'Zuletzt bearbeitete Sorten',
