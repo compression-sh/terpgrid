@@ -13,7 +13,7 @@ import { type ReactNode, createContext, useCallback, useContext, useEffect, useM
 import { clearPhotoUrlCache } from '../components/photos/usePhotoUrl';
 import { setCatalogProxy } from '../lib/catalog/endpoint';
 import { clearAccountLocalStorage, isSharedDevice } from '../lib/device';
-import { DB_NAME, closeDatabase, deleteDatabase, getAll, setSyncTracking, useDatabaseName } from '../lib/db/database';
+import { DB_NAME, closeDatabase, deleteDatabase, getAll, setSyncTracking, selectDatabase } from '../lib/db/database';
 import { type AuthConfig, type ServerUser, type SessionResponse, ApiError, api, setCsrfToken, setOnUnauthorized } from '../lib/server/api';
 import { loginWithPasskey } from '../lib/server/passkeys';
 import { SyncEngine, type SyncStatus } from '../lib/sync/engine';
@@ -94,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (user: ServerUser, offline: boolean, reauthUntil: string | null) => {
       stopEngine();
       clearPhotoUrlCache();
-      useDatabaseName(accountDbName(user.accountKey));
+      selectDatabase(accountDbName(user.accountKey));
       setSyncTracking(true);
       setCatalogProxy(window.location.origin);
       const la = { accountKey: user.accountKey, loginName: user.loginName, displayName: user.displayName };
@@ -139,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setState({ kind: 'anonymous', config: { inviteOnly: true, minPasswordLength: 12, version: '' }, offline: true });
         return;
       }
-      useDatabaseName(DB_NAME);
+      selectDatabase(DB_NAME);
       setSyncTracking(false);
       setCatalogProxy(null);
       setState({ kind: 'local' });
@@ -211,7 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await api('POST', '/api/auth/logout').catch(() => {});
       stopEngine();
       if ((opts.wipeLocal || isSharedDevice()) && current) {
-        useDatabaseName(accountDbName(current.accountKey));
+        selectDatabase(accountDbName(current.accountKey));
         await deleteDatabase().catch(() => {});
         clearAccountLocalStorage(current.accountKey);
       } else {

@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { DB_VERSION, count, deleteDatabase, getAll, getOne, subscribe, useDatabaseName } from '../db/database';
+import { DB_VERSION, count, deleteDatabase, getAll, getOne, subscribe, selectDatabase } from '../db/database';
 import { runDataMigrations } from '../db/migrate';
 import {
   addPhoto,
@@ -22,7 +22,7 @@ import { STORAGE_KEY } from '../storage';
 let n = 0;
 beforeEach(async () => {
   await deleteDatabase();
-  useDatabaseName(`terpgrid-test-${++n}`);
+  selectDatabase(`terpgrid-test-${++n}`);
 });
 
 const buf = (bytes: number[]) => new Uint8Array(bytes).buffer;

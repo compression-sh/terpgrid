@@ -1,0 +1,13 @@
+# gitleaks-Konfiguration: Standardregeln + eng begrenzte Ausnahmen für bekannte Fehlalarme.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Testpasswörter lokaler Testkonten und Namen von localStorage-Schlüsseln (keine Geheimnisse)"
+paths = [
+  '''server/test/.*\.test\.ts''',
+  '''src/lib/__tests__/.*''',
+]
+regexes = [
+  '''^cannabisrechner\.saved\.v1$''',
+]

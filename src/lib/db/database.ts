@@ -162,7 +162,7 @@ let dbName = DB_NAME;
 let tracking = false;
 
 /** Wählt die Datenbank (Lokalmodus: `terpgrid`, Servermodus: eine Datenbank je Konto). */
-export function useDatabaseName(name: string): void {
+export function selectDatabase(name: string): void {
   if (name !== dbName) {
     dbPromise?.then((d) => d.close()).catch(() => {});
     dbPromise = null;

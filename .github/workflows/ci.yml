@@ -1,0 +1,139 @@
+# TERPGRID – CI: Prüfungen für jeden Push und Pull Request.
+# Sicherheitsprinzipien:
+# - Nur Leserechte (contents: read), keine Secrets, kein Deployment, keine Schreibzugriffe
+# - pull_request (nicht pull_request_target): fremder PR-Code läuft ohne Zugriff auf Secrets
+# - Actions per Commit-SHA, Container-Images per Digest angeheftet
+name: CI
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '22.21.1'
+
+jobs:
+  frontend:
+    name: Frontend (Typecheck, Lint, Tests, Build, Audit)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npx vitest run
+      - run: npm run build # enthält tsc -b (Typecheck)
+      - run: npm audit --audit-level=moderate
+
+  server:
+    name: Backend (Typecheck, Migrationen, Integrations- und Isolationstests, Audit)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16.10-alpine3.22@sha256:029660641a0cfc575b14f336ba448fb8a75fd595d42e1fa316b9fb4378742297
+        env:
+          POSTGRES_PASSWORD: ci-only-not-a-secret
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    defaults:
+      run:
+        working-directory: server
+    env:
+      TEST_PG_URL: postgres://postgres:ci-only-not-a-secret@127.0.0.1:5432/postgres
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      - run: npx tsc --noEmit -p .
+      - name: Migrationen auf leerer DB (zweimal, idempotent) und Schemaprüfung
+        run: |
+          psql "$TEST_PG_URL" -v ON_ERROR_STOP=1 -c "CREATE ROLE terpgrid_owner LOGIN PASSWORD 'o' NOBYPASSRLS" -c "CREATE ROLE terpgrid_app LOGIN PASSWORD 'a' NOBYPASSRLS" -c "CREATE DATABASE migtest OWNER terpgrid_owner"
+          export DATABASE_URL=postgres://terpgrid_app:a@127.0.0.1:5432/migtest DATABASE_MIGRATE_URL=postgres://terpgrid_owner:o@127.0.0.1:5432/migtest
+          export PUBLIC_ORIGIN=https://ci.test MASTER_KEYS="1:$(openssl rand -base64 32)" HMAC_SECRET="$(openssl rand -base64 32)"
+          npx tsx src/cli.ts migrate
+          npx tsx src/cli.ts migrate
+          npx tsx src/cli.ts schema-status
+      - name: Integrationstests (Auth, Passkeys, Isolation inkl. RLS, Verschlüsselung, Rotation, Sync, Dateien, Proxy)
+        run: npx vitest run
+      - run: npm audit --audit-level=moderate
+
+  e2e:
+    name: Browser-Smoke-Test (Lokalmodus)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Smoke-Test gegen den Produktions-Build
+        run: |
+          npx vite preview --port 4173 --strictPort &
+          npx --yes wait-on@8.0.1 --timeout 60000 http://localhost:4173
+          npm run e2e
+
+  deploy-config:
+    name: Deployment-Konfiguration (Compose, Caddy, Skripte, Images)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: ShellCheck
+        run: shellcheck -x -S warning deploy/*.sh deploy/backup/*.sh deploy/db-init/*.sh
+      - name: docker compose config (mit Platzhalter-Secrets, nicht committet)
+        working-directory: deploy
+        run: |
+          cp .env.example .env && sed -i 's/^TERPGRID_DOMAIN=.*/TERPGRID_DOMAIN=ci.example/' .env
+          mkdir -m 700 secrets && for s in postgres_password db_owner_password db_app_password master_keys hmac_secret; do echo placeholder > secrets/$s; done
+          docker compose config -q
+          ! grep -q docker.sock docker-compose.yml
+      - name: Caddyfile validieren
+        run: docker run --rm -e TERPGRID_DOMAIN=ci.example -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d caddy validate --config /etc/caddy/Caddyfile
+      - name: API-Image bauen (nicht gepusht) und Laufzeitbenutzer prüfen
+        run: |
+          docker build -t terpgrid-api:ci server
+          test "$(docker run --rm terpgrid-api:ci id -u)" = "1000"
+      - name: Web-Image bauen (nicht gepusht)
+        run: docker build -f deploy/Dockerfile.web -t terpgrid-web:ci .
+
+  secrets:
+    name: Secret-Scan (gesamte Historie)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: gitleaks
+        run: docker run --rm -v "$PWD:/repo:ro" zricethezav/gitleaks:v8.21.2@sha256:0e99e8821643ea5b235718642b93bb32486af9c8162c8b8731f7cbdc951a7f46 git /repo --no-banner --config /repo/.gitleaks.toml --redact

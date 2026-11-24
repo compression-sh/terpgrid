@@ -54,7 +54,8 @@ export function overdue(reminders: Reminder[], todayStr: string, days = 14): Occ
 /* ───────────── ICS-Export (RFC 5545) ───────────── */
 
 function icsEscape(s: string): string {
-  return s.replace(/\\/g, '\\\\').replace(/;/g, '\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+  // RFC 5545: Backslash, Semikolon und Komma maskieren, Zeilenumbrüche als \n
+  return s.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
 }
 
 /** Zeilen > 75 Oktette falten (RFC 5545, 3.1). */

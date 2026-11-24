@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { deleteDatabase, getAll, getOne, putOne, setSyncTracking, useDatabaseName, writeBatch } from '../db/database';
+import { deleteDatabase, getAll, getOne, putOne, setSyncTracking, selectDatabase, writeBatch } from '../db/database';
 import { setApiFetch, setCsrfToken } from '../server/api';
 import { SyncEngine } from '../sync/engine';
 import { deleteLegacy, importLegacy, legacyExists, readImportMark, readLegacy } from '../sync/legacy';
@@ -82,7 +82,7 @@ const grow = (id: string, name: string) => ({ id, name, description: '', startDa
 
 beforeEach(async () => {
   await deleteDatabase();
-  useDatabaseName(`terpgrid-u-test${++n}`);
+  selectDatabase(`terpgrid-u-test${++n}`);
   setSyncTracking(true);
   server = new FakeServer();
   setApiFetch(server.fetch);
@@ -210,7 +210,7 @@ describe('Sync-Engine', () => {
     expect(server.files.has('/api/files/photo/p1/thumb')).toBe(true);
     // Zweites Gerät
     engine.stop();
-    useDatabaseName(`terpgrid-u-device2-${n}`);
+    selectDatabase(`terpgrid-u-device2-${n}`);
     const e2 = new SyncEngine();
     await e2.syncNow();
     await new Promise((r) => setTimeout(r, 50));
@@ -224,7 +224,7 @@ describe('Sync-Engine', () => {
   it('Konto-Datenbanken sind getrennt: Outbox eines Kontos wird nie im anderen hochgeladen', async () => {
     await putOne('grows', grow('nur-a', 'Konto A'));
     engine.stop();
-    useDatabaseName(`terpgrid-u-other-${n}`);
+    selectDatabase(`terpgrid-u-other-${n}`);
     const eb = new SyncEngine();
     await eb.syncNow();
     expect(server.rows.has('grows:nur-a')).toBe(false);
@@ -233,12 +233,12 @@ describe('Sync-Engine', () => {
 });
 
 async function createLegacy(rows: { grows?: any[]; photos?: any[]; photoData?: any[] }) {
-  useDatabaseName('terpgrid');
+  selectDatabase('terpgrid');
   setSyncTracking(false);
   await writeBatch({ put: { grows: rows.grows ?? [], photos: rows.photos ?? [], photoData: rows.photoData ?? [], settings: [{ key: 'app', value: { theme: 'x' } }] } as any });
   const { closeDatabase } = await import('../db/database');
   await closeDatabase();
-  useDatabaseName(`terpgrid-u-import${n}`);
+  selectDatabase(`terpgrid-u-import${n}`);
   setSyncTracking(true);
 }
 

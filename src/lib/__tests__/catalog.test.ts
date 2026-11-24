@@ -8,7 +8,7 @@ import { CatalogService, TTL } from '../catalog/service';
 import * as SA from '../catalog/strainapi';
 import { TERPENES, matchTerpene, terpeneLabel } from '../catalog/terpenes';
 import { CatalogError } from '../catalog/types';
-import { deleteDatabase, useDatabaseName } from '../db/database';
+import { deleteDatabase, selectDatabase } from '../db/database';
 import cannalibDetail from './fixtures/cannalib-detail.json';
 import cannalibSearch from './fixtures/cannalib-search.json';
 import saDetail from './fixtures/strainapi-detail.json';
@@ -238,7 +238,7 @@ let n = 0;
 describe('CatalogService (Cache & Offline)', () => {
   beforeEach(async () => {
     await deleteDatabase();
-    useDatabaseName(`terpgrid-catalog-${++n}`);
+    selectDatabase(`terpgrid-catalog-${++n}`);
   });
 
   function setup(handler: (url: string) => Response | Promise<Response>) {

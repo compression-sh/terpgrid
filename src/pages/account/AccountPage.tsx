@@ -26,7 +26,7 @@ import { useToast } from '../../app/Toasts';
 import { Callout } from '../../components/ui/Callout';
 import { Modal } from '../../components/ui/Modal';
 import { PageHeader } from '../../components/ui/PageHeader';
-import { deleteDatabase, storageEstimate, useDatabaseName } from '../../lib/db/database';
+import { deleteDatabase, storageEstimate, selectDatabase } from '../../lib/db/database';
 import { isSharedDevice, setSharedDevice } from '../../lib/device';
 import { useData } from '../../app/DataProvider';
 import { formatBytes } from '../../lib/media/images';
@@ -797,7 +797,7 @@ function DeviceSection() {
             if (!ok) return;
             setBusy(true);
             auth.engine?.stop();
-            useDatabaseName(accountDbName(user.accountKey));
+            selectDatabase(accountDbName(user.accountKey));
             await deleteDatabase().catch(() => {});
             window.location.reload();
           }}
@@ -878,7 +878,7 @@ function DeleteSection({ user, disabled }: { user: ServerUser; disabled: boolean
             try {
               const r = await reauth(() => api('DELETE', '/api/account', { confirm: typed }));
               if (!r) return;
-              useDatabaseName(accountDbName(user.accountKey));
+              selectDatabase(accountDbName(user.accountKey));
               await deleteDatabase().catch(() => {});
               toast('Dein Konto wurde gelöscht.', { tone: 'ok' });
               await auth.logout();
