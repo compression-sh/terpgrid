@@ -1,5 +1,6 @@
 import {
   Download,
+  Fingerprint,
   HardDrive,
   KeyRound,
   Laptop,
@@ -25,9 +26,12 @@ import { useToast } from '../../app/Toasts';
 import { Callout } from '../../components/ui/Callout';
 import { Modal } from '../../components/ui/Modal';
 import { PageHeader } from '../../components/ui/PageHeader';
-import { deleteDatabase, useDatabaseName } from '../../lib/db/database';
+import { deleteDatabase, storageEstimate, selectDatabase } from '../../lib/db/database';
+import { isSharedDevice, setSharedDevice } from '../../lib/device';
+import { useData } from '../../app/DataProvider';
 import { formatBytes } from '../../lib/media/images';
 import { ApiError, type ServerUser, api } from '../../lib/server/api';
+import { type PasskeyInfo, passkeyErrorText, passkeysSupported, registerPasskey, suggestPasskeyName } from '../../lib/server/passkeys';
 import { FormError, PasswordField, PasswordStrength, passwordHints } from '../auth/fields';
 import { RecoveryCodesPanel } from '../auth/RecoveryCodes';
 
@@ -39,6 +43,7 @@ interface Overview {
   quotaBytes: number;
   recoveryCodesRemaining: number;
   sessions: number;
+  passkeys: number;
   totpEnabled: boolean;
   securityEvents: { type: string; created_at: string }[];
 }
@@ -122,8 +127,10 @@ export function AccountPage() {
         {[
           ['profil', 'Profil'],
           ['sicherheit', 'Sicherheit'],
+          ['passkeys', 'Passkeys'],
           ['sitzungen', 'Sitzungen'],
           ['daten', 'Daten'],
+          ['geraet', 'Dieses Gerät'],
           ['datenschutz', 'Datenschutz-Center'],
           ['loeschen', 'Konto löschen'],
           ...(user.role === 'admin' ? [['admin', 'Administration']] : []),
@@ -141,10 +148,12 @@ export function AccountPage() {
       </nav>
 
       {offline && <Callout tone="warn">Offline-Modus: Kontoeinstellungen sind erst wieder verfügbar, wenn der Server erreichbar ist.</Callout>}
+      {ov && <SecurityStatus ov={ov} totp={user.totpEnabled} />}
       {loadError && <Callout tone="danger">{loadError}</Callout>}
 
       <ProfileSection user={user} ov={ov} onSaved={(displayName) => auth.setUser({ displayName })} disabled={offline} />
       <SecuritySection user={user} ov={ov} reload={load} disabled={offline} />
+      <PasskeySection disabled={offline} />
 
       <Section id="sitzungen" icon={<Laptop className="size-4" />} title="Aktive Sitzungen" subtitle="Geräte, auf denen du angemeldet bist. Unbekannte Sitzungen sofort beenden.">
         <ul className="divide-y divide-white/[0.05]">
@@ -248,6 +257,7 @@ export function AccountPage() {
         )}
       </Section>
 
+      <DeviceSection />
       <PrivacyCenter />
       <DeleteSection user={user} disabled={offline} />
     </div>
@@ -399,6 +409,147 @@ function SecuritySection({ user, ov, reload, disabled }: { user: ServerUser; ov:
   );
 }
 
+function PasskeySection({ disabled }: { disabled: boolean }) {
+  const reauth = useReauth();
+  const toast = useToast();
+  const confirm = useConfirm();
+  const [list, setList] = useState<PasskeyInfo[] | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [name, setName] = useState(suggestPasskeyName);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+  const [editing, setEditing] = useState<{ id: string; name: string } | null>(null);
+  const supported = passkeysSupported();
+
+  useEffect(() => {
+    if (disabled) return;
+    api<{ passkeys: PasskeyInfo[] }>('GET', '/api/auth/passkeys')
+      .then((r) => setList(r.passkeys))
+      .catch(() => setList([]));
+  }, [disabled]);
+
+  return (
+    <Section id="passkeys" icon={<Fingerprint className="size-4" />} title="Passkeys" subtitle="Anmelden mit Fingerabdruck, Gesichtserkennung oder Geräte-PIN – ohne Passwort, ohne E-Mail.">
+      {!supported && <Callout tone="warn">Dieser Browser unterstützt keine Passkeys.</Callout>}
+      {list && list.length > 0 && (
+        <ul className="mb-3 divide-y divide-white/[0.05]">
+          {list.map((p) => (
+            <li key={p.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center">
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-leaf-500/10 text-leaf-300">
+                <Fingerprint className="size-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                {editing?.id === p.id ? (
+                  <form
+                    className="flex gap-2"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      try {
+                        const r = await reauth(() => api<{ passkeys: PasskeyInfo[] }>('PATCH', `/api/auth/passkeys/${p.id}`, { name: editing.name.trim() }));
+                        if (r) setList(r.passkeys);
+                        setEditing(null);
+                      } catch (err) {
+                        toast(passkeyErrorText(err), { tone: 'error' });
+                      }
+                    }}
+                  >
+                    <input className="input-base py-1.5" aria-label="Name des Passkeys" value={editing.name} maxLength={60} autoFocus onChange={(e) => setEditing({ id: p.id, name: e.target.value })} />
+                    <button type="submit" className="btn-primary py-1.5" disabled={!editing.name.trim()}>
+                      Speichern
+                    </button>
+                    <button type="button" className="btn-ghost py-1.5" onClick={() => setEditing(null)}>
+                      Abbrechen
+                    </button>
+                  </form>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 text-[13.5px] text-ink-100">
+                      {p.name}
+                      {p.backedUp && <span className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[10.5px] text-ink-300">synchronisiert</span>}
+                    </div>
+                    <div className="text-[11.5px] text-ink-500">
+                      Hinzugefügt {dt(p.createdAt)} · {p.lastUsedAt ? `zuletzt verwendet ${dt(p.lastUsedAt)}` : 'noch nicht verwendet'}
+                    </div>
+                  </>
+                )}
+              </div>
+              {editing?.id !== p.id && (
+                <div className="flex gap-1.5 pl-11 sm:pl-0">
+                  <button type="button" className="btn-ghost px-2.5 py-1.5 text-xs" disabled={disabled} onClick={() => setEditing({ id: p.id, name: p.name })}>
+                    Umbenennen
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-ghost px-2.5 py-1.5 text-xs text-rose-200"
+                    disabled={disabled}
+                    onClick={async () => {
+                      const ok = await confirm({ title: `Passkey „${p.name}“ entfernen?`, message: 'Mit diesem Passkey ist danach keine Anmeldung mehr möglich. Passwort und andere Passkeys bleiben gültig.', confirmLabel: 'Entfernen', tone: 'danger' });
+                      if (!ok) return;
+                      try {
+                        const r = await reauth(() => api<{ passkeys: PasskeyInfo[] }>('DELETE', `/api/auth/passkeys/${p.id}`));
+                        if (r) setList(r.passkeys);
+                      } catch (err) {
+                        toast(passkeyErrorText(err), { tone: 'error' });
+                      }
+                    }}
+                  >
+                    Entfernen
+                  </button>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {list && list.length === 0 && <p className="mb-3 text-[13px] text-ink-400">Noch kein Passkey registriert.</p>}
+      {adding ? (
+        <form
+          className="flex flex-col gap-2 rounded-xl border border-white/[0.06] bg-white/[0.015] p-3 sm:flex-row sm:items-end"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setBusy(true);
+            setError(undefined);
+            try {
+              const r = await reauth(() => registerPasskey(name.trim()));
+              if (r) {
+                setList(r);
+                setAdding(false);
+                toast('Passkey hinzugefügt.', { tone: 'ok' });
+              }
+            } catch (err) {
+              setError(passkeyErrorText(err));
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <div className="flex-1 space-y-1.5">
+            <label className="label" htmlFor="pk-name">
+              Name (z. B. Gerät)
+            </label>
+            <input id="pk-name" className="input-base" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
+            <FormError message={error} />
+          </div>
+          <button type="submit" className="btn-primary" disabled={busy || !name.trim()}>
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <Fingerprint className="size-4" />} Passkey erstellen
+          </button>
+          <button type="button" className="btn-ghost" onClick={() => setAdding(false)}>
+            Abbrechen
+          </button>
+        </form>
+      ) : (
+        <button type="button" className="btn-primary" disabled={disabled || !supported} onClick={() => setAdding(true)}>
+          <Fingerprint className="size-4" /> Passkey hinzufügen
+        </button>
+      )}
+      <p className="hint mt-3">
+        Passkeys werden auf deinem Gerät oder in deinem Passwort-Manager gespeichert; der Server kennt nur den öffentlichen Schlüssel. Eine Anmeldung mit Passkey ersetzt Passwort und
+        2FA-Code. Bei einer Wiederherstellung per Recovery-Code werden alle Passkeys entfernt.
+      </p>
+    </Section>
+  );
+}
+
 function Row({ icon, title, text, badge, children }: { icon: ReactNode; title: string; text: string; badge?: ReactNode; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-3 py-3.5 sm:flex-row sm:items-center sm:justify-between">
@@ -545,6 +696,123 @@ function TotpModal({ open, onClose, onDone }: { open: boolean; onClose: () => vo
   );
 }
 
+/** Zurückhaltende Übersicht – Status statt Alarm, ohne „100 % sicher“-Versprechen. */
+function SecurityStatus({ ov, totp }: { ov: Overview; totp: boolean }) {
+  const secondFactor = totp || ov.passkeys > 0;
+  const codesOk = ov.recoveryCodesRemaining >= 4;
+  const items: { label: string; value: string; ok: boolean; to: string }[] = [
+    { label: 'Zweiter Faktor', value: totp ? '2FA aktiv' : ov.passkeys > 0 ? 'Passkey' : 'nicht eingerichtet', ok: secondFactor, to: 'sicherheit' },
+    { label: 'Passkeys', value: String(ov.passkeys), ok: true, to: 'passkeys' },
+    { label: 'Recovery-Codes', value: `${ov.recoveryCodesRemaining} / 10`, ok: codesOk, to: 'sicherheit' },
+    { label: 'Aktive Sitzungen', value: String(ov.sessions), ok: true, to: 'sitzungen' },
+  ];
+  return (
+    <div className="card flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
+      <div className="flex items-center gap-3 sm:w-56">
+        <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${secondFactor && codesOk ? 'bg-leaf-500/12 text-leaf-300' : 'bg-amber-400/10 text-amber-200'}`}>
+          <ShieldCheck className="size-5" />
+        </span>
+        <div>
+          <div className="text-[13.5px] font-medium text-ink-50">{secondFactor && codesOk ? 'Gut abgesichert' : 'Absicherung verbessern'}</div>
+          <div className="text-[11.5px] text-ink-500">{secondFactor ? (codesOk ? 'Zweiter Faktor und Recovery-Codes vorhanden' : 'Neue Recovery-Codes empfohlen') : '2FA oder Passkey empfohlen'}</div>
+        </div>
+      </div>
+      <dl className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
+        {items.map((i) => (
+          <button key={i.label} type="button" onClick={() => document.getElementById(i.to)?.scrollIntoView({ behavior: 'smooth' })} className="rounded-lg border border-white/[0.05] bg-white/[0.015] px-3 py-2 text-left hover:border-white/[0.12]">
+            <dt className="text-[11px] text-ink-500">{i.label}</dt>
+            <dd className={`mt-0.5 flex items-center gap-1.5 text-[13px] ${i.ok ? 'text-ink-100' : 'text-amber-200'}`}>
+              <span className={`size-1.5 rounded-full ${i.ok ? 'bg-leaf-400' : 'bg-amber-300'}`} aria-hidden />
+              {i.value}
+            </dd>
+          </button>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
+function DeviceSection() {
+  const auth = useAuth();
+  const confirm = useConfirm();
+  const { data } = useData();
+  const [shared, setShared] = useState(isSharedDevice);
+  const [usage, setUsage] = useState<number | undefined>();
+  const [busy, setBusy] = useState(false);
+  const user = auth.state.kind === 'authenticated' ? auth.state.user : null;
+  useEffect(() => {
+    void storageEstimate().then((e) => setUsage(e.usage));
+  }, []);
+  const records = Object.values(data).reduce((n, l) => n + l.length, 0);
+  return (
+    <Section id="geraet" icon={<Smartphone className="size-4" />} title="Dieses Gerät" subtitle="Lokale Arbeitskopie in diesem Browser – für Offline-Nutzung und Synchronisation.">
+      <dl className="mb-4 grid grid-cols-2 gap-3 text-[13px] sm:grid-cols-3">
+        <div>
+          <dt className="text-ink-500">Lokale Datensätze</dt>
+          <dd className="mt-0.5 tabular text-ink-100">{records}</dd>
+        </div>
+        <div>
+          <dt className="text-ink-500">Belegter Browser-Speicher</dt>
+          <dd className="mt-0.5 tabular text-ink-100">{usage !== undefined ? formatBytes(usage) : 'unbekannt'}</dd>
+        </div>
+        <div>
+          <dt className="text-ink-500">Noch nicht übertragen</dt>
+          <dd className={`mt-0.5 tabular ${auth.sync.pending ? 'text-amber-200' : 'text-ink-100'}`}>{auth.sync.pending}</dd>
+        </div>
+      </dl>
+      <label className="flex items-start gap-3 rounded-xl border border-white/[0.06] bg-white/[0.015] p-3.5">
+        <input
+          type="checkbox"
+          className="mt-0.5 size-4 accent-leaf-500"
+          checked={shared}
+          onChange={(e) => {
+            setSharedDevice(e.target.checked);
+            setShared(e.target.checked);
+          }}
+        />
+        <span>
+          <span className="block text-[13.5px] font-medium text-ink-100">Geteiltes Gerät</span>
+          <span className="mt-0.5 block text-[12.5px] leading-relaxed text-ink-400">
+            Beim Abmelden wird die lokale Kopie immer gelöscht, deine Kennung wird nicht gemerkt und Offline-Weiterarbeiten ist aus. Empfohlen für Geräte, die auch andere nutzen.
+          </span>
+        </span>
+      </label>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          className="btn-ghost"
+          disabled={busy || !user}
+          onClick={async () => {
+            if (!user) return;
+            const pending = auth.sync.pending;
+            const ok = await confirm({
+              title: 'Lokale Kopie löschen?',
+              message:
+                pending > 0
+                  ? `${pending} Änderung(en) wurden noch nicht vom Server bestätigt und gehen dabei verloren. Besser zuerst synchronisieren.`
+                  : 'Die Daten werden aus diesem Browser entfernt und anschließend frisch vom Server geladen. Auf dem Server ändert sich nichts.',
+              confirmLabel: pending > 0 ? 'Trotzdem löschen' : 'Löschen und neu laden',
+              tone: pending > 0 ? 'danger' : 'default',
+            });
+            if (!ok) return;
+            setBusy(true);
+            auth.engine?.stop();
+            selectDatabase(accountDbName(user.accountKey));
+            await deleteDatabase().catch(() => {});
+            window.location.reload();
+          }}
+        >
+          <HardDrive className="size-4" /> Lokale Kopie löschen und neu laden
+        </button>
+      </div>
+      <p className="hint mt-3">
+        Die lokale Kopie ist nicht verschlüsselt. Eine Verschlüsselung im Browser würde einen Schlüssel auf demselben Gerät erfordern und gegen Personen mit Zugriff auf das entsperrte
+        Gerät keinen echten Schutz bieten. Schütze das Gerät selbst (Bildschirmsperre, Geräteverschlüsselung).
+      </p>
+    </Section>
+  );
+}
+
 function PrivacyCenter() {
   const Item = ({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) => (
     <div className="flex gap-3">
@@ -610,7 +878,7 @@ function DeleteSection({ user, disabled }: { user: ServerUser; disabled: boolean
             try {
               const r = await reauth(() => api('DELETE', '/api/account', { confirm: typed }));
               if (!r) return;
-              useDatabaseName(accountDbName(user.accountKey));
+              selectDatabase(accountDbName(user.accountKey));
               await deleteDatabase().catch(() => {});
               toast('Dein Konto wurde gelöscht.', { tone: 'ok' });
               await auth.logout();

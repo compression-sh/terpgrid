@@ -13,8 +13,8 @@ Growlogs, Pflanzen, Fotos (inkl. Standortbezug), Journal (Konsumangaben – beso
 | # | Bedrohung | Maßnahme (umgesetzt) | Restrisiko |
 | --- | --- | --- | --- |
 | T1 | Unberechtigte Konten | Invite-only (Standard), Einladungen einmalig, ablaufend, widerrufbar, Token gehasht; Registrierungs-Rate-Limit | Wer einen gültigen Einladungslink erhält, kann ein Konto anlegen |
-| T2 | Kompromittierte Zugangsdaten | Argon2id, optional TOTP, Sitzungsübersicht + Widerruf, „überall abmelden“, Re-Auth für sensible Aktionen | Ohne 2FA genügt das Passwort |
-| T3 | Brute Force | Kontobezogenes progressives Backoff, IP-Limit, Argon2-Parallelitätslimit | Verteilte Angriffe mit vielen IPs werden nur verlangsamt |
+| T2 | Kompromittierte Zugangsdaten | Argon2id, optional TOTP oder Passkey, Sitzungsübersicht + Widerruf, „überall abmelden“, Re-Auth für sensible Aktionen, Sicherheitsstatus im Konto | Ohne 2. Faktor genügt das Passwort |
+| T3 | Brute Force | Progressives Backoff je Kennung + IP, kontoweiter Backoff ab 50 Fehlversuchen, IP-Limit, Argon2-Parallelitätslimit | Verteilte Angriffe mit vielen IPs werden nur verlangsamt |
 | T4 | Credential Stuffing | wie T3 + Mindestlänge 12 + Liste häufiger Passwörter; einheitliche Fehlermeldungen | – |
 | T5 | Konto-Enumeration | Gleiche Antwort und vergleichbare Laufzeit für unbekannte Konten (Dummy-Hash); Registrierung meldet belegte Namen nur nach gültiger Einladung | Verfügbarkeitsprüfung des Benutzernamens verrät Existenz (bewusst, nur mit Einladung) |
 | T6 | Cross-Account-Leaks / BOLA / IDOR | Benutzer-ID nur aus Server-Session; jede Abfrage `WHERE user_id = $session`; PK `(user_id, store, id)`; RLS als zweite Schicht; Isolationstests A/B | – |
@@ -39,5 +39,13 @@ Growlogs, Pflanzen, Fotos (inkl. Standortbezug), Journal (Konsumangaben – beso
 | T25 | Gemeinsam genutzte Geräte | Datenbank je Konto, Abmelden mit optionalem Löschen der lokalen Kopie, Warnung bei ausstehenden Änderungen, Sitzungsablagen gelöscht, Service Worker cacht nur die öffentliche App-Hülle | Wer das entsperrte Gerät nutzt, sieht die lokale Kopie eines nicht abgemeldeten Kontos |
 | T26 | Lieferkette (npm, Images) | Exakt gepinnte Versionen, Lockfiles, `npm audit` (0 Befunde), feste Image-Tags, mehrstufige Builds ohne Dev-Abhängigkeiten im Laufzeit-Image | Kompromittierte Upstream-Pakete bleiben ein Restrisiko |
 | T27 | Stiller Import fremder Gerätedaten | Altdaten (IndexedDB/localStorage) werden nie automatisch in ein Konto übernommen – nur über den Assistenten mit Vorschau, Zielkonto und Bestätigung | – |
+
+| T28 | 2FA-Codes durchprobieren mit bekanntem Passwort | Kontoweite Grenze für falsche TOTP-Codes über alle Anmeldevorgänge, Re-Auth und 2FA-Aktivierung (Phase 4; vorher je Vorgang 5 neue Versuche) | – |
+| T29 | Aussperren fremder Konten durch Fehlversuche | Backoff je Kennung + IP; kontoweite Bremse erst ab 50 Fehlversuchen (Phase 4) | Massiv verteilte Angriffe können ein Konto bis zu 15 Min. je Stunde bremsen |
+| T30 | Passkey-Missbrauch (Replay, fremde Origin, Credential-Substitution) | Prüfung durch @simplewebauthn: einmalige Challenge, Origin, RP-ID, UV, Signatur, Zähler; Credential-ID eindeutig je Konto; Re-Auth für Änderungen | Synchronisierte Passkeys liegen beim Anbieter des Passwort-Managers |
+| T31 | Schlüsselverlust bei Rotation | Generationen an jeder Zeile, Rotation fortsetzbar, Prüfung vor Ausmusterung, Purge nur nach Frist und ohne Verwendung | Purge vor Ablauf alter Backups macht diese Backups für das Konto unlesbar |
+| T32 | Rollback ohne Restore (DB neuer als Programm) | Schema-Schutz beim Start, rollback.sh prüft mit der Zielversion | Versionen vor 4.0 haben diese Prüfung nicht |
+| T33 | Fremdinhalte der Sortendaten-Quellen (z. B. Firewall-HTML) | Proxy reicht Fehlerinhalte nie durch, nur eigenes JSON | – |
+| T34 | Lieferkette CI | Actions per SHA, Images per Digest, `contents: read`, keine Secrets, `pull_request` statt `pull_request_target`, gitleaks | Kompromittierte Upstream-Commits hinter einem gepinnten SHA sind ausgeschlossen, neue Versionen müssen geprüft werden |
 
 **Stand:** Alle Maßnahmen in der Spalte „umgesetzt“ sind im Code vorhanden und durch automatisierte Tests oder die dokumentierte Stack-Prüfung belegt (siehe SECURITY.md und FINAL-REPORT.md).

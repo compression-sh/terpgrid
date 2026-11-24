@@ -8,6 +8,7 @@ import type { FastifyInstance } from 'fastify';
 import { audit } from '../audit.js';
 import type { AppContext } from '../context.js';
 import { hmac, randomToken } from '../crypto.js';
+import { schemaStatus } from '../migrate.js';
 import { HttpError, requireAdmin, requireReauth } from '../http.js';
 import fp from '../plugin.js';
 
@@ -61,6 +62,42 @@ export function adminRoutes(ctx: AppContext) {
         disk,
         backup,
         health: { database: 'ok' },
+      };
+    });
+
+    /** System Health: nur Betriebskennzahlen, keine personenbezogenen Daten */
+    app.get('/api/admin/system', async (req) => {
+      admin(req);
+      const t0 = performance.now();
+      let db: Record<string, unknown> = { ok: false };
+      try {
+        const r = await ctx.db.query('SELECT pg_database_size(current_database())::text AS size, (SELECT count(*) FROM pg_stat_activity WHERE datname = current_database())::int AS connections');
+        db = { ok: true, latencyMs: Math.round((performance.now() - t0) * 10) / 10, sizeBytes: Number(r.rows[0].size), connections: r.rows[0].connections, pool: { total: ctx.db.totalCount, idle: ctx.db.idleCount, waiting: ctx.db.waitingCount } };
+      } catch {
+        db = { ok: false };
+      }
+      const schema = await schemaStatus(ctx.db);
+      const trash = await ctx.db.query('SELECT count(*)::int AS n FROM file_trash');
+      const rot = await ctx.db.query("SELECT count(DISTINCT user_id)::int AS n FROM user_keys WHERE state = 'retiring'");
+      const mem = process.memoryUsage();
+      let disk: { freeBytes: number; totalBytes: number } | null = null;
+      try {
+        const st = await statfs(ctx.config.fileDir);
+        disk = { freeBytes: st.bavail * st.bsize, totalBytes: st.blocks * st.bsize };
+      } catch {
+        disk = null;
+      }
+      return {
+        version: ctx.config.version,
+        node: process.version,
+        memory: { rssBytes: mem.rss, heapUsedBytes: mem.heapUsed },
+        http: ctx.metrics.snapshot(),
+        db,
+        schema: { applied: schema.applied.length, pending: schema.pending, unknown: schema.unknown },
+        storage: { disk, trashBlobs: trash.rows[0].n },
+        keys: { rotationsInProgress: rot.rows[0].n },
+        tasks: { failures: ctx.tasks.failures, lastFailure: ctx.tasks.lastFailure ?? null },
+        errors: ctx.errors,
       };
     });
 

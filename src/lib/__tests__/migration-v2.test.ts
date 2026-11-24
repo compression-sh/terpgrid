@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { DB_VERSION, SCHEMA_MIGRATIONS, closeDatabase, count, deleteDatabase, getAll, getOne, openDatabase, useDatabaseName } from '../db/database';
+import { DB_VERSION, SCHEMA_MIGRATIONS, closeDatabase, count, deleteDatabase, getAll, getOne, openDatabase, selectDatabase } from '../db/database';
 import { createRecord, deleteStrain, ensureStrainForExternal, findByExternal, updateRecord } from '../db/repo';
 
 let n = 0;
@@ -8,7 +8,7 @@ let name = '';
 beforeEach(async () => {
   await deleteDatabase();
   name = `terpgrid-mig-${++n}`;
-  useDatabaseName(name);
+  selectDatabase(name);
 });
 
 /** Erstellt eine Datenbank im Zustand von Schema v1 mit Bestandsdaten. */

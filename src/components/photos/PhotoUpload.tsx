@@ -1,5 +1,6 @@
-import { ImagePlus, Loader2, ShieldCheck, Upload } from 'lucide-react';
-import { type DragEvent, useId, useRef, useState } from 'react';
+import { Camera, CheckCircle2, CircleAlert, ImagePlus, Loader2, RotateCcw, ShieldCheck, Upload } from 'lucide-react';
+import { type DragEvent, useEffect, useId, useRef, useState } from 'react';
+import { useIsServerMode } from '../../app/auth';
 import { useData } from '../../app/DataProvider';
 import { errorText, useToast } from '../../app/Toasts';
 import { nowLocal } from '../../lib/dates';
@@ -26,6 +27,15 @@ interface Props {
   onUploaded?: (photoIds: string[]) => void;
 }
 
+type ItemStatus = 'queued' | 'processing' | 'saved' | 'error';
+interface UploadItem {
+  key: string;
+  file: File;
+  status: ItemStatus;
+  error?: string;
+  preview?: string;
+}
+
 interface Result {
   ok: number;
   errors: string[];
@@ -50,7 +60,15 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
   const [busy, setBusy] = useState<{ done: number; total: number } | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [drag, setDrag] = useState(false);
+  const [items, setItems] = useState<UploadItem[]>([]);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const server = useIsServerMode();
   const plants = data.plants.filter((p) => p.growId === growId);
+  // Vorschau-URLs erst freigeben, wenn der Dialog geschlossen wird (nicht bei jeder Statusänderung)
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
+  useEffect(() => () => itemsRef.current.forEach((i) => i.preview && URL.revokeObjectURL(i.preview)), []);
+  const setStatus = (key: string, status: ItemStatus, error?: string) => setItems((list) => list.map((i) => (i.key === key ? { ...i, status, error } : i)));
 
   async function handle(files: File[]) {
     const images = files.filter((f) => f.type.startsWith('image/') || /\.(jpe?g|png|webp|heic|heif|avif|gif)$/i.test(f.name));
@@ -58,11 +76,15 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
       toast('Keine Bilddateien ausgewählt.', { tone: 'error' });
       return;
     }
+    const batch: UploadItem[] = images.map((file, i) => ({ key: `${Date.now()}-${i}-${file.name}`, file, status: 'queued', preview: images.length <= 24 ? URL.createObjectURL(file) : undefined }));
+    setItems((list) => [...list.filter((x) => x.status !== 'error' || !images.includes(x.file)), ...batch]);
     const res: Result = { ok: 0, errors: [], gpsRemoved: 0, savedBytes: 0, originalBytes: 0 };
     const ids: string[] = [];
     setResult(null);
     setBusy({ done: 0, total: images.length });
-    for (const file of images) {
+    for (const item of batch) {
+      const file = item.file;
+      setStatus(item.key, 'processing');
       try {
         const img = await processImage(file);
         const photo = await addPhoto(
@@ -85,8 +107,11 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
         if (img.hadGps) res.gpsRemoved++;
         res.savedBytes += img.full.byteLength + img.thumb.byteLength;
         res.originalBytes += img.originalSize;
+        setStatus(item.key, 'saved');
       } catch (e) {
-        res.errors.push(errorText(e));
+        const msg = errorText(e);
+        res.errors.push(msg);
+        setStatus(item.key, 'error', msg);
       }
       setBusy((b) => (b ? { ...b, done: b.done + 1 } : b));
     }
@@ -124,7 +149,7 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
       open={open}
       onClose={() => !busy && onClose()}
       title="Fotos hochladen"
-      subtitle="Bleiben ausschließlich auf diesem Gerät gespeichert."
+      subtitle={server ? 'Werden auf diesem Gerät verarbeitet und verschlüsselt mit deinem Server synchronisiert.' : 'Bleiben ausschließlich auf diesem Gerät gespeichert.'}
       size="md"
       footer={
         <button type="button" className="btn-ghost" onClick={onClose} disabled={!!busy}>
@@ -187,11 +212,30 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
                 </label>
               </p>
               <p className="hint mt-1">JPEG, PNG, WebP · mehrere gleichzeitig möglich</p>
-              <button type="button" className="btn-primary mt-4" onClick={() => inputRef.current?.click()}>
-                <Upload className="size-4" /> Fotos wählen
-              </button>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <button type="button" className="btn-primary" onClick={() => inputRef.current?.click()}>
+                  <Upload className="size-4" /> Fotos wählen
+                </button>
+                <button type="button" className="btn-ghost sm:hidden" onClick={() => cameraRef.current?.click()}>
+                  <Camera className="size-4" /> Kamera
+                </button>
+              </div>
             </>
           )}
+          <input
+            ref={cameraRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="sr-only"
+            tabIndex={-1}
+            aria-hidden
+            onChange={(e) => {
+              const files = [...(e.target.files ?? [])];
+              e.target.value = '';
+              if (files.length) handle(files);
+            }}
+          />
           <input
             ref={inputRef}
             id={inputId}
@@ -206,6 +250,30 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
             }}
           />
         </div>
+
+        {items.length > 0 && (
+          <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2" aria-label="Upload-Status je Datei">
+            {items.map((i) => (
+              <li key={i.key} className="flex items-center gap-2.5 rounded-lg border border-white/[0.05] bg-white/[0.015] p-1.5 pr-2.5">
+                {i.preview ? <img src={i.preview} alt="" className="size-9 shrink-0 rounded-md object-cover" /> : <span className="size-9 shrink-0 rounded-md bg-white/[0.04]" />}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[12.5px] text-ink-100">{i.file.name}</span>
+                  <span className={`block truncate text-[11px] ${i.status === 'error' ? 'text-rose-300' : 'text-ink-500'}`}>
+                    {i.status === 'queued' ? 'Wartet …' : i.status === 'processing' ? 'Wird verkleinert und bereinigt …' : i.status === 'saved' ? `Gespeichert${server ? ' · wird synchronisiert' : ''}` : i.error}
+                  </span>
+                </span>
+                {i.status === 'processing' && <Loader2 className="size-4 shrink-0 animate-spin text-leaf-400" />}
+                {i.status === 'saved' && <CheckCircle2 className="size-4 shrink-0 text-leaf-400" />}
+                {i.status === 'error' && <CircleAlert className="size-4 shrink-0 text-rose-300" />}
+              </li>
+            ))}
+          </ul>
+        )}
+        {!busy && items.some((i) => i.status === 'error') && (
+          <button type="button" className="btn-ghost" onClick={() => handle(items.filter((i) => i.status === 'error').map((i) => i.file))}>
+            <RotateCcw className="size-4" /> Fehlgeschlagene erneut versuchen
+          </button>
+        )}
 
         {result && (
           <div className="space-y-2">
@@ -227,7 +295,8 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-leaf-400" />
           <span>
             Fotos werden auf max. 2048 px verkleinert und neu kodiert. Dabei werden alle eingebetteten Metadaten entfernt – auch Standort, Kameramodell und
-            Seriennummern. Das Aufnahmedatum wird vorher ausgelesen und separat gespeichert. Nichts wird hochgeladen.
+            Seriennummern. Das Aufnahmedatum wird vorher ausgelesen und separat gespeichert.{' '}
+            {server ? 'Nur das bereinigte Bild wird verschlüsselt auf deinem Server gespeichert – das Original verlässt dein Gerät nicht.' : 'Nichts wird hochgeladen.'}
           </span>
         </div>
       </div>

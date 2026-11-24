@@ -77,7 +77,7 @@ async function makeJpeg(page, color) {
 
   await p.getByRole('button', { name: 'Fotos', exact: true }).first().click();
   const imgs = [await makeJpeg(p, '#2f6f3e'), await makeJpeg(p, '#4f9f5e')];
-  await p.locator('input[type=file]').setInputFiles(imgs.map((buffer, i) => ({ name: `foto${i}.jpg`, mimeType: 'image/jpeg', buffer })));
+  await p.locator('input[type=file][multiple]').setInputFiles(imgs.map((buffer, i) => ({ name: `foto${i}.jpg`, mimeType: 'image/jpeg', buffer })));
   await p.waitForSelector('text=2 Fotos gespeichert', { timeout: 20000 });
   await p.getByRole('button', { name: 'Fertig' }).click();
 

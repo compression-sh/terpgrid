@@ -36,6 +36,8 @@ export function displayNameProblem(input: string): string | null {
   const s = input.normalize('NFKC').trim();
   if (s.length > 60) return 'Der Anzeigename darf höchstens 60 Zeichen lang sein.';
   // Steuerzeichen und bidirektionale Override-Zeichen verbieten
+  // Steuer- und Bidi-Zeichen bewusst ablehnen (Spoofing/Darstellungsfehler)
+  // eslint-disable-next-line no-control-regex
   if (/[\u0000-\u001f\u007f‪-‮⁦-⁩]/.test(s)) return 'Der Anzeigename enthält unzulässige Zeichen.';
   return null;
 }

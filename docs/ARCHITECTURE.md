@@ -1,6 +1,6 @@
 # TERPGRID – Architektur (Phase 3: Private Cloud & Multiuser)
 
-Stand: 23.11.2026 · gilt für den Code in diesem Repository (Version 3.0.0, Phase 3 umgesetzt).
+Stand: 24.11.2026 · gilt für den Code in diesem Repository (Version 4.0.0-rc.1, Phase 4).
 
 ## 1. Bestandsaufnahme (Audit vor Phase 3)
 
@@ -51,7 +51,10 @@ Generisches, eigentümergebundenes Datensatzmodell statt 13 einzelner Tabellen: 
 | `records` | `(user_id, store, id)` PK, `version`, `seq` (globale Sequenz für Pull), `deleted`, `payload` (AES-256-GCM), `payload_mac` (HMAC für idempotenten Import) |
 | `files` | `(user_id, kind, id, variant)` PK, Größe, MIME (per Magic Bytes geprüft) – Inhalt mit dem Konto-DEK verschlüsselt im Dateisystem unter zufälligem 48-Hex-Namen |
 | `audit_events` | Typ, Zeit, Benutzer, gekürzter IP-HMAC, Metadaten **ohne** Secrets/Inhalte |
-| `schema_migrations` | versionierte SQL-Migrationen |
+| `schema_migrations` | versionierte SQL-Migrationen (001 Basis, 002 Passkeys, 003 Schlüsselgenerationen + Datei-Papierkorb, 004 Leserecht der App-Rolle auf den Schemastand) |
+| `webauthn_credentials` | Passkeys: eindeutige Credential-ID, öffentlicher Schlüssel, Zähler, Name, Gerätetyp, Synchronisiert-Flag |
+| `user_keys` | DEK-Generationen je Konto (`active`/`retiring`/`retired`), mit Master-Key verpackt; `dek_gen` an `records`, `files` und TOTP |
+| `file_trash` | ersetzte/gelöschte Blobs bis zum Ablauf von `FILE_TRASH_DAYS` (Backup-Konsistenz) |
 
 **Row Level Security** auf `records` und `files`: Die App verbindet sich als Rolle `terpgrid_app` (kein Owner, kein `BYPASSRLS`); jede Anfrage mit Benutzerkontext setzt in einer Transaktion `SET LOCAL app.user_id`. Zusätzlich enthält **jede** Abfrage `user_id = $1` (Defense in Depth).
 
@@ -84,7 +87,12 @@ StrainAPI und CannaLib laufen im Servermodus über einen **festen** Proxy (`/api
 | Sessions, Passwörter, Ratenbegrenzung | `server/src/sessions.ts`, `passwords.ts`, `ratelimit.ts` |
 | Kryptografie, Schlüsselrotation, Integritätsprüfung | `server/src/crypto.ts`, `keys.ts`, `verify.ts` |
 | Schema + RLS | `server/migrations/001_init.sql` |
-| CLI | `server/src/cli.ts` (`migrate`, `invite`, `promote`, `rotate-keys`, `verify-data`, `bench-argon2`, …) |
+| CLI | `server/src/cli.ts` (`migrate`, `schema-status`, `invite`, `promote`, `rotate-keys`, `rotate-user-keys`, `key-status`, `purge-retired-keys`, `verify-data`, `bench-argon2`, `cleanup`) |
+| Passkeys | `server/src/routes/passkeys.ts`, `src/lib/server/passkeys.ts` |
+| Schlüsselgenerationen/Rotation | `server/src/userkeys.ts`, `server/src/rotation.ts` |
+| Sync 2.0 | `src/lib/sync/merge.ts` (Drei-Wege-Merge), `src/hooks/useLabDraft.ts` (THC-Lab-Entwürfe) |
+| Verlauf/Insights | `src/lib/timeline.ts`, `src/lib/insights.ts`, `src/pages/TimelinePage.tsx` |
+| Betrieb | `server/src/metrics.ts`, `deploy/{preflight,upgrade,rollback}.sh`, `.github/workflows/ci.yml` |
 | Frontend-Auth, Konto-DB, Sync | `src/app/auth.tsx`, `src/lib/server/api.ts`, `src/lib/sync/engine.ts`, `src/lib/db/database.ts` (Schema v3) |
 | Altdaten-Übernahme | `src/lib/sync/legacy.ts`, `src/pages/account/ImportPage.tsx` |
 | Konto, Admin, Sync-Status | `src/pages/account/*` |

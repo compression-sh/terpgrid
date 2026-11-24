@@ -41,7 +41,8 @@ describe('Erinnerungen', () => {
       new Date('2026-11-23T10:00:00Z'),
     );
     expect(ics).toContain('BEGIN:VCALENDAR');
-    expect(ics).toContain('SUMMARY:Düngen\; Blüte\\, Teil 2');
+    // Regression: Semikolon muss als \; maskiert werden (vorher fälschlich unmaskiert)
+    expect(ics).toContain('SUMMARY:Düngen\\; Blüte\\, Teil 2');
     expect(ics).toContain('RRULE:FREQ=WEEKLY;INTERVAL=2;UNTIL=20261231');
     expect(ics).toContain('DTSTART:20261101T093000');
     expect(ics.split('\r\n').every((l) => new TextEncoder().encode(l).length <= 75)).toBe(true);

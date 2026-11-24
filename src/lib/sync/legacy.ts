@@ -148,14 +148,14 @@ export async function importLegacy(s: LegacySnapshot, target: { accountKey: stri
         if (!item) continue;
         if (r.status === 'ok' || r.status === 'unchanged') {
           tx.objectStore(item.store).put(item.data);
-          tx.objectStore('syncState').put({ key, version: r.version });
+          tx.objectStore('syncState').put({ key, version: r.version, base: item.data });
           if (r.status === 'ok') report.created++;
           else report.unchanged++;
         } else if (r.status === 'conflict') {
           // Server hat bereits einen anderen Stand → beide Versionen aufbewahren, Nutzer entscheidet
           report.conflicts++;
           if (r.server && !r.server.deleted) tx.objectStore(item.store).put(r.server.data);
-          tx.objectStore('syncState').put({ key, version: r.server.version });
+          tx.objectStore('syncState').put({ key, version: r.server.version, base: r.server.data });
           tx.objectStore('syncConflicts').put({ key, store: item.store, id: item.id, kind: 'conflict', local: item.data, server: r.server, detectedAt: Date.now() } satisfies SyncConflict);
         } else {
           report.rejected.push({ store: r.store, id: r.id, error: r.error });

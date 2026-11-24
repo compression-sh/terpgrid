@@ -8,23 +8,23 @@ TERPGRID läuft in zwei Modi:
 
 | | **Servermodus** (Self-Hosting, empfohlen) | **Lokalmodus** (ohne Backend) |
 | --- | --- | --- |
-| Konten | Anonyme Konten (Benutzername oder generierte Konto-ID, keine E-Mail), Einladungen, 2FA, Recovery-Codes | keine |
+| Konten | Anonyme Konten (Benutzername oder generierte Konto-ID, keine E-Mail), Einladungen, 2FA, Passkeys, Recovery-Codes | keine |
 | Speicherort | Eigener Server (PostgreSQL + Dateispeicher), Arbeitskopie je Konto im Browser | nur dieser Browser |
 | Verschlüsselung | Inhalte auf dem Server AES-256-GCM (Envelope, Schlüssel je Konto). **Keine Ende-zu-Ende-Verschlüsselung** – der Server-Betreiber könnte technisch entschlüsseln | keine |
-| Geräte | Synchronisation mit Konflikterkennung, offline nutzbar | ein Gerät |
+| Geräte | Synchronisation mit Drei-Wege-Merge und Konfliktauflösung, offline nutzbar, THC-Lab-Entwürfe geräteübergreifend | ein Gerät |
 | Sortendaten | über den Proxy deines Servers | direkt bei StrainAPI/CannaLib |
 
 - Keine Analyse-, Werbe- oder Tracking-Dienste. Persönliche Daten werden nie an Sortendaten-Anbieter gesendet.
 - Fotos werden beim Import verkleinert und neu kodiert. Dabei fallen alle eingebetteten Metadaten weg (inkl. GPS).
 - Ein Informationswerkzeug zur Dokumentation und Schadensminimierung, keine medizinische oder rechtliche Beratung.
 
-**Self-Hosting:** [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) · Backups: [docs/BACKUP.md](docs/BACKUP.md) · Sicherheit: [docs/SECURITY.md](docs/SECURITY.md) · Architektur: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Bedrohungsmodell: [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md) · Verschlüsselung: [docs/E2EE-DECISION.md](docs/E2EE-DECISION.md)
+**Self-Hosting:** [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) · Checkliste: [docs/PRODUCTION-CHECKLIST.md](docs/PRODUCTION-CHECKLIST.md) · Störungen: [docs/RUNBOOK.md](docs/RUNBOOK.md) · Backups: [docs/BACKUP.md](docs/BACKUP.md) · Sicherheit: [docs/SECURITY.md](docs/SECURITY.md) · Architektur: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Bedrohungsmodell: [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md) · Verschlüsselung: [docs/E2EE-DECISION.md](docs/E2EE-DECISION.md)
 
 ## Bereiche
 
 | Bereich | Inhalt |
 | --- | --- |
-| **Discover** | Live-Sortenkatalog (StrainAPI): Suche mit Debounce/Abbruch, Filter (Typ, Breeder, Genetik, Terpen, THC/CBD, Favoriten), Sortierung, „Mehr laden“, verlinkbarer URL-Zustand. Filter ohne API-Unterstützung werden als „nur geladene Sorten“ gekennzeichnet; vollständige Ergebnisse nur nach ausdrücklichem „Alle laden“. |
+| **Discover** | Live-Sortenkatalog (StrainAPI): Suche mit Relevanz-Sortierung (Namenstreffer vor Erwähnungen und reinen Volltexttreffern, Gruppen ehrlich ausgewiesen, „Nur Namenstreffer“), Debounce/Abbruch, Filter (Typ, Breeder, Genetik, Terpen, THC/CBD, Favoriten), Sortierung, „Mehr laden“, verlinkbarer URL-Zustand. Filter ohne API-Unterstützung werden als „nur geladene Sorten“ gekennzeichnet; vollständige Ergebnisse nur nach ausdrücklichem „Alle laden“. |
 | **Sortenprofil** | Hero-Bild mit Quellenangabe, Cannabinoid-Spannen mit Evidenzstatus (belegt/berichtet/umstritten/unzureichend), Terpene (Mengen nur aus eigenen Laborberichten), Genetik, Aroma, Botanik, berichtete Erfahrungen (klar als subjektiv gekennzeichnet), Beschreibung (HTML der Quelle nur als Text), optional CannaLib-Forschungsdaten. Merken, mit Pflanze verknüpfen, Grow zuordnen, Journal, Vergleich. |
 | **Genetics Explorer** | Interaktiver Abstammungsgraph (Zoom, Pan, Pinch, Tastatur). Nur belegte Beziehungen; alternative Angaben gestrichelt, gleichnamige Sorten verschiedener Breeder als „mehrdeutig“ (nie zusammengeführt), CannaLib-Elternangaben mit Konfidenz. |
 | **Terpen-Atlas** | 7 Terpene mit Formel, molarer Masse, CAS, PubChem-Quelle, Aroma und Vorkommen; Terpen-Rad, Vergleich, Nennungen im Katalog (ohne Mengen), Zusammensetzungen nur aus Laborberichten. |
@@ -41,10 +41,11 @@ TERPGRID läuft in zwei Modi:
 | **Journal** | Optionale, private Einträge (Sorte, Konsumform, eigene Mengenangabe, Stimmung, Notizen) mit Listen- und Kalenderansicht, Suche, Filtern und einer rein beschreibenden Zusammenfassung. |
 | **Sammlung** | Inventar, Zubehör, Ausrüstung und Ausgaben. Mengen ändern sich nur nach Bestätigung. |
 | **Kalender** | Monats- und Wochenansicht mit Aktivitäten, Fotos, Meilensteinen und eigenen (wiederkehrenden) Erinnerungen, Erledigt-Status und ICS-Export. Keine Push-Benachrichtigungen. |
-| **Analysen** | Grow-Dauer, Ausgaben nach Kategorie und Grow, Messwert-Verläufe, Ernteergebnisse, Sorten-Bewertungen, Journal-Verlauf und Foto-Heatmap. |
+| **Insights** | Kennzahlen mit Datengrundlage (aktive Grows, dokumentierte Grow-Dauer, Pflanzenalter, Foto-Häufigkeit, Messungen, Sorten, Journal, Ausgaben) – ohne Empfehlungen oder Vorhersagen, mit Hinweis bei zu wenig Daten. Dazu Grow-Dauer, Ausgaben nach Kategorie und Grow, Messwert-Verläufe, Ernteergebnisse, Sorten-Bewertungen, Journal-Verlauf und Foto-Heatmap. |
 | **Werkzeuge** | Einheiten (°C/°F, g/oz, l/gal, cm/in), Stromkosten, Kostenüberschlag, Datum & Dauer, Foto-Vergleich. |
-| **Konto & Datenschutz** | Profil, Passwort, 2FA (TOTP), Recovery-Codes, aktive Sitzungen (einzeln/alle beenden), vollständiger Export, Kontolöschung, Datenschutz-Center mit ehrlicher Darstellung, was wo wie geschützt liegt. |
-| **Synchronisation** | Status („synchronisiert“ erst nach Serverbestätigung), ausstehende Änderungen, Konflikte mit Feldvergleich (Meine Version / Server-Version). |
+| **Konto & Datenschutz** | Sicherheitsstatus, Profil, Passwort, 2FA (TOTP), Passkeys (mehrere, umbenennen, entfernen), Recovery-Codes, aktive Sitzungen (einzeln/alle beenden), vollständiger Export, Kontolöschung, Datenschutz-Center mit ehrlicher Darstellung, was wo wie geschützt liegt. |
+| **Synchronisation** | Status („synchronisiert“ erst nach Serverbestätigung), ausstehende Änderungen; Änderungen an verschiedenen Feldern werden automatisch zusammengeführt, echte Feldkonflikte erscheinen mit Feldvergleich (Meine Version / Server-Version); erneute Versuche mit wachsendem Abstand. |
+| **Verlauf** | Persönliche Zeitachse aus Meilensteinen, Pflege, Messwerten, Fotos, Journal, Sorten, Laborberichten und Kalender – aus vorhandenen Daten abgeleitet, filterbar, nach Tagen gruppiert. Kein Feed, nichts wird geteilt. |
 | **Datenübernahme** | Geführte Übernahme der bisherigen lokalen Daten in ein Konto: Vorschau, Sicherung, Zielkonto, Bestätigung, idempotenter Upload, Serverprüfung, Aufräumen erst danach. |
 | **Administration** | Konten (sperren/entsperren), Einladungen, Speicher, Backup-Status, Fehler, Sicherheitsereignisse – ohne Zugriff auf Inhalte. |
 | **Befehlspalette** | Strg/⌘ + K: Navigation, Aktionen und Suche in den eigenen, lokal geladenen Daten (nichts wird gesendet). |

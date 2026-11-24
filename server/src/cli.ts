@@ -9,7 +9,10 @@ import { KeyRing, hmac, randomToken, subkey } from './crypto.js';
 import { createPool } from './db.js';
 import { rotateKeys } from './keys.js';
 import { verifyData } from './verify.js';
-import { migrate } from './migrate.js';
+import { createContext } from './context.js';
+import { purgeTrash } from './files.js';
+import { purgeRetiredKeys, rotateUserKey } from './rotation.js';
+import { migrate, schemaStatus } from './migrate.js';
 
 const [cmd, ...args] = process.argv.slice(2);
 
@@ -24,7 +27,13 @@ function help(): never {
   demote <kennung>            Administrationsrechte entziehen
   bench-argon2                Argon2id-Laufzeit mit den aktuellen Parametern messen
   verify-data                 Alle Datensätze und Dateien testweise entschlüsseln (z. B. nach Restore)
-  cleanup                     Abgelaufene Sessions löschen`);
+  rotate-user-keys <kennung>|--all [--batch N]
+                              Datenschlüssel je Konto erneuern (fortsetzbar, prüft danach alles)
+  key-status                  Schlüsselgenerationen und laufende Rotationen anzeigen
+  purge-retired-keys [--min-age-days N]
+                              Ausgemusterte Schlüssel löschen (Standard 200 Tage; nur ohne Verwendung)
+  cleanup                     Abgelaufene Sessions löschen, Datei-Papierkorb leeren
+  schema-status               Schemastand prüfen (Exit 0 = passend, 3 = DB neuer als Programm, 4 = Migration ausstehend)`);
   process.exit(cmd ? 1 : 0);
 }
 
@@ -91,9 +100,50 @@ async function main() {
         if (r.errors.length) process.exitCode = 2;
         return;
       }
+      case 'schema-status': {
+        const st = await schemaStatus(db);
+        console.log(`Angewendet: ${st.applied.join(', ') || '–'}\nDiese Version kennt: ${st.known.join(', ')}`);
+        if (st.unknown.length) {
+          console.log(`✗ Datenbank ist neuer als diese Version (unbekannt: ${st.unknown.join(', ')}) – Rollback nur mit Restore.`);
+          process.exitCode = 3;
+        } else if (st.pending.length) {
+          console.log(`• Ausstehend: ${st.pending.join(', ')}`);
+          process.exitCode = 4;
+        } else console.log('✓ Schema passt zu dieser Version.');
+        return;
+      }
+      case 'rotate-user-keys': {
+        const ctx = createContext(c, { db });
+        const batch = Number(args[args.indexOf('--batch') + 1]) || 100;
+        const target = args[0];
+        if (!target) help();
+        const users = target === '--all' ? (await db.query('SELECT id, login_name FROM users ORDER BY created_at')).rows : (await db.query('SELECT id, login_name FROM users WHERE login_name = $1', [target.toLowerCase()])).rows;
+        if (!users.length) throw new Error('Konto nicht gefunden');
+        for (const u of users) {
+          const p = await rotateUserKey(ctx, u.id, { batch });
+          console.log(`${u.login_name}: Generation ${p.gen} · ${p.records} Datensätze · ${p.files} Dateien${p.totp ? ' · 2FA' : ''} · ${p.done ? 'abgeschlossen und geprüft' : `${p.remaining} offen – erneut ausführen`}`);
+        }
+        return;
+      }
+      case 'key-status': {
+        const { rows } = await db.query(
+          `SELECT u.login_name, u.dek_gen, string_agg(k.gen || ':' || k.state || ':v' || k.kek_version, ' ' ORDER BY k.gen) AS gens
+             FROM users u JOIN user_keys k ON k.user_id = u.id GROUP BY u.login_name, u.dek_gen ORDER BY u.login_name`,
+        );
+        for (const r of rows) console.log(`${r.login_name}: aktuell Gen ${r.dek_gen} · ${r.gens}`);
+        return;
+      }
+      case 'purge-retired-keys': {
+        const i = args.indexOf('--min-age-days');
+        const days = i >= 0 ? Number(args[i + 1]) : 200;
+        const n = await purgeRetiredKeys(createContext(c, { db }), days);
+        console.log(`${n} ausgemusterte Schlüsselgeneration(en) gelöscht (älter als ${days} Tage, ohne Verwendung).`);
+        return;
+      }
       case 'cleanup': {
         const r = await db.query('DELETE FROM sessions WHERE expires_at < now() OR last_seen_at < now() - make_interval(mins => $1)', [c.sessionIdleMinutes]);
-        console.log(`${r.rowCount ?? 0} abgelaufene Sessions gelöscht.`);
+        const t = await purgeTrash(db, c.fileDir, c.fileTrashDays);
+        console.log(`${r.rowCount ?? 0} abgelaufene Sessions gelöscht · ${t} Blobs aus dem Papierkorb entfernt.`);
         return;
       }
       default:

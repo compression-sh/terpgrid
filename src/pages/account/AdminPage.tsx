@@ -24,6 +24,17 @@ interface OverviewData {
   disk: { freeBytes: number; totalBytes: number } | null;
   backup: { ok: boolean; lastSuccess: string | null; lastCheck: string | null } | null;
 }
+interface SystemData {
+  version: string;
+  node: string;
+  memory: { rssBytes: number; heapUsedBytes: number };
+  http: { uptimeSeconds: number; requestsTotal: number; window: { minutes: number; requests: number; p50Ms: number | null; p95Ms: number | null; p99Ms: number | null; serverErrorRate: number } };
+  db: { ok: boolean; latencyMs?: number; sizeBytes?: number; connections?: number };
+  schema: { applied: number; pending: string[]; unknown: string[] };
+  storage: { trashBlobs: number };
+  keys: { rotationsInProgress: number };
+  tasks: { failures: Record<string, number>; lastFailure: string | null };
+}
 interface AdminUser {
   id: string;
   login_name: string;
@@ -78,6 +89,7 @@ export function AdminPage() {
   const confirm = useConfirm();
   const isAdmin = auth.state.kind === 'authenticated' && auth.state.user.role === 'admin';
   const [ov, setOv] = useState<OverviewData | null>(null);
+  const [sys, setSys] = useState<SystemData | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
   const [error, setError] = useState<string>();
@@ -93,6 +105,7 @@ export function AdminPage() {
         api<{ invites: Invite[] }>('GET', '/api/admin/invites'),
       ]);
       setOv(o);
+      api<SystemData>('GET', '/api/admin/system').then(setSys).catch(() => setSys(null));
       setUsers(u.users);
       setInvites(i.invites);
       setError(undefined);
@@ -141,6 +154,38 @@ export function AdminPage() {
             tone={(ov.securityEvents7d['login.throttled'] ?? 0) > 0 ? 'warn' : 'default'}
           />
         </div>
+      )}
+
+      {sys && (
+        <section className="card p-5">
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-[15px] font-semibold text-ink-50">System Health</h2>
+            <span className="text-[11.5px] text-ink-500">
+              Letzte {sys.http.window.minutes} Min. · seit Start {Math.round(sys.http.uptimeSeconds / 3600)} Std. · ohne personenbezogene Daten
+            </span>
+          </div>
+          <dl className="grid grid-cols-2 gap-3 text-[12.5px] sm:grid-cols-4">
+            {[
+              ['API-Latenz p50 / p95', sys.http.window.p50Ms !== null ? `${sys.http.window.p50Ms} / ${sys.http.window.p95Ms} ms` : '–', false],
+              ['Serverfehler-Rate', `${sys.http.window.serverErrorRate} %`, sys.http.window.serverErrorRate > 1],
+              ['Anfragen (Fenster)', String(sys.http.window.requests), false],
+              ['Datenbank', sys.db.ok ? `${sys.db.latencyMs} ms · ${formatBytes(sys.db.sizeBytes ?? 0)}` : 'nicht erreichbar', !sys.db.ok],
+              ['DB-Verbindungen', String(sys.db.connections ?? '–'), false],
+              ['Schema', sys.schema.unknown.length ? 'neuer als Programm!' : sys.schema.pending.length ? `${sys.schema.pending.length} ausstehend` : `${sys.schema.applied} Migrationen, aktuell`, sys.schema.unknown.length + sys.schema.pending.length > 0],
+              ['Speicher API (RSS)', formatBytes(sys.memory.rssBytes), false],
+              ['Datei-Papierkorb', `${sys.storage.trashBlobs} Blobs`, false],
+              ['Schlüsselrotationen aktiv', String(sys.keys.rotationsInProgress), sys.keys.rotationsInProgress > 0],
+              ['Hintergrundaufgaben', Object.keys(sys.tasks.failures).length ? `Fehler: ${Object.entries(sys.tasks.failures).map(([k, v]) => `${k} ${v}×`).join(', ')}` : 'ohne Fehler', Object.keys(sys.tasks.failures).length > 0],
+              ['Version / Node', `${sys.version} · ${sys.node}`, false],
+            ].map(([label, value, warn]) => (
+              <div key={label as string} className="rounded-lg border border-white/[0.05] bg-white/[0.015] px-3 py-2">
+                <dt className="text-[11px] text-ink-500">{label}</dt>
+                <dd className={`mt-0.5 tabular ${warn ? 'text-amber-200' : 'text-ink-100'}`}>{value}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="hint mt-3">Container-Zustand und Neustarts: auf dem Server mit „docker compose ps“. Kennzahlen liegen nur im Arbeitsspeicher und werden beim Neustart zurückgesetzt.</p>
+        </section>
       )}
 
       <section className="card p-5">

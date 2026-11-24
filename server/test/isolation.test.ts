@@ -148,6 +148,10 @@ describe.skipIf(!hasDb)('Mandantentrennung A/B', () => {
   it('Kontolöschung von B entfernt nur B-Daten und B-Dateien', async () => {
     await bob.post('/api/auth/reauth', { password: 'sehr-sicheres-passwort-42' });
     expect((await bob.req('DELETE', '/api/account', { confirm: 'bob' })).status).toBe(200);
+    // Bobs Blobs liegen bis zum Ablauf der Frist im Papierkorb – ohne Schlüssel (Konto gelöscht) nicht entschlüsselbar
+    const { purgeTrash } = await import('../src/files.js');
+    await env.ctx.db.query("UPDATE file_trash SET deleted_at = now() - interval '30 days'");
+    expect(await purgeTrash(env.ctx.db, env.fileDir, 7)).toBe(1);
     expect(walk(env.fileDir)).toHaveLength(1);
     const owner = new pg.Client({ connectionString: env.superDbUrl });
     await owner.connect();

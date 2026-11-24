@@ -3,16 +3,20 @@ import fp from '../plugin.js';
 import * as OTPAuth from 'otpauth';
 import QRCode from 'qrcode';
 import { audit } from '../audit.js';
-import { type AppContext, accountKey } from '../context.js';
+import { type AppContext, accountKey, ipTag } from '../context.js';
 import { decrypt, encrypt, hmac, randomToken, totpAad } from '../crypto.js';
 import { tx } from '../db.js';
 import { HttpError, requireReauth, requireSession, throttle } from '../http.js';
 import { displayNameProblem, generateAccountId, normalizeLogin, usernameProblem } from '../identity.js';
 import { passwordProblems } from '../passwords.js';
-import { type SessionInfo, clearSessionCookie, createSession, handleOf, setSessionCookie } from '../sessions.js';
-import { createUserRow, getDek, publicUser, recoveryHash, replaceRecoveryCodes } from '../users.js';
+import { issueLoginSession } from '../login.js';
+import { type SessionInfo, clearSessionCookie, handleOf, type setSessionCookie } from '../sessions.js';
+import { loadUserKeys } from '../userkeys.js';
+import { createUserRow, recoveryHash, replaceRecoveryCodes } from '../users.js';
 
 const str = (max: number, min = 1) => ({ type: 'string', minLength: min, maxLength: max }) as const;
+
+const MAX_PENDING_MFA = 10_000;
 
 /** Ausstehende 2FA-Anmeldungen (5 Minuten, max. 5 Versuche) – im Speicher, nicht in der DB. */
 interface PendingMfa {
@@ -29,11 +33,12 @@ export function totpFor(secret: Buffer, label: string) {
 export async function checkTotp(ctx: AppContext, userId: string, code: string): Promise<boolean> {
   if (!/^\d{6}$/.test(code)) return false;
   return tx(ctx.db, async (c) => {
-    const { rows } = await c.query('SELECT login_name, totp_secret, totp_last_step FROM users WHERE id = $1 FOR UPDATE', [userId]);
+    const { rows } = await c.query('SELECT login_name, totp_secret, totp_last_step, totp_dek_gen FROM users WHERE id = $1 FOR UPDATE', [userId]);
     const r = rows[0];
     if (!r?.totp_secret) return false;
-    const dek = await getDek(ctx, c, userId);
-    const secret = decrypt(dek, r.totp_secret, totpAad(userId));
+    const keys = await loadUserKeys(ctx, c, userId);
+    const secret = decrypt(keys.get(r.totp_dek_gen), r.totp_secret, totpAad(userId));
+    keys.wipe();
     const totp = totpFor(secret, r.login_name);
     const delta = totp.validate({ token: code, window: 1 });
     if (delta === null) return false;
@@ -56,15 +61,8 @@ export function authRoutes(ctx: AppContext) {
   };
 
   return fp(async (app: FastifyInstance) => {
-    async function startSession(req: FastifyRequest, reply: Parameters<typeof setSessionCookie>[1], userId: string, oldSession?: Buffer | null) {
-      // Rotation: bestehende Session dieses Browsers wird ersetzt
-      if (oldSession) await ctx.db.query('DELETE FROM sessions WHERE id = $1', [oldSession]);
-      const { token, csrfToken } = await createSession(ctx, ctx.db, userId, req);
-      setSessionCookie(ctx, reply, token);
-      await ctx.db.query('UPDATE users SET last_login_at = now() WHERE id = $1', [userId]);
-      const { rows } = await ctx.db.query('SELECT login_name, login_kind, display_name, role, totp_enabled FROM users WHERE id = $1', [userId]);
-      return { user: { ...publicUser(rows[0]), accountKey: accountKey(ctx, userId) }, csrfToken };
-    }
+    const startSession = (req: FastifyRequest, reply: Parameters<typeof setSessionCookie>[1], userId: string, oldSession?: Buffer | null) =>
+      issueLoginSession(ctx, req, reply, userId, oldSession);
 
     async function validInvite(token: string | undefined) {
       if (!token || token.length > 100) return null;
@@ -159,8 +157,9 @@ export function authRoutes(ctx: AppContext) {
       { schema: { body: { type: 'object', required: ['login', 'password'], additionalProperties: false, properties: { login: str(80), password: str(256) } } } },
       async (req, reply) => {
         const login = normalizeLogin(req.body.login);
+        const pairKey = `${login}|${ipTag(ctx, req.ip)}`;
         const ipWait = ctx.limits.loginIp.take(`login:${req.ip}`);
-        const accWait = ctx.limits.loginAccount.retryAfter(login);
+        const accWait = Math.max(ctx.limits.loginAccount.retryAfter(pairKey), ctx.limits.loginGlobal.retryAfter(login));
         if (ipWait || accWait) {
           await audit(ctx, 'login.throttled', { ip: req.ip });
           throttle(Math.max(ipWait, accWait));
@@ -169,12 +168,14 @@ export function authRoutes(ctx: AppContext) {
         const u = rows[0];
         const ok = u ? await ctx.hasher.verify(u.password_hash, req.body.password) : await ctx.hasher.verifyDummy(req.body.password);
         if (!ok || !u) {
-          ctx.limits.loginAccount.fail(login);
+          ctx.limits.loginAccount.fail(pairKey);
+          ctx.limits.loginGlobal.fail(login);
           await audit(ctx, 'login.failure', { userId: u?.id ?? null, ip: req.ip });
           // Einheitliche Meldung – verrät nicht, ob das Konto existiert
           throw new HttpError(401, 'Anmeldung fehlgeschlagen. Kennung oder Passwort ist falsch.');
         }
-        ctx.limits.loginAccount.success(login);
+        ctx.limits.loginAccount.success(pairKey);
+        ctx.limits.loginGlobal.success(login);
         if (u.status !== 'active') throw new HttpError(403, 'Dieses Konto ist gesperrt. Bitte wende dich an die Administration.');
         if (ctx.hasher.needsRehash(u.password_hash)) {
           const nh = await ctx.hasher.hash(req.body.password);
@@ -182,6 +183,7 @@ export function authRoutes(ctx: AppContext) {
         }
         if (u.totp_enabled) {
           prune();
+          if (pending.size >= MAX_PENDING_MFA) throw new HttpError(503, 'Server ausgelastet – bitte gleich erneut versuchen.');
           const mfaToken = randomToken(32);
           pending.set(mfaToken, { userId: u.id, expires: Date.now() + 5 * 60_000, attempts: 0 });
           return { status: 'mfa', mfaToken };
@@ -198,15 +200,20 @@ export function authRoutes(ctx: AppContext) {
         prune();
         const p = pending.get(req.body.mfaToken);
         if (!p) throw new HttpError(401, 'Anmeldung abgelaufen. Bitte erneut anmelden.');
+        // Kontoweite Grenze: neue Anmeldevorgänge setzen den Zähler nicht zurück
+        const mfaWait = ctx.limits.mfa.retryAfter(p.userId);
+        if (mfaWait) throttle(mfaWait);
         p.attempts++;
         if (p.attempts > 5) {
           pending.delete(req.body.mfaToken);
           throw new HttpError(401, 'Zu viele Versuche. Bitte erneut anmelden.');
         }
         if (!(await checkTotp(ctx, p.userId, req.body.code.replace(/\s/g, '')))) {
+          ctx.limits.mfa.fail(p.userId);
           await audit(ctx, 'login.failure', { userId: p.userId, ip: req.ip, meta: { factor: 'totp' } });
           throw new HttpError(401, 'Der Code ist ungültig.');
         }
+        ctx.limits.mfa.success(p.userId);
         pending.delete(req.body.mfaToken);
         await audit(ctx, 'login.success', { userId: p.userId, ip: req.ip, meta: { mfa: true } });
         return { status: 'ok', ...(await startSession(req, reply, p.userId, req.session?.id)) };
@@ -238,13 +245,14 @@ export function authRoutes(ctx: AppContext) {
       { schema: { body: { type: 'object', required: ['password'], additionalProperties: false, properties: { password: str(256), code: str(10) } } } },
       async (req) => {
         const s = requireSession(req);
-        const wait = ctx.limits.loginAccount.retryAfter(`reauth:${s.userId}`);
+        const wait = Math.max(ctx.limits.loginAccount.retryAfter(`reauth:${s.userId}`), ctx.limits.mfa.retryAfter(s.userId));
         if (wait) throttle(wait);
         const { rows } = await ctx.db.query('SELECT password_hash, totp_enabled FROM users WHERE id = $1', [s.userId]);
         const ok = await ctx.hasher.verify(rows[0].password_hash, req.body.password);
         const totpOk = !rows[0].totp_enabled || (req.body.code ? await checkTotp(ctx, s.userId, req.body.code.replace(/\s/g, '')) : false);
         if (!ok || !totpOk) {
           ctx.limits.loginAccount.fail(`reauth:${s.userId}`);
+          if (ok && rows[0].totp_enabled && req.body.code) ctx.limits.mfa.fail(s.userId);
           throw new HttpError(401, rows[0].totp_enabled && ok ? 'Bitte gib einen gültigen 2FA-Code ein.' : 'Das Passwort ist falsch.', { totpRequired: rows[0].totp_enabled });
         }
         ctx.limits.loginAccount.success(`reauth:${s.userId}`);
@@ -282,13 +290,15 @@ export function authRoutes(ctx: AppContext) {
           // Neues Passwort, 2FA aus (Gerät evtl. verloren), alle Sessions beenden
           await c.query('UPDATE users SET password_hash = $2, password_changed_at = now(), totp_enabled = false, totp_secret = NULL, totp_last_step = NULL WHERE id = $1', [userId, newHash]);
           await c.query('DELETE FROM sessions WHERE user_id = $1', [userId]);
+          // Passkeys entfernen: nach einer Wiederherstellung soll nur noch die berechtigte Person Zugang haben
+          await c.query('DELETE FROM webauthn_credentials WHERE user_id = $1', [userId]);
           const r = await c.query('SELECT count(*)::int AS n FROM recovery_codes WHERE user_id = $1 AND used_at IS NULL', [userId]);
           await audit(ctx, 'recovery.success', { userId, ip: req.ip, client: c });
           return r.rows[0].n as number;
         });
         if (remaining === null) return fail();
         ctx.limits.recoverAccount.success(login);
-        return { status: 'ok', remainingRecoveryCodes: remaining, totpDisabled: true, ...(await startSession(req, reply, userId)) };
+        return { status: 'ok', remainingRecoveryCodes: remaining, totpDisabled: true, passkeysRemoved: true, ...(await startSession(req, reply, userId)) };
       },
     );
 
@@ -365,8 +375,9 @@ export function authRoutes(ctx: AppContext) {
       if (s.totpEnabled) throw new HttpError(409, '2FA ist bereits aktiv.');
       const secret = new OTPAuth.Secret({ size: 20 });
       const raw = Buffer.from(secret.buffer);
-      const dek = await getDek(ctx, ctx.db, s.userId);
-      await ctx.db.query('UPDATE users SET totp_secret = $2, totp_enabled = false, totp_last_step = NULL WHERE id = $1', [s.userId, encrypt(dek, raw, totpAad(s.userId))]);
+      const keys = await loadUserKeys(ctx, ctx.db, s.userId);
+      await ctx.db.query('UPDATE users SET totp_secret = $2, totp_dek_gen = $3, totp_enabled = false, totp_last_step = NULL WHERE id = $1', [s.userId, encrypt(keys.currentKey(), raw, totpAad(s.userId)), keys.current]);
+      keys.wipe();
       const totp = totpFor(raw, s.loginName);
       const uri = totp.toString();
       return { secret: secret.base32, otpauthUri: uri, qrSvg: await QRCode.toString(uri, { type: 'svg', margin: 1, color: { dark: '#0a0d0c', light: '#ffffff' } }) };
@@ -377,7 +388,12 @@ export function authRoutes(ctx: AppContext) {
       { schema: { body: { type: 'object', required: ['code'], additionalProperties: false, properties: { code: str(10) } } } },
       async (req, reply) => {
         const s = requireReauth(ctx, req);
-        if (!(await checkTotp(ctx, s.userId, req.body.code.replace(/\s/g, '')))) throw new HttpError(400, 'Der Code ist ungültig. Bitte Uhrzeit des Geräts prüfen.');
+        const w = ctx.limits.mfa.retryAfter(s.userId);
+        if (w) throttle(w);
+        if (!(await checkTotp(ctx, s.userId, req.body.code.replace(/\s/g, '')))) {
+          ctx.limits.mfa.fail(s.userId);
+          throw new HttpError(400, 'Der Code ist ungültig. Bitte Uhrzeit des Geräts prüfen.');
+        }
         await ctx.db.query('UPDATE users SET totp_enabled = true WHERE id = $1', [s.userId]);
         await audit(ctx, 'totp.enable', { userId: s.userId, ip: req.ip });
         // Rechteänderung → Session rotieren

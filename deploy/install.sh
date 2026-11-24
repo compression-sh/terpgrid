@@ -49,8 +49,12 @@ if [[ "${1:-}" == "--secrets-only" ]]; then
   echo "✓ Secrets und .env vorbereitet (ohne Build/Start)."
   exit 0
 fi
+./preflight.sh || { echo "Preflight fehlgeschlagen – bitte die Hinweise oben beheben und install.sh erneut ausführen." >&2; exit 1; }
 docker compose build
 docker compose up -d
-echo "✓ TERPGRID startet. Status: docker compose ps"
+# shellcheck source=deploy/lib.sh
+. ./lib.sh
+wait_healthy 240 || { echo "TERPGRID ist nicht gesund gestartet – docker compose logs" >&2; exit 1; }
+echo "✓ TERPGRID läuft. Status: docker compose ps"
 echo "Erstes Konto: docker compose exec api node dist/cli.js invite 7 \"Admin\"  → Link öffnen, registrieren,"
 echo "danach:       docker compose exec api node dist/cli.js promote <kennung>"

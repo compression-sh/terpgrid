@@ -10,9 +10,12 @@
  *   Verhalten mit der lokalen Datenbank `terpgrid`, gekennzeichnet als „nur auf diesem Gerät“.
  */
 import { type ReactNode, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { clearPhotoUrlCache } from '../components/photos/usePhotoUrl';
 import { setCatalogProxy } from '../lib/catalog/endpoint';
-import { DB_NAME, closeDatabase, deleteDatabase, getAll, setSyncTracking, useDatabaseName } from '../lib/db/database';
+import { clearAccountLocalStorage, isSharedDevice } from '../lib/device';
+import { DB_NAME, closeDatabase, deleteDatabase, getAll, setSyncTracking, selectDatabase } from '../lib/db/database';
 import { type AuthConfig, type ServerUser, type SessionResponse, ApiError, api, setCsrfToken, setOnUnauthorized } from '../lib/server/api';
+import { loginWithPasskey } from '../lib/server/passkeys';
 import { SyncEngine, type SyncStatus } from '../lib/sync/engine';
 
 const MODE_KEY = 'terpgrid.mode';
@@ -39,6 +42,7 @@ interface AuthApi {
   lastAccount: LastAccount | null;
   login(login: string, password: string): Promise<LoginResult>;
   completeMfa(mfaToken: string, code: string): Promise<void>;
+  loginPasskey(): Promise<void>;
   /** Registriert; das Konto wird erst mit enter() geöffnet (nachdem die Recovery-Codes gesichert wurden). */
   register(body: { mode: 'username' | 'generated'; username?: string; displayName?: string; password: string; invite?: string; ageConfirmed: boolean }): Promise<{ user: ServerUser; recoveryCodes: string[] }>;
   enter(user: ServerUser): void;
@@ -89,12 +93,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const activate = useCallback(
     (user: ServerUser, offline: boolean, reauthUntil: string | null) => {
       stopEngine();
-      useDatabaseName(accountDbName(user.accountKey));
+      clearPhotoUrlCache();
+      selectDatabase(accountDbName(user.accountKey));
       setSyncTracking(true);
       setCatalogProxy(window.location.origin);
       const la = { accountKey: user.accountKey, loginName: user.loginName, displayName: user.displayName };
-      writeJson(LAST_ACCOUNT_KEY, la);
-      setLastAccount(la);
+      // Auf geteilten Geräten keine Kennung merken (kein Offline-Fortsetzen)
+      if (!isSharedDevice()) {
+        writeJson(LAST_ACCOUNT_KEY, la);
+        setLastAccount(la);
+      }
       const e = new SyncEngine();
       engineRef.current = e;
       setEngine(e);
@@ -108,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const toAnonymous = useCallback(
     (offline = false) => {
       stopEngine();
+      clearPhotoUrlCache();
       setCsrfToken('');
       // Keine Konto-Datenbank geöffnet lassen
       void closeDatabase();
@@ -130,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setState({ kind: 'anonymous', config: { inviteOnly: true, minPasswordLength: 12, version: '' }, offline: true });
         return;
       }
-      useDatabaseName(DB_NAME);
+      selectDatabase(DB_NAME);
       setSyncTracking(false);
       setCatalogProxy(null);
       setState({ kind: 'local' });
@@ -174,6 +183,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [activate],
   );
 
+  const loginPasskey = useCallback(async () => {
+    const r = await loginWithPasskey();
+    activate(r.user, false, new Date(Date.now() + 10 * 60_000).toISOString());
+  }, [activate]);
+
   const register = useCallback(
     async (body: Parameters<AuthApi['register']>[0]) => {
       return api<{ user: ServerUser; recoveryCodes: string[] }>('POST', '/api/auth/register', body);
@@ -196,9 +210,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const current = state.kind === 'authenticated' ? state.user : null;
       await api('POST', '/api/auth/logout').catch(() => {});
       stopEngine();
-      if (opts.wipeLocal && current) {
-        useDatabaseName(accountDbName(current.accountKey));
+      if ((opts.wipeLocal || isSharedDevice()) && current) {
+        selectDatabase(accountDbName(current.accountKey));
         await deleteDatabase().catch(() => {});
+        clearAccountLocalStorage(current.accountKey);
       } else {
         await closeDatabase();
       }
@@ -230,8 +245,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<AuthApi>(
-    () => ({ state, sync, engine, lastAccount, login, completeMfa, register, enter, recover, logout, continueOffline, refresh, reauth, setUser }),
-    [state, sync, engine, lastAccount, login, completeMfa, register, enter, recover, logout, continueOffline, refresh, reauth, setUser],
+    () => ({ state, sync, engine, lastAccount, login, completeMfa, loginPasskey, register, enter, recover, logout, continueOffline, refresh, reauth, setUser }),
+    [state, sync, engine, lastAccount, login, completeMfa, loginPasskey, register, enter, recover, logout, continueOffline, refresh, reauth, setUser],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

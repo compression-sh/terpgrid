@@ -76,3 +76,10 @@ export function usePhotoUrl(id: string | undefined, variant: 'thumb' | 'full' = 
   }, [id, variant]);
   return state;
 }
+
+/** Gibt alle Bild-URLs frei (Abmelden/Kontowechsel – keine Bilder des vorherigen Kontos im Speicher). */
+export function clearPhotoUrlCache(): void {
+  for (const url of cache.values()) URL.revokeObjectURL(url);
+  cache.clear();
+  inflight.clear();
+}

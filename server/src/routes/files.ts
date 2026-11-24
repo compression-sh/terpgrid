@@ -2,11 +2,11 @@ import type { FastifyInstance } from 'fastify';
 import type { AppContext } from '../context.js';
 import { decrypt, encrypt, fileAad } from '../crypto.js';
 import { withUser } from '../db.js';
-import { FILE_KINDS, type FileKind, KIND_MIMES, newStorageName, readBlob, removeBlob, sniffMime, writeBlob } from '../files.js';
+import { FILE_KINDS, type FileKind, KIND_MIMES, newStorageName, readBlob, removeBlob, sniffMime, trashBlob, writeBlob } from '../files.js';
 import { HttpError, requireSession, throttle } from '../http.js';
 import fp from '../plugin.js';
 import { ID_RE } from '../stores.js';
-import { getDek } from '../users.js';
+import { loadUserKeys } from '../userkeys.js';
 
 type P = { kind: string; id: string; variant: string };
 
@@ -36,21 +36,24 @@ export function fileRoutes(ctx: AppContext) {
         const oldSize = Number(old.rows[0]?.size ?? 0);
         const used = Number(u.rows[0].storage_bytes);
         if (used - oldSize + body.length > ctx.config.userQuotaBytes) throw new HttpError(413, 'Speicherkontingent erschöpft.', { quotaBytes: ctx.config.userQuotaBytes, usedBytes: used });
-        const dek = await getDek(ctx, c, s.userId);
-        const enc = encrypt(dek, body, fileAad(s.userId, kind, id, variant));
+        const keys = await loadUserKeys(ctx, c, s.userId);
+        const enc = encrypt(keys.currentKey(), body, fileAad(s.userId, kind, id, variant));
+        keys.wipe();
         await writeBlob(ctx.config.fileDir, name, enc);
         await c.query(
-          `INSERT INTO files(user_id, kind, id, variant, mime, size, storage_name) VALUES ($1, $2, $3, $4, $5, $6, $7)
-           ON CONFLICT (user_id, kind, id, variant) DO UPDATE SET mime = EXCLUDED.mime, size = EXCLUDED.size, storage_name = EXCLUDED.storage_name, created_at = now()`,
-          [s.userId, kind, id, variant, mime, body.length, name],
+          `INSERT INTO files(user_id, kind, id, variant, mime, size, storage_name, dek_gen) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           ON CONFLICT (user_id, kind, id, variant) DO UPDATE SET mime = EXCLUDED.mime, size = EXCLUDED.size, storage_name = EXCLUDED.storage_name, dek_gen = EXCLUDED.dek_gen, created_at = now()`,
+          [s.userId, kind, id, variant, mime, body.length, name, keys.current],
         );
         await c.query('UPDATE users SET storage_bytes = storage_bytes - $2 + $3 WHERE id = $1', [s.userId, oldSize, body.length]);
-        return { oldName: old.rows[0]?.storage_name as string | undefined };
+        // Alten Blob nicht sofort löschen, sondern in den Papierkorb (Backup-Konsistenz)
+        if (old.rows[0]?.storage_name) await trashBlob(c, old.rows[0].storage_name);
+        return { ok: true };
       }).catch(async (e) => {
         await removeBlob(ctx.config.fileDir, name).catch(() => {});
         throw e;
       });
-      if (result.oldName) await removeBlob(ctx.config.fileDir, result.oldName).catch(() => {});
+      void result;
       return reply.code(201).send({ ok: true, mime, size: body.length });
     });
 
@@ -58,11 +61,13 @@ export function fileRoutes(ctx: AppContext) {
       const s = requireSession(req);
       const { kind, id, variant } = check(req.params);
       const data = await withUser(ctx.db, s.userId, async (c) => {
-        const { rows } = await c.query('SELECT mime, storage_name FROM files WHERE user_id = $1 AND kind = $2 AND id = $3 AND variant = $4', [s.userId, kind, id, variant]);
+        const { rows } = await c.query('SELECT mime, storage_name, dek_gen FROM files WHERE user_id = $1 AND kind = $2 AND id = $3 AND variant = $4', [s.userId, kind, id, variant]);
         if (!rows[0]) throw new HttpError(404, 'Nicht gefunden');
-        const dek = await getDek(ctx, c, s.userId);
+        const keys = await loadUserKeys(ctx, c, s.userId);
         const blob = await readBlob(ctx.config.fileDir, rows[0].storage_name);
-        return { mime: rows[0].mime as string, body: decrypt(dek, blob, fileAad(s.userId, kind, id, variant)) };
+        const body = decrypt(keys.get(rows[0].dek_gen), blob, fileAad(s.userId, kind, id, variant));
+        keys.wipe();
+        return { mime: rows[0].mime as string, body };
       });
       return reply
         .header('Content-Type', data.mime)
@@ -79,9 +84,9 @@ export function fileRoutes(ctx: AppContext) {
         const { rows } = await c.query('DELETE FROM files WHERE user_id = $1 AND kind = $2 AND id = $3 AND variant = $4 RETURNING size, storage_name', [s.userId, kind, id, variant]);
         if (!rows[0]) return null;
         await c.query('UPDATE users SET storage_bytes = greatest(0, storage_bytes - $2) WHERE id = $1', [s.userId, rows[0].size]);
+        await trashBlob(c, rows[0].storage_name);
         return rows[0].storage_name as string;
       });
-      if (name) await removeBlob(ctx.config.fileDir, name).catch(() => {});
       return { ok: true, deleted: !!name };
     });
 

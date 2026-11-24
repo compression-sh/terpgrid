@@ -119,8 +119,31 @@ describe.skipIf(!hasDb)('Authentifizierung (echte PostgreSQL-DB)', () => {
     expect(t.status).toBe(429);
     expect(Number(t.headers['retry-after'])).toBeGreaterThan(0);
     // Nach Ablauf (hier: Zustand zurückgesetzt) funktioniert das richtige Passwort wieder
-    env.ctx.limits.loginAccount.success('carol');
+    env.ctx.limits.loginAccount = new (env.ctx.limits.loginAccount.constructor as any)(5);
     expect((await c.post('/api/auth/login', { login: 'carol', password: PW })).status).toBe(200);
+  });
+
+  it('Fehlversuche von einer IP sperren das Konto nicht für andere IPs (kein Aussperren durch Angreifer)', async () => {
+    await new Client(env.app).register('opfer_dos');
+    const attacker = new Client(env.app);
+    attacker.ip = '10.66.0.1';
+    const st: number[] = [];
+    for (let i = 0; i < 8; i++) st.push((await attacker.post('/api/auth/login', { login: 'opfer_dos', password: `falsch-falsch-${i}` })).status);
+    expect(st).toContain(429);
+    const victim = new Client(env.app);
+    victim.ip = '10.66.0.2';
+    expect((await victim.post('/api/auth/login', { login: 'opfer_dos', password: PW })).status).toBe(200);
+  });
+
+  it('bremst verteilte Angriffe über viele IPs kontoweit', async () => {
+    await new Client(env.app).register('opfer_verteilt');
+    let blocked = false;
+    for (let i = 0; i < 60 && !blocked; i++) {
+      const c = new Client(env.app);
+      c.ip = `10.77.${Math.floor(i / 200)}.${(i % 200) + 1}`;
+      blocked = (await c.post('/api/auth/login', { login: 'opfer_verteilt', password: `falsch-falsch-${i}` })).status === 429;
+    }
+    expect(blocked).toBe(true);
   });
 
   it('erzwingt Origin-Prüfung, Pre-Auth-Header und CSRF-Token', async () => {
@@ -298,6 +321,24 @@ describe.skipIf(!hasDb)('Authentifizierung (echte PostgreSQL-DB)', () => {
     expect(final.status).toBe(401);
   });
 
+  it('begrenzt falsche 2FA-Codes kontoweit über mehrere Anmeldevorgänge hinweg', async () => {
+    await new Client(env.app).register('mfa_brute');
+    const c = new Client(env.app);
+    await c.post('/api/auth/login', { login: 'mfa_brute', password: PW });
+    const s = await c.post('/api/auth/totp/setup');
+    const totp = new OTPAuth.TOTP({ secret: OTPAuth.Secret.fromBase32(s.json.secret) });
+    expect((await c.post('/api/auth/totp/enable', { code: totp.generate() })).status).toBe(200);
+    const statuses: number[] = [];
+    // Je Anmeldevorgang höchstens 2 Versuche – ein Angreifer startet einfach neue Vorgänge
+    for (let round = 0; round < 4; round++) {
+      const l = new Client(env.app);
+      const st = await l.post('/api/auth/login', { login: 'mfa_brute', password: PW });
+      for (let i = 0; i < 2; i++) statuses.push((await l.post('/api/auth/login/mfa', { mfaToken: st.json.mfaToken, code: '000000' })).status);
+    }
+    expect(statuses.slice(0, 5)).toEqual([401, 401, 401, 401, 401]);
+    expect(statuses.slice(5)).toContain(429);
+  });
+
   it('Kontolöschung entfernt Konto und Sessions endgültig', async () => {
     await new Client(env.app).register('gina');
     const c = new Client(env.app);
@@ -416,5 +457,36 @@ describe.skipIf(!hasDb)('IP-Ratenbegrenzung', () => {
     for (let i = 0; i < 5; i++) st.push((await new Client(env.app).post('/api/auth/recover', { login: 'opfer', recoveryCode: 'aaaa-bbbb-cccc-dddd', newPassword: 'neues-passwort-999' })).status);
     expect(st.slice(0, 3)).toEqual([401, 401, 401]);
     expect(st).toContain(429);
+  });
+});
+
+describe.skipIf(!hasDb)('Schema-Schutz und System Health', () => {
+  let env: TestEnv;
+  beforeAll(async () => {
+    env = await setup();
+  });
+  afterAll(async () => env?.close());
+
+  it('erkennt passende, neuere und ausstehende Schemastände', async () => {
+    const { schemaStatus, assertSchemaCompatible } = await import('../src/migrate.js');
+    const ok = await schemaStatus(env.ctx.db);
+    expect(ok.pending).toEqual([]);
+    expect(() => assertSchemaCompatible(ok)).not.toThrow();
+    expect(() => assertSchemaCompatible({ ...ok, unknown: ['999_zukunft.sql'] })).toThrow(/neuer als diese TERPGRID-Version/);
+    expect(() => assertSchemaCompatible({ ...ok, pending: ['005_neu.sql'] })).toThrow(/Ausstehende/);
+  });
+
+  it('System Health nur für Admins, ohne personenbezogene Daten', async () => {
+    const u = new Client(env.app);
+    await u.register('health_user');
+    expect((await u.get('/api/admin/system')).status).toBe(403);
+    await env.ctx.db.query("UPDATE users SET role = 'admin' WHERE login_name = 'health_user'");
+    await u.post('/api/auth/login', { login: 'health_user', password: PW });
+    const r = await u.get('/api/admin/system');
+    expect(r.status).toBe(200);
+    expect(r.json.db.ok).toBe(true);
+    expect(r.json.http.requestsTotal).toBeGreaterThan(0);
+    expect(r.json.schema.pending).toEqual([]);
+    expect(JSON.stringify(r.json)).not.toMatch(/health_user|127\.0\.0\.1|login|password/);
   });
 });

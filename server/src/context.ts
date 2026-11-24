@@ -2,6 +2,7 @@ import type { Config } from './config.js';
 import { KeyRing, hmac, subkey } from './crypto.js';
 import { type Db, createPool } from './db.js';
 import { PasswordHasher } from './passwords.js';
+import { Metrics } from './metrics.js';
 import { LoginBackoff, WindowLimiter } from './ratelimit.js';
 
 export interface AppContext {
@@ -13,7 +14,12 @@ export interface AppContext {
   macKeys: { recovery: Buffer; invite: Buffer; ip: Buffer; account: Buffer };
   limits: {
     loginIp: WindowLimiter;
+    /** Backoff je Kennung UND IP – Fehlversuche von einer Adresse sperren das Opfer nicht überall aus */
     loginAccount: LoginBackoff;
+    /** Kontoweiter Backoff mit hoher Schwelle – bremst verteilte Angriffe über viele IPs */
+    loginGlobal: LoginBackoff;
+    /** Falsche 2FA-Codes je Konto (über alle Anmeldevorgänge, Re-Auth und 2FA-Aktivierung) */
+    mfa: LoginBackoff;
     register: WindowLimiter;
     recoverIp: WindowLimiter;
     recoverAccount: LoginBackoff;
@@ -25,6 +31,9 @@ export interface AppContext {
   errors: { count: number; last?: string };
   startedAt: Date;
   fetchImpl: typeof fetch;
+  /** Fehlgeschlagene Hintergrundaufgaben (für System Health; keine Inhalte) */
+  tasks: { failures: Record<string, number>; lastFailure?: string; fail(name: string): void };
+  metrics: Metrics;
 }
 
 export function createContext(config: Config, opts: { db?: Db; fetchImpl?: typeof fetch } = {}): AppContext {
@@ -42,6 +51,8 @@ export function createContext(config: Config, opts: { db?: Db; fetchImpl?: typeo
     limits: {
       loginIp: new WindowLimiter(30, 15 * 60_000),
       loginAccount: new LoginBackoff(5),
+      loginGlobal: new LoginBackoff(50),
+      mfa: new LoginBackoff(5, 2000),
       register: new WindowLimiter(5, 60 * 60_000),
       recoverIp: new WindowLimiter(10, 60 * 60_000),
       recoverAccount: new LoginBackoff(3, 5000),
@@ -52,6 +63,14 @@ export function createContext(config: Config, opts: { db?: Db; fetchImpl?: typeo
     errors: { count: 0 },
     startedAt: new Date(),
     fetchImpl: opts.fetchImpl ?? fetch,
+    metrics: new Metrics(),
+    tasks: {
+      failures: {},
+      fail(name: string) {
+        this.failures[name] = (this.failures[name] ?? 0) + 1;
+        this.lastFailure = new Date().toISOString();
+      },
+    },
   };
 }
 

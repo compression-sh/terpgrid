@@ -8,7 +8,8 @@
 * **Envelope:** Jeder Benutzer hat einen zufälligen 256-Bit-Daten-Schlüssel (DEK). Der DEK wird mit dem Master-Key (KEK) per AES-256-GCM verpackt und mit KEK-Version in `users` gespeichert.
 * **Gebundene Metadaten (AAD):** Datensätze `rec|v1|<userId>|<store>|<id>`, Dateien `file|v1|<userId>|<kind>|<fileId>|<variant>`, TOTP-Schlüssel `totp|v1|<userId>`, DEK `dek|v1|<userId>`. Ein Chiffrat kann daher nicht unbemerkt einem anderen Benutzer/Datensatz untergeschoben werden.
 * **Format:** `0x01 ‖ nonce(12) ‖ tag(16) ‖ ciphertext` (versioniert).
-* **Master-Key:** 32 Byte, als Datei (Docker Secret, read-only) – **nicht** in der Datenbank, **nicht** im Image, **nicht** im Git. Mehrere Versionen möglich (`1:…,2:…`), aktuelle Version konfigurierbar; `npm run keys:rotate` verpackt alle DEKs neu.
+* **Master-Key:** 32 Byte, als Datei (Docker Secret, read-only) – **nicht** in der Datenbank, **nicht** im Image, **nicht** im Git. Mehrere Versionen möglich (`1:…,2:…`), aktuelle Version konfigurierbar; `rotate-keys` verpackt alle DEKs (aller Generationen) neu.
+* **DEK-Rotation je Konto (seit 4.0):** versionierte Generationen; `rotate-user-keys` verschlüsselt alle Inhalte eines Kontos fortsetzbar mit einem neuen DEK um, prüft alles und mustert die alte Generation erst danach aus. Ausgemusterte Schlüssel bleiben bis zum ausdrücklichen `purge-retired-keys` (Standard ≥ 200 Tage) erhalten, damit ältere Backups lesbar bleiben. Nach einer Kontolöschung sind alle DEKs vernichtet (Krypto-Shredding verbleibender Blobs).
 * **Verschlüsselt:** alle Datensatzinhalte (Growlogs, Pflanzen, Aktivitäten, Fotos-Metadaten, Journal, Sorten, Sammlung, Ausgaben, Erinnerungen, Berechnungen, Laborberichte, Einstellungen), alle Dateien (Fotos, Vorschaubilder, Laborberichtsdokumente), TOTP-Schlüssel.
 * **Nicht verschlüsselt (Metadaten):** Benutzername/Konto-ID, Anzeigename, Store-Name und ID je Datensatz, Versions-/Zeitstempel, Dateigrößen, Session-Metadaten.
 
@@ -21,7 +22,8 @@
 | Backup gestohlen | Doppelt verschlüsselt (restic + Model A); ohne restic-Passwort und Master-Key unlesbar |
 | VPS vollständig kompromittiert (Root, laufender Prozess) | **Angreifer kann Daten entschlüsseln** (Master-Key ist zur Laufzeit verfügbar) und Passwörter beim nächsten Login abgreifen |
 | Administrator mit Zugriff auf Secrets | **Kann technisch entschlüsseln.** Die Admin-Oberfläche bietet dafür bewusst keine Funktion; das ist eine organisatorische, keine kryptografische Grenze |
-| Master-Key verloren | **Alle verschlüsselten Inhalte sind unwiederbringlich verloren.** Deshalb separate, offline gesicherte Kopie (siehe BACKUP.md) |
+| Master-Key verloren | **Alle verschlüsselten Inhalte sind unwiederbringlich verloren – auch in jedem Backup.** Deshalb separate, offline gesicherte Kopie (siehe BACKUP.md, RUNBOOK.md) |
+| Passkeys | Ändern nichts am Verschlüsselungsmodell: Sie ersetzen nur die Anmeldung. Inhalte bleiben serverseitig verschlüsselt (Model A), keine E2EE |
 
 ## Model B – E2EE (bewertet, nicht umgesetzt)
 

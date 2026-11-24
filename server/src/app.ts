@@ -3,7 +3,7 @@
  * Fehlerbehandlung ohne Detailpreisgabe, Routen-Registrierung.
  */
 import cookie from '@fastify/cookie';
-import Fastify, { type FastifyInstance } from 'fastify';
+import Fastify, { type FastifyInstance, LogController } from 'fastify';
 import type { AppContext } from './context.js';
 import { HttpError, csrfValid, sendError } from './http.js';
 import { accountRoutes } from './routes/account.js';
@@ -11,6 +11,7 @@ import { adminRoutes } from './routes/admin.js';
 import { authRoutes } from './routes/auth.js';
 import { catalogRoutes } from './routes/catalog.js';
 import { fileRoutes } from './routes/files.js';
+import { passkeyRoutes } from './routes/passkeys.js';
 import { syncRoutes } from './routes/sync.js';
 import { loadSession, sessionCookieName } from './sessions.js';
 
@@ -21,7 +22,7 @@ export function redactUrl(url: string): string {
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 /** Schreibende Endpunkte ohne Session (Login etc.) – nur mit Origin-Prüfung + Custom-Header */
-const PRE_AUTH = new Set(['/api/auth/login', '/api/auth/login/mfa', '/api/auth/register', '/api/auth/recover']);
+const PRE_AUTH = new Set(['/api/auth/login', '/api/auth/login/mfa', '/api/auth/register', '/api/auth/recover', '/api/auth/passkeys/login/options', '/api/auth/passkeys/login/verify']);
 
 export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
   const app = Fastify({
@@ -31,7 +32,8 @@ export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
     bodyLimit: 1024 * 1024,
     requestTimeout: 30_000,
     connectionTimeout: 30_000,
-    disableRequestLogging: ctx.config.env === 'test',
+    // Request-Logs: nur Methode/Pfad (geschwärzt) und Status; in Tests aus
+    logController: new LogController({ disableRequestLogging: ctx.config.env === 'test' }),
     logger:
       ctx.config.env === 'test'
         ? false
@@ -81,6 +83,11 @@ export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
     if (req.session && !csrfValid(req)) return sendError(reply, new HttpError(403, 'Sicherheitstoken ungültig – bitte Seite neu laden.'));
   });
 
+  // Kennzahlen je Statusklasse (ohne IP, Benutzer oder Pfad)
+  app.addHook('onResponse', async (req, reply) => {
+    if (req.url.startsWith('/api/')) ctx.metrics.record(reply.statusCode, reply.elapsedTime);
+  });
+
   app.setErrorHandler((err: unknown, req, reply) => {
     if (err instanceof HttpError) return sendError(reply, err);
     const e = err as { statusCode?: number; validation?: unknown; code?: string; name?: string; message?: string };
@@ -108,6 +115,7 @@ export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
   });
 
   await app.register(authRoutes(ctx));
+  await app.register(passkeyRoutes(ctx));
   await app.register(accountRoutes(ctx));
   await app.register(syncRoutes(ctx));
   await app.register(fileRoutes(ctx));

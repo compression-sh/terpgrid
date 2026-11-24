@@ -51,6 +51,20 @@ export function unwrapDek(kek: Buffer, wrapped: Buffer, userId: string): Buffer 
   return dek;
 }
 
+/**
+ * DEK-Verpackung mit Generation. Generation 1 nutzt das bisherige AAD-Format
+ * (kompatibel mit bestehenden Daten), ab Generation 2 ist die Generation gebunden.
+ */
+const dekAad = (userId: string, gen: number) => (gen === 1 ? `dek|v1|${userId}` : `dek|v2|${userId}|${gen}`);
+export function wrapDekGen(kek: Buffer, dek: Buffer, userId: string, gen: number): Buffer {
+  return encrypt(kek, dek, dekAad(userId, gen));
+}
+export function unwrapDekGen(kek: Buffer, wrapped: Buffer, userId: string, gen: number): Buffer {
+  const dek = decrypt(kek, wrapped, dekAad(userId, gen));
+  if (dek.length !== 32) throw new CryptoError('Ungültiger Datenschlüssel');
+  return dek;
+}
+
 export const recordAad = (userId: string, store: string, id: string) => `rec|v1|${userId}|${store}|${id}`;
 export const fileAad = (userId: string, kind: string, id: string, variant: string) => `file|v1|${userId}|${kind}|${id}|${variant}`;
 export const totpAad = (userId: string) => `totp|v1|${userId}`;

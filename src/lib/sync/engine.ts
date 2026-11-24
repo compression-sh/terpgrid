@@ -24,6 +24,7 @@ import {
 } from '../db/database';
 import type { LabDocument, LabReport, Photo, PhotoData } from '../db/types';
 import { ApiError, type ChangeResult, type RemoteChange, api } from '../server/api';
+import { merge3 } from './merge';
 
 export type SyncPhase = 'idle' | 'syncing' | 'offline' | 'error' | 'stopped';
 export interface SyncStatus {
@@ -48,6 +49,8 @@ export class SyncEngine {
   private unsub: (() => void) | undefined;
   private stopped = false;
   private downloads = new Set<string>();
+  /** Aufeinanderfolgende Fehlschläge (für exponentielles Backoff bei instabiler Verbindung) */
+  private failures = 0;
 
   start(): void {
     this.stopped = false;
@@ -117,11 +120,15 @@ export class SyncEngine {
       await this.push();
       await this.pull();
       await this.refreshCounts();
+      this.failures = 0;
       this.set({ phase: 'idle', lastSyncAt: Date.now() });
     } catch (e) {
       await this.refreshCounts().catch(() => {});
       if (e instanceof ApiError && e.status === 0) this.set({ phase: 'offline', message: e.message });
       else this.set({ phase: 'error', message: e instanceof Error ? e.message : 'Synchronisation fehlgeschlagen' });
+      // Erneuter Versuch mit wachsendem Abstand (5 s, 10 s, 20 s … max. 5 Min.); Outbox bleibt erhalten
+      this.failures++;
+      if (!(e instanceof ApiError && e.status === 401)) this.schedule(Math.min(300_000, 5000 * 2 ** (this.failures - 1)));
     } finally {
       this.running = false;
       if (this.again && !this.stopped) {
@@ -141,9 +148,11 @@ export class SyncEngine {
   }
 
   private async pushRecords(entries: OutboxEntry[]): Promise<void> {
+    const states = new Map<string, { base?: unknown }>();
     const changes = await Promise.all(
       entries.map(async (e) => {
         const [value, state] = await Promise.all([getOne(e.store, e.id), getOne('syncState', e.key)]);
+        states.set(e.key, { base: state?.base });
         const baseVersion = state?.version ?? 0;
         return value === undefined ? { store: e.store, id: e.id, baseVersion, deleted: true } : { store: e.store, id: e.id, baseVersion, data: value };
       }),
@@ -151,7 +160,10 @@ export class SyncEngine {
     const { results } = await api<{ results: ChangeResult[] }>('POST', '/api/sync/push', { changes });
     const byKey = new Map(entries.map((e) => [e.key, e]));
     const local = new Map(changes.map((c) => [`${c.store}:${c.id}`, 'data' in c ? c.data : null]));
-    await transact(['outbox', 'syncState', 'syncConflicts'], (tx) => {
+    const stores = new Set<StoreName>(['outbox', 'syncState', 'syncConflicts']);
+    for (const e of entries) stores.add(e.store);
+    let merged = 0;
+    await transact([...stores], (tx) => {
       const ob = tx.objectStore('outbox');
       const st = tx.objectStore('syncState');
       const cf = tx.objectStore('syncConflicts');
@@ -167,9 +179,22 @@ export class SyncEngine {
           };
         };
         if (r.status === 'ok' || r.status === 'unchanged') {
-          st.put({ key, version: r.version });
+          st.put({ key, version: r.version, base: local.get(key) ?? null });
           cf.delete(key);
           removeIfUnchanged();
+        } else if (r.status === 'conflict' && !r.server.deleted && local.get(key) != null) {
+          // Drei-Wege-Merge: verschiedene Felder geändert → automatisch zusammenführen
+          const m = merge3(states.get(key)?.base ?? undefined, local.get(key), r.server.data);
+          if (m.ok && m.merged) {
+            tx.objectStore(sent.store).put(m.merged);
+            st.put({ key, version: r.server.version, base: r.server.data });
+            ob.put({ key, store: sent.store, id: sent.id, queuedAt: Date.now() } satisfies OutboxEntry);
+            cf.delete(key);
+            merged++;
+          } else {
+            cf.put({ key, store: sent.store, id: sent.id, kind: 'conflict', local: local.get(key) ?? null, server: r.server, fields: m.conflicts, detectedAt: Date.now() } satisfies SyncConflict);
+            removeIfUnchanged();
+          }
         } else {
           const conflict: SyncConflict = {
             key,
@@ -185,7 +210,9 @@ export class SyncEngine {
           removeIfUnchanged();
         }
       }
-    }, ['outbox', 'syncConflicts']);
+    }, merged ? [...stores] : ['outbox', 'syncConflicts']);
+    // Zusammengeführte Datensätze sofort erneut hochladen
+    if (merged) this.again = true;
   }
 
   private async pushFile(e: OutboxEntry): Promise<void> {
@@ -277,7 +304,7 @@ export class SyncEngine {
                 if (docId) needDocs.add(docId);
               }
             }
-            st.put({ key, version: c.version });
+            st.put({ key, version: c.version, base: c.deleted ? null : c.data });
             touched.add(c.store as StoreName);
           };
         };
@@ -342,7 +369,7 @@ export class SyncEngine {
     const c = await getOne('syncConflicts', key);
     if (!c) return;
     await transact(['syncState', 'syncConflicts', 'outbox'], (tx) => {
-      if (c.server) tx.objectStore('syncState').put({ key, version: c.server.version });
+      if (c.server) tx.objectStore('syncState').put({ key, version: c.server.version, base: c.server.data });
       tx.objectStore('syncConflicts').delete(key);
       tx.objectStore('outbox').put({ key, store: c.store, id: c.id, queuedAt: Date.now() } satisfies OutboxEntry);
     });
@@ -364,7 +391,7 @@ export class SyncEngine {
       const os = tx.objectStore(c.store);
       if (!c.server || c.server.deleted) os.delete(c.id);
       else os.put(c.server.data);
-      if (c.server) tx.objectStore('syncState').put({ key, version: c.server.version });
+      if (c.server) tx.objectStore('syncState').put({ key, version: c.server.version, base: c.server.data });
       tx.objectStore('syncConflicts').delete(key);
       tx.objectStore('outbox').delete(key);
     });

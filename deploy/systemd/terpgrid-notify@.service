@@ -1,0 +1,7 @@
+[Unit]
+Description=TERPGRID Benachrichtigung über fehlgeschlagene Unit %i
+
+[Service]
+Type=oneshot
+# Nutzt NOTIFY_CMD aus backup.env (Pfad anpassen); sendet nur Unit-Name und Zeitpunkt
+ExecStart=/bin/bash -c 'set -a; . /opt/terpgrid/deploy/backup/backup.env; set +a; [ -n "$NOTIFY_CMD" ] && printf "TERPGRID: %%s fehlgeschlagen auf %%s um %%s\\n" "%i" "$(hostname)" "$(date -Is)" | sh -c "$NOTIFY_CMD"'

@@ -13,9 +13,11 @@ import { TERPENES, matchTerpene } from '../../lib/catalog/terpenes';
 import type { CatalogStrain, TypeClass } from '../../lib/catalog/types';
 import { fmtDateTime, nowLocal } from '../../lib/dates';
 import { parseLocaleNumber } from '../../lib/calc/validation';
+import { type RankedStrain, rankStrains, relevanceCounts } from '../../lib/catalog/rank';
 
-type SortKey = 'source' | 'name' | 'thc' | 'cbd' | 'breeder';
+type SortKey = 'relevance' | 'source' | 'name' | 'thc' | 'cbd' | 'breeder';
 const SORTS: { id: SortKey; label: string }[] = [
+  { id: 'relevance', label: 'Relevanz (Suche)' },
   { id: 'source', label: 'Reihenfolge der Quelle' },
   { id: 'name', label: 'Name A–Z' },
   { id: 'thc', label: 'THC (Obergrenze, absteigend)' },
@@ -176,9 +178,17 @@ export function DiscoverPage() {
     cbdMax: num(q.get('cbdMax')),
     fav: q.get('fav') === '1',
   };
-  const sort = (SORTS.some((s) => s.id === q.get('sort')) ? q.get('sort') : 'source') as SortKey;
+  const query = q.get('q') ?? '';
+  // Bei einer Suche ist Relevanz Standard (die Quelle sortiert nicht nach Relevanz)
+  const sort = (SORTS.some((s) => s.id === q.get('sort')) ? q.get('sort') : query ? 'relevance' : 'source') as SortKey;
+  // Sofort anzeigen; die URL (verlinkbarer Zustand) zieht asynchron nach
+  const [nameOnlyPending, setNameOnlyPending] = useState<boolean | null>(null);
+  const nameOnlyUrl = !!query && q.get('nameOnly') === '1';
+  const nameOnly = nameOnlyPending ?? nameOnlyUrl;
+  useEffect(() => setNameOnlyPending(null), [nameOnlyUrl]);
+  const [visible, setVisible] = useState(48);
   const set = (p: Record<string, string | undefined>) => setQuery(route, p);
-  const filterKeys = ['type', 'breeder', 'genetics', 'terp', 'thcMin', 'thcMax', 'cbdMin', 'cbdMax', 'fav'];
+  const filterKeys = ['type', 'breeder', 'genetics', 'terp', 'thcMin', 'thcMax', 'cbdMin', 'cbdMax', 'fav', 'nameOnly'];
   const activeFilters = filterKeys.filter((k) => q.get(k)).length;
   const resetAll = () => {
     setText('');
@@ -187,8 +197,15 @@ export function DiscoverPage() {
 
   const favKeys = useMemo(() => new Set([...linked.entries()].filter(([, s]) => s.favorite).map(([k]) => k)), [linked]);
   const breeders = useMemo(() => [...new Set(search.items.map((i) => i.breeder).filter((b): b is string => !!b))].sort((a, b) => a.localeCompare(b, 'de')), [search.items]);
-  const results = useMemo(() => sortStrains(applyFilters(search.items, f, favKeys), sort), [search.items, JSON.stringify(f), favKeys, sort]);
-  const localOnly = activeFilters > 0 || sort !== 'source';
+  const counts = useMemo(() => (query ? relevanceCounts(query, search.items) : null), [query, search.items]);
+  const results = useMemo(() => {
+    const filtered = applyFilters(search.items, f, favKeys);
+    const ranked = query && (sort === 'relevance' || nameOnly) ? rankStrains(query, filtered) : filtered;
+    const scoped = nameOnly ? (ranked as RankedStrain[]).filter((s) => s.relevanceGroup === 'name') : ranked;
+    return sort === 'relevance' || sort === 'source' ? scoped : sortStrains(scoped, sort);
+  }, [search.items, JSON.stringify(f), favKeys, sort, query, nameOnly]);
+  useEffect(() => setVisible(48), [query, sort, nameOnly, JSON.stringify(f)]);
+  const localOnly = activeFilters > 0 || nameOnly || (sort !== 'source' && sort !== 'relevance');
   const requestsForAll = Math.ceil(search.total / 100);
 
   // Endloses Nachladen nur ohne lokale Filter (sonst wäre die Trefferzahl irreführend)
@@ -281,6 +298,28 @@ export function DiscoverPage() {
           <Bookmark className={`size-4 ${f.fav ? 'fill-current' : ''}`} />
         </button>
       </div>
+
+      {counts && !search.loading && search.items.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-white/[0.05] bg-white/[0.015] px-3 py-2 text-[12px] text-ink-400">
+          <span>
+            <span className="font-mono text-ink-100">{counts.name}</span> im Namen
+          </span>
+          <span>
+            <span className="font-mono text-ink-100">{counts.genetics + counts.description}</span> in Abstammung/Beschreibung
+          </span>
+          <span title="Die Volltextsuche der Quelle findet den Begriff auch in Feldern, die nicht ausgeliefert werden.">
+            <span className="font-mono text-ink-100">{counts.fulltext}</span> weitere Volltexttreffer der Quelle
+          </span>
+          {!search.complete && <span className="text-amber-200/80">· sortiert über die ersten {search.items.length} von {search.total.toLocaleString('de-DE')}</span>}
+          <label className="ml-auto inline-flex items-center gap-1.5 text-ink-300">
+            <input type="checkbox" className="size-3.5 accent-leaf-500" checked={nameOnly} onChange={(e) => {
+                setNameOnlyPending(e.target.checked);
+                set({ nameOnly: e.target.checked ? '1' : undefined });
+              }} />
+            Nur Namenstreffer
+          </label>
+        </div>
+      )}
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2 text-[12px] text-ink-400">
@@ -380,10 +419,17 @@ export function DiscoverPage() {
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {results.map((s, i) => (
+            {results.slice(0, visible).map((s, i) => (
               <StrainCard key={s.key} strain={s} priority={i < 4} />
             ))}
           </div>
+          {results.length > visible && (
+            <div className="mt-5 flex justify-center">
+              <button type="button" className="btn-ghost" onClick={() => setVisible((v) => v + 48)}>
+                Weitere {Math.min(48, results.length - visible)} anzeigen ({results.length - visible} übrig)
+              </button>
+            </div>
+          )}
           <div ref={sentinel} className="h-1" />
           <div className="mt-6 flex flex-col items-center gap-2">
             {search.error && <p className="text-[12px] text-rose-300">{search.error}</p>}

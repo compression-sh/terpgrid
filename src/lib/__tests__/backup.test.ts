@@ -11,13 +11,13 @@ import {
   restoreBackup,
   sanitizeData,
 } from '../backup';
-import { count, deleteDatabase, getAll, getOne, useDatabaseName } from '../db/database';
+import { count, deleteDatabase, getAll, getOne, selectDatabase } from '../db/database';
 import { addPhoto, createRecord, saveSettings } from '../db/repo';
 
 let n = 0;
 beforeEach(async () => {
   await deleteDatabase();
-  useDatabaseName(`terpgrid-backup-${++n}`);
+  selectDatabase(`terpgrid-backup-${++n}`);
 });
 
 async function seed() {

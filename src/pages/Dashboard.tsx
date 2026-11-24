@@ -1,4 +1,5 @@
 import { useIsServerMode } from '../app/auth';
+import { type TimelineKind, buildTimeline } from '../lib/timeline';
 import {
   ArrowDown,
   ArrowRight,
@@ -19,6 +20,10 @@ import {
   Settings2,
   ShieldCheck,
   Sprout,
+  Bell,
+  Flag,
+  FlaskRound,
+  Gauge,
 } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useData, useLookup } from '../app/DataProvider';
@@ -31,12 +36,11 @@ import { PhotoImg } from '../components/photos/PhotoImg';
 import { Card } from '../components/ui/Card';
 import { Chip, PhaseChip } from '../components/ui/Chip';
 import { EmptyState } from '../components/ui/EmptyState';
-import { ACTIVITY_ICON } from '../components/grow/ActivityTimeline';
 import { overdue, upcoming } from '../lib/calendar';
 import { fmtDateLong, fmtDateShort, fmtDateTime, relativeDay, today } from '../lib/dates';
 import { toggleReminderCompletion } from '../lib/db/repo';
 import { DASHBOARD_WIDGETS, type DashboardWidget, type GrowProject } from '../lib/db/types';
-import { ACTIVITY_LABEL, METHOD_LABEL, REMINDER_CATEGORY_LABEL } from '../lib/grow/labels';
+import { METHOD_LABEL, REMINDER_CATEGORY_LABEL } from '../lib/grow/labels';
 import { PHASE_COLOR, currentPhase, growDay, phaseSpans } from '../lib/grow/phases';
 
 const WIDGET_META: Record<DashboardWidget, { label: string; span: string }> = {
@@ -154,20 +158,13 @@ export function Dashboard() {
   const recentCalcs = [...data.calculations].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 4);
   const recentStrains = [...data.strains].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 4);
 
-  // Aktivitätsverlauf ausschließlich aus echten Datensätzen.
+  // Aktivitätsverlauf: dieselbe Ableitung wie die Seite „Verlauf“ (keine doppelte Logik)
   const timeline = useMemo(() => {
-    type Item = { id: string; at: string; icon: LucideIcon; text: string; sub?: string; to?: string };
-    const items: Item[] = [];
-    for (const a of data.activities) {
-      const g = lookup.grow.get(a.growId);
-      const p = a.plantId ? lookup.plant.get(a.plantId) : undefined;
-      items.push({ id: `a-${a.id}`, at: a.date, icon: ACTIVITY_ICON[a.type], text: a.title || ACTIVITY_LABEL[a.type], sub: [g?.name, p?.name].filter(Boolean).join(' · '), to: g ? `grows/${g.id}${p ? `/plants/${p.id}` : ''}` : undefined });
-    }
-    for (const j of data.journal) items.push({ id: `j-${j.id}`, at: j.date, icon: BookOpenText, text: `Journal: ${METHOD_LABEL[j.method]}`, sub: j.strainId ? lookup.strain.get(j.strainId)?.name : j.strainName, to: 'journal' });
-    for (const g of data.grows) items.push({ id: `g-${g.id}`, at: g.createdAt.slice(0, 16), icon: Plus, text: `Grow angelegt: ${g.name}`, to: `grows/${g.id}` });
-    for (const s of data.strains) items.push({ id: `s-${s.id}`, at: s.updatedAt.slice(0, 16), icon: Leaf, text: `Sorte bearbeitet: ${s.name}`, to: `strains/${s.id}` });
-    return items.sort((a, b) => b.at.localeCompare(a.at)).slice(0, 8);
-  }, [data.activities, data.journal, data.grows, data.strains, lookup]);
+    const icon: Record<TimelineKind, LucideIcon> = { milestone: Flag, activity: Sprout, measurement: Gauge, photo: Camera, journal: BookOpenText, strain: Leaf, lab: FlaskRound, reminder: Bell };
+    return buildTimeline(data, { today: t })
+      .slice(0, 8)
+      .map((e) => ({ id: e.id, at: e.at, icon: icon[e.kind], text: e.title, sub: e.subtitle, to: e.to }));
+  }, [data, t]);
 
   const isEmpty = ready && data.grows.length === 0 && data.journal.length === 0 && data.strains.length === 0 && data.calculations.length === 0 && data.photos.length === 0;
 
@@ -281,7 +278,15 @@ export function Dashboard() {
       </Card>
     ),
     activity: (
-      <Card title="Letzte Aktivitäten" icon={<History className="size-4" />}>
+      <Card
+        title="Letzte Aktivitäten"
+        icon={<History className="size-4" />}
+        actions={
+          <a href={href('timeline')} className="text-[12px] text-leaf-300 hover:underline">
+            Ganzer Verlauf
+          </a>
+        }
+      >
         {timeline.length === 0 ? (
           <EmptyState compact title="Noch keine Aktivitäten" />
         ) : (
