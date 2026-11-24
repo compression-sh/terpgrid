@@ -5,7 +5,7 @@ import { withUser } from '../db.js';
 import { HttpError, requireSession } from '../http.js';
 import fp from '../plugin.js';
 import { type ChangeResult, applyChange, assertChanges, listChanges } from '../records.js';
-import { getDek } from '../users.js';
+import { loadUserKeys } from '../userkeys.js';
 
 export function syncRoutes(ctx: AppContext) {
   return fp(async (app: FastifyInstance) => {
@@ -15,8 +15,9 @@ export function syncRoutes(ctx: AppContext) {
       if (since === null) throw new HttpError(400, 'Ungültiger Cursor');
       const limit = Math.min(500, Math.max(1, Number(req.query.limit) || 200));
       return withUser(ctx.db, s.userId, async (c) => {
-        const dek = await getDek(ctx, c, s.userId);
-        const changes = await listChanges(c, s.userId, dek, since, limit + 1);
+        const keys = await loadUserKeys(ctx, c, s.userId);
+        const changes = await listChanges(c, s.userId, keys, since, limit + 1);
+        keys.wipe();
         const more = changes.length > limit;
         const page = more ? changes.slice(0, limit) : changes;
         return { changes: page, cursor: page.length ? page[page.length - 1]!.seq : String(since), more };
@@ -27,13 +28,13 @@ export function syncRoutes(ctx: AppContext) {
       const s = requireSession(req);
       const changes = assertChanges(req.body);
       const results: ChangeResult[] = await withUser(ctx.db, s.userId, async (c) => {
-        const dek = await getDek(ctx, c, s.userId);
+        const keys = await loadUserKeys(ctx, c, s.userId);
         const out: ChangeResult[] = [];
         for (const ch of changes) {
           // Savepoint je Änderung: ein Fehler bricht nicht den ganzen Stapel ab
           await c.query('SAVEPOINT ch');
           try {
-            out.push(await applyChange(c, s.userId, dek, ch));
+            out.push(await applyChange(c, s.userId, keys, ch));
             await c.query('RELEASE SAVEPOINT ch');
           } catch (e) {
             await c.query('ROLLBACK TO SAVEPOINT ch');
@@ -41,6 +42,7 @@ export function syncRoutes(ctx: AppContext) {
             else throw e;
           }
         }
+        keys.wipe();
         return out;
       });
       if (changes.some((c) => c?.mode === 'import')) await audit(ctx, 'import', { userId: s.userId, meta: { count: changes.length } });

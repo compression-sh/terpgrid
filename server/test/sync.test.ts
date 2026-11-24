@@ -3,7 +3,9 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { KeyRing } from '../src/crypto.js';
 import { rotateKeys } from '../src/keys.js';
-import { getDek } from '../src/users.js';
+import { loadUserKeys } from '../src/userkeys.js';
+import { purgeTrash } from '../src/files.js';
+const getDek = async (ctx: any, db: any, id: string) => Buffer.from((await loadUserKeys(ctx, db, id)).currentKey());
 import { Client, MASTER1, MASTER2, type TestEnv, hasDb, setup } from './helpers.js';
 
 const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(64, 1)]);
@@ -100,6 +102,11 @@ describe.skipIf(!hasDb)('Synchronisation', () => {
     expect((await c.req('PUT', '/api/files/photo/f1/full', PNG, { 'content-type': 'image/png' })).status).toBe(201);
     expect((await c.get('/api/files')).json.usedBytes).toBe(before);
     const count = (dir: string): number => readdirSync(dir).reduce((n, f) => n + (statSync(join(dir, f)).isDirectory() ? count(join(dir, f)) : 1), 0);
+    // Ersetzter Blob liegt im Papierkorb, bis die Frist abläuft
+    expect(count(env.fileDir)).toBe(3);
+    expect(await purgeTrash(env.ctx.db, env.fileDir, 7)).toBe(0);
+    await env.ctx.db.query("UPDATE file_trash SET deleted_at = now() - interval '8 days'");
+    expect(await purgeTrash(env.ctx.db, env.fileDir, 7)).toBe(1);
     expect(count(env.fileDir)).toBe(2);
     // Kontingent
     env.ctx.config.userQuotaBytes = before + 10;
@@ -141,8 +148,10 @@ describe.skipIf(!hasDb)('Synchronisation', () => {
     );
     expect(await rotateKeys(env.ctx.db, ring)).toBeGreaterThan(0);
     expect(await rotateKeys(env.ctx.db, ring)).toBe(0);
-    const v = await env.ctx.db.query('SELECT DISTINCT dek_key_version FROM users');
-    expect(v.rows).toEqual([{ dek_key_version: 2 }]);
+    const v = await env.ctx.db.query('SELECT DISTINCT kek_version FROM user_keys');
+    expect(v.rows).toEqual([{ kek_version: 2 }]);
+    const legacy = await env.ctx.db.query('SELECT DISTINCT dek_key_version FROM users');
+    expect(legacy.rows).toEqual([{ dek_key_version: 2 }]);
     env.ctx.keys = ring;
     expect((await getDek(env.ctx, env.ctx.db, rows[0].id)).equals(before)).toBe(true);
     expect((await c.get('/api/sync/changes?since=0')).json.changes.length).toBeGreaterThan(0);
@@ -152,8 +161,8 @@ describe.skipIf(!hasDb)('Synchronisation', () => {
     env.ctx.keys = ring;
     // Neue Konten nutzen die aktuelle Version
     await new Client(env.app).register('nach_rotation');
-    const n = await env.ctx.db.query("SELECT dek_key_version FROM users WHERE login_name = 'nach_rotation'");
-    expect(n.rows[0].dek_key_version).toBe(2);
+    const n = await env.ctx.db.query("SELECT k.kek_version FROM user_keys k JOIN users u ON u.id = k.user_id WHERE u.login_name = 'nach_rotation'");
+    expect(n.rows[0].kek_version).toBe(2);
   });
 });
 

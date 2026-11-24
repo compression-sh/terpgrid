@@ -30,6 +30,8 @@ export interface AppContext {
   errors: { count: number; last?: string };
   startedAt: Date;
   fetchImpl: typeof fetch;
+  /** Fehlgeschlagene Hintergrundaufgaben (für System Health; keine Inhalte) */
+  tasks: { failures: Record<string, number>; lastFailure?: string; fail(name: string): void };
 }
 
 export function createContext(config: Config, opts: { db?: Db; fetchImpl?: typeof fetch } = {}): AppContext {
@@ -59,6 +61,13 @@ export function createContext(config: Config, opts: { db?: Db; fetchImpl?: typeo
     errors: { count: 0 },
     startedAt: new Date(),
     fetchImpl: opts.fetchImpl ?? fetch,
+    tasks: {
+      failures: {},
+      fail(name: string) {
+        this.failures[name] = (this.failures[name] ?? 0) + 1;
+        this.lastFailure = new Date().toISOString();
+      },
+    },
   };
 }
 

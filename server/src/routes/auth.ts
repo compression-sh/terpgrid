@@ -11,7 +11,8 @@ import { displayNameProblem, generateAccountId, normalizeLogin, usernameProblem 
 import { passwordProblems } from '../passwords.js';
 import { issueLoginSession } from '../login.js';
 import { type SessionInfo, clearSessionCookie, handleOf, type setSessionCookie } from '../sessions.js';
-import { createUserRow, getDek, recoveryHash, replaceRecoveryCodes } from '../users.js';
+import { loadUserKeys } from '../userkeys.js';
+import { createUserRow, recoveryHash, replaceRecoveryCodes } from '../users.js';
 
 const str = (max: number, min = 1) => ({ type: 'string', minLength: min, maxLength: max }) as const;
 
@@ -32,11 +33,12 @@ export function totpFor(secret: Buffer, label: string) {
 export async function checkTotp(ctx: AppContext, userId: string, code: string): Promise<boolean> {
   if (!/^\d{6}$/.test(code)) return false;
   return tx(ctx.db, async (c) => {
-    const { rows } = await c.query('SELECT login_name, totp_secret, totp_last_step FROM users WHERE id = $1 FOR UPDATE', [userId]);
+    const { rows } = await c.query('SELECT login_name, totp_secret, totp_last_step, totp_dek_gen FROM users WHERE id = $1 FOR UPDATE', [userId]);
     const r = rows[0];
     if (!r?.totp_secret) return false;
-    const dek = await getDek(ctx, c, userId);
-    const secret = decrypt(dek, r.totp_secret, totpAad(userId));
+    const keys = await loadUserKeys(ctx, c, userId);
+    const secret = decrypt(keys.get(r.totp_dek_gen), r.totp_secret, totpAad(userId));
+    keys.wipe();
     const totp = totpFor(secret, r.login_name);
     const delta = totp.validate({ token: code, window: 1 });
     if (delta === null) return false;
@@ -373,8 +375,9 @@ export function authRoutes(ctx: AppContext) {
       if (s.totpEnabled) throw new HttpError(409, '2FA ist bereits aktiv.');
       const secret = new OTPAuth.Secret({ size: 20 });
       const raw = Buffer.from(secret.buffer);
-      const dek = await getDek(ctx, ctx.db, s.userId);
-      await ctx.db.query('UPDATE users SET totp_secret = $2, totp_enabled = false, totp_last_step = NULL WHERE id = $1', [s.userId, encrypt(dek, raw, totpAad(s.userId))]);
+      const keys = await loadUserKeys(ctx, ctx.db, s.userId);
+      await ctx.db.query('UPDATE users SET totp_secret = $2, totp_dek_gen = $3, totp_enabled = false, totp_last_step = NULL WHERE id = $1', [s.userId, encrypt(keys.currentKey(), raw, totpAad(s.userId)), keys.current]);
+      keys.wipe();
       const totp = totpFor(raw, s.loginName);
       const uri = totp.toString();
       return { secret: secret.base32, otpauthUri: uri, qrSvg: await QRCode.toString(uri, { type: 'svg', margin: 1, color: { dark: '#0a0d0c', light: '#ffffff' } }) };

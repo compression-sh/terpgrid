@@ -4,14 +4,14 @@ import { audit } from '../audit.js';
 import type { AppContext } from '../context.js';
 import { decrypt, fileAad } from '../crypto.js';
 import { withUser } from '../db.js';
-import { readBlob, removeBlob } from '../files.js';
+import { readBlob, trashBlob } from '../files.js';
 import { HttpError, requireReauth, requireSession } from '../http.js';
 import { displayNameProblem } from '../identity.js';
 import fp from '../plugin.js';
 import { decodePayload } from '../records.js';
 import { clearSessionCookie } from '../sessions.js';
 import { SYNC_STORES } from '../stores.js';
-import { getDek } from '../users.js';
+import { loadUserKeys } from '../userkeys.js';
 
 /** Gleiche Reihenfolge/Bereiche wie das lokale Backup-Format (src/lib/backup.ts, Format 2). */
 const BACKUP_STORES = SYNC_STORES.filter((s) => s !== 'settings');
@@ -61,12 +61,12 @@ export function accountRoutes(ctx: AppContext) {
     app.get('/api/account/export', async (req, reply) => {
       const s = requireReauth(ctx, req);
       const zip = await withUser(ctx.db, s.userId, async (c) => {
-        const dek = await getDek(ctx, c, s.userId);
+        const keys = await loadUserKeys(ctx, c, s.userId);
         const data: Record<string, unknown[]> = Object.fromEntries(BACKUP_STORES.map((st) => [st, []]));
         let settings: unknown;
-        const recs = await c.query('SELECT store, id, payload FROM records WHERE user_id = $1 AND NOT deleted ORDER BY store, id', [s.userId]);
+        const recs = await c.query('SELECT store, id, payload, dek_gen FROM records WHERE user_id = $1 AND NOT deleted ORDER BY store, id', [s.userId]);
         for (const r of recs.rows) {
-          const v = decodePayload(dek, s.userId, r.store, r.id, r.payload);
+          const v = decodePayload(keys.get(r.dek_gen), s.userId, r.store, r.id, r.payload);
           if (r.store === 'settings') {
             if (r.id === 'app') settings = (v as { value?: unknown })?.value;
           } else data[r.store]!.push(v);
@@ -74,10 +74,10 @@ export function accountRoutes(ctx: AppContext) {
         const files: Zippable = {};
         const photoFiles: { id: string; full: string; thumb: string; mime: string }[] = [];
         const docFiles: { id: string; path: string; mime: string; name: string }[] = [];
-        const fr = await c.query('SELECT kind, id, variant, mime, storage_name FROM files WHERE user_id = $1 ORDER BY kind, id, variant', [s.userId]);
+        const fr = await c.query('SELECT kind, id, variant, mime, storage_name, dek_gen FROM files WHERE user_id = $1 ORDER BY kind, id, variant', [s.userId]);
         const photos = new Map<string, { full?: Buffer; thumb?: Buffer; mime: string }>();
         for (const f of fr.rows) {
-          const body = decrypt(dek, await readBlob(ctx.config.fileDir, f.storage_name), fileAad(s.userId, f.kind, f.id, f.variant));
+          const body = decrypt(keys.get(f.dek_gen), await readBlob(ctx.config.fileDir, f.storage_name), fileAad(s.userId, f.kind, f.id, f.variant));
           if (f.kind === 'photo') {
             const p: { full?: Buffer; thumb?: Buffer; mime: string } = photos.get(f.id) ?? { mime: f.mime };
             if (f.variant === 'full') {
@@ -111,6 +111,7 @@ export function accountRoutes(ctx: AppContext) {
           photoFiles,
           docFiles,
         };
+        keys.wipe();
         files['manifest.json'] = strToU8(JSON.stringify(manifest, null, 2));
         return zipSync(files, { level: 0 });
       });
@@ -133,11 +134,13 @@ export function accountRoutes(ctx: AppContext) {
         }
         const names = await withUser(ctx.db, s.userId, async (c) => {
           const f = await c.query('DELETE FROM files WHERE user_id = $1 RETURNING storage_name', [s.userId]);
+          // Blobs in den Papierkorb; mit dem Konto werden auch alle Datenschlüssel gelöscht –
+          // die verbleibenden verschlüsselten Blobs sind damit sofort nicht mehr entschlüsselbar.
+          for (const r of f.rows) await trashBlob(c, r.storage_name);
           await c.query('DELETE FROM records WHERE user_id = $1', [s.userId]);
           await c.query('DELETE FROM users WHERE id = $1', [s.userId]);
           return f.rows.map((r) => r.storage_name as string);
         });
-        for (const n of names) await removeBlob(ctx.config.fileDir, n).catch(() => {});
         await audit(ctx, 'account.delete', { ip: req.ip, meta: { files: names.length } });
         clearSessionCookie(ctx, reply);
         return { ok: true };

@@ -1,7 +1,7 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import type { AppContext } from './context.js';
-import { hmac, unwrapDek, wrapDek } from './crypto.js';
-import type { Db, Tx } from './db.js';
+import { hmac, wrapDek, wrapDekGen } from './crypto.js';
+import type { Tx } from './db.js';
 import { generateRecoveryCode, normalizeRecoveryCode } from './identity.js';
 
 export const RECOVERY_CODE_COUNT = 10;
@@ -14,21 +14,18 @@ export async function createUserRow(
   const id = randomUUID();
   const dek = randomBytes(32);
   const wrapped = wrapDek(ctx.keys.currentKey(), dek, id);
+  const dekCopy = Buffer.from(dek);
   dek.fill(0);
   await c.query(
     `INSERT INTO users(id, login_name, login_kind, display_name, role, password_hash, dek_wrapped, dek_key_version, age_confirmed_at)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())`,
     [id, u.loginName, u.loginKind, u.displayName, u.role ?? 'user', u.passwordHash, wrapped, ctx.keys.current],
   );
+  const dek2 = Buffer.from(dekCopy);
+  await c.query("INSERT INTO user_keys(user_id, gen, dek_wrapped, kek_version, state) VALUES ($1, 1, $2, $3, 'active')", [id, wrapDekGen(ctx.keys.currentKey(), dek2, id, 1), ctx.keys.current]);
+  dek2.fill(0);
+  dekCopy.fill(0);
   return id;
-}
-
-/** Entpackt den Datenschlüssel eines Benutzers (nur serverseitig, nie ausgeliefert). */
-export async function getDek(ctx: AppContext, c: Tx | Db, userId: string): Promise<Buffer> {
-  const { rows } = await c.query('SELECT dek_wrapped, dek_key_version FROM users WHERE id = $1', [userId]);
-  const r = rows[0];
-  if (!r) throw new Error('Benutzer nicht gefunden');
-  return unwrapDek(ctx.keys.get(r.dek_key_version), r.dek_wrapped, userId);
 }
 
 export function recoveryHash(ctx: AppContext, userId: string, code: string): Buffer {

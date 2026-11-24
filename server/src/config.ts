@@ -25,6 +25,8 @@ export interface Config {
   fileDir: string;
   maxUploadBytes: number;
   userQuotaBytes: number;
+  /** Tage, die ersetzte/gelöschte Blobs im Papierkorb bleiben (Backup-Konsistenz) */
+  fileTrashDays: number;
   trustProxy: string | boolean;
   cookieSecure: boolean;
   catalogEnabled: boolean;
@@ -121,6 +123,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     fileDir: env.FILE_STORAGE_DIR ?? '/data/files',
     maxUploadBytes: int(env, 'MAX_UPLOAD_MB', 20, 1, 100) * 1024 * 1024,
     userQuotaBytes: int(env, 'USER_QUOTA_MB', 2048, 10, 1_000_000) * 1024 * 1024,
+    fileTrashDays: int(env, 'FILE_TRASH_DAYS', 7, 1, 365),
     trustProxy: tp === 'false' ? false : tp === 'true' ? true : tp,
     cookieSecure,
     catalogEnabled: bool(env, 'CATALOG_PROXY_ENABLED', true),

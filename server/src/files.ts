@@ -41,3 +41,24 @@ export async function writeBlob(dir: string, name: string, data: Buffer): Promis
 
 export const readBlob = (dir: string, name: string) => readFile(storagePath(dir, name));
 export const removeBlob = (dir: string, name: string) => rm(storagePath(dir, name), { force: true });
+
+/** Blob in den Papierkorb legen (gleiche Transaktion wie die DB-Änderung). */
+export async function trashBlob(c: { query: (q: string, p: unknown[]) => Promise<unknown> }, name: string): Promise<void> {
+  await c.query('INSERT INTO file_trash(storage_name) VALUES ($1) ON CONFLICT DO NOTHING', [name]);
+}
+
+/** Löscht Blobs aus dem Papierkorb, die älter als die Frist sind (nur unreferenzierte). */
+export async function purgeTrash(db: { query: (q: string, p?: unknown[]) => Promise<{ rows: { storage_name: string }[] }> }, dir: string, days: number): Promise<number> {
+  const { rows } = await db.query(
+    `SELECT t.storage_name FROM file_trash t
+      WHERE t.deleted_at < now() - make_interval(days => $1)
+        AND NOT EXISTS (SELECT 1 FROM files f WHERE f.storage_name = t.storage_name)
+      LIMIT 1000`,
+    [days],
+  );
+  for (const r of rows) {
+    await removeBlob(dir, r.storage_name).catch(() => {});
+    await db.query('DELETE FROM file_trash WHERE storage_name = $1', [r.storage_name]);
+  }
+  return rows.length;
+}

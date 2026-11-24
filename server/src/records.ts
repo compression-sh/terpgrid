@@ -5,6 +5,7 @@
 import { canonicalJson, decrypt, encrypt, hmac, recordAad, subkey } from './crypto.js';
 import type { Tx } from './db.js';
 import { HttpError } from './http.js';
+import type { UserKeys } from './userkeys.js';
 import { ID_RE, MAX_RECORD_BYTES, type SyncStore, isSyncStore } from './stores.js';
 
 export interface Change {
@@ -31,7 +32,7 @@ export function decodePayload(dek: Buffer, userId: string, store: string, id: st
   return JSON.parse(decrypt(dek, payload, recordAad(userId, store, id)).toString('utf8'));
 }
 
-export async function applyChange(c: Tx, userId: string, dek: Buffer, ch: Change): Promise<ChangeResult> {
+export async function applyChange(c: Tx, userId: string, keys: UserKeys, ch: Change): Promise<ChangeResult> {
   const { store, id } = ch;
   if (!isSyncStore(store) || typeof id !== 'string' || !ID_RE.test(id)) return { store: String(store), id: String(id), status: 'rejected', error: 'Ungültiger Bereich oder ID' };
   if (!Number.isInteger(ch.baseVersion) || ch.baseVersion < 0) return { store, id, status: 'rejected', error: 'Ungültige Version' };
@@ -45,40 +46,42 @@ export async function applyChange(c: Tx, userId: string, dek: Buffer, ch: Change
     json = JSON.stringify(ch.data);
     if (Buffer.byteLength(json) > MAX_RECORD_BYTES) return { store, id, status: 'rejected', error: 'Datensatz zu groß' };
   }
-  const mac = deleted ? null : hmac(macKey(dek), `${store}|${id}|${canonicalJson(ch.data)}`);
+  const canon = deleted ? '' : `${store}|${id}|${canonicalJson(ch.data)}`;
+  const mac = deleted ? null : hmac(macKey(keys.currentKey()), canon);
 
-  const { rows } = await c.query('SELECT version, deleted, payload, payload_mac FROM records WHERE user_id = $1 AND store = $2 AND id = $3 FOR UPDATE', [userId, store, id]);
-  const cur = rows[0] as { version: number; deleted: boolean; payload: Buffer | null; payload_mac: Buffer | null } | undefined;
+  const { rows } = await c.query('SELECT version, deleted, payload, payload_mac, dek_gen FROM records WHERE user_id = $1 AND store = $2 AND id = $3 FOR UPDATE', [userId, store, id]);
+  const cur = rows[0] as { version: number; deleted: boolean; payload: Buffer | null; payload_mac: Buffer | null; dek_gen: number } | undefined;
 
-  // Idempotenter Import: identischer Inhalt → nichts tun
-  if (cur && !cur.deleted && mac && cur.payload_mac && cur.payload_mac.equals(mac)) return { store, id, status: 'unchanged', version: cur.version };
+  // Idempotenter Import: identischer Inhalt → nichts tun (MAC mit der Schlüsselgeneration der Zeile)
+  if (cur && !cur.deleted && !deleted && cur.payload_mac && cur.payload_mac.equals(cur.dek_gen === keys.current ? mac! : hmac(macKey(keys.get(cur.dek_gen)), canon)))
+    return { store, id, status: 'unchanged', version: cur.version };
   if (cur && cur.deleted && deleted) return { store, id, status: 'unchanged', version: cur.version };
 
   const curVersion = cur?.version ?? 0;
   if (curVersion !== ch.baseVersion) {
-    return { store, id, status: 'conflict', server: { version: curVersion, deleted: cur?.deleted ?? true, data: cur && !cur.deleted ? decodePayload(dek, userId, store, id, cur.payload) : null } };
+    return { store, id, status: 'conflict', server: { version: curVersion, deleted: cur?.deleted ?? true, data: cur && !cur.deleted ? decodePayload(keys.get(cur.dek_gen), userId, store, id, cur.payload) : null } };
   }
   if (!cur && deleted) return { store, id, status: 'unchanged', version: 0 };
 
-  const payload = deleted ? null : encrypt(dek, Buffer.from(json, 'utf8'), recordAad(userId, store, id));
+  const payload = deleted ? null : encrypt(keys.currentKey(), Buffer.from(json, 'utf8'), recordAad(userId, store, id));
   const size = payload?.length ?? 0;
   const version = curVersion + 1;
   const r = cur
     ? await c.query(
-        `UPDATE records SET version = $4, deleted = $5, payload = $6, payload_mac = $7, size = $8, seq = nextval('records_seq'), updated_at = now()
+        `UPDATE records SET version = $4, deleted = $5, payload = $6, payload_mac = $7, size = $8, dek_gen = $9, seq = nextval('records_seq'), updated_at = now()
           WHERE user_id = $1 AND store = $2 AND id = $3 RETURNING seq`,
-        [userId, store, id, version, deleted, payload, mac, size],
+        [userId, store, id, version, deleted, payload, mac, size, keys.current],
       )
     : await c.query(
-        `INSERT INTO records(user_id, store, id, version, deleted, payload, payload_mac, size) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING seq`,
-        [userId, store, id, version, deleted, payload, mac, size],
+        `INSERT INTO records(user_id, store, id, version, deleted, payload, payload_mac, size, dek_gen) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING seq`,
+        [userId, store, id, version, deleted, payload, mac, size, keys.current],
       );
   return { store, id, status: 'ok', version, seq: String(r.rows[0].seq) };
 }
 
-export async function listChanges(c: Tx, userId: string, dek: Buffer, since: bigint, limit: number) {
+export async function listChanges(c: Tx, userId: string, keys: UserKeys, since: bigint, limit: number) {
   const { rows } = await c.query(
-    'SELECT store, id, version, seq, deleted, payload, updated_at FROM records WHERE user_id = $1 AND seq > $2 ORDER BY seq LIMIT $3',
+    'SELECT store, id, version, seq, deleted, payload, dek_gen, updated_at FROM records WHERE user_id = $1 AND seq > $2 ORDER BY seq LIMIT $3',
     [userId, since.toString(), limit],
   );
   return rows.map((r) => ({
@@ -87,7 +90,7 @@ export async function listChanges(c: Tx, userId: string, dek: Buffer, since: big
     version: r.version as number,
     seq: String(r.seq),
     deleted: r.deleted as boolean,
-    data: r.deleted ? null : decodePayload(dek, userId, r.store, r.id, r.payload),
+    data: r.deleted ? null : decodePayload(keys.get(r.dek_gen), userId, r.store, r.id, r.payload),
     updatedAt: r.updated_at,
   }));
 }
