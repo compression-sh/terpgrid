@@ -11,7 +11,7 @@ describe('Fotos nach Anmeldung auf neuem Gerät', () => {
   });
   afterEach(async () => {
     clearPhotoUrlCache();
-    await deleteDatabase('foto-test');
+    await deleteDatabase();
   });
 
   it('meldet zuerst „nicht vorhanden“ und lädt nach, sobald die Bilddaten gespeichert sind', async () => {

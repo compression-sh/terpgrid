@@ -108,12 +108,15 @@ export function ActivityTimeline({ activities, growId, showPlant = true, limit, 
   const [editing, setEditing] = useState<Activity | null>(null);
   const [filter, setFilter] = useState<ActivityType | 'all'>('all');
   const [viewer, setViewer] = useState<{ ids: string[]; index: number } | null>(null);
+  // Lange Verläufe schrittweise anzeigen (Seitenlänge, Renderzeit auf Mobilgeräten)
+  const PAGE = 20;
+  const [visible, setVisible] = useState(PAGE);
 
   const sorted = useMemo(
     () => [...activities].filter((a) => filter === 'all' || a.type === filter).sort((a, b) => b.date.localeCompare(a.date)),
     [activities, filter],
   );
-  const shown = limit ? sorted.slice(0, limit) : sorted;
+  const shown = sorted.slice(0, limit ?? visible);
   const groups = useMemo(() => {
     const map = new Map<string, Activity[]>();
     for (const a of shown) map.set(a.date.slice(0, 10), [...(map.get(a.date.slice(0, 10)) ?? []), a]);
@@ -148,7 +151,7 @@ export function ActivityTimeline({ activities, growId, showPlant = true, limit, 
               key={t}
               type="button"
               aria-pressed={filter === t}
-              onClick={() => setFilter(t)}
+              onClick={() => (setFilter(t), setVisible(PAGE))}
               className={`shrink-0 rounded-full border px-2.5 py-1 text-xs ${filter === t ? 'border-leaf-500/40 bg-leaf-500/15 text-leaf-200' : 'border-white/[0.08] text-ink-400 hover:text-ink-200'}`}
             >
               {t === 'all' ? 'Alle' : ACTIVITY_LABEL[t]}
@@ -215,6 +218,16 @@ export function ActivityTimeline({ activities, growId, showPlant = true, limit, 
             </section>
           ))}
           {limit && sorted.length > limit && <p className="hint text-center">{sorted.length - limit} ältere Einträge im Verlauf</p>}
+          {!limit && sorted.length > visible && (
+            <div className="flex flex-col items-center gap-1 pt-1">
+              <button type="button" className="btn-ghost text-[13px]" onClick={() => setVisible((v) => v + PAGE)}>
+                {Math.min(PAGE, sorted.length - visible)} ältere Einträge anzeigen
+              </button>
+              <span className="text-[11px] text-ink-500">
+                {visible} von {sorted.length} angezeigt
+              </span>
+            </div>
+          )}
         </div>
       )}
       {editing && <ActivityFormModal open onClose={() => setEditing(null)} activity={editing} growId={growId} />}

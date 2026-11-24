@@ -62,6 +62,38 @@ export function upcoming(reminders: Reminder[], from: string, days = 30, limit =
     .slice(0, limit);
 }
 
+export interface NextReminder {
+  reminder: Reminder;
+  /** Ältestes überfälliges, sonst nächstes offenes Vorkommen */
+  date: string;
+  late: boolean;
+  /** Weitere offene Vorkommen derselben Erinnerung im Zeitfenster (überfällig + anstehend) */
+  more: number;
+}
+
+/**
+ * Je Erinnerung nur ein Eintrag (statt jedes Vorkommen einer Serie): überfällige zuerst, dann nach Datum.
+ * Verhindert, dass eine tägliche Erinnerung die ganze Liste füllt.
+ */
+export function nextPerReminder(reminders: Reminder[], todayStr: string, days = 14): NextReminder[] {
+  const all = [...overdue(reminders, todayStr, days).map((o) => ({ ...o, late: true })), ...occurrencesInRange(reminders, todayStr, addDays(todayStr, days)).filter((o) => !o.done).map((o) => ({ ...o, late: false }))];
+  const by = new Map<string, NextReminder>();
+  for (const o of all) {
+    const cur = by.get(o.reminder.id);
+    if (!cur) by.set(o.reminder.id, { reminder: o.reminder, date: o.date, late: o.late, more: 0 });
+    else cur.more++;
+  }
+  return [...by.values()].sort((a, b) => Number(b.late) - Number(a.late) || a.date.localeCompare(b.date));
+}
+
+/** Lesbarer Rhythmus einer Serie, z. B. „alle 3 Tage“ – undefined bei einmaligen Terminen. */
+export function repeatLabel(repeat: unknown): string | undefined {
+  const r = safeRepeat(repeat);
+  if (r.kind === 'none') return undefined;
+  if (r.kind === 'daily') return r.interval === 1 ? 'täglich' : `alle ${r.interval} Tage`;
+  return r.interval === 1 ? 'wöchentlich' : `alle ${r.interval} Wochen`;
+}
+
 /** Überfällige, nicht erledigte Vorkommen der letzten `days` Tage. */
 export function overdue(reminders: Reminder[], todayStr: string, days = 14): Occurrence[] {
   return occurrencesInRange(reminders, addDays(todayStr, -days), addDays(todayStr, -1)).filter((o) => !o.done);

@@ -56,3 +56,16 @@ describe('Personal Data Explorer', () => {
     expect(expenseCsv(expenses, grows, { nutrients: 'Dünger', seeds: 'Samen' })).toContain('"Dünger; ""A+B"""');
   });
 });
+
+describe('Sammlung: Mengenverlauf', () => {
+  it('protokolliert nur echte Änderungen und begrenzt auf 50', async () => {
+    const { withQuantityChange } = await import('../inventory');
+    expect(withQuantityChange(undefined, 2, 2, 't')).toBeUndefined();
+    expect(withQuantityChange(undefined, undefined, 3, 't')).toBeUndefined();
+    expect(withQuantityChange(undefined, 2, 1, 't1')).toEqual([{ at: 't1', from: 2, to: 1 }]);
+    let log: ReturnType<typeof withQuantityChange> = undefined;
+    for (let i = 0; i < 60; i++) log = withQuantityChange(log, i, i + 1, `t${i}`);
+    expect(log).toHaveLength(50);
+    expect(log![0]!.at).toBe('t10');
+  });
+});

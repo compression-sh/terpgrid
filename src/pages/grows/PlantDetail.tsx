@@ -26,6 +26,8 @@ import { fmt } from '../../lib/format';
 
 type Tab = 'log' | 'photos' | 'measurements' | 'outcome';
 
+const PHENO_LABEL = { appearance: 'Erscheinungsbild', growth: 'Wuchs', leaves: 'Blätter', aroma: 'Aroma', variation: 'Abweichungen', notes: 'Notizen' } as const;
+
 export function PlantDetail({ growId, plantId }: { growId: string; plantId: string }) {
   const { data } = useData();
   const route = useRoute();
@@ -73,6 +75,9 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
     }
   }
 
+  const phenoEntries = (Object.keys(PHENO_LABEL) as (keyof typeof PHENO_LABEL)[])
+    .map((k) => [k, plant.phenotype?.[k]] as const)
+    .filter((e): e is readonly [keyof typeof PHENO_LABEL, string] => typeof e[1] === 'string' && e[1].trim() !== '');
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'log', label: 'Verlauf', icon: <History className="size-4" /> },
     { id: 'photos', label: `Fotos (${photos.length})`, icon: <Images className="size-4" /> },
@@ -172,10 +177,34 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
         </div>
       </section>
 
-      {plant.notes && (
-        <Card title="Notizen" className="mb-5">
-          <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-ink-300">{plant.notes}</p>
-        </Card>
+      {(plant.notes || phenoEntries.length > 0) && (
+        <div className={`mb-5 grid gap-5 ${plant.notes && phenoEntries.length ? 'lg:grid-cols-2' : ''}`}>
+          {plant.notes && (
+            <Card title="Notizen">
+              <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-ink-300">{plant.notes}</p>
+            </Card>
+          )}
+          {phenoEntries.length > 0 && (
+            <Card
+              title="Phänotyp"
+              subtitle="Eigene Beobachtungen – subjektiv, keine Messung"
+              actions={
+                <a href={href(`grows/${growId}/experiments`)} className="btn-ghost py-1.5 text-xs">
+                  Bearbeiten
+                </a>
+              }
+            >
+              <dl className="grid gap-2.5 sm:grid-cols-2">
+                {phenoEntries.map(([k, v]) => (
+                  <div key={k} className="min-w-0">
+                    <dt className="text-[10.5px] uppercase tracking-wider text-ink-500">{PHENO_LABEL[k]}</dt>
+                    <dd className="mt-0.5 whitespace-pre-wrap break-words text-[13px] text-ink-200">{v}</dd>
+                  </div>
+                ))}
+              </dl>
+            </Card>
+          )}
+        </div>
       )}
 
       <Card title="Phasen" subtitle={ownPhases ? 'Eigene Meilensteine dieser Pflanze' : `Meilensteine von „${grow.name}“`} className="mb-5">

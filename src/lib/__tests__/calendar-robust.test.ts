@@ -18,3 +18,19 @@ describe('Kalender: robuste Wiederholungsregeln', () => {
     expect(() => remindersToIcs([r])).not.toThrow();
   });
 });
+
+describe('Übersicht: eine Zeile je Erinnerung', () => {
+  it('fasst Serien zusammen, überfällige zuerst', async () => {
+    const { nextPerReminder, repeatLabel } = await import('../calendar');
+    const daily = { ...base, id: 'd', date: '2026-11-20', repeat: { kind: 'daily', interval: 3 } } as unknown as Reminder;
+    const once = { ...base, id: 'o', date: '2026-11-26', repeat: { kind: 'none' } } as unknown as Reminder;
+    const r = nextPerReminder([daily, once], '2026-11-24', 14);
+    expect(r.map((x) => [x.reminder.id, x.date, x.late, x.more])).toEqual([
+      ['d', '2026-11-20', true, 6],
+      ['o', '2026-11-26', false, 0],
+    ]);
+    expect(repeatLabel(daily.repeat)).toBe('alle 3 Tage');
+    expect(repeatLabel({ kind: 'weekly', interval: 1 })).toBe('wöchentlich');
+    expect(repeatLabel(once.repeat)).toBeUndefined();
+  });
+});
