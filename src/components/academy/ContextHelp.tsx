@@ -19,7 +19,7 @@ export function ContextHelp({ ids, label = 'Hintergrund' }: { ids: string[]; lab
       <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-lg border border-white/[0.08] px-2.5 py-1 text-[12px] text-ink-300 hover:border-leaf-500/30 hover:text-leaf-200 [&::-webkit-details-marker]:hidden">
         <GraduationCap className="size-3.5" /> {label}
       </summary>
-      <div className="absolute right-0 z-30 mt-2 w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-white/[0.08] bg-ink-900 p-3 shadow-2xl">
+      <div className="fixed inset-x-4 bottom-4 z-50 max-h-[70vh] overflow-y-auto rounded-xl border border-white/[0.08] bg-ink-900 p-3 shadow-2xl sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:mt-2 sm:w-[22rem]">
         <p className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-ink-500">Aus der Academy</p>
         {items.length === 0 ? (
           <p className="hint">Wird geladen …</p>

@@ -70,7 +70,7 @@ const S = {
   hanus: { label: 'Hanuš LO, Hod Y (2020). Terpenes/Terpenoids in Cannabis: Are They Important? Med Cannabis Cannabinoids 3(1):25–60.', url: 'https://doi.org/10.1159/000509733' },
   russo: { label: 'Russo EB (2011). Taming THC: potential cannabis synergy and phytocannabinoid-terpenoid entourage effects. Br J Pharmacol 163(7):1344–1364.', url: 'https://doi.org/10.1111/j.1476-5381.2011.01238.x' },
   schwabe2019: { label: 'Schwabe AL, McGlaughlin ME (2019). Genetic tools weed out misconceptions of strain reliability in Cannabis sativa. J Cannabis Res 1:3.', url: 'https://doi.org/10.1186/s42238-019-0001-1' },
-  smith2022: { label: 'Smith CJ et al. (2022). The phytochemical diversity of commercial Cannabis in the United States. Nature Plants 8:1240–1249.', url: 'https://doi.org/10.1038/s41477-022-01242-9' },
+  smith2022: { label: 'Smith CJ, Vergara D, Keegan B, Jikomes N (2022). The phytochemical diversity of commercial Cannabis in the United States. PLoS One 17(5):e0267498.', url: 'https://doi.org/10.1371/journal.pone.0267498' },
   schwabe2023: { label: 'Schwabe AL et al. (2023). Uncomfortably high: Testing reveals inflated THC potency on retail Cannabis labels. PLOS ONE 18(4):e0282396.', url: 'https://doi.org/10.1371/journal.pone.0282396' },
   hirvonen: { label: 'Hirvonen J et al. (2012). Reversible and regionally selective downregulation of brain cannabinoid CB1 receptors in chronic daily cannabis smokers. Mol Psychiatry 17:642–649.', url: 'https://doi.org/10.1038/mp.2011.82' },
   freeman: { label: "Freeman TP, Lorenzetti V (2020). 'Standard THC units'. Addiction 115(7):1207–1216.", url: 'https://doi.org/10.1111/add.14842' },
@@ -198,7 +198,7 @@ const BASE_ARTICLES: KbArticle[] = [
     title: 'Genetik, Kreuzungen und Sortennamen',
     category: 'Genetik & Züchtung',
     summary: 'Sortennamen sind nicht genormt. Gleich benannte Proben können genetisch verschieden sein, und die Einteilung in „Indica“ und „Sativa“ spiegelt die Chemie nur schlecht wider.',
-    updated: KB_UPDATED,
+    updated: '2026-11-24',
     sections: [
       {
         heading: 'Kreuzungen lesen',
@@ -211,7 +211,7 @@ const BASE_ARTICLES: KbArticle[] = [
         heading: 'Namen sind keine Garantie',
         paragraphs: [
           'Genetische Untersuchungen fanden, dass Proben mit demselben Sortennamen teils weniger verwandt waren als Proben verschiedener Namen.',
-          'Eine große Analyse kommerzieller Proben zeigte, dass „Indica“- und „Sativa“-Etiketten die tatsächliche chemische Zusammensetzung kaum vorhersagen.',
+          'Eine Analyse von Cannabinoid- und Terpengehalten kommerzieller Proben aus sechs US-Bundesstaaten zeigte, dass die üblichen Etiketten (etwa „Indica“, „Sativa“ oder Sortennamen) nicht verlässlich zur gemessenen Chemie passen – einzelne Etiketten zeigten allerdings eine Tendenz zu bestimmten Chemotypen.',
         ],
         note: 'TERPGRID führt gleichnamige Sorten verschiedener Breeder deshalb nie automatisch zusammen.',
       },
@@ -345,7 +345,7 @@ const BASE_ARTICLES: KbArticle[] = [
     title: 'Forschung richtig einordnen',
     category: 'Labor & Analytik',
     summary: 'Laborwerte, Studien und Online-Datenbanken haben unterschiedliche Aussagekraft. Worauf es beim Lesen ankommt.',
-    updated: KB_UPDATED,
+    updated: '2026-11-24',
     sections: [
       {
         heading: 'Laborwerte',
@@ -358,7 +358,7 @@ const BASE_ARTICLES: KbArticle[] = [
       {
         heading: 'Sortendatenbanken',
         paragraphs: [
-          'Online-Kataloge sammeln Angaben aus unterschiedlichen Quellen. TERPGRID zeigt deshalb den Evidenzstatus der Quelle (belegt, berichtet, umstritten, unzureichend) und übernimmt keine fehlenden Werte.',
+          'Online-Kataloge sammeln Angaben aus unterschiedlichen Quellen. TERPGRID zeigt deshalb je Angabe die Belegart (Laborbestätigt, Breeder-Angabe, Seedbank-Angabe, Datenbank-Angabe, Widersprüchlich, Keine Daten) und ergänzt keine fehlenden Werte.',
           'Berichtete Erfahrungen sind subjektiv und keine Wirkungsgarantie.',
         ],
         links: [{ label: 'Discover', to: 'discover' }],
