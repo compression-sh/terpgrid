@@ -111,7 +111,8 @@ export class PoliteClient {
         throw new CatalogError(`Anfragelimit der Quelle erreicht – bitte in ${retry} s erneut versuchen.`, 'rate_limited', retry);
       }
       if (res.status === 404) throw new CatalogError('Eintrag nicht gefunden.', 'not_found');
-      if (res.status === 400) throw new CatalogError('Ungültige Anfrage.', 'bad_request');
+      if (res.status === 400) throw new CatalogError('Die Quelle hat diese Anfrage abgelehnt (z. B. wegen Sonderzeichen). Bitte einen anderen Suchbegriff verwenden.', 'bad_request');
+      if (res.status === 403) throw new CatalogError('Die Quelle hat diese Anfrage abgelehnt. Bitte einen anderen Suchbegriff verwenden.', 'bad_request');
       if (!res.ok) throw new CatalogError(`Die Quelle meldet einen Fehler (HTTP ${res.status}).`, 'server');
       let data: T;
       try {

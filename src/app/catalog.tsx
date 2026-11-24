@@ -41,6 +41,8 @@ export interface SearchState {
 }
 
 const PER_PAGE = 24;
+/** Suche: bis zu 3 × 100 Treffer vorab laden, damit nach Relevanz sortiert werden kann */
+const SEARCH_PAGES = 3;
 
 export function useStrainSearch(query: string, debounceMs = 350) {
   const [state, setState] = useState<SearchState>({ items: [], total: 0, totalPages: 0, page: 0, loading: true, loadingMore: false, fromCache: false, complete: false });
@@ -76,7 +78,7 @@ export function useStrainSearch(query: string, debounceMs = 350) {
     setState({ items: [], total: 0, totalPages: 0, page: 0, loading: true, loadingMore: false, fromCache: false, complete: false });
     const t = window.setTimeout(
       () => {
-        (q ? catalog.search(q, 1, PER_PAGE, c.signal) : catalog.list(1, PER_PAGE, c.signal)).then((p) => !c.signal.aborted && apply(p, false)).catch(fail);
+        (q ? catalog.searchTop(q, SEARCH_PAGES, c.signal) : catalog.list(1, PER_PAGE, c.signal)).then((p) => !c.signal.aborted && apply(p, false)).catch(fail);
       },
       q ? debounceMs : 0,
     );
@@ -91,7 +93,7 @@ export function useStrainSearch(query: string, debounceMs = 350) {
     const c = ctrl.current ?? new AbortController();
     setState((s) => ({ ...s, loadingMore: true, error: undefined }));
     const next = state.page + 1;
-    (q ? catalog.search(q, next, PER_PAGE, c.signal) : catalog.list(next, PER_PAGE, c.signal)).then((p) => !c.signal.aborted && apply(p, true)).catch(fail);
+    (q ? catalog.search(q, next, 100, c.signal) : catalog.list(next, PER_PAGE, c.signal)).then((p) => !c.signal.aborted && apply(p, true)).catch(fail);
   }, [q, state.page, state.loadingMore, state.complete]);
 
   /** Alle Treffer laden (für vollständige lokale Filter). Nur auf Nutzerwunsch. */

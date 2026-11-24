@@ -148,6 +148,22 @@ export class CatalogService {
     );
   }
 
+  /**
+   * Suche für die Relevanz-Sortierung: bis zu `maxPages` Seiten à 100 nacheinander
+   * (je Seite 30 Min. gecacht). Die Quelle sortiert nicht nach Relevanz, daher wird lokal
+   * über alle geladenen Treffer sortiert.
+   */
+  async searchTop(q: string, maxPages = 3, signal?: AbortSignal): Promise<CatalogPage> {
+    const first = await this.search(q, 1, 100, signal);
+    let items = first.items;
+    let page = first;
+    for (let p = 2; p <= Math.min(maxPages, first.totalPages); p++) {
+      page = await this.search(q, p, 100, signal);
+      items = [...new Map([...items, ...page.items].map((i) => [i.key, i])).values()];
+    }
+    return { ...first, items, page: Math.min(maxPages, first.totalPages || 1), fromCache: first.fromCache && page.fromCache };
+  }
+
   detail(slug: string, signal?: AbortSignal): Promise<{ strain: CatalogStrain; fromCache: boolean; fetchedAt: string }> {
     return this.cachedFetch(`sa:detail:${slug}`, SA.detailUrl(slug), TTL.detail, signal, (raw: { data?: SA.RawStrain }, _h, fromCache, fetchedAt) => {
       const s = raw && typeof raw === 'object' && raw.data ? SA.normalizeStrain(raw.data, true) : undefined;

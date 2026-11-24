@@ -122,8 +122,12 @@ export function catalogRoutes(ctx: AppContext) {
       })());
     for (const [k, v] of Object.entries(entry.headers)) reply.header(k, v);
     reply.header('Cache-Control', kind === 'image' ? 'private, max-age=3600' : 'no-store');
-    if (entry.status >= 500) return reply.code(502).send({ error: 'Quelle meldet einen Fehler' });
-    return reply.code(entry.status === 429 ? 429 : entry.status >= 400 ? 404 : 200).type(entry.type).send(entry.body);
+    // Fehler der Quelle immer als eigenes JSON – nie den (HTML-)Inhalt der Quelle durchreichen
+    if (entry.status >= 500) return reply.code(502).send({ error: 'Die Quelle meldet einen Fehler. Bitte später erneut versuchen.' });
+    if (entry.status === 429) return reply.code(429).send({ error: 'Anfragelimit der Quelle erreicht.' });
+    if (entry.status === 404) return reply.code(404).send({ error: 'Eintrag nicht gefunden.' });
+    if (entry.status >= 400) return reply.code(400).send({ error: 'Die Quelle hat diese Anfrage abgelehnt (z. B. wegen Sonderzeichen).' });
+    return reply.code(200).type(entry.type).send(entry.body);
   }
 
   return fp(async (app: FastifyInstance) => {

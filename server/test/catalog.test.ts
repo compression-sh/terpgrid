@@ -9,6 +9,7 @@ describe.skipIf(!hasDb)('Katalog-Proxy', () => {
     calls.push({ url, init });
     if (url.includes('fake.jpg')) return new Response('<svg onload=alert(1)>', { headers: { 'content-type': 'image/jpeg' } });
     if (url.includes('/wp-content/uploads/')) return new Response(Buffer.from([0xff, 0xd8, 0xff, 0x00]), { headers: { 'content-type': 'image/jpeg' } });
+    if (url.includes('script')) return new Response('<!DOCTYPE html><html>WAF</html>', { status: 403, headers: { 'content-type': 'text/html' } });
     if (url.includes('evil')) return new Response('<html>', { headers: { 'content-type': 'text/html' } });
     return new Response(JSON.stringify({ data: [{ slug: 'og-kush' }] }), { headers: { 'content-type': 'application/json', 'x-wp-total': '1', 'set-cookie': 'tracking=1' } });
   }) as unknown as typeof fetch;
@@ -76,6 +77,14 @@ describe.skipIf(!hasDb)('Katalog-Proxy', () => {
     let last = 0;
     for (let i = 0; i < 19; i++) last = (await c.get(`/api/catalog/cannalib/v1/catalogs/strains?q=sorte${i}`)).status;
     expect(last).toBe(429);
+  });
+
+  it('übersetzt Ablehnungen der Quelle (z. B. Firewall 403 mit HTML) in eigenes JSON ohne Fremdinhalt', async () => {
+    const r = await c.get(`/api/catalog/strainapi/search?q=${encodeURIComponent('"><script>')}`);
+    expect(r.status).toBe(400);
+    expect(r.headers['content-type']).toMatch(/application\/json/);
+    expect(r.json.error).toMatch(/abgelehnt/);
+    expect(Buffer.from(r.raw).toString()).not.toContain('<html');
   });
 
   it('lässt sich per Konfiguration abschalten', async () => {
