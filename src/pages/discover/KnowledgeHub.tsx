@@ -273,7 +273,7 @@ function Glossary() {
               </dt>
               <dd className="mt-1 text-[13px] leading-relaxed text-ink-300">{g.definition}</dd>
               <dd className="mt-1.5">
-                <a href={href(`discover/learn/${g.article}`)} className="text-[12px] text-leaf-300 hover:underline">
+                <a href={href(`discover/learn/${g.article}`)} className="inline-flex min-h-6 items-center text-[12px] text-leaf-300 hover:underline">
                   {byId(g.article)?.title ?? 'Artikel'} →
                 </a>
               </dd>

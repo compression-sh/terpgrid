@@ -510,7 +510,7 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
               <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-500" />
               <input className="input-base pl-9" placeholder="Name oder Schreibweise …" value={q} onChange={(e) => setQ(e.target.value)} />
             </label>
-            <select aria-label="Aromafamilie" className="input-base w-auto" value={fam} onChange={(e) => setFam(e.target.value as AromaFamily | '')}>
+            <select aria-label="Aromafamilie" className="input-base w-auto max-w-full" value={fam} onChange={(e) => setFam(e.target.value as AromaFamily | '')}>
               <option value="">Alle Aromafamilien</option>
               {AROMA_FAMILIES.map((f) => (
                 <option key={f.id} value={f.id}>
@@ -518,13 +518,13 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
                 </option>
               ))}
             </select>
-            <select aria-label="Stoffklasse" className="input-base w-auto" value={cls} onChange={(e) => setCls(e.target.value)}>
+            <select aria-label="Stoffklasse" className="input-base w-auto max-w-full" value={cls} onChange={(e) => setCls(e.target.value)}>
               <option value="">Alle Stoffklassen</option>
               {CLASSES.map((c) => (
                 <option key={c}>{c}</option>
               ))}
             </select>
-            <select aria-label="Beleg für Cannabis" className="input-base w-auto" value={evidence} onChange={(e) => setEvidence(e.target.value as '' | 'lit' | 'none')}>
+            <select aria-label="Beleg für Cannabis" className="input-base w-auto max-w-full" value={evidence} onChange={(e) => setEvidence(e.target.value as '' | 'lit' | 'none')}>
               <option value="">Alle Belege</option>
               <option value="lit">In Cannabis belegt</option>
               <option value="none">Nicht belegt</option>
@@ -569,7 +569,7 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
           <div className="flex flex-wrap gap-1.5 pt-1">
             <span className="text-[11px] text-ink-500">Sammelnamen:</span>
             {TERPENE_GROUPS.map((g) => (
-              <a key={g.id} href={href(`discover/terpenes/${g.id}`)} className="rounded-full border border-dashed border-white/[0.12] px-2 py-0.5 text-[11px] text-ink-300 hover:border-white/25">
+              <a key={g.id} href={href(`discover/terpenes/${g.id}`)} className="rounded-full border border-dashed border-white/[0.12] inline-flex min-h-6 items-center px-2 py-0.5 text-[11px] text-ink-300 hover:border-white/25">
                 {g.name.replace(' (Isomer nicht angegeben)', '')}
               </a>
             ))}
@@ -593,7 +593,7 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
                     </p>
                     <div className="mt-1 flex flex-wrap gap-1">
                       {items.map((t) => (
-                        <a key={t.id} href={href(`discover/terpenes/${t.id}`)} className="rounded-full border border-white/[0.08] px-2 py-0.5 text-[11.5px] text-ink-200 hover:border-white/20" style={{ boxShadow: `inset 3px 0 0 ${t.color}` }}>
+                        <a key={t.id} href={href(`discover/terpenes/${t.id}`)} className="rounded-full border border-white/[0.08] inline-flex min-h-6 items-center px-2 py-0.5 text-[11.5px] text-ink-200 hover:border-white/20" style={{ boxShadow: `inset 3px 0 0 ${t.color}` }}>
                           {t.name}
                         </a>
                       ))}
@@ -635,7 +635,7 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
                       <th key={t.id} className="py-1.5 pr-3 align-top font-semibold" style={{ color: t.color }}>
                         <div className="flex items-start justify-between gap-1">
                           {t.name}
-                          <button type="button" aria-label={`${t.name} entfernen`} className="text-ink-500 hover:text-ink-100" onClick={() => setCompare((c) => c.filter((x) => x !== t.id))}>
+                          <button type="button" aria-label={`${t.name} entfernen`} className="-m-1 inline-grid size-6 shrink-0 place-items-center rounded text-ink-500 hover:text-ink-100" onClick={() => setCompare((c) => c.filter((x) => x !== t.id))}>
                             ×
                           </button>
                         </div>
