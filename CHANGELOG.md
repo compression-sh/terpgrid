@@ -1,5 +1,21 @@
 # Änderungsprotokoll
 
+## 5.2.0-rc.1 – 24.11.2026 (Release-Kandidat, nicht veröffentlicht)
+
+Cannabis 101 & Terpen-Atlas, Expansion 2.1. Migration 006 (nur Katalog-Metadaten); Nutzerdaten unverändert.
+
+### Neu
+- **Katalog-Anreicherung mit Herkunft je Feld:** Vollständigkeits-Audit (`catalog-audit`), Anreicherung aus StrainAPI gemäß Nutzungsbedingungen (`enrich-catalog`, Probelauf, Fortsetzung), konservativer Abgleich (Name + Breeder), Admin-Ansicht mit Feldabdeckung, Läufen und Prüfliste. Find My Seeds bleibt deaktiviert (automatisierte Abrufe abgewiesen).
+- **Belegarten auf der Sortenseite:** Laborbestätigt (eigene Berichte, je Probe), Breeder-, Seedbank-, Datenbank-Angabe, Widersprüchlich, Keine Daten; „Kein belegtes Terpenprofil verfügbar.“
+- **CISP-Parser v2:** Typ-Bezeichnung und Abstammungstext der Quelle.
+- **Terpen-Atlas 3.0:** 27 Verbindungen mit PubChem-Identität, 2D-Strukturformel, belegtem Geruch, Cannabis-Beleg aus geprüfter Literatur, Sammelnamen ohne Isomer-Zuordnung, Katalogsorten je Terpen, Vergleich, Filter.
+- **Academy:** 17 Kategorien, 18 neue Leitfäden (30 Artikel), Lernpfade, Glossar (auch in Strg+K), interaktive Diagramme (VPD, DLI, Lebenszyklus, Narbenstufen), Kontexthilfe in Growlogs, Laborberichten und Grow-Vergleich.
+
+### Korrigiert
+- „Pinen“ ohne Isomerangabe wurde als α-Pinen gedeutet; jetzt Sammelname.
+- Lesefortschritt erreicht am Seitenende 100 %.
+- StrainAPI-Fotos werden nicht übernommen (Rechte und Zuordnung nicht belegt).
+
 ## 5.1.0-rc.1 – 24.11.2026 (Release-Kandidat, nicht veröffentlicht)
 
 Abschluss offener Punkte aus Phase 5. Keine Datenbank-Migration; neue Felder sind optionale Teile bestehender, verschlüsselter Datensätze.

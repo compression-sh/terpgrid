@@ -104,9 +104,9 @@ function TerpeneWheel({ items, active, onSelect }: { items: TerpeneInfo[]; activ
 }
 
 /** Kennzahlen-Kachel der chemischen Identität */
-function Fact({ k, v, mono = true, note }: { k: string; v: string; mono?: boolean; note?: string }) {
+function Fact({ k, v, mono = true, note, className = '' }: { k: string; v: string; mono?: boolean; note?: string; className?: string }) {
   return (
-    <div className="min-w-0 rounded-xl border border-white/[0.06] bg-ink-950/50 px-3 py-2.5">
+    <div className={`min-w-0 ${className} rounded-xl border border-white/[0.06] bg-ink-950/50 px-3 py-2.5`}>
       <dt className="text-[10px] uppercase tracking-wider text-ink-500">{k}</dt>
       <dd className={`mt-0.5 break-words text-[13.5px] text-ink-50 ${mono ? 'font-mono' : ''}`}>{v}</dd>
       {note && <dd className="mt-0.5 text-[10.5px] leading-snug text-ink-500">{note}</dd>}
@@ -228,15 +228,9 @@ function TerpeneDetail({ t }: { t: TerpeneInfo }) {
                 <Fact k="Molare Masse" v={`${t.molarMass.toLocaleString('de-DE')} g/mol`} />
                 <Fact k="PubChem CID" v={String(chem.cid)} />
                 <Fact k="CAS-Nr." v={chem.cas ?? '–'} note={chem.casListed > 1 ? `Erste von ${chem.casListed} bei PubChem gelisteten Nummern (Isomere/Gemische)` : undefined} />
-                <div className="col-span-2">
-                  <Fact k="PubChem-Eintrag" v={chem.title} mono={false} note="Der Titel zeigt, ob eine bestimmte Stereoform gemeint ist." />
-                </div>
-                <div className="col-span-2 sm:col-span-3">
-                  <Fact k="IUPAC-Name" v={chem.iupac} />
-                </div>
-                <div className="col-span-2 sm:col-span-3">
-                  <Fact k="InChIKey" v={chem.inchikey} />
-                </div>
+                <Fact className="col-span-2" k="PubChem-Eintrag" v={chem.title} mono={false} note="Der Titel zeigt, ob eine bestimmte Stereoform gemeint ist." />
+                <Fact className="col-span-2 sm:col-span-3" k="IUPAC-Name" v={chem.iupac} />
+                <Fact className="col-span-2 sm:col-span-3" k="InChIKey" v={chem.inchikey} />
               </dl>
             ) : (
               <p className="hint">Keine PubChem-Daten hinterlegt.</p>
