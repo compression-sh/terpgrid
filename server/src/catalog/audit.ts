@@ -35,26 +35,27 @@ export interface AuditReport {
  * gilt der Wert als „Breeder-Angabe“, sonst als „Seedbank-Angabe“. Labormessungen enthält
  * der Katalog nicht (private Laborberichte bleiben im Konto und fließen nie ein).
  */
-const FIELDS: { field: string; label: string; present: string; conflict?: string; rejected?: string[]; claimField?: string }[] = [
+/** keys = Schlüssel in den Angebotswerten (catalog_listings.values), aus denen das Feld stammt – für die Belegart je Feld */
+const FIELDS: { field: string; label: string; present: string; conflict?: string; rejected?: string[]; claimField?: string; keys?: string[] }[] = [
   { field: 'breeder', label: 'Breeder', present: 'true' },
   { field: 'aliases', label: 'Weitere Bezeichnungen', present: 'cardinality(c.aliases) > 0' },
-  { field: 'type', label: 'Typ (Indica/Sativa/Hybrid)', present: `(c."values"->>'geneticsType') IS NOT NULL`, conflict: 'geneticsType' },
-  { field: 'typeLabel', label: 'Typ-Bezeichnung laut Shop', present: `(c."values"->>'typeLabel') IS NOT NULL` },
-  { field: 'ratio', label: 'Indica-/Sativa-Anteil', present: `(c."values"->>'indica') IS NOT NULL`, conflict: 'indica', rejected: ['indica_sativa'] },
+  { field: 'type', label: 'Typ (Indica/Sativa/Hybrid)', present: `(c."values"->>'geneticsType') IS NOT NULL`, conflict: 'geneticsType', keys: ['geneticsType'] },
+  { field: 'typeLabel', label: 'Typ-Bezeichnung laut Shop', present: `(c."values"->>'typeLabel') IS NOT NULL`, keys: ['typeLabel'] },
+  { field: 'ratio', label: 'Indica-/Sativa-Anteil', present: `(c."values"->>'indica') IS NOT NULL`, conflict: 'indica', rejected: ['indica_sativa'], keys: ['indica', 'sativa'] },
   { field: 'seedType', label: 'Samentyp (fem./regulär)', present: `('feminisiert' = ANY(c.seed_types) OR 'regulär' = ANY(c.seed_types))` },
   { field: 'auto', label: 'Blüteverhalten (Auto/photoperiodisch)', present: 'true' },
-  { field: 'lineage', label: 'Abstammung (strukturiert)', present: 'c.has_lineage', conflict: 'parents', rejected: ['parents'], claimField: 'genetics' },
-  { field: 'lineageText', label: 'Abstammung (Text der Quelle)', present: `(c."values"->>'lineageText') IS NOT NULL` },
-  { field: 'thc', label: 'THC', present: 'c.thc_max IS NOT NULL', conflict: 'thc', rejected: ['thc_min', 'thc_max', 'thc'], claimField: 'thc' },
-  { field: 'cbd', label: 'CBD', present: 'c.cbd_max IS NOT NULL', conflict: 'cbd', rejected: ['cbd_min', 'cbd_max', 'cbd'], claimField: 'cbd' },
+  { field: 'lineage', label: 'Abstammung (strukturiert)', present: 'c.has_lineage', conflict: 'parents', rejected: ['parents'], claimField: 'genetics', keys: ['parents'] },
+  { field: 'lineageText', label: 'Abstammung (Text der Quelle)', present: `(c."values"->>'lineageText') IS NOT NULL`, keys: ['lineageText'] },
+  { field: 'thc', label: 'THC', present: 'c.thc_max IS NOT NULL', conflict: 'thc', rejected: ['thc_min', 'thc_max', 'thc'], claimField: 'thc', keys: ['thc'] },
+  { field: 'cbd', label: 'CBD', present: 'c.cbd_max IS NOT NULL', conflict: 'cbd', rejected: ['cbd_min', 'cbd_max', 'cbd'], claimField: 'cbd', keys: ['cbd'] },
   { field: 'otherCannabinoids', label: 'Weitere Cannabinoide (THCA, CBG, CBN …)', present: 'false' },
-  { field: 'terpenes', label: 'Terpene (Nennung)', present: 'cardinality(c.terpenes) > 0', rejected: ['terpenes'], claimField: 'terpenes' },
+  { field: 'terpenes', label: 'Terpene (Nennung)', present: 'cardinality(c.terpenes) > 0', rejected: ['terpenes'], claimField: 'terpenes', keys: ['terpenes'] },
   { field: 'terpeneAmounts', label: 'Terpene (Mengen)', present: 'false' },
-  { field: 'flavors', label: 'Aroma/Geschmack', present: `jsonb_array_length(coalesce(c."values"->'flavors', '[]'::jsonb)) > 0`, rejected: ['flavors'], claimField: 'aroma' },
-  { field: 'effects', label: 'Beschriebene Wirkung (Shop-Text)', present: `jsonb_array_length(coalesce(c."values"->'effects', '[]'::jsonb)) > 0` },
-  { field: 'flowering', label: 'Blütezeit', present: `(c."values"->'flowering') IS NOT NULL`, conflict: 'flowering', rejected: ['flowering_days_min', 'flowering_days_max'] },
-  { field: 'height', label: 'Wuchshöhe', present: `(c."values"->'heightIndoorCm') IS NOT NULL OR (c."values"->'heightOutdoorCm') IS NOT NULL` },
-  { field: 'yield', label: 'Ertragsangabe', present: `(c."values"->'yieldIndoorGm2') IS NOT NULL OR (c."values"->'yieldOutdoorGPlant') IS NOT NULL` },
+  { field: 'flavors', label: 'Aroma/Geschmack', present: `jsonb_array_length(coalesce(c."values"->'flavors', '[]'::jsonb)) > 0`, rejected: ['flavors'], claimField: 'aroma', keys: ['flavors'] },
+  { field: 'effects', label: 'Beschriebene Wirkung (Shop-Text)', present: `jsonb_array_length(coalesce(c."values"->'effects', '[]'::jsonb)) > 0`, keys: ['effects'] },
+  { field: 'flowering', label: 'Blütezeit', present: `(c."values"->'flowering') IS NOT NULL`, conflict: 'flowering', rejected: ['flowering_days_min', 'flowering_days_max'], keys: ['flowering'] },
+  { field: 'height', label: 'Wuchshöhe', present: `(c."values"->'heightIndoorCm') IS NOT NULL OR (c."values"->'heightOutdoorCm') IS NOT NULL`, keys: ['heightIndoorCm', 'heightOutdoorCm'] },
+  { field: 'yield', label: 'Ertragsangabe', present: `(c."values"->'yieldIndoorGm2') IS NOT NULL OR (c."values"->'yieldOutdoorGPlant') IS NOT NULL`, keys: ['yieldIndoorGm2', 'yieldOutdoorGPlant'] },
   { field: 'description', label: 'Beschreibung', present: 'false', claimField: 'description' },
   { field: 'image', label: 'Foto (Rechte und Zuordnung belegt)', present: 'false', claimField: 'image' },
   { field: 'source', label: 'Quellenangabe (URL)', present: 'c.listing_count > 0' },
@@ -73,11 +74,13 @@ export async function catalogAudit(db: Q): Promise<AuditReport> {
   FIELDS.forEach((f, i) => {
     const claim = hasClaims && f.claimField ? `EXISTS (SELECT 1 FROM catalog_claims k WHERE k.cultivar_id = x.id AND k.field = ${lit(f.claimField)} AND k.review_status = 'accepted' AND (k.expires_at IS NULL OR k.expires_at > now()))` : 'false';
     const pres = f.present.replace(/\bc\./g, 'x.');
+    const direct = f.keys ? `x.direct_keys && ARRAY[${f.keys.map(lit).join(',')}]::text[]` : 'x.direct';
     const rej = f.rejected?.length ? `x.rejected_keys && ARRAY[${f.rejected.map(lit).join(',')}]` : 'false';
     cols.push(
       `count(*) FILTER (WHERE (${pres}) OR ${claim}) AS p${i}`,
-      `count(*) FILTER (WHERE (${pres}) AND x.direct) AS b${i}`,
-      `count(*) FILTER (WHERE (${pres}) AND NOT x.direct) AS s${i}`,
+      // Breeder-Angabe nur, wenn ein Angebot aus dem Shop des Breeders genau dieses Feld liefert
+      `count(*) FILTER (WHERE (${pres}) AND ${direct}) AS b${i}`,
+      `count(*) FILTER (WHERE (${pres}) AND NOT ${direct}) AS s${i}`,
       `count(*) FILTER (WHERE ${claim}) AS d${i}`,
       `count(*) FILTER (WHERE ${f.conflict ? `${lit(f.conflict)} = ANY(x.conflicts)` : 'false'}) AS k${i}`,
       `count(*) FILTER (WHERE ${rej}) AS q${i}`,
@@ -88,7 +91,10 @@ export async function catalogAudit(db: Q): Promise<AuditReport> {
       `WITH x AS (
          SELECT c.*,
                 EXISTS (SELECT 1 FROM catalog_listings l WHERE l.cultivar_id = c.id AND regexp_replace(lower(l.seed_bank), '[^a-z0-9]', '', 'g') = c.breeder_id) AS direct,
-                coalesce((SELECT array_agg(DISTINCT k) FROM catalog_listings l, jsonb_object_keys(l.rejected) k WHERE l.cultivar_id = c.id), '{}') AS rejected_keys
+                coalesce((SELECT array_agg(DISTINCT k) FROM catalog_listings l, jsonb_object_keys(l.rejected) k WHERE l.cultivar_id = c.id), '{}') AS rejected_keys,
+                coalesce((SELECT array_agg(DISTINCT e.key) FROM catalog_listings l, jsonb_each(l."values") e
+                           WHERE l.cultivar_id = c.id AND regexp_replace(lower(l.seed_bank), '[^a-z0-9]', '', 'g') = c.breeder_id
+                             AND e.value NOT IN ('null'::jsonb, '[]'::jsonb, '""'::jsonb)), '{}') AS direct_keys
            FROM catalog_cultivars c)
        SELECT ${cols.join(',\n              ')} FROM x`,
     )

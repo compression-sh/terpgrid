@@ -1,0 +1,11 @@
+[Unit]
+Description=TERPGRID Sortenkatalog: zwischengespeicherte StrainAPI-Angaben gedrosselt aktualisieren
+OnFailure=terpgrid-notify@%n.service
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+# Pfad an den Installationsort anpassen
+ExecStart=/opt/terpgrid/deploy/refresh-catalog.sh
+Nice=10

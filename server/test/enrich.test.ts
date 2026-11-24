@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseDataset } from '../src/catalog/cisp.js';
-import { type CultivarRef, claimsFrom, decideMatch, enrichBatch, enrichFromStrainApiIndex, normalizeFindMySeeds, normalizeStrainApi, normalizeTerpene } from '../src/catalog/enrich.js';
+import { type CultivarRef, claimsFrom, decideMatch, enrichBatch, enrichFromStrainApiIndex, normalizeFindMySeeds, normalizeStrainApi, normalizeTerpene, refreshStrainApi } from '../src/catalog/enrich.js';
 import { importDataset } from '../src/catalog/importer.js';
 import { catalogAudit } from '../src/catalog/audit.js';
 import { Client, type TestEnv, hasDb, setup } from './helpers.js';
@@ -50,6 +50,16 @@ describe('Konservativer Abgleich', () => {
     expect(decideMatch({ id: '6', name: 'Gelato', breeders: ['Fast Buds'], terpenes: [], aroma: [] }, [ref('fastbuds--gelato', 'fastbuds'), ref('fastbuds--gelato--auto', 'fastbuds', { auto: true })])).toMatchObject({ status: 'exact', cultivarId: 'fastbuds--gelato' });
     expect(decideMatch({ id: '6b', name: 'Gelato', breeders: ["Barney's Farm"], terpenes: [], aroma: [] }, [ref('barneysfarm--gelato--v-45', 'barneysfarm', { version: '45' })]).status).toBe('ambiguous');
     expect(decideMatch({ id: '6c', name: 'Gelato', breeders: ['Fast Buds'], terpenes: [], aroma: [] }, [ref('fastbuds--gelato--auto', 'fastbuds', { auto: true })]).status).toBe('ambiguous');
+  });
+  it('falsche Zuordnungen werden verhindert: Namensähnlichkeit, Kooperationen, fremde Breeder', () => {
+    // Nur Namensbestandteil gleich → kein Kandidat (Abgleich nur über den exakten Namen)
+    expect(decideMatch({ id: '10', name: 'Gelato Cake', breeders: ["Barney's Farm"], terpenes: [], aroma: [] }, []).status).toBe('none');
+    // Kooperationsangabe der Quelle („A x B“) ist kein einzelner Breeder → nie exakt
+    expect(decideMatch({ id: '11', name: 'Gelato', breeders: ["Barney's Farm x Cookies"], terpenes: [], aroma: [] }, [ref('barneysfarm--gelato', 'barneysfarm')]).status).not.toBe('exact');
+    // Mehrere gleichnamige Linien, Quelle nennt einen dritten Breeder → keine Zuordnung
+    expect(decideMatch({ id: '12', name: 'Gelato', breeders: ['Seedsman'], terpenes: [], aroma: [] }, [ref('barneysfarm--gelato', 'barneysfarm'), ref('fastbuds--gelato', 'fastbuds')]).status).toBe('none');
+    // Groß-/Kleinschreibung und Satzzeichen des Breeders zählen nicht als Unterschied
+    expect(decideMatch({ id: '13', name: 'gelato', breeders: ['BARNEYS FARM'], terpenes: [], aroma: [] }, [ref('barneysfarm--gelato', 'barneysfarm')])).toMatchObject({ status: 'exact', cultivarId: 'barneysfarm--gelato' });
   });
   it('keine erfundenen Angaben: leere Felder erzeugen keine Angaben, Ausreißer werden verworfen', () => {
     expect(claimsFrom('strainapi', { id: '7', name: 'X', breeders: ['B'], terpenes: [], aroma: [] })).toEqual([]);
@@ -166,5 +176,80 @@ describe.skipIf(!hasDb)('Anreicherungslauf (Datenbank, Quelle simuliert)', () =>
     } finally {
       await app.end();
     }
+  });
+  describe('Aktualisierung abgelaufener Angaben (30 Tage)', () => {
+    const NL = 'amsterdammarijuanaseeds--northern-lights';
+    const count = async (sql: string) => (await owner.query(sql)).rows[0].n as number;
+    let fetches = 0;
+    const counting = (impl: typeof fetch) => (async (u: string, i?: RequestInit) => (fetches++, impl(u as never, i))) as unknown as typeof fetch;
+
+    it('Angaben laufen nach 30 Tagen ab und werden ab Ablauf nicht mehr angezeigt', async () => {
+      const days = (await owner.query(`SELECT round(extract(epoch FROM expires_at - retrieved_at) / 86400)::int AS d FROM catalog_claims WHERE cultivar_id = '${NL}' LIMIT 1`)).rows[0].d;
+      expect(days).toBe(30);
+      const c = new Client(env.app);
+      await c.register('ttl_user');
+      await owner.query(`UPDATE catalog_claims SET expires_at = now() - interval '1 minute' WHERE cultivar_id = '${NL}' AND field = 'thc'`);
+      const d = (await c.get(`/api/catalog/local/cultivars/${NL}`)).json;
+      expect(d.claims.some((x: { field: string }) => x.field === 'thc')).toBe(false);
+      expect(d.claims.some((x: { field: string }) => x.field === 'terpenes')).toBe(true);
+      await owner.query(`UPDATE catalog_claims SET expires_at = retrieved_at + interval '30 days' WHERE cultivar_id = '${NL}'`);
+    });
+
+    it('nichts fällig → kein Abruf', async () => {
+      fetches = 0;
+      const r = await refreshStrainApi(owner as unknown as pg.Pool, { fetchImpl: counting(fakeIndex), sleep: async () => {} });
+      expect(r.action).toBe('nothing-due');
+      expect(fetches).toBe(0);
+    });
+
+    it('fällig, aber letzter Abruf zu kurz her → kein Abruf (Ratenschutz)', async () => {
+      await owner.query(`UPDATE catalog_claims SET expires_at = now() + interval '2 days' WHERE cultivar_id = '${NL}'`);
+      fetches = 0;
+      const r = await refreshStrainApi(owner as unknown as pg.Pool, { fetchImpl: counting(fakeIndex), sleep: async () => {} });
+      expect(r.action).toBe('too-soon');
+      expect(r.expiring).toBeGreaterThan(0);
+      expect(fetches).toBe(0);
+    });
+
+    it('fehlgeschlagener Abruf lässt gültige Angaben stehen; nur Abgelaufenes wird entfernt', async () => {
+      await owner.query("UPDATE catalog_enrichment_runs SET started_at = now() - interval '3 days'");
+      const failing = (async () => new Response('Fehler', { status: 503 })) as unknown as typeof fetch;
+      const before = await count(`SELECT count(*)::int AS n FROM catalog_claims WHERE cultivar_id = '${NL}'`);
+      await owner.query(`UPDATE catalog_claims SET expires_at = now() - interval '1 hour' WHERE cultivar_id = '${NL}' AND field = 'description'`);
+      const r = await refreshStrainApi(owner as unknown as pg.Pool, { fetchImpl: failing, sleep: async () => {} });
+      expect(r.action).toBe('run');
+      expect(r.run!.errors.length).toBeGreaterThan(0);
+      expect(r.purged).toBe(1);
+      expect(await count(`SELECT count(*)::int AS n FROM catalog_claims WHERE cultivar_id = '${NL}'`)).toBe(before - 1);
+      // fehlgeschlagener Lauf zählt für die Drosselung mit – kein erneuter Versuch im selben Zeitfenster
+      expect((await refreshStrainApi(owner as unknown as pg.Pool, { fetchImpl: failing, sleep: async () => {} })).action).toBe('too-soon');
+    });
+
+    it('erfolgreicher Abruf verlängert die Gültigkeit, entfernt nicht mehr gelieferte Felder und lässt Nutzerdaten unberührt', async () => {
+      const u = new Client(env.app);
+      await u.register('refresh_owner');
+      await u.post('/api/sync/push', { changes: [{ store: 'strains', id: 's1', baseVersion: 0, data: { id: 's1', name: 'Northern Lights', catalogRef: `cisp:${NL}` } }] });
+      const userRows = await count('SELECT count(*)::int AS n FROM records');
+      const userHash = (await owner.query("SELECT md5(string_agg(id || ':' || version::text, ',' ORDER BY id)) AS h FROM records")).rows[0].h;
+      const adminDecision = (await owner.query("SELECT status, decided_by FROM catalog_matches WHERE provider_id = '2'")).rows[0];
+      await owner.query("UPDATE catalog_enrichment_runs SET started_at = now() - interval '3 days'");
+      // Quelle liefert jetzt keine THC-Angabe und keine Beschreibung mehr
+      const changed = (async (url: string) => {
+        const res = await fakeIndex(url as never);
+        const body = await res.json();
+        body.data[0] = { ...body.data[0], thc: undefined, excerpt: undefined };
+        return new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } });
+      }) as unknown as typeof fetch;
+      const r = await refreshStrainApi(owner as unknown as pg.Pool, { fetchImpl: changed, sleep: async () => {} });
+      expect(r.action).toBe('run');
+      expect(r.run!.errors).toEqual([]);
+      const fields = (await owner.query(`SELECT field, expires_at > now() + interval '29 days' AS fresh FROM catalog_claims WHERE cultivar_id = '${NL}' ORDER BY field`)).rows;
+      expect(fields).toEqual([{ field: 'terpenes', fresh: true }]);
+      // Nutzerdaten (verschlüsselte Datensätze, Verknüpfung zur Katalogsorte) und Admin-Entscheidungen unverändert
+      expect(await count('SELECT count(*)::int AS n FROM records')).toBe(userRows);
+      expect((await owner.query("SELECT md5(string_agg(id || ':' || version::text, ',' ORDER BY id)) AS h FROM records")).rows[0].h).toBe(userHash);
+      expect((await owner.query("SELECT status, decided_by FROM catalog_matches WHERE provider_id = '2'")).rows[0]).toEqual(adminDecision);
+      expect((await owner.query("SELECT started_by FROM catalog_enrichment_runs ORDER BY id DESC LIMIT 1")).rows[0].started_by).toBe('refresh');
+    });
   });
 });
