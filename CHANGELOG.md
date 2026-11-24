@@ -24,7 +24,7 @@
 - Design-System: semantische Farb-Tokens; gedämpfte Textfarben auf WCAG-Kontrast ≥ 4,5:1 angehoben (vorher 2,0 bzw. 3,6:1).
 
 ### Qualität
-- Server: 133 Tests (u. a. Parser, Import, Katalog-API, Rechte der Laufzeitrolle). Frontend: 218 Tests (u. a. EC-Umrechnung, VPD/DLI, Kontextfilter, Formular).
+- Server: 134 Tests (u. a. Parser, Import, Katalog-API, Rechte der Laufzeitrolle). Frontend: 218 Tests (u. a. EC-Umrechnung, VPD/DLI, Kontextfilter, Formular).
 - Neue Abhängigkeit im Frontend: `qrcode` 1.5.4 (bereits im Server im Einsatz).
 
 ## 4.0.0-rc.1 – 24.11.2026 (Release-Kandidat, nicht veröffentlicht)

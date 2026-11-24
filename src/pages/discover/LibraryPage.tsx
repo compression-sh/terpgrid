@@ -109,7 +109,7 @@ export function LibraryPage({ status }: { status: LibStatus }) {
         </p>
       </header>
 
-      <div className="sticky top-[6.9rem] z-10 -mx-1 mb-4 rounded-2xl border border-white/[0.06] bg-ink-950/90 p-2 backdrop-blur-xl lg:top-[3.4rem]">
+      <div className="z-10 -mx-1 mb-4 rounded-2xl lg:sticky lg:top-[3.4rem] border border-white/[0.06] bg-ink-950/90 p-2 backdrop-blur-xl lg:top-[3.4rem]">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-500" />
           <input

@@ -92,7 +92,7 @@ Abdeckung je Angebot nach Validierung:
 
 Auf Sortenebene: 10.926 mit Abstammung, 7.376 mit THC-, 3.891 mit CBD-Angabe, 2.486 Autoflowering.
 Verworfene Einzelwerte (Auszug): THC max 4.839, THC min 4.667, Abstammung 3.249, Ertrag indoor min 2.211, Terpene 574.
-Speicherbedarf in PostgreSQL inkl. Indizes: ca. 70 MB.
+Speicherbedarf in PostgreSQL inkl. Indizes: ca. 50 MB (frische Installation, gemessen mit `pg_database_size`).
 
 Den vollständigen Bericht erzeugt `import-catalog --dry-run --report bericht.json`; die API liefert ihn unter
 `/api/catalog/local/report` (angemeldet).
