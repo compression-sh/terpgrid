@@ -78,7 +78,7 @@ function NotFound() {
 }
 
 function Routes() {
-  const { path } = useRoute();
+  const { path, query } = useRoute();
   const [a, b, c, d] = path;
   let page: ReactNode;
   switch (a) {
@@ -135,7 +135,7 @@ function Routes() {
       else if (b === 'terpenes') page = <TerpeneAtlas terpeneId={c} />;
       else if (b === 'compare') page = <CompareStudio />;
       else if (b === 'gallery') page = <VisualExplorer />;
-      else if (b === 'learn') page = <KnowledgeHub articleId={c} />;
+      else if (b === 'learn') page = <KnowledgeHub key={c ?? `list-${query.get('cat') ?? ''}`} articleId={c} />;
       else if (!b) page = <DiscoverHome />;
       else page = <NotFound />;
       break;

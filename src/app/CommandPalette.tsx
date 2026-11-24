@@ -5,7 +5,8 @@
  * - Katalog/Breeder (nur Servermodus mit importiertem Katalog): Anfrage an die EIGENE
  *   Instanz, nie an Dritte; persönliche Daten werden dabei nicht gesendet.
  */
-import { BookOpen, BookOpenText, CornerDownLeft, Dna, FlaskRound, Leaf, Loader2, LogOut, NotebookPen, Package, Plus, RefreshCw, Search, ShieldCheck, Sprout, Bell, UserRound, Users } from 'lucide-react';
+import { BookOpen, BookOpenText, CornerDownLeft, Dna, FlaskConical, FlaskRound, Leaf, Loader2, LogOut, NotebookPen, Package, Plus, RefreshCw, Search, ShieldCheck, Sprout, Bell, UserRound, Users } from 'lucide-react';
+import type { GlossaryTerm } from '../lib/academy/glossary';
 import type { KbArticle } from '../lib/knowledge';
 import { type LibBreeder, type LibCultivar, library } from '../lib/catalog/library';
 import { useLibraryStatus } from './library';
@@ -21,7 +22,7 @@ import { logoutFlow } from './SyncIndicator';
 
 interface Item {
   id: string;
-  group: 'Deine Daten' | 'Katalog' | 'Breeder' | 'Wissen' | 'Aktionen' | 'Navigation';
+  group: 'Deine Daten' | 'Katalog' | 'Breeder' | 'Wissen' | 'Glossar' | 'Terpen-Atlas' | 'Aktionen' | 'Navigation';
   label: string;
   hint?: string;
   icon: ReactNode;
@@ -53,9 +54,13 @@ export function CommandPalette() {
   const lib = useLibraryStatus();
   // Wissensartikel erst beim Öffnen laden (hält das Start-Bundle klein)
   const [articles, setArticles] = useState<KbArticle[]>([]);
+  const [glossary, setGlossary] = useState<{ search: (q: string) => GlossaryTerm[] } | null>(null);
+  const [terps, setTerps] = useState<{ id: string; name: string; aliases: string[]; className: string }[]>([]);
   useEffect(() => {
     if (open && !articles.length) void import('../lib/knowledge').then((m) => setArticles(m.KB_ARTICLES));
-  }, [open, articles.length]);
+    if (open && !glossary) void import('../lib/academy/glossary').then((m) => setGlossary({ search: m.searchGlossary }));
+    if (open && !terps.length) void import('../lib/catalog/terpenes').then((m) => setTerps(m.TERPENES));
+  }, [open, articles.length, glossary, terps.length]);
   const [remote, setRemote] = useState<{ q: string; cultivars: LibCultivar[]; breeders: LibBreeder[]; loading: boolean }>({ q: '', cultivars: [], breeders: [], loading: false });
   useEffect(() => {
     const term = q.trim();
@@ -135,9 +140,22 @@ export function CommandPalette() {
     const catalogItems: Item[] = remote.q && remote.q === q.trim() ? remote.cultivars.map((c) => ({ id: `c-${c.id}`, group: 'Katalog', label: c.version ? `${c.name} (${c.version})` : c.name, hint: c.breeder.name + (c.auto ? ' · Auto' : ''), icon: <Dna className="size-4" />, run: close(() => navigate(`discover/cultivar/${c.id}`)) })) : [];
     if (catalogItems.length && remote.q) catalogItems.push({ id: 'c-all', group: 'Katalog', label: `Alle Treffer für „${remote.q}“ im Katalog`, icon: <Search className="size-4" />, run: close(() => navigate(`discover?q=${encodeURIComponent(remote.q)}`)) });
     const breederItems: Item[] = remote.q && remote.q === q.trim() ? remote.breeders.map((b) => ({ id: `b-${b.id}`, group: 'Breeder', label: b.name, hint: `${b.cultivarCount} Sorten`, icon: <Users className="size-4" />, run: close(() => navigate(`discover/breeders/${b.id}`)) })) : [];
-    const knowledge: Item[] = query.length >= 2 ? articles.filter((a) => normalize(`${a.title} ${a.summary}`).includes(query)).slice(0, 4).map((a) => ({ id: `k-${a.id}`, group: 'Wissen', label: a.title, hint: 'Cannabis 101', icon: <BookOpen className="size-4" />, run: close(() => navigate(`discover/learn/${a.id}`)) })) : [];
-    return [...records, ...catalogItems, ...breederItems, ...knowledge, ...actions.filter(match), ...nav.filter(match)];
-  }, [q, data, quick, auth, confirm, server, admin, remote, articles]);
+    const knowledge: Item[] = query.length >= 2 ? articles.filter((a) => normalize(`${a.title} ${a.summary}`).includes(query)).slice(0, 4).map((a) => ({ id: `k-${a.id}`, group: 'Wissen', label: a.title, hint: `Academy · ${a.category}`, icon: <BookOpen className="size-4" />, run: close(() => navigate(`discover/learn/${a.id}`)) })) : [];
+    const terms: Item[] = glossary
+      ? glossary
+          .search(q)
+          .slice(0, 4)
+          .map((g) => ({ id: `g-${g.id}`, group: 'Glossar', label: g.term, hint: g.definition, icon: <BookOpen className="size-4" />, run: close(() => navigate(`discover/learn/${g.article}`)) }))
+      : [];
+    const atlas: Item[] =
+      query.length >= 3
+        ? terps
+            .filter((t) => [t.name, ...t.aliases].some((a) => normalize(a).includes(query)))
+            .slice(0, 3)
+            .map((t) => ({ id: `t-${t.id}`, group: 'Terpen-Atlas', label: t.name, hint: t.className, icon: <FlaskConical className="size-4" />, run: close(() => navigate(`discover/terpenes/${t.id}`)) }))
+        : [];
+    return [...records, ...catalogItems, ...breederItems, ...knowledge, ...terms, ...atlas, ...actions.filter(match), ...nav.filter(match)];
+  }, [q, data, quick, auth, confirm, server, admin, remote, articles, glossary, terps]);
 
   useEffect(() => {
     setActive(0);
