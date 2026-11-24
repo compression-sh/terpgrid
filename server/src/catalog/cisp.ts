@@ -316,7 +316,7 @@ export function parseRow(cells: string[], h: Header, line: number): Listing | Ro
     const nm = titleCase(
       raw
         .replace(/<\/?[a-z][^>]*>/gi, ' ')
-        .replace(/^[\s[(*\-]+|[\s\])*]+$/g, '')
+        .replace(/^[\s[(*-]+|[\s\])*]+$/g, '')
         .replace(/\s+strain$/i, '')
         .replace(/\s+/g, ' ')
         .trim(),
