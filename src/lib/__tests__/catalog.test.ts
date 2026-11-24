@@ -427,3 +427,15 @@ describe('Belegart je Feld', () => {
     expect(listingEvidence(detail, ['flavors'])).toBe('seedbank');
   });
 });
+
+describe('Atlas: Stoffklasse passt zur PubChem-Summenformel', () => {
+  it('Monoterpen(oid)e haben 10 C, Sesquiterpen(oid)e 15 C; Terpenoide enthalten O, Kohlenwasserstoffe nicht', async () => {
+    const { TERPENES, terpeneChem } = await import('../catalog/terpenes');
+    for (const t of TERPENES) {
+      const f = terpeneChem(t.id)!.formula;
+      const c = Number(/C(\d+)/.exec(f)![1]);
+      expect(c, t.id).toBe(t.className.startsWith('Sesqui') ? 15 : 10);
+      expect(/O/.test(f), t.id).toBe(/oid/.test(t.className));
+    }
+  });
+});

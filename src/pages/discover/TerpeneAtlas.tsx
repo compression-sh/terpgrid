@@ -411,6 +411,13 @@ function GroupDetail({ g }: { g: TerpeneGroup }) {
 }
 
 const CLASSES = [...new Set(TERPENES.map((t) => t.className))];
+/** Gliederung: Monoterpene C10 (2 Isopren-Einheiten), Sesquiterpene C15 (3 Einheiten); Terpenoide tragen Sauerstoff */
+const TAXONOMY: { title: string; hint: string; classes: TerpeneInfo['className'][] }[] = [
+  { title: 'Monoterpene', hint: 'C₁₀-Kohlenwasserstoffe ohne Sauerstoff', classes: ['Monoterpen', 'Aromatischer Monoterpen-Kohlenwasserstoff'] },
+  { title: 'Monoterpenoide', hint: 'C₁₀ mit Sauerstoff (Alkohol, Ether, Keton)', classes: ['Monoterpenoid (Alkohol)', 'Monoterpenoid (Ether)', 'Monoterpenoid (Keton)'] },
+  { title: 'Sesquiterpene', hint: 'C₁₅-Kohlenwasserstoffe', classes: ['Sesquiterpen'] },
+  { title: 'Sesquiterpenoide', hint: 'C₁₅ mit Sauerstoff (Alkohol, Epoxid)', classes: ['Sesquiterpenoid (Alkohol)', 'Sesquiterpenoid (Epoxid)'] },
+];
 
 export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
   const { data } = useData();
@@ -569,6 +576,35 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
           </div>
         </div>
       </div>
+
+      <Card title="Chemische Systematik" subtitle="Grundgerüst (Isopren-Einheiten) und funktionelle Gruppe – nach PubChem-Summenformel" className="mt-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {TAXONOMY.map((grp) => (
+            <section key={grp.title} aria-label={grp.title}>
+              <h3 className="text-[13px] font-semibold text-ink-100">{grp.title}</h3>
+              <p className="text-[11px] text-ink-500">{grp.hint}</p>
+              {grp.classes.map((cl) => {
+                const items = TERPENES.filter((t) => t.className === cl);
+                if (!items.length) return null;
+                return (
+                  <div key={cl} className="mt-2.5">
+                    <p className="text-[10.5px] uppercase tracking-wider text-ink-500">
+                      {cl.replace(/^(Mono|Sesqui)terpen(oid)? ?/, '').replace(/[()]/g, '') || 'Kohlenwasserstoff'} · {items.length}
+                    </p>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {items.map((t) => (
+                        <a key={t.id} href={href(`discover/terpenes/${t.id}`)} className="rounded-full border border-white/[0.08] px-2 py-0.5 text-[11.5px] text-ink-200 hover:border-white/20" style={{ boxShadow: `inset 3px 0 0 ${t.color}` }}>
+                          {t.name}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </section>
+          ))}
+        </div>
+      </Card>
 
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Card title="Terpene vergleichen" subtitle="Bis zu drei Verbindungen nebeneinander">
