@@ -28,6 +28,7 @@ import { ReminderFormModal } from '../../components/forms/PersonalForms';
 import { ActivityTimeline } from '../../components/grow/ActivityTimeline';
 import { ExpenseList, money } from '../../components/grow/ExpenseList';
 import { MeasurementCharts } from '../../components/grow/MeasurementCharts';
+import { ThresholdsModal } from '../../components/forms/ThresholdsModal';
 import { type DayMarker, MonthCalendar } from '../../components/grow/MonthCalendar';
 import { PhaseTimeline } from '../../components/grow/PhaseTimeline';
 import { PhotoGrid } from '../../components/photos/PhotoGrid';
@@ -158,7 +159,7 @@ export function GrowDetail({ growId }: { growId: string }) {
   const route = useRoute();
   const quick = useQuickActions();
   const tab = (TABS.some((t) => t.id === route.query.get('tab')) ? route.query.get('tab') : 'overview') as Tab;
-  const [modal, setModal] = useState<'edit' | 'activity' | 'photo' | 'reminder' | null>(null);
+  const [modal, setModal] = useState<'edit' | 'activity' | 'photo' | 'reminder' | 'thresholds' | null>(null);
   const [month, setMonth] = useState(startOfMonth(today()));
   const [selectedDay, setSelectedDay] = useState<string>();
   const [photoPlant, setPhotoPlant] = useState('');
@@ -452,7 +453,7 @@ export function GrowDetail({ growId }: { growId: string }) {
 
       {tab === 'measurements' && (
         <Card title="Messwerte" subtitle="Dokumentierte Werte je Pflanze bzw. für den ganzen Grow">
-          <MeasurementCharts activities={activities} />
+          <MeasurementCharts activities={activities} thresholds={grow.thresholds} onEditThresholds={() => setModal('thresholds')} fileName={`grow-${grow.name}`} />
         </Card>
       )}
 
@@ -511,6 +512,7 @@ export function GrowDetail({ growId }: { growId: string }) {
       )}
 
       {modal === 'edit' && <GrowFormModal open onClose={() => setModal(null)} grow={grow} />}
+      {modal === 'thresholds' && <ThresholdsModal grow={grow} onClose={() => setModal(null)} />}
       {modal === 'activity' && <ActivityFormModal open onClose={() => setModal(null)} growId={growId} />}
       {modal === 'photo' && <PhotoUploadModal open onClose={() => setModal(null)} target={{ growId }} selectable />}
       {modal === 'reminder' && <ReminderFormModal open onClose={() => setModal(null)} growId={growId} date={selectedDay && selectedDay >= t ? selectedDay : addDays(t, 0)} />}

@@ -1,4 +1,4 @@
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { type FormEvent, useId, useMemo, useState } from 'react';
 import { useData } from '../../app/DataProvider';
 import { errorText, useToast } from '../../app/Toasts';
@@ -8,7 +8,6 @@ import {
   ACTIVITY_TYPES,
   type Activity,
   type ActivityType,
-  type CustomMeasurement,
   EXPENSE_CATEGORIES,
   type Expense,
   type ExpenseCategory,
@@ -16,14 +15,13 @@ import {
   type GrowProject,
   type GrowSetting,
   type GrowStatus,
-  type Measurements,
   type PhaseDates,
   type Plant,
   type PlantType,
 } from '../../lib/db/types';
 import { ACTIVITY_LABEL, EXPENSE_CATEGORY_LABEL, PLANT_TYPE_LABEL, SETTING_LABEL, STATUS_LABEL } from '../../lib/grow/labels';
 import { PHASE_LABEL, phaseOrderIssues } from '../../lib/grow/phases';
-import { METRICS } from '../../lib/grow/series';
+import { type MeasurementState, MeasurementFields, buildMeasurements, hasMeasurementInput, initialMeasurementState, measurementErrors } from './MeasurementFields';
 import { Callout } from '../ui/Callout';
 import { Modal } from '../ui/Modal';
 import { Field, OptionalNumber, SelectField, TextArea, TextField, numText, numberError, toOptionalNumber } from './Fields';
@@ -285,7 +283,6 @@ export function PlantFormModal({
 
 /* ───────────── Aktivität ───────────── */
 
-type MetricTexts = Record<(typeof METRICS)[number]['key'], string>;
 
 export function ActivityFormModal({
   open,
@@ -312,38 +309,18 @@ export function ActivityFormModal({
   const [title, setTitle] = useState(activity?.title ?? '');
   const [notes, setNotes] = useState(activity?.notes ?? '');
   const [volume, setVolume] = useState(numText(activity?.volumeMl));
-  const m = activity?.measurements;
-  const [metrics, setMetrics] = useState<MetricTexts>({
-    heightCm: numText(m?.heightCm),
-    temperatureC: numText(m?.temperatureC),
-    humidityPct: numText(m?.humidityPct),
-    ph: numText(m?.ph),
-    ecMsCm: numText(m?.ecMsCm),
-  });
-  const [custom, setCustom] = useState<{ label: string; value: string; unit: string }[]>(
-    (m?.custom ?? []).map((c) => ({ label: c.label, value: numText(c.value), unit: c.unit })),
-  );
+  const [ms, setMs] = useState<MeasurementState>(() => initialMeasurementState(activity?.measurements));
   const [saving, setSaving] = useState(false);
   const [forceMeasure, setForceMeasure] = useState(false);
 
-  const showMeasurements = forceMeasure || type === 'measurement' || type === 'environment' || Object.values(metrics).some(Boolean) || custom.length > 0;
-  const metricErrors = METRICS.map((d) => numberError(metrics[d.key], { min: d.min, max: d.max })).filter(Boolean);
-  const customErrors = custom.filter((c) => c.label.trim() && numberError(c.value, { required: true }));
+  const showMeasurements = forceMeasure || type === 'measurement' || type === 'environment' || hasMeasurementInput(ms) || (activity?.measurements?.custom?.length ?? 0) > 0;
   const volErr = numberError(volume, { min: 0, max: 1_000_000 });
-  const invalid = metricErrors.length > 0 || customErrors.length > 0 || !!volErr || !date;
+  const invalid = measurementErrors(ms) > 0 || !!volErr || !date;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (invalid) return;
-    const measurements: Measurements = {};
-    for (const d of METRICS) {
-      const v = toOptionalNumber(metrics[d.key]);
-      if (v !== undefined) measurements[d.key] = v;
-    }
-    const cm: CustomMeasurement[] = custom
-      .filter((c) => c.label.trim() && toOptionalNumber(c.value) !== undefined)
-      .map((c) => ({ label: c.label.trim(), value: toOptionalNumber(c.value)!, unit: c.unit.trim() }));
-    if (cm.length) measurements.custom = cm;
+    const measurements = buildMeasurements(ms);
     const payload = {
       growId,
       plantId: pid || undefined,
@@ -352,7 +329,7 @@ export function ActivityFormModal({
       title: title.trim(),
       notes,
       volumeMl: type === 'watering' || type === 'feeding' ? toOptionalNumber(volume) : undefined,
-      measurements: Object.keys(measurements).length ? measurements : undefined,
+      measurements,
       photoIds: activity?.photoIds,
     };
     setSaving(true);
@@ -398,26 +375,7 @@ export function ActivityFormModal({
         {showMeasurements ? (
           <fieldset className="space-y-3 rounded-xl border border-white/[0.06] p-4">
             <legend className="px-1 text-[13px] font-medium text-ink-200">Messwerte (optional)</legend>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {METRICS.map((d) => (
-                <OptionalNumber key={d.key} label={d.label} unit={d.unit || undefined} text={metrics[d.key]} onText={(t) => setMetrics((s) => ({ ...s, [d.key]: t }))} min={d.min} max={d.max} />
-              ))}
-            </div>
-            <div className="space-y-2">
-              {custom.map((c, i) => (
-                <div key={i} className="grid grid-cols-[1fr_6rem_5rem_auto] items-end gap-2">
-                  <TextField label="Messgröße" value={c.label} onChange={(v) => setCustom((s) => s.map((x, j) => (j === i ? { ...x, label: v } : x)))} maxLength={30} placeholder="z. B. VPD" />
-                  <TextField label="Wert" inputMode="decimal" value={c.value} onChange={(v) => setCustom((s) => s.map((x, j) => (j === i ? { ...x, value: v } : x)))} error={c.label.trim() ? numberError(c.value, { required: true }) : undefined} />
-                  <TextField label="Einheit" value={c.unit} onChange={(v) => setCustom((s) => s.map((x, j) => (j === i ? { ...x, unit: v } : x)))} maxLength={12} placeholder="kPa" />
-                  <button type="button" className="btn-ghost mb-0.5 p-2" aria-label="Messgröße entfernen" onClick={() => setCustom((s) => s.filter((_, j) => j !== i))}>
-                    <Trash2 className="size-4" />
-                  </button>
-                </div>
-              ))}
-              <button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setCustom((s) => [...s, { label: '', value: '', unit: '' }])}>
-                <Plus className="size-3.5" /> Eigene Messgröße
-              </button>
-            </div>
+            <MeasurementFields state={ms} onChange={setMs} />
           </fieldset>
         ) : (
           <button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setForceMeasure(true)}>

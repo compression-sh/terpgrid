@@ -48,6 +48,8 @@ export interface GrowProject extends BaseRecord {
   status: GrowStatus;
   completedDate?: DateString;
   phaseDates: PhaseDates;
+  /** Eigene Zielbereiche für Messwerte dieses Grows */
+  thresholds?: Thresholds;
 }
 
 export type PlantType = 'photoperiod' | 'autoflower' | 'unknown';
@@ -101,10 +103,40 @@ export interface Measurements {
   /** Relative Luftfeuchte in % */
   humidityPct?: number;
   ph?: number;
-  /** Elektrische Leitfähigkeit in mS/cm */
+  /** Elektrische Leitfähigkeit in mS/cm (kanonisch; Eingabe in µS/cm oder ppm wird umgerechnet) */
   ecMsCm?: number;
   custom?: CustomMeasurement[];
+  /** Messkontext pH bzw. EC (Gießwasser, Nährlösung, Drainage, Substrat …) */
+  phContext?: MeasureContext;
+  ecContext?: MeasureContext;
+  /** Ursprüngliche EC/TDS-Eingabe inkl. gewählter Einheit/Skala (Anzeige, Nachvollziehbarkeit) */
+  ecInput?: { value: number; unit: EcUnit };
+  /** Wassertemperatur in °C */
+  waterTempC?: number;
+  /** Substrattemperatur in °C */
+  substrateTempC?: number;
+  /** Substratfeuchte in % (Messgerät des Nutzers) */
+  substrateMoisturePct?: number;
+  /** CO₂ in ppm */
+  co2Ppm?: number;
+  /** Blatttemperatur in °C */
+  leafTempC?: number;
+  /** true = Blatttemperatur geschätzt, nicht gemessen */
+  leafTempEstimated?: boolean;
+  /** Photosynthetische Photonenflussdichte in µmol/m²/s */
+  ppfd?: number;
+  /** Lichtstunden pro Tag */
+  photoperiodH?: number;
+  /** Optional: Messgerät */
+  device?: string;
 }
+
+export const MEASURE_CONTEXTS = ['water', 'nutrient', 'runoff', 'substrate', 'other'] as const;
+export type MeasureContext = (typeof MEASURE_CONTEXTS)[number];
+export type EcUnit = 'mS/cm' | 'µS/cm' | 'ppm500' | 'ppm700';
+
+/** Eigene Zielbereiche je Messgröße (vom Nutzer festgelegt, keine Referenzwerte) */
+export type Thresholds = Partial<Record<string, { min?: number; max?: number }>>;
 
 export interface Activity extends BaseRecord {
   growId: string;

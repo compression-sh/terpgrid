@@ -8,6 +8,7 @@ import { href, navigate, setQuery, useRoute } from '../../app/router';
 import { ActivityFormModal, PlantFormModal } from '../../components/forms/GrowForms';
 import { ActivityTimeline } from '../../components/grow/ActivityTimeline';
 import { MeasurementCharts } from '../../components/grow/MeasurementCharts';
+import { ThresholdsModal } from '../../components/forms/ThresholdsModal';
 import { PhaseTimeline } from '../../components/grow/PhaseTimeline';
 import { PhotoGrid } from '../../components/photos/PhotoGrid';
 import { PhotoImg } from '../../components/photos/PhotoImg';
@@ -29,7 +30,7 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
   const route = useRoute();
   const toast = useToast();
   const confirm = useConfirm();
-  const [modal, setModal] = useState<'edit' | 'activity' | 'photo' | 'measure' | null>(null);
+  const [modal, setModal] = useState<'edit' | 'activity' | 'photo' | 'measure' | 'thresholds' | null>(null);
   const tab = (['log', 'photos', 'measurements', 'outcome'].includes(route.query.get('tab') ?? '') ? route.query.get('tab') : 'log') as Tab;
 
   const plant = data.plants.find((p) => p.id === plantId);
@@ -207,7 +208,7 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
       )}
       {tab === 'measurements' && (
         <Card title="Messwerte" actions={<button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setModal('measure')}><Plus className="size-3.5" /> Messung</button>}>
-          <MeasurementCharts activities={activities} splitByPlant={false} />
+          <MeasurementCharts activities={activities} splitByPlant={false} thresholds={grow?.thresholds} onEditThresholds={grow ? () => setModal('thresholds') : undefined} fileName={`pflanze-${plant.name}`} />
         </Card>
       )}
       {tab === 'outcome' && (
@@ -237,6 +238,7 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
       )}
 
       {modal === 'edit' && <PlantFormModal open onClose={() => setModal(null)} plant={plant} growId={growId} />}
+      {modal === 'thresholds' && grow && <ThresholdsModal grow={grow} onClose={() => setModal(null)} />}
       {modal === 'activity' && <ActivityFormModal open onClose={() => setModal(null)} growId={growId} plantId={plantId} />}
       {modal === 'measure' && <ActivityFormModal open onClose={() => setModal(null)} growId={growId} plantId={plantId} defaultType="measurement" />}
       {modal === 'photo' && <PhotoUploadModal open onClose={() => setModal(null)} target={{ growId, plantId }} />}
