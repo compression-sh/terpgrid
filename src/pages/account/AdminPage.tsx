@@ -8,6 +8,7 @@ import { Callout } from '../../components/ui/Callout';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Modal } from '../../components/ui/Modal';
 import { PageHeader } from '../../components/ui/PageHeader';
+import { CatalogAdmin } from './CatalogAdmin';
 import { formatBytes } from '../../lib/media/images';
 import { ApiError, api } from '../../lib/server/api';
 
@@ -366,6 +367,8 @@ export function AdminPage() {
           <p className="hint mt-2">IP-Adressen werden nur als gekürzter, nicht umkehrbarer Hash gespeichert.</p>
         </section>
       )}
+
+      <CatalogAdmin />
 
       <Modal open={!!newInvite} onClose={() => setNewInvite(null)} title="Einladungslink" subtitle={`Einmalig nutzbar, ${newInvite?.expiresInDays ?? 7} Tage gültig. Wird nur jetzt angezeigt.`}>
         {newInvite && (

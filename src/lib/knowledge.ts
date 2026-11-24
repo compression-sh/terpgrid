@@ -4,7 +4,30 @@
  * versprechen, keine individuellen Dosis- oder Wirkungsprognosen.
  */
 
-export type KbCategory = 'Grundlagen' | 'Wirkstoffe' | 'Pflanze & Genetik' | 'Konsum & Risiko' | 'Nachschlagen';
+/** Die 17 Academy-Kategorien (Reihenfolge = Anzeige) */
+export const KB_CATEGORIES = [
+  'Grundlagen',
+  'Pflanze & Botanik',
+  'Genetik & Züchtung',
+  'Anbau-Grundlagen',
+  'Substrat & Bewässerung',
+  'pH, EC & Nährstoffe',
+  'Licht',
+  'Klima & VPD',
+  'Pflanzengesundheit',
+  'Schädlinge',
+  'Ernte',
+  'Trocknung & Lagerung',
+  'Cannabinoide',
+  'Terpene',
+  'Labor & Analytik',
+  'Konsum & Risiko',
+  'Nachschlagen',
+] as const;
+export type KbCategory = (typeof KB_CATEGORIES)[number];
+export type KbLevel = 'Einsteiger' | 'Fortgeschritten';
+/** Interaktive Diagramme, die in einen Abschnitt eingebettet werden können */
+export type KbDiagram = 'vpd' | 'dli' | 'lifecycle' | 'stigma';
 
 export interface KbSource {
   label: string;
@@ -18,18 +41,22 @@ export interface KbSection {
   note?: string;
   /** Interne Verweise auf App-Bereiche */
   links?: { label: string; to: string }[];
+  diagram?: KbDiagram;
 }
 
 export interface KbArticle {
   id: string;
   title: string;
   category: KbCategory;
+  level?: KbLevel;
   summary: string;
   updated: string;
   sections: KbSection[];
   related: string[];
   sources: KbSource[];
 }
+
+import { ACADEMY_ARTICLES } from './academy/articles';
 
 export const KB_UPDATED = '2026-11-23';
 
@@ -50,11 +77,11 @@ const S = {
   huestis: { label: 'Huestis MA (2007). Human cannabinoid pharmacokinetics. Chem Biodivers 4(8):1770–1804.', url: 'https://doi.org/10.1002/cbdv.200790152' },
 };
 
-export const KB_ARTICLES: KbArticle[] = [
+const BASE_ARTICLES: KbArticle[] = [
   {
     id: 'cannabinoide',
     title: 'Was sind Cannabinoide?',
-    category: 'Wirkstoffe',
+    category: 'Grundlagen',
     summary: 'Cannabinoide sind eine Stoffgruppe, die in der Cannabispflanze vor allem als Säuren entsteht. Erst Erhitzen wandelt sie in die bekannten Formen wie THC und CBD um.',
     updated: KB_UPDATED,
     sections: [
@@ -84,7 +111,7 @@ export const KB_ARTICLES: KbArticle[] = [
   {
     id: 'thc-cbd',
     title: 'THC und CBD',
-    category: 'Wirkstoffe',
+    category: 'Cannabinoide',
     summary: 'Δ9-THC ist der hauptsächlich berauschende Bestandteil von Cannabis. CBD wirkt nicht in vergleichbarer Weise berauschend. Beide werden im Körper unterschiedlich verarbeitet.',
     updated: KB_UPDATED,
     sections: [
@@ -117,7 +144,7 @@ export const KB_ARTICLES: KbArticle[] = [
   {
     id: 'terpene',
     title: 'Terpene in Cannabis',
-    category: 'Wirkstoffe',
+    category: 'Terpene',
     summary: 'Terpene prägen Geruch und Geschmack. Dass sie die Wirkung von Cannabis spürbar verändern („Entourage-Effekt“), ist eine Hypothese mit begrenzter Evidenz.',
     updated: KB_UPDATED,
     sections: [
@@ -143,7 +170,7 @@ export const KB_ARTICLES: KbArticle[] = [
   {
     id: 'botanik',
     title: 'Cannabis-Botanik',
-    category: 'Pflanze & Genetik',
+    category: 'Pflanze & Botanik',
     summary: 'Cannabis ist meist zweihäusig: Es gibt männliche und weibliche Pflanzen. Die harzreichen weiblichen Blütenstände enthalten die meisten Cannabinoide.',
     updated: KB_UPDATED,
     sections: [
@@ -169,7 +196,7 @@ export const KB_ARTICLES: KbArticle[] = [
   {
     id: 'genetik',
     title: 'Genetik, Kreuzungen und Sortennamen',
-    category: 'Pflanze & Genetik',
+    category: 'Genetik & Züchtung',
     summary: 'Sortennamen sind nicht genormt. Gleich benannte Proben können genetisch verschieden sein, und die Einteilung in „Indica“ und „Sativa“ spiegelt die Chemie nur schlecht wider.',
     updated: KB_UPDATED,
     sections: [
@@ -195,7 +222,7 @@ export const KB_ARTICLES: KbArticle[] = [
   {
     id: 'lebenszyklus',
     title: 'Der Lebenszyklus einer Cannabispflanze',
-    category: 'Pflanze & Genetik',
+    category: 'Anbau-Grundlagen',
     summary: 'Von der Keimung bis zur Aushärtung – die typischen Phasen und warum feste Zeitpläne trügen.',
     updated: KB_UPDATED,
     sections: [
@@ -316,7 +343,7 @@ export const KB_ARTICLES: KbArticle[] = [
   {
     id: 'forschung',
     title: 'Forschung richtig einordnen',
-    category: 'Nachschlagen',
+    category: 'Labor & Analytik',
     summary: 'Laborwerte, Studien und Online-Datenbanken haben unterschiedliche Aussagekraft. Worauf es beim Lesen ankommt.',
     updated: KB_UPDATED,
     sections: [
@@ -368,7 +395,7 @@ export const KB_ARTICLES: KbArticle[] = [
   },
 ];
 
-export const KB_CATEGORIES: KbCategory[] = ['Grundlagen', 'Wirkstoffe', 'Pflanze & Genetik', 'Konsum & Risiko', 'Nachschlagen'];
+export const KB_ARTICLES: KbArticle[] = [...BASE_ARTICLES, ...ACADEMY_ARTICLES];
 
 export function kbSearch(q: string, articles = KB_ARTICLES): KbArticle[] {
   const needle = q.trim().toLowerCase();

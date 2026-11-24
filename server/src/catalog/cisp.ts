@@ -21,6 +21,8 @@ export const CISP = {
   /** Geprüfte Version (Commit) und Prüfsumme der Datei raw-data.csv */
   commit: '80fbe5d40fac8dda5120f50b946f069c4961f253',
   sha256: '469fb653819f0f97c29d17ca6e58451f3e4972da72424ab9ca6d1cd319d9103c',
+  /** Version der Import-Regeln – eine neue Version erzwingt einen erneuten Import derselben Datei */
+  parserVersion: 2,
   changes: 'Von TERPGRID verändert: Zeichenkodierung bereinigt, unplausible Werte verworfen, Angebote je Breeder und Sorte gruppiert, Breeder-Schreibweisen zusammengeführt.',
 } as const;
 
@@ -140,7 +142,13 @@ export interface ListingValues {
   indica?: number;
   sativa?: number;
   geneticsType?: string;
+  /** Typ-Bezeichnung laut Shop (Spalte category_type), z. B. „Indica Dominant Hybrid“ */
+  typeLabel?: string;
   parents?: Parent[];
+  /** Abstammung als Freitext der Quelle (genetics_description / lineage_description) */
+  lineageText?: string;
+  /** Herkunft der strukturierten Eltern: Elternspalten oder aus dem Abstammungstext abgeleitet */
+  parentsFrom?: 'columns' | 'text';
   generation?: string;
   terpenes?: string[];
   flavors?: string[];
@@ -288,6 +296,12 @@ export function parseRow(cells: string[], h: Header, line: number): Listing | Ro
   }
   const gt = cleanText(g('genetics_type'));
   if (['Sativa Dominant', 'Indica Dominant', 'Balanced Hybrid'].includes(gt)) values.geneticsType = gt;
+  const cat = cleanText(g('category_type'));
+  if (['Indica Dominant Hybrid', 'Sativa Dominant Hybrid', 'Balanced Hybrid', 'Indica', 'Sativa'].includes(cat)) {
+    values.typeLabel = cat;
+    // Gleichbedeutende Kategorien als Typ übernehmen (reine „Indica“/„Sativa“ bleiben nur Bezeichnung)
+    if (!values.geneticsType && cat !== 'Indica' && cat !== 'Sativa') values.geneticsType = cat === 'Balanced Hybrid' ? cat : cat.replace(' Hybrid', '');
+  }
 
   const parents: Parent[] = [];
   for (const k of ['parent_1_display', 'parent_2_display']) {
@@ -300,7 +314,25 @@ export function parseRow(cells: string[], h: Header, line: number): Listing | Ro
     else rejected.parents = 'not_a_name';
   }
   if (rejected.parents) parents.length = 0; // halbe Abstammung wäre irreführend
-  if (parents.length) values.parents = parents;
+  if (parents.length) {
+    values.parents = parents;
+    values.parentsFrom = 'columns';
+  }
+  for (const k of ['genetics_description', 'lineage_description']) {
+    const t = cleanText(g(k));
+    if (t && t.length <= 140 && /[a-z]/i.test(t) && !/^unknown( parent( strains?)?)?$/i.test(t)) {
+      values.lineageText = t;
+      break;
+    }
+  }
+  // Keine Elternspalten, aber ein eindeutiger Text „A x B“ bzw. „A and B“ → strukturiert übernehmen
+  if (!values.parents && !rejected.parents && values.lineageText && !/[()[\],;.]/.test(values.lineageText)) {
+    const parts = values.lineageText.split(/\s+(?:x|×|and|&)\s+/i).map((p) => titleCase(p.trim()));
+    if (parts.length === 2 && parts.every((p) => plausibleName(p) && !/^unknown/i.test(p)) && slugify(parts[0]!) !== slugify(parts[1]!)) {
+      values.parents = parts.map((p) => ({ name: p, slug: slugify(p) }));
+      values.parentsFrom = 'text';
+    }
+  }
   const gen = cleanText(g('generation'));
   if (/^(F\d|S\d|BX\d|IBL)$/i.test(gen)) values.generation = gen.toUpperCase();
 
@@ -422,6 +454,12 @@ export function groupCultivars(listings: Listing[]): { cultivars: Cultivar[]; br
     for (const l of ls) if (l.values.parents?.length) lineages.set(l.values.parents.map((p) => p.slug).sort().join('×'), l.values.parents);
     if (lineages.size) values.parents = [...lineages.values()][0];
     if (lineages.size > 1) conflicts.push('parents');
+    const labels = ls.map((l) => l.values.typeLabel).filter(Boolean) as string[];
+    if (labels.length) values.typeLabel = mostCommon(labels);
+    const texts = ls.map((l) => l.values.lineageText).filter(Boolean) as string[];
+    if (texts.length) values.lineageText = mostCommon(texts);
+    const from = ls.find((l) => l.values.parents?.length && l.values.parents.map((p) => p.slug).sort().join('×') === (values.parents ?? []).map((p) => p.slug).sort().join('×'))?.values.parentsFrom;
+    if (from) values.parentsFrom = from;
     const gens = [...new Set(ls.map((l) => l.values.generation).filter(Boolean) as string[])];
     if (gens.length === 1) values.generation = gens[0];
     for (const f of ['terpenes', 'flavors', 'effects'] as const) {
@@ -492,6 +530,7 @@ export interface QualityReport {
   coverage: Record<string, { listings: number; percent: number }>;
   fieldRejections: Record<string, number>;
   images: number;
+  parserVersion: number;
 }
 
 export interface ParsedDataset {
@@ -569,6 +608,8 @@ export function parseDataset(buf: Buffer, commit: string = CISP.commit): ParsedD
       thc: cov((l) => !!l.values.thc),
       cbd: cov((l) => !!l.values.cbd),
       lineage: cov((l) => !!l.values.parents?.length),
+      lineageText: cov((l) => !!l.values.lineageText),
+      typeLabel: cov((l) => !!l.values.typeLabel),
       flowering: cov((l) => !!l.values.flowering),
       indicaSativa: cov((l) => l.values.indica !== undefined),
       terpenes: cov((l) => !!l.values.terpenes?.length),
@@ -580,6 +621,7 @@ export function parseDataset(buf: Buffer, commit: string = CISP.commit): ParsedD
     },
     fieldRejections,
     images: 0,
+    parserVersion: CISP.parserVersion,
   };
   return { listings, cultivars, breeders, report, errors };
 }

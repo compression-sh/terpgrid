@@ -8,3 +8,6 @@
 
 Auswahl für Tests: gleichnamige Sorten verschiedener Breeder, Mojibake, unplausible Werte
 (THC 8211 %, 0,03 %), Fließtext als Abstammung, abweichende Breeder-Schreibweisen.
+
+`strainapi-barf-breath.json` und `findmyseeds-gelato.json` sind gekürzte, unveränderte API-Antworten
+(StrainAPI bzw. Find My Seeds, abgerufen am 24.11.2026) – nur für Tests des Abgleichs und der Normalisierung.

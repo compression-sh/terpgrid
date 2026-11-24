@@ -27,6 +27,7 @@ import { GrowFormModal, ActivityFormModal } from '../../components/forms/GrowFor
 import { ReminderFormModal } from '../../components/forms/PersonalForms';
 import { ActivityTimeline } from '../../components/grow/ActivityTimeline';
 import { ExpenseList, money } from '../../components/grow/ExpenseList';
+import { ContextHelp } from '../../components/academy/ContextHelp';
 import { MeasurementCharts } from '../../components/grow/MeasurementCharts';
 import { ThresholdsModal } from '../../components/forms/ThresholdsModal';
 import { type DayMarker, MonthCalendar } from '../../components/grow/MonthCalendar';
@@ -486,7 +487,7 @@ export function GrowDetail({ growId }: { growId: string }) {
       )}
 
       {tab === 'measurements' && (
-        <Card title="Messwerte" subtitle="Dokumentierte Werte je Pflanze bzw. für den ganzen Grow">
+        <Card title="Messwerte" subtitle="Dokumentierte Werte je Pflanze bzw. für den ganzen Grow" actions={<ContextHelp ids={['ph-ec', 'klima-vpd', 'licht-ppfd-dli', 'mangel-erkennen']} />}>
           <MeasurementCharts activities={activities} thresholds={grow.thresholds} onEditThresholds={() => setModal('thresholds')} fileName={`grow-${grow.name}`} />
         </Card>
       )}

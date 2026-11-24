@@ -19,6 +19,8 @@ export type AuditType =
   | 'invite.create'
   | 'invite.revoke'
   | 'admin.user.status'
+  | 'admin.catalog.enrich'
+  | 'admin.catalog.review'
   | 'import'
   | 'passkey.add'
   | 'passkey.rename'

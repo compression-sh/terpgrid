@@ -16,6 +16,8 @@ import { migrate, schemaStatus } from './migrate.js';
 import { readFileSync } from 'node:fs';
 import { CISP, cispUrl, parseDataset } from './catalog/cisp.js';
 import { importDataset } from './catalog/importer.js';
+import { catalogAudit } from './catalog/audit.js';
+import { MAX_BATCH, PROVIDERS, type Provider, enrichBatch, enrichFromStrainApiIndex, purgeExpiredClaims } from './catalog/enrich.js';
 import pg from 'pg';
 
 const [cmd, ...args] = process.argv.slice(2);
@@ -41,6 +43,11 @@ function help(): never {
                               CI-Strains-Pro (CC BY 4.0) in den lokalen Katalog importieren.
                               Ohne --file: geprüfte Version von GitHub laden (Prüfsumme wird verglichen).
                               --dry-run: nur prüfen und Qualitätsbericht ausgeben, nichts schreiben.
+  catalog-audit [--json DATEI] Vollständigkeit des Sortenkatalogs je Feld (Belegart, Widersprüche, verworfene Werte)
+  enrich-catalog --provider strainapi [--index | --limit N | --ids a,b] [--dry-run] [--resume RUN]
+                              Kleine Charge des Katalogs aus einer weiteren Quelle anreichern (max. 50 Sorten,
+                              Ratenlimit, nur Name+Breeder-Treffer). --index: StrainAPI-Liste (8 Seiten) im Speicher
+                              abgleichen, nur Treffer speichern. Kein Spiegeln der Quelle (Nutzungsbedingungen).
   schema-status               Schemastand prüfen (Exit 0 = passend, 3 = DB neuer als Programm, 4 = Migration ausstehend)`);
   process.exit(cmd ? 1 : 0);
 }
@@ -59,6 +66,54 @@ async function main() {
       const ms = (performance.now() - t0) / runs;
       console.log(`Argon2id m=${c.argon2.memoryCost} KiB, t=${c.argon2.timeCost}, p=${c.argon2.parallelism}: ${ms.toFixed(0)} ms je Hash`);
       console.log(ms < 150 ? 'Hinweis: unter ~150 ms – ARGON2_MEMORY_KIB oder ARGON2_TIME_COST kann erhöht werden.' : ms > 1000 ? 'Hinweis: über 1 s – Login wird träge, Parameter ggf. senken (min. OWASP-Werte beachten).' : 'OK');
+      return;
+    }
+    case 'enrich-catalog': {
+      const c = loadConfig();
+      const opt = (k: string) => (args.includes(k) ? args[args.indexOf(k) + 1] : undefined);
+      const provider = opt('--provider') as Provider | undefined;
+      if (!provider || !(provider in PROVIDERS)) throw new Error('--provider strainapi|findmyseeds angeben');
+      const limit = Math.min(MAX_BATCH, Number(opt('--limit') ?? 10) || 10);
+      const pool = createPool(c.migrateDatabaseUrl, 2);
+      try {
+        const purged = await purgeExpiredClaims(pool);
+        if (purged) console.log(`${purged} abgelaufene Angaben entfernt (Cache-Pflege).`);
+        const r = args.includes('--index') && provider === 'strainapi'
+          ? await enrichFromStrainApiIndex(pool, { dryRun: args.includes('--dry-run'), log: (m) => console.log(m) })
+          : await enrichBatch(pool, {
+          provider,
+          limit,
+          dryRun: args.includes('--dry-run'),
+          cultivarIds: opt('--ids')?.split(',').filter(Boolean),
+          resumeRunId: opt('--resume') ? Number(opt('--resume')) : undefined,
+          log: (m) => console.log(m),
+        });
+        console.log(`Lauf ${r.runId}: ${r.processed} Sorten abgefragt · ${r.matched} exakte Zuordnungen · ${r.claims} Angaben · Entscheidungen ${JSON.stringify(r.decisions)} · Fehler ${r.errors.length}`);
+      } finally {
+        await pool.end();
+      }
+      return;
+    }
+    case 'catalog-audit': {
+      const c = loadConfig();
+      const pool = createPool(c.migrateDatabaseUrl, 2);
+      try {
+        const r = await catalogAudit(pool);
+        const i = args.indexOf('--json');
+        if (i >= 0 && args[i + 1]) {
+          const { writeFileSync } = await import('node:fs');
+          writeFileSync(args[i + 1]!, JSON.stringify(r, null, 2));
+        }
+        console.log(`Sorten: ${r.cultivars} · Breeder: ${r.breeders} · Angebote: ${r.listings}`);
+        console.log('Feld'.padEnd(42) + 'vorhanden'.padStart(16) + 'widersprüchl.'.padStart(15) + 'verworfen'.padStart(11) + '  Belegart (Breeder/Seedbank/Datenbank/Labor)');
+        for (const f of r.fields) {
+          const pct = r.cultivars ? ((f.present / r.cultivars) * 100).toFixed(1) : '0';
+          console.log(`${f.label.padEnd(42)}${`${f.present} (${pct} %)`.padStart(16)}${String(f.conflicting).padStart(15)}${String(f.questionable).padStart(11)}  ${f.evidence.breeder}/${f.evidence.seedbank}/${f.evidence.database}/${f.evidence.lab}`);
+        }
+        for (const p of r.providers) console.log(`Quelle ${p.provider}: ${p.matchedCultivars} Sorten mit Angaben, ${p.claims} Angaben · Abgleich ${JSON.stringify(p.byStatus)}`);
+      } finally {
+        await pool.end();
+      }
       return;
     }
     case 'import-catalog': {

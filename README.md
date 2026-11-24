@@ -2,7 +2,7 @@
 
 **Your personal cannabis space.** Persönliches Dashboard für Growlogs, Fotos, einen Online-Sortenkatalog (Discover), ein persönliches Journal, die eigene Sammlung, Laborberichte und den THC-Rechner (THC Lab).
 
-**Self-hosted · Private Daten geschützt · Kein Tracking.** · Version 5.1.0-rc.1 (Release-Kandidat) · Änderungen: [CHANGELOG.md](CHANGELOG.md)
+**Self-hosted · Private Daten geschützt · Kein Tracking.** · Version 5.2.0-rc.1 (Release-Kandidat) · Änderungen: [CHANGELOG.md](CHANGELOG.md)
 
 TERPGRID läuft in zwei Modi:
 
@@ -24,16 +24,16 @@ TERPGRID läuft in zwei Modi:
 
 | Bereich | Inhalt |
 | --- | --- |
-| **Katalog** (Servermodus) | Lokal indexierter Datensatz CI-Strains-Pro (CC BY 4.0): Suche über alle 16.710 Sorten mit Trefferarten und echten Summen, Filter, Sortenseiten mit Angeboten je Seedbank, Quell-URL, Widersprüchen, Abstammung und Nachkommen. Siehe [docs/CATALOG.md](docs/CATALOG.md). |
+| **Katalog** (Servermodus) | Lokal indexierter Datensatz CI-Strains-Pro (CC BY 4.0): Suche über alle 16.710 Sorten mit Trefferarten und echten Summen, Filter, Sortenseiten mit Angeboten je Seedbank, Quell-URL, Widersprüchen, Abstammung und Nachkommen. Belegart je Angabe (Breeder, Seedbank, Datenbank, eigenes Labor); Anreicherung aus StrainAPI mit Herkunft je Feld, Vollständigkeits-Audit und Admin-Prüfliste. Siehe [docs/CATALOG.md](docs/CATALOG.md). |
 | **Genetik** (Servermodus) | Abstammungsgraph aus dem Katalog: nur dokumentierte Eltern, gleichnamige Sorten verschiedener Breeder bleiben getrennt, unbekannte und abweichende Angaben gekennzeichnet. |
 | **Breeder** (Servermodus) | Verzeichnis aller 494 Breeder (A–Z, Suche, Kooperationen) mit Profil, Typverteilung, häufigen Elternsorten und Sortenliste; Breeder merken. Keine erfundenen Firmenangaben. |
 | **Discover / Live & Bilder** | Live-Sortenkatalog (StrainAPI): Suche mit Relevanz-Sortierung (Namenstreffer vor Erwähnungen und reinen Volltexttreffern, Gruppen ehrlich ausgewiesen, „Nur Namenstreffer“), Debounce/Abbruch, Filter (Typ, Breeder, Genetik, Terpen, THC/CBD, Favoriten), Sortierung, „Mehr laden“, verlinkbarer URL-Zustand. Filter ohne API-Unterstützung werden als „nur geladene Sorten“ gekennzeichnet; vollständige Ergebnisse nur nach ausdrücklichem „Alle laden“. |
 | **Sortenprofil** | Hero-Bild mit Quellenangabe, Cannabinoid-Spannen mit Evidenzstatus (belegt/berichtet/umstritten/unzureichend), Terpene (Mengen nur aus eigenen Laborberichten), Genetik, Aroma, Botanik, berichtete Erfahrungen (klar als subjektiv gekennzeichnet), Beschreibung (HTML der Quelle nur als Text), optional CannaLib-Forschungsdaten. Merken, mit Pflanze verknüpfen, Grow zuordnen, Journal, Vergleich. |
 | **Genetics Explorer** | Interaktiver Abstammungsgraph (Zoom, Pan, Pinch, Tastatur). Nur belegte Beziehungen; alternative Angaben gestrichelt, gleichnamige Sorten verschiedener Breeder als „mehrdeutig“ (nie zusammengeführt), CannaLib-Elternangaben mit Konfidenz. |
-| **Terpen-Atlas** | 7 Terpene mit Formel, molarer Masse, CAS, PubChem-Quelle, Aroma und Vorkommen; Terpen-Rad, Vergleich, Nennungen im Katalog (ohne Mengen), Zusammensetzungen nur aus Laborberichten. |
+| **Terpen-Atlas** | 27 Verbindungen mit PubChem-geprüfter Identität (CID, Formel, Masse, IUPAC, InChIKey, CAS), 2D-Strukturformel, belegtem Geruch und Cannabis-Beleg aus geprüfter Literatur; Sammelnamen ohne Isomer-Zuordnung, Terpen-Rad, Filter, Vergleich, Katalogsorten je Terpen (Nennungen, keine Mengen), eigene Laborwerte je Probe. |
 | **Vergleich** | 2–4 Online- oder eigene Sorten nebeneinander, Unterschiede hervorgehoben, THC/CBD-Spannen auf gemeinsamer Skala. Keine Scores, kein Radar ohne vergleichbare Messwerte. |
 | **Galerie** | Vollbild-Galerie mit Zoom/Swipe und Ansichten nach dokumentierten Metadaten (Typ, Terpen, Breeder, genetische Verwandte). |
-| **Cannabis 101** | 12 Wissensartikel mit Quellen, Suche, Kategorien, Querverweisen, Lesefortschritt und Merkliste. |
+| **Cannabis 101 · Academy** | 30 Artikel in 17 Kategorien (Anbau, Licht, Klima/VPD, pH/EC, Nährstoffe, Pflanzengesundheit, Ernte, Trocknung, Wirkstoffe, Risiken …) mit Quellen aus Open-Access-Studien; Lernpfade mit Fortschritt, Glossar (auch in Strg+K), interaktive Diagramme, Kontexthilfe in Growlogs und Laborberichten. |
 | **Lab Insights** | Laborberichte mit THC/THCA/CBD/CBDA/CBG/CBN, Terpenen, Labor, Charge, Datum, lokalem Originaldokument (PDF/Bild), Herkunftskennzeichnung und Gesamtwerten (THC + 0,877 × THCA, CBD + 0,877 × CBDA). |
 | **Übersicht** | Aktive Grows mit Tageszähler und Phase, neueste Fotos, anstehende Erinnerungen, Journal, Berechnungen, Sorten und Aktivitätsverlauf, ausschließlich aus eigenen Daten. Schnellaktionen; Karten lassen sich sortieren und ausblenden. |
 | **Growlogs** | Projekte anlegen, bearbeiten, abschließen, archivieren und löschen. Meilensteine (Keimung … Abgeschlossen) mit berechneten Phasendauern. Projektseite mit Titelbild, Pflanzen, Foto-Zeitleiste, Verlauf, Messwert-Diagrammen, Kalender und Ausgaben. |

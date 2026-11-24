@@ -1,0 +1,112 @@
+{
+ "items": [
+  {
+   "id": 39846,
+   "name": "Gelato",
+   "slug": "gelato",
+   "url": "https://www.findmyseeds.com/strains/gelato/",
+   "image": "",
+   "image_srcset": "",
+   "image_sizes": "(max-width: 680px) calc(100vw - 48px), (max-width: 900px) 48vw, 300px",
+   "image_width": 0,
+   "image_height": 0,
+   "aka": "Gelato 42 | Larry Bird | Zelato",
+   "type": "Hybrid",
+   "thc": 20,
+   "cbd": 0.04,
+   "rating": null,
+   "rating_count": 0,
+   "effects": [
+    "Relaxed",
+    "Aroused",
+    "Euphoric"
+   ],
+   "flavors": [
+    "Sweet",
+    "Flowery",
+    "Pepper"
+   ],
+   "terpenes": [
+    "Beta-Caryophyllene",
+    "Limonene",
+    "Myrcene"
+   ],
+   "conditions": [
+    "Anxiety",
+    "Stress",
+    "Depression"
+   ],
+   "difficulty": "moderate",
+   "breeder": "ApeOrigin | Unknown or Legendary | Aztech Genetics | Barneys Farm | Blim Burn Seeds | Dr. Blaze | Elev8 Seeds | Fatbush Seeds | Medicann Seeds | Nirvana Seeds | Original Sensible Seeds | Seed Junky Genetics | Sherbinskis | Semyanich | United Cannabis Seeds | US SkunkX | Zamnesia | Spliff Seeds",
+   "heritage": "indica / sativa | mostly indica | mostly sativa",
+   "indica": 50,
+   "sativa": 50,
+   "flowering_days_min": 60,
+   "flowering_days_max": 70,
+   "flowering_min_days": 60,
+   "flowering_max_days": 70,
+   "climate": [],
+   "parents": [
+    "Gelato",
+    "Gelato #33",
+    "Gelato (S1) »»» Gelato #33",
+    "Sunset Sherbet",
+    "Wedding Cake",
+    "Gelato #41",
+    "Gelato [reversed]",
+    "Thin Mint Cookies",
+    "(Gelato x Gelato [pheno #33])"
+   ],
+   "excerpt": "Gelato is a Bay Area dessert-family cultivar most commonly traced to Sunset Sherbet crossed with Thin Mint GSC. The name also covers numbered selections&hellip;"
+  },
+  {
+   "id": 14343,
+   "name": "Gelato #3",
+   "slug": "gelato-3",
+   "url": "https://www.findmyseeds.com/strains/gelato-3/",
+   "image": "",
+   "image_srcset": "",
+   "image_sizes": "(max-width: 680px) calc(100vw - 48px), (max-width: 900px) 48vw, 300px",
+   "image_width": 0,
+   "image_height": 0,
+   "aka": "",
+   "type": "Hybrid",
+   "thc": null,
+   "cbd": null,
+   "rating": null,
+   "rating_count": 0,
+   "effects": [
+    "Talkative",
+    "Aroused",
+    "Euphoric"
+   ],
+   "flavors": [
+    "Pepper",
+    "Nutty",
+    "Diesel"
+   ],
+   "terpenes": [],
+   "conditions": [
+    "Anxiety",
+    "Arthritis",
+    "Cramps"
+   ],
+   "difficulty": "",
+   "breeder": "",
+   "heritage": "",
+   "indica": null,
+   "sativa": null,
+   "flowering_days_min": null,
+   "flowering_days_max": null,
+   "flowering_min_days": null,
+   "flowering_max_days": null,
+   "climate": [],
+   "parents": [],
+   "excerpt": "Find My Seeds records Gelato #3 as a hybrid cannabis cultivar. Available cannabinoid records list CBG at 1%. Community and source reports most often&hellip;"
+  }
+ ],
+ "total": 1112,
+ "page": 1,
+ "pages": 186,
+ "per_page": 6
+}

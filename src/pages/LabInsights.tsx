@@ -11,6 +11,7 @@ import { Card } from '../components/ui/Card';
 import { Chip } from '../components/ui/Chip';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Modal } from '../components/ui/Modal';
+import { ContextHelp } from '../components/academy/ContextHelp';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Segmented } from '../components/ui/Segmented';
 import { TERPENES, matchTerpene, terpeneLabel } from '../lib/catalog/terpenes';
@@ -444,9 +445,12 @@ export function LabInsights() {
         title="Lab Insights"
         subtitle="Eigene Laboranalysen dokumentieren und verstehen – Originaldokumente bleiben lokal."
         actions={
-          <button type="button" className="btn-primary" onClick={() => setForm({})}>
-            <Plus className="size-4" /> Bericht erfassen
-          </button>
+          <>
+            <ContextHelp ids={['laborberichte-lesen', 'terpene-analytik', 'thc-cbd']} />
+            <button type="button" className="btn-primary" onClick={() => setForm({})}>
+              <Plus className="size-4" /> Bericht erfassen
+            </button>
+          </>
         }
       />
       {reports.length === 0 ? (

@@ -1,0 +1,58 @@
+{
+ "data": [
+  {
+   "id": 5752,
+   "name": "Barf Breath",
+   "slug": "barf-breath",
+   "url": "https://www.strainapi.com/barf-breath/",
+   "excerpt": "Bred by Solfire Gardens, Barf Breath is an indica-dominant hybrid crossing Don Mega and Giggle Gas, recognized for its pungent savory-fuel aroma and heavy resin production.",
+   "image": {
+    "url": "https://www.strainapi.com/wp-content/uploads/2026/11/Barf-Breath-strain.jpg",
+    "width": 1024,
+    "height": 1024,
+    "alt": "Barf Breath cannabis strain"
+   },
+   "breeder": "Solfire Gardens",
+   "genetics": "Don Mega x Giggle Gas",
+   "type": "Indica-dominant hybrid",
+   "indica_percent": 70,
+   "sativa_percent": 30,
+   "seed_type": "Feminized",
+   "thc": {
+    "value": null,
+    "min": 20,
+    "max": 25,
+    "unit": "%"
+   },
+   "cbd": {
+    "value": null,
+    "min": 0,
+    "max": 1,
+    "unit": "%"
+   },
+   "terpenes": [
+    "Ocimene",
+    "Caryophyllene",
+    "Limonene",
+    "Myrcene"
+   ],
+   "flowering": {
+    "min_days": 56,
+    "max_days": 63
+   },
+   "aroma": [
+    "Sweet garlic, chemical funk, skunk, burnt rubber, pungent fuel"
+   ],
+   "flavor": [
+    "Savory garlic, diesel, earth, citrus, sweet exhale"
+   ],
+   "updated_at": "2026-11-24T16:31:16+00:00"
+  }
+ ],
+ "pagination": {
+  "page": 1,
+  "per_page": 1,
+  "total": 725,
+  "total_pages": 725
+ }
+}

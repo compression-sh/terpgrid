@@ -11,6 +11,7 @@ import { adminRoutes } from './routes/admin.js';
 import { authRoutes } from './routes/auth.js';
 import { catalogRoutes } from './routes/catalog.js';
 import { libraryRoutes } from './routes/library.js';
+import { catalogAdminRoutes } from './routes/catalogAdmin.js';
 import { fileRoutes } from './routes/files.js';
 import { passkeyRoutes } from './routes/passkeys.js';
 import { syncRoutes } from './routes/sync.js';
@@ -122,6 +123,7 @@ export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
   await app.register(fileRoutes(ctx));
   await app.register(catalogRoutes(ctx));
   await app.register(libraryRoutes(ctx));
+  await app.register(catalogAdminRoutes(ctx));
   await app.register(adminRoutes(ctx));
   return app;
 }

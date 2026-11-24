@@ -7,6 +7,7 @@ import { money } from '../../components/grow/ExpenseList';
 import { PhotoImg } from '../../components/photos/PhotoImg';
 import { Card } from '../../components/ui/Card';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { ContextHelp } from '../../components/academy/ContextHelp';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { fmtDate } from '../../lib/dates';
 import { MEASURE_CONTEXTS, type MeasureContext } from '../../lib/db/types';
@@ -72,9 +73,12 @@ export function GrowCompare() {
         title="Grow-Vergleich"
         subtitle="Bis zu vier Projekte nebeneinander – nur dokumentierte Werte, Zeitachse in Grow-Tagen ab Start."
         actions={
-          <a href={href('grows')} className="btn-ghost">
-            <ArrowLeft className="size-4" /> Growlogs
-          </a>
+          <>
+            <ContextHelp ids={['anbau-ueberblick', 'licht-ppfd-dli', 'klima-vpd']} />
+            <a href={href('grows')} className="btn-ghost">
+              <ArrowLeft className="size-4" /> Growlogs
+            </a>
+          </>
         }
       />
 

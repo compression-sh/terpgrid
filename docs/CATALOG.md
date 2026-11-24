@@ -59,6 +59,10 @@ dargestellt. Alle Werte sind Angaben von Seedbanks/Breedern (Shop-Texte).
   verschiedener Breeder werden **nie** zusammengeführt (1.604 Namen kommen bei mehreren Breedern vor).
   Breeder werden nur über Groß-/Kleinschreibung, Satzzeichen und Leerraum zusammengeführt (z. B. „ACE Seeds“/„Ace Seeds“).
   Kooperationen („X x Y“) bleiben eigene Einträge mit Mitgliederliste.
+- **Parser v2 (5.2):** zusätzlich die Typ-Bezeichnung des Shops (`category_type`) und der Abstammungstext der Quelle
+  (`genetics_description`/`lineage_description`, ≤ 140 Zeichen, nicht „Unknown…“) im Originalwortlaut. Sind dort genau
+  zwei plausible Sortennamen ohne Klammern genannt, werden sie als Eltern übernommen und als „aus Text abgeleitet“
+  gekennzeichnet. Ein geänderter Parser löst beim nächsten Import eine Neuverarbeitung derselben Datei aus.
 - **Widersprüche:** Überschneiden sich die Spannen zweier Angebote nicht (z. B. THC 20–22 % vs. 25–28 %), wird das Feld als
   widersprüchlich markiert; die Sortenseite zeigt jede Einzelangabe mit Seedbank und Quell-URL.
 
@@ -128,6 +132,52 @@ Ohne Docker (Entwicklung): `DATABASE_MIGRATE_URL=… npx tsx src/cli.ts import-c
 - Gemessen auf dem Testsystem (16.710 Sorten): 5–11 ms je Suchanfrage in der Datenbank; im Browser inkl. 300 ms Eingabeverzögerung ca. 0,9 s.
 - Suchanfragen gehen nur an die eigene Instanz. In der Befehlspalette werden Katalog und Breeder ebenfalls nur über die eigene
   Instanz durchsucht; persönliche Daten bleiben lokal.
+
+## Anreicherung aus weiteren Quellen (ab 5.2 / Expansion 2.1)
+
+Ziel: fehlende Felder nur dort ergänzen, wo eine Quelle sie **rechtlich nutzbar** und **eindeutig derselben Breeder-Linie
+zuordenbar** liefert. Jede Angabe bleibt mit Herkunft gespeichert; nichts wird geschätzt oder abgeleitet.
+
+**Tabellen (Migration 006):** `catalog_matches` (Abgleichsentscheidung je Quelldatensatz, keine Kopie der Quelldaten),
+`catalog_claims` (Feldangabe: Originalwert, normalisierter Wert, Belegart, Lizenz, Abrufzeit, Ablaufdatum, Prüfstatus),
+`catalog_enrichment_runs` (Läufe mit Checkpoint). Nur diese drei Tabellen sind für die Laufzeitrolle beschreibbar;
+der importierte Kernkatalog bleibt schreibgeschützt.
+
+**Quellen (Prüfung der Nutzungsbedingungen am 24.11.2026):**
+
+| Quelle | Status | Grund |
+|---|---|---|
+| StrainAPI | aktiv | Zwischenspeichern erlaubt, keine im Wesentlichen vollständige Kopie, Namensnennung „Data provided by StrainAPI“. Angaben laufen nach 30 Tagen ab. Fotos werden **nicht** übernommen (Rechte und Zuordnung zur Breeder-Linie nicht belegt). |
+| Find My Seeds | deaktiviert | Der Server antwortet automatisierten Abrufen mit HTTP 403; die Bedingungen untersagen Spiegelung. Nicht umgangen. |
+| CannaLib | nicht genutzt | Anonym 20 Anfragen/Stunde; API-Seite für Automatisierung gesperrt. Für Massenanreicherung ungeeignet. |
+
+**Abgleich (konservativ):** „exakt“ nur, wenn Name **und** Breeder übereinstimmen, die Katalogsorte keine Version
+trägt und Auto/Photoperiode passt. Sammel- oder Breeder-lose Datensätze → „mehrdeutig“; ähnlicher Breeder →
+„zu prüfen“. Gleichnamige Sorten verschiedener Breeder werden nie zusammengeführt. Entscheidungen von Admins
+werden von automatischen Läufen nicht überschrieben.
+
+**Belegarten in der Oberfläche:** Laborbestätigt (nur eigene, private Laborberichte – je Probe) · Breeder-Angabe
+(Shop des Breeders) · Seedbank-Angabe · Datenbank-Angabe · Widersprüchlich · Keine Daten. Ohne belegte Terpene
+steht „Kein belegtes Terpenprofil verfügbar.“ Private Laborberichte und andere Nutzerdaten werden nie an Quellen
+gesendet; Anfragen enthalten nur den Sortennamen aus dem öffentlichen Katalog.
+
+**Befehle:**
+
+```bash
+npx tsx src/cli.ts catalog-audit [--json datei.json]                 # Vollständigkeit je Feld und Belegart
+npx tsx src/cli.ts enrich-catalog --provider strainapi --index        # Verzeichnis abgleichen (≈8 Seiten, 1,5 s Pause)
+npx tsx src/cli.ts enrich-catalog --provider strainapi --limit 25 [--dry-run] [--resume LAUF]
+```
+
+Admin-Oberfläche: *Administration → Sortenkatalog* (Feldabdeckung, Läufe, Batch bis 25 Sorten mit Probelauf,
+Prüfliste „zu prüfen/mehrdeutig“ – Freigabe nur für eine Sorte aus den Kandidaten). Die Qualitätsberechnung dauert
+auf dem Testsystem ≈6,5 s und wird 10 Minuten zwischengespeichert.
+
+**Ergebnis auf dem Testsystem (24.11.2026):** 725 StrainAPI-Datensätze geprüft → 37 exakte Zuordnungen,
+2 zur Prüfung, 4 mehrdeutig, 682 ohne Gegenstück im Katalog. 288 freigegebene Feldangaben (u. a. Terpene bei 30,
+THC bei 28, CBD bei 12 Sorten). Terpen-Nennungen insgesamt: 541 → 571 Sorten (3,4 % von 16.710);
+Terpen-**Mengen**: 0. Eine vollständige, belegte Terpen- oder Cannabinoid-Abdeckung ist mit rechtlich nutzbaren
+Quellen derzeit nicht erreichbar. Details: `docs/ACADEMY-2-1-REPORT.md`.
 
 ## Grenzen
 
