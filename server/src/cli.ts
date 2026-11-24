@@ -13,6 +13,10 @@ import { createContext } from './context.js';
 import { purgeTrash } from './files.js';
 import { purgeRetiredKeys, rotateUserKey } from './rotation.js';
 import { migrate, schemaStatus } from './migrate.js';
+import { readFileSync } from 'node:fs';
+import { CISP, cispUrl, parseDataset } from './catalog/cisp.js';
+import { importDataset } from './catalog/importer.js';
+import pg from 'pg';
 
 const [cmd, ...args] = process.argv.slice(2);
 
@@ -33,6 +37,10 @@ function help(): never {
   purge-retired-keys [--min-age-days N]
                               Ausgemusterte Schlüssel löschen (Standard 200 Tage; nur ohne Verwendung)
   cleanup                     Abgelaufene Sessions löschen, Datei-Papierkorb leeren
+  import-catalog [--file PFAD | --commit SHA] [--dry-run] [--force] [--report DATEI]
+                              CI-Strains-Pro (CC BY 4.0) in den lokalen Katalog importieren.
+                              Ohne --file: geprüfte Version von GitHub laden (Prüfsumme wird verglichen).
+                              --dry-run: nur prüfen und Qualitätsbericht ausgeben, nichts schreiben.
   schema-status               Schemastand prüfen (Exit 0 = passend, 3 = DB neuer als Programm, 4 = Migration ausstehend)`);
   process.exit(cmd ? 1 : 0);
 }
@@ -51,6 +59,50 @@ async function main() {
       const ms = (performance.now() - t0) / runs;
       console.log(`Argon2id m=${c.argon2.memoryCost} KiB, t=${c.argon2.timeCost}, p=${c.argon2.parallelism}: ${ms.toFixed(0)} ms je Hash`);
       console.log(ms < 150 ? 'Hinweis: unter ~150 ms – ARGON2_MEMORY_KIB oder ARGON2_TIME_COST kann erhöht werden.' : ms > 1000 ? 'Hinweis: über 1 s – Login wird träge, Parameter ggf. senken (min. OWASP-Werte beachten).' : 'OK');
+      return;
+    }
+    case 'import-catalog': {
+      const c = loadConfig();
+      const opt = (k: string) => (args.includes(k) ? args[args.indexOf(k) + 1] : undefined);
+      const file = opt('--file');
+      const commit = opt('--commit') ?? CISP.commit;
+      if (!/^[a-f0-9]{40}$/.test(commit)) throw new Error('--commit erwartet einen 40-stelligen Commit-Hash');
+      let buf: Buffer;
+      if (file) buf = readFileSync(file);
+      else {
+        console.log(`Lade ${cispUrl(commit)} …`);
+        const res = await fetch(cispUrl(commit), { redirect: 'error', signal: AbortSignal.timeout(120_000) });
+        if (!res.ok) throw new Error(`Download fehlgeschlagen (HTTP ${res.status})`);
+        buf = Buffer.from(await res.arrayBuffer());
+      }
+      const data = parseDataset(buf, commit);
+      const r = data.report;
+      if (commit === CISP.commit && !r.checksumMatches && !args.includes('--force')) {
+        throw new Error(`Prüfsumme weicht von der geprüften Version ab (${r.sha256}). Abbruch – mit --force trotzdem importieren.`);
+      }
+      console.log(`Quelle: ${CISP.name} · Commit ${commit.slice(0, 12)} · SHA-256 ${r.sha256.slice(0, 16)}…${r.checksumMatches ? ' (geprüft)' : ' (nicht geprüfte Version)'}`);
+      console.log(`Zeilen: ${r.rawRows} · übernommen: ${r.accepted} · abgelehnt: ${r.rejectedRows} · Sorten: ${r.cultivars} · Breeder: ${r.breeders}`);
+      console.log(`Abdeckung: ${Object.entries(r.coverage).map(([k, v]) => `${k} ${v.percent} %`).join(' · ')}`);
+      const rep = opt('--report');
+      if (rep) {
+        const { writeFileSync } = await import('node:fs');
+        writeFileSync(rep, JSON.stringify({ report: r, errors: data.errors.slice(0, 500) }, null, 2));
+        console.log(`Bericht geschrieben: ${rep}`);
+      }
+      if (args.includes('--dry-run')) {
+        console.log('Probelauf – es wurde nichts geschrieben.');
+        return;
+      }
+      const client = new pg.Client({ connectionString: c.migrateDatabaseUrl });
+      await client.connect();
+      try {
+        const t0 = Date.now();
+        const res = await importDataset(client as unknown as pg.PoolClient, data, { force: args.includes('--force'), log: (m) => console.log(`  ${m}`) });
+        if (res.status === 'unchanged') console.log('Diese Version ist bereits aktiv – nichts zu tun (mit --force erneut importieren).');
+        else console.log(`✓ Import ${res.importId} aktiv (${((Date.now() - t0) / 1000).toFixed(1)} s) · entfernt: ${res.removed?.cultivars ?? 0} Sorten, ${res.removed?.listings ?? 0} Angebote, ${res.removed?.breeders ?? 0} Breeder`);
+      } finally {
+        await client.end();
+      }
       return;
     }
     case 'migrate': {
