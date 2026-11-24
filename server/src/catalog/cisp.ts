@@ -70,16 +70,17 @@ export function parseCsv(text: string): string[][] {
 export function cleanText(s: string | undefined): string {
   if (!s) return '';
   return s
-    .replace(/(?:[ÃÂ][\u0080-¿]?){2,}/g, ' ')
-    .replace(/[�\u0000-\u0008\u000b-\u001f\u007f-\u009f]/g, '')
-    .replace(/[ \s]+/g, ' ')
+    .replace(/(?:[ÃÂ][\u0080-\u00bf]?){2,}/g, ' ')
+    // eslint-disable-next-line no-control-regex -- Steuerzeichen aus fehlerhaft kodierten Quelltexten entfernen
+    .replace(/[\ufffd\u0000-\u0008\u000b-\u001f\u007f-\u009f]/g, '')
+    .replace(/[\u00a0\s]+/g, ' ')
     .trim();
 }
 
 export const slugify = (s: string) =>
   s
     .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/&/g, ' and ')
     .replace(/[^a-z0-9]+/g, '-')
@@ -503,7 +504,7 @@ export function sha256(buf: Buffer | string): string {
 
 export function parseDataset(buf: Buffer, commit: string = CISP.commit): ParsedDataset {
   const digest = sha256(buf);
-  const text = buf.toString('utf8').replace(/^﻿/, '');
+  const text = buf.toString('utf8').replace(/^\ufeff/, '');
   const rows = parseCsv(text);
   const header = rows.shift() ?? [];
   const h = headerIndex(header);
