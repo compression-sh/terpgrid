@@ -7,6 +7,7 @@
 | PostgreSQL (`pg_dump -Fc`) | ✅ | Konten, Sessions, Datensätze. Inhalte bereits mit Model A (AES-256-GCM) verschlüsselt |
 | Dateispeicher (Volume `terpgrid_api-files`) | ✅ | Fotos/Dokumente, ebenfalls verschlüsselt |
 | `deploy/secrets/` (Master-Key, HMAC-Secret, DB-Passwörter) | ❌ **bewusst nicht** | Separat offline sichern (siehe unten) |
+| Sortenkatalog (`catalog_*`, ab 5.0) | ✅ (im Dump) | **öffentliche, regenerierbare** Daten (CC BY 4.0) – kommen mit dem Restore zurück; alternativ jederzeit mit `./import-catalog.sh` neu importierbar. Persönliche Verknüpfungen (Favoriten, gemerkte Breeder) liegen verschlüsselt in den Konto-Datensätzen und sind **nicht** regenerierbar |
 | Caddy-Zertifikate | ❌ | werden automatisch neu ausgestellt |
 
 restic verschlüsselt das Repository zusätzlich (AES-256-CTR + Poly1305-AES), dedupliziert und prüft Integrität. Ein gestohlenes Backup ist damit doppelt geschützt: Man bräuchte **das restic-Passwort und den Master-Key**.
@@ -61,6 +62,9 @@ Bewahre **getrennt vom Backup-Ziel** auf (Passwort-Manager, verschlüsselter USB
 Der Restore-Test meldet einen falschen Master-Key ausdrücklich („Datenschlüssel nicht entschlüsselbar“, Exit-Code 2) – getestet.
 
 ## Restore-Test (isoliert, monatlich)
+
+Getestet mit 5.0.0-rc.1 (Docker, isoliert, 24.11.2026): Backup inkl. Katalog (Dump 3,6 MB) → `restore-test.sh` zeigt Konten, Datensätze, Dateien **und** Katalogzählung (16.710 Sorten · 494 Breeder · 21.210 Angebote, Version) und entschlüsselt alles (0 Fehler). Danach `restore.sh` auf dem laufenden Stack: ein nach dem Backup angelegter Datensatz ist wieder weg, Altdaten, Foto (byte-identisch) und Katalog sind vorhanden, Suche und Breeder-Profile funktionieren. Ein mitten im Lauf abgebrochener Katalogimport (`docker kill`) hinterlässt den vorherigen Katalog unverändert (eine Transaktion).
+
 
 ```bash
 sudo backup/restore-test.sh [snapshot|latest]
