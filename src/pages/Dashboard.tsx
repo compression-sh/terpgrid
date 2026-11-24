@@ -451,7 +451,7 @@ export function Dashboard() {
           <div className="text-xs text-ink-400">{fmtDateLong(t)}</div>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink-50 sm:text-[28px]">{greeting()}</h1>
           <p className="mt-0.5 text-[13px] text-ink-400">
-            {activeGrows.length ? `${activeGrows.length} aktive${activeGrows.length === 1 ? 'r Grow' : ' Grows'} · ${trackedPlants.length} Pflanzen` : 'Deine Übersicht'}
+            {activeGrows.length ? `${activeGrows.length} aktive${activeGrows.length === 1 ? 'r Grow' : ' Grows'} · ${trackedPlants.length} ${trackedPlants.length === 1 ? 'Pflanze' : 'Pflanzen'}` : 'Deine Übersicht'}
             {next.length > 0 && ` · ${next.length} anstehende Aufgabe${next.length === 1 ? '' : 'n'} (14 Tage)`}
           </p>
         </div>

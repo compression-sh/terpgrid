@@ -272,7 +272,7 @@ export function BreederProfile({ id }: { id: string }) {
             </div>
           </div>
           {list.error && <p className="text-[13px] text-rose-300">{list.error}</p>}
-          <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {cards.map((c) => (
               <StrainCard key={c.key} strain={c} />
             ))}

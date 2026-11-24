@@ -49,11 +49,11 @@ export function StrainCard({ strain, priority, matchLabel }: { strain: CatalogSt
     return (
       <article className="group relative flex flex-col rounded-2xl border border-white/[0.06] bg-ink-900/70 p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-white/[0.14]">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-1">
             <TypeBadge type={strain.typeClass} label={strain.type} />
             {auto && <span className="rounded-full border border-white/[0.08] px-2 py-0.5 text-[11px] text-ink-300">Auto</span>}
           </div>
-          <div className="relative z-10 -mr-1.5 -mt-1.5">{actions}</div>
+          <div className="relative z-10 -mr-1.5 -mt-1.5 shrink-0">{actions}</div>
         </div>
         <a href={href(strainLink(strain))} className="mt-2 block min-w-0 after:absolute after:inset-0 after:rounded-2xl after:content-[''] focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-leaf-400" aria-label={`${strain.name} von ${strain.breeder ?? 'unbekanntem Breeder'} – Profil öffnen`}>
           <h3 className="truncate text-[15px] font-semibold tracking-tight text-ink-50">{strain.name}</h3>

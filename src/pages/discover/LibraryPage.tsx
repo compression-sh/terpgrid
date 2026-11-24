@@ -265,7 +265,7 @@ export function LibraryPage({ status }: { status: LibStatus }) {
         />
       )}
 
-      <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {items.map((s, i) => (
           <StrainCard key={s.key} strain={s} priority={i < 4} matchLabel={query && d?.items[i]?.match ? MATCH_LABEL[d.items[i]!.match!] : undefined} />
         ))}
