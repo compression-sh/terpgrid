@@ -100,6 +100,8 @@ export async function setup(overrides: Record<string, string> = {}, opts: { fetc
 export class Client {
   cookie = '';
   csrf = '';
+  /** Simulierte Absender-IP (remoteAddress) */
+  ip?: string;
   constructor(
     readonly app: FastifyInstance,
     readonly origin = 'https://terpgrid.test',
@@ -117,7 +119,7 @@ export class Client {
       payload = JSON.stringify(body);
       h['content-type'] = 'application/json';
     }
-    const res = await this.app.inject({ method: method as 'GET', url, payload, headers: h });
+    const res = await this.app.inject({ method: method as 'GET', url, payload, headers: h, ...(this.ip ? { remoteAddress: this.ip } : {}) });
     const set = res.headers['set-cookie'];
     for (const c of Array.isArray(set) ? set : set ? [set] : []) {
       const [pair] = c.split(';');

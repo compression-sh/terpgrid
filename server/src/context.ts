@@ -13,7 +13,12 @@ export interface AppContext {
   macKeys: { recovery: Buffer; invite: Buffer; ip: Buffer; account: Buffer };
   limits: {
     loginIp: WindowLimiter;
+    /** Backoff je Kennung UND IP – Fehlversuche von einer Adresse sperren das Opfer nicht überall aus */
     loginAccount: LoginBackoff;
+    /** Kontoweiter Backoff mit hoher Schwelle – bremst verteilte Angriffe über viele IPs */
+    loginGlobal: LoginBackoff;
+    /** Falsche 2FA-Codes je Konto (über alle Anmeldevorgänge, Re-Auth und 2FA-Aktivierung) */
+    mfa: LoginBackoff;
     register: WindowLimiter;
     recoverIp: WindowLimiter;
     recoverAccount: LoginBackoff;
@@ -42,6 +47,8 @@ export function createContext(config: Config, opts: { db?: Db; fetchImpl?: typeo
     limits: {
       loginIp: new WindowLimiter(30, 15 * 60_000),
       loginAccount: new LoginBackoff(5),
+      loginGlobal: new LoginBackoff(50),
+      mfa: new LoginBackoff(5, 2000),
       register: new WindowLimiter(5, 60 * 60_000),
       recoverIp: new WindowLimiter(10, 60 * 60_000),
       recoverAccount: new LoginBackoff(3, 5000),

@@ -10,7 +10,9 @@
  *   Verhalten mit der lokalen Datenbank `terpgrid`, gekennzeichnet als „nur auf diesem Gerät“.
  */
 import { type ReactNode, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { clearPhotoUrlCache } from '../components/photos/usePhotoUrl';
 import { setCatalogProxy } from '../lib/catalog/endpoint';
+import { clearAccountLocalStorage, isSharedDevice } from '../lib/device';
 import { DB_NAME, closeDatabase, deleteDatabase, getAll, setSyncTracking, useDatabaseName } from '../lib/db/database';
 import { type AuthConfig, type ServerUser, type SessionResponse, ApiError, api, setCsrfToken, setOnUnauthorized } from '../lib/server/api';
 import { SyncEngine, type SyncStatus } from '../lib/sync/engine';
@@ -89,12 +91,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const activate = useCallback(
     (user: ServerUser, offline: boolean, reauthUntil: string | null) => {
       stopEngine();
+      clearPhotoUrlCache();
       useDatabaseName(accountDbName(user.accountKey));
       setSyncTracking(true);
       setCatalogProxy(window.location.origin);
       const la = { accountKey: user.accountKey, loginName: user.loginName, displayName: user.displayName };
-      writeJson(LAST_ACCOUNT_KEY, la);
-      setLastAccount(la);
+      // Auf geteilten Geräten keine Kennung merken (kein Offline-Fortsetzen)
+      if (!isSharedDevice()) {
+        writeJson(LAST_ACCOUNT_KEY, la);
+        setLastAccount(la);
+      }
       const e = new SyncEngine();
       engineRef.current = e;
       setEngine(e);
@@ -108,6 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const toAnonymous = useCallback(
     (offline = false) => {
       stopEngine();
+      clearPhotoUrlCache();
       setCsrfToken('');
       // Keine Konto-Datenbank geöffnet lassen
       void closeDatabase();
@@ -196,9 +203,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const current = state.kind === 'authenticated' ? state.user : null;
       await api('POST', '/api/auth/logout').catch(() => {});
       stopEngine();
-      if (opts.wipeLocal && current) {
+      if ((opts.wipeLocal || isSharedDevice()) && current) {
         useDatabaseName(accountDbName(current.accountKey));
         await deleteDatabase().catch(() => {});
+        clearAccountLocalStorage(current.accountKey);
       } else {
         await closeDatabase();
       }

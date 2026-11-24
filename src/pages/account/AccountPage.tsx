@@ -25,7 +25,9 @@ import { useToast } from '../../app/Toasts';
 import { Callout } from '../../components/ui/Callout';
 import { Modal } from '../../components/ui/Modal';
 import { PageHeader } from '../../components/ui/PageHeader';
-import { deleteDatabase, useDatabaseName } from '../../lib/db/database';
+import { deleteDatabase, storageEstimate, useDatabaseName } from '../../lib/db/database';
+import { isSharedDevice, setSharedDevice } from '../../lib/device';
+import { useData } from '../../app/DataProvider';
 import { formatBytes } from '../../lib/media/images';
 import { ApiError, type ServerUser, api } from '../../lib/server/api';
 import { FormError, PasswordField, PasswordStrength, passwordHints } from '../auth/fields';
@@ -124,6 +126,7 @@ export function AccountPage() {
           ['sicherheit', 'Sicherheit'],
           ['sitzungen', 'Sitzungen'],
           ['daten', 'Daten'],
+          ['geraet', 'Dieses Gerät'],
           ['datenschutz', 'Datenschutz-Center'],
           ['loeschen', 'Konto löschen'],
           ...(user.role === 'admin' ? [['admin', 'Administration']] : []),
@@ -248,6 +251,7 @@ export function AccountPage() {
         )}
       </Section>
 
+      <DeviceSection />
       <PrivacyCenter />
       <DeleteSection user={user} disabled={offline} />
     </div>
@@ -542,6 +546,87 @@ function TotpModal({ open, onClose, onDone }: { open: boolean; onClose: () => vo
         </form>
       )}
     </Modal>
+  );
+}
+
+function DeviceSection() {
+  const auth = useAuth();
+  const confirm = useConfirm();
+  const { data } = useData();
+  const [shared, setShared] = useState(isSharedDevice);
+  const [usage, setUsage] = useState<number | undefined>();
+  const [busy, setBusy] = useState(false);
+  const user = auth.state.kind === 'authenticated' ? auth.state.user : null;
+  useEffect(() => {
+    void storageEstimate().then((e) => setUsage(e.usage));
+  }, []);
+  const records = Object.values(data).reduce((n, l) => n + l.length, 0);
+  return (
+    <Section id="geraet" icon={<Smartphone className="size-4" />} title="Dieses Gerät" subtitle="Lokale Arbeitskopie in diesem Browser – für Offline-Nutzung und Synchronisation.">
+      <dl className="mb-4 grid grid-cols-2 gap-3 text-[13px] sm:grid-cols-3">
+        <div>
+          <dt className="text-ink-500">Lokale Datensätze</dt>
+          <dd className="mt-0.5 tabular text-ink-100">{records}</dd>
+        </div>
+        <div>
+          <dt className="text-ink-500">Belegter Browser-Speicher</dt>
+          <dd className="mt-0.5 tabular text-ink-100">{usage !== undefined ? formatBytes(usage) : 'unbekannt'}</dd>
+        </div>
+        <div>
+          <dt className="text-ink-500">Noch nicht übertragen</dt>
+          <dd className={`mt-0.5 tabular ${auth.sync.pending ? 'text-amber-200' : 'text-ink-100'}`}>{auth.sync.pending}</dd>
+        </div>
+      </dl>
+      <label className="flex items-start gap-3 rounded-xl border border-white/[0.06] bg-white/[0.015] p-3.5">
+        <input
+          type="checkbox"
+          className="mt-0.5 size-4 accent-leaf-500"
+          checked={shared}
+          onChange={(e) => {
+            setSharedDevice(e.target.checked);
+            setShared(e.target.checked);
+          }}
+        />
+        <span>
+          <span className="block text-[13.5px] font-medium text-ink-100">Geteiltes Gerät</span>
+          <span className="mt-0.5 block text-[12.5px] leading-relaxed text-ink-400">
+            Beim Abmelden wird die lokale Kopie immer gelöscht, deine Kennung wird nicht gemerkt und Offline-Weiterarbeiten ist aus. Empfohlen für Geräte, die auch andere nutzen.
+          </span>
+        </span>
+      </label>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          className="btn-ghost"
+          disabled={busy || !user}
+          onClick={async () => {
+            if (!user) return;
+            const pending = auth.sync.pending;
+            const ok = await confirm({
+              title: 'Lokale Kopie löschen?',
+              message:
+                pending > 0
+                  ? `${pending} Änderung(en) wurden noch nicht vom Server bestätigt und gehen dabei verloren. Besser zuerst synchronisieren.`
+                  : 'Die Daten werden aus diesem Browser entfernt und anschließend frisch vom Server geladen. Auf dem Server ändert sich nichts.',
+              confirmLabel: pending > 0 ? 'Trotzdem löschen' : 'Löschen und neu laden',
+              tone: pending > 0 ? 'danger' : 'default',
+            });
+            if (!ok) return;
+            setBusy(true);
+            auth.engine?.stop();
+            useDatabaseName(accountDbName(user.accountKey));
+            await deleteDatabase().catch(() => {});
+            window.location.reload();
+          }}
+        >
+          <HardDrive className="size-4" /> Lokale Kopie löschen und neu laden
+        </button>
+      </div>
+      <p className="hint mt-3">
+        Die lokale Kopie ist nicht verschlüsselt. Eine Verschlüsselung im Browser würde einen Schlüssel auf demselben Gerät erfordern und gegen Personen mit Zugriff auf das entsperrte
+        Gerät keinen echten Schutz bieten. Schütze das Gerät selbst (Bildschirmsperre, Geräteverschlüsselung).
+      </p>
+    </Section>
   );
 }
 

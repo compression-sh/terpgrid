@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { type LastAccount, pendingChanges, useAuth } from './auth';
 import { useConfirm } from './Confirm';
 import { href } from './router';
+import { isSharedDevice } from '../lib/device';
 import { legacyDismissed, legacyExists, readImportMark } from '../lib/sync/legacy';
 
 /** Kompakter Sync-Status. „Synchronisiert“ nur, wenn der Server alles bestätigt hat. */
@@ -88,8 +89,9 @@ export async function logoutFlow(logout: (o?: { wipeLocal?: boolean }) => Promis
       tone: 'danger',
     });
     if (!ok) return;
-    return logout();
+    return logout({ wipeLocal: isSharedDevice() });
   }
+  if (isSharedDevice()) return logout({ wipeLocal: true });
   const wipe = await confirm({
     title: 'Abmelden',
     message: 'Soll die lokale Kopie deiner Daten auf diesem Gerät gelöscht werden? Empfohlen auf gemeinsam genutzten Geräten. Deine Daten bleiben auf dem Server erhalten.',
