@@ -9,8 +9,9 @@ import { tx } from '../db.js';
 import { HttpError, requireReauth, requireSession, throttle } from '../http.js';
 import { displayNameProblem, generateAccountId, normalizeLogin, usernameProblem } from '../identity.js';
 import { passwordProblems } from '../passwords.js';
-import { type SessionInfo, clearSessionCookie, createSession, handleOf, setSessionCookie } from '../sessions.js';
-import { createUserRow, getDek, publicUser, recoveryHash, replaceRecoveryCodes } from '../users.js';
+import { issueLoginSession } from '../login.js';
+import { type SessionInfo, clearSessionCookie, handleOf, type setSessionCookie } from '../sessions.js';
+import { createUserRow, getDek, recoveryHash, replaceRecoveryCodes } from '../users.js';
 
 const str = (max: number, min = 1) => ({ type: 'string', minLength: min, maxLength: max }) as const;
 
@@ -58,15 +59,8 @@ export function authRoutes(ctx: AppContext) {
   };
 
   return fp(async (app: FastifyInstance) => {
-    async function startSession(req: FastifyRequest, reply: Parameters<typeof setSessionCookie>[1], userId: string, oldSession?: Buffer | null) {
-      // Rotation: bestehende Session dieses Browsers wird ersetzt
-      if (oldSession) await ctx.db.query('DELETE FROM sessions WHERE id = $1', [oldSession]);
-      const { token, csrfToken } = await createSession(ctx, ctx.db, userId, req);
-      setSessionCookie(ctx, reply, token);
-      await ctx.db.query('UPDATE users SET last_login_at = now() WHERE id = $1', [userId]);
-      const { rows } = await ctx.db.query('SELECT login_name, login_kind, display_name, role, totp_enabled FROM users WHERE id = $1', [userId]);
-      return { user: { ...publicUser(rows[0]), accountKey: accountKey(ctx, userId) }, csrfToken };
-    }
+    const startSession = (req: FastifyRequest, reply: Parameters<typeof setSessionCookie>[1], userId: string, oldSession?: Buffer | null) =>
+      issueLoginSession(ctx, req, reply, userId, oldSession);
 
     async function validInvite(token: string | undefined) {
       if (!token || token.length > 100) return null;
@@ -294,13 +288,15 @@ export function authRoutes(ctx: AppContext) {
           // Neues Passwort, 2FA aus (Gerät evtl. verloren), alle Sessions beenden
           await c.query('UPDATE users SET password_hash = $2, password_changed_at = now(), totp_enabled = false, totp_secret = NULL, totp_last_step = NULL WHERE id = $1', [userId, newHash]);
           await c.query('DELETE FROM sessions WHERE user_id = $1', [userId]);
+          // Passkeys entfernen: nach einer Wiederherstellung soll nur noch die berechtigte Person Zugang haben
+          await c.query('DELETE FROM webauthn_credentials WHERE user_id = $1', [userId]);
           const r = await c.query('SELECT count(*)::int AS n FROM recovery_codes WHERE user_id = $1 AND used_at IS NULL', [userId]);
           await audit(ctx, 'recovery.success', { userId, ip: req.ip, client: c });
           return r.rows[0].n as number;
         });
         if (remaining === null) return fail();
         ctx.limits.recoverAccount.success(login);
-        return { status: 'ok', remainingRecoveryCodes: remaining, totpDisabled: true, ...(await startSession(req, reply, userId)) };
+        return { status: 'ok', remainingRecoveryCodes: remaining, totpDisabled: true, passkeysRemoved: true, ...(await startSession(req, reply, userId)) };
       },
     );
 

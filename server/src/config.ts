@@ -29,6 +29,8 @@ export interface Config {
   cookieSecure: boolean;
   catalogEnabled: boolean;
   backupStatusFile?: string;
+  /** WebAuthn Relying-Party-ID (Standard: Hostname aus PUBLIC_ORIGIN) */
+  webauthnRpId?: string;
   version: string;
 }
 
@@ -123,6 +125,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     cookieSecure,
     catalogEnabled: bool(env, 'CATALOG_PROXY_ENABLED', true),
     backupStatusFile: env.BACKUP_STATUS_FILE || undefined,
+    webauthnRpId: env.WEBAUTHN_RP_ID || undefined,
     version: env.APP_VERSION ?? '3.0.0',
   };
 }

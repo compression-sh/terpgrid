@@ -1,5 +1,6 @@
 import {
   Download,
+  Fingerprint,
   HardDrive,
   KeyRound,
   Laptop,
@@ -30,6 +31,7 @@ import { isSharedDevice, setSharedDevice } from '../../lib/device';
 import { useData } from '../../app/DataProvider';
 import { formatBytes } from '../../lib/media/images';
 import { ApiError, type ServerUser, api } from '../../lib/server/api';
+import { type PasskeyInfo, passkeyErrorText, passkeysSupported, registerPasskey, suggestPasskeyName } from '../../lib/server/passkeys';
 import { FormError, PasswordField, PasswordStrength, passwordHints } from '../auth/fields';
 import { RecoveryCodesPanel } from '../auth/RecoveryCodes';
 
@@ -124,6 +126,7 @@ export function AccountPage() {
         {[
           ['profil', 'Profil'],
           ['sicherheit', 'Sicherheit'],
+          ['passkeys', 'Passkeys'],
           ['sitzungen', 'Sitzungen'],
           ['daten', 'Daten'],
           ['geraet', 'Dieses Gerät'],
@@ -148,6 +151,7 @@ export function AccountPage() {
 
       <ProfileSection user={user} ov={ov} onSaved={(displayName) => auth.setUser({ displayName })} disabled={offline} />
       <SecuritySection user={user} ov={ov} reload={load} disabled={offline} />
+      <PasskeySection disabled={offline} />
 
       <Section id="sitzungen" icon={<Laptop className="size-4" />} title="Aktive Sitzungen" subtitle="Geräte, auf denen du angemeldet bist. Unbekannte Sitzungen sofort beenden.">
         <ul className="divide-y divide-white/[0.05]">
@@ -399,6 +403,147 @@ function SecuritySection({ user, ov, reload, disabled }: { user: ServerUser; ov:
       <Modal open={!!codes} onClose={() => setCodes(null)} title="Neue Wiederherstellungscodes" subtitle="Nur jetzt sichtbar. Die alten Codes sind ungültig.">
         {codes && <RecoveryCodesPanel codes={codes} loginName={user.loginName} doneLabel="Fertig" onDone={() => { setCodes(null); reload(); }} />}
       </Modal>
+    </Section>
+  );
+}
+
+function PasskeySection({ disabled }: { disabled: boolean }) {
+  const reauth = useReauth();
+  const toast = useToast();
+  const confirm = useConfirm();
+  const [list, setList] = useState<PasskeyInfo[] | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [name, setName] = useState(suggestPasskeyName);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+  const [editing, setEditing] = useState<{ id: string; name: string } | null>(null);
+  const supported = passkeysSupported();
+
+  useEffect(() => {
+    if (disabled) return;
+    api<{ passkeys: PasskeyInfo[] }>('GET', '/api/auth/passkeys')
+      .then((r) => setList(r.passkeys))
+      .catch(() => setList([]));
+  }, [disabled]);
+
+  return (
+    <Section id="passkeys" icon={<Fingerprint className="size-4" />} title="Passkeys" subtitle="Anmelden mit Fingerabdruck, Gesichtserkennung oder Geräte-PIN – ohne Passwort, ohne E-Mail.">
+      {!supported && <Callout tone="warn">Dieser Browser unterstützt keine Passkeys.</Callout>}
+      {list && list.length > 0 && (
+        <ul className="mb-3 divide-y divide-white/[0.05]">
+          {list.map((p) => (
+            <li key={p.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center">
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-leaf-500/10 text-leaf-300">
+                <Fingerprint className="size-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                {editing?.id === p.id ? (
+                  <form
+                    className="flex gap-2"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      try {
+                        const r = await reauth(() => api<{ passkeys: PasskeyInfo[] }>('PATCH', `/api/auth/passkeys/${p.id}`, { name: editing.name.trim() }));
+                        if (r) setList(r.passkeys);
+                        setEditing(null);
+                      } catch (err) {
+                        toast(passkeyErrorText(err), { tone: 'error' });
+                      }
+                    }}
+                  >
+                    <input className="input-base py-1.5" aria-label="Name des Passkeys" value={editing.name} maxLength={60} autoFocus onChange={(e) => setEditing({ id: p.id, name: e.target.value })} />
+                    <button type="submit" className="btn-primary py-1.5" disabled={!editing.name.trim()}>
+                      Speichern
+                    </button>
+                    <button type="button" className="btn-ghost py-1.5" onClick={() => setEditing(null)}>
+                      Abbrechen
+                    </button>
+                  </form>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 text-[13.5px] text-ink-100">
+                      {p.name}
+                      {p.backedUp && <span className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[10.5px] text-ink-300">synchronisiert</span>}
+                    </div>
+                    <div className="text-[11.5px] text-ink-500">
+                      Hinzugefügt {dt(p.createdAt)} · {p.lastUsedAt ? `zuletzt verwendet ${dt(p.lastUsedAt)}` : 'noch nicht verwendet'}
+                    </div>
+                  </>
+                )}
+              </div>
+              {editing?.id !== p.id && (
+                <div className="flex gap-1.5 pl-11 sm:pl-0">
+                  <button type="button" className="btn-ghost px-2.5 py-1.5 text-xs" disabled={disabled} onClick={() => setEditing({ id: p.id, name: p.name })}>
+                    Umbenennen
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-ghost px-2.5 py-1.5 text-xs text-rose-200"
+                    disabled={disabled}
+                    onClick={async () => {
+                      const ok = await confirm({ title: `Passkey „${p.name}“ entfernen?`, message: 'Mit diesem Passkey ist danach keine Anmeldung mehr möglich. Passwort und andere Passkeys bleiben gültig.', confirmLabel: 'Entfernen', tone: 'danger' });
+                      if (!ok) return;
+                      try {
+                        const r = await reauth(() => api<{ passkeys: PasskeyInfo[] }>('DELETE', `/api/auth/passkeys/${p.id}`));
+                        if (r) setList(r.passkeys);
+                      } catch (err) {
+                        toast(passkeyErrorText(err), { tone: 'error' });
+                      }
+                    }}
+                  >
+                    Entfernen
+                  </button>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {list && list.length === 0 && <p className="mb-3 text-[13px] text-ink-400">Noch kein Passkey registriert.</p>}
+      {adding ? (
+        <form
+          className="flex flex-col gap-2 rounded-xl border border-white/[0.06] bg-white/[0.015] p-3 sm:flex-row sm:items-end"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setBusy(true);
+            setError(undefined);
+            try {
+              const r = await reauth(() => registerPasskey(name.trim()));
+              if (r) {
+                setList(r);
+                setAdding(false);
+                toast('Passkey hinzugefügt.', { tone: 'ok' });
+              }
+            } catch (err) {
+              setError(passkeyErrorText(err));
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <div className="flex-1 space-y-1.5">
+            <label className="label" htmlFor="pk-name">
+              Name (z. B. Gerät)
+            </label>
+            <input id="pk-name" className="input-base" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
+            <FormError message={error} />
+          </div>
+          <button type="submit" className="btn-primary" disabled={busy || !name.trim()}>
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <Fingerprint className="size-4" />} Passkey erstellen
+          </button>
+          <button type="button" className="btn-ghost" onClick={() => setAdding(false)}>
+            Abbrechen
+          </button>
+        </form>
+      ) : (
+        <button type="button" className="btn-primary" disabled={disabled || !supported} onClick={() => setAdding(true)}>
+          <Fingerprint className="size-4" /> Passkey hinzufügen
+        </button>
+      )}
+      <p className="hint mt-3">
+        Passkeys werden auf deinem Gerät oder in deinem Passwort-Manager gespeichert; der Server kennt nur den öffentlichen Schlüssel. Eine Anmeldung mit Passkey ersetzt Passwort und
+        2FA-Code. Bei einer Wiederherstellung per Recovery-Code werden alle Passkeys entfernt.
+      </p>
     </Section>
   );
 }

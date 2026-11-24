@@ -15,6 +15,7 @@ import { setCatalogProxy } from '../lib/catalog/endpoint';
 import { clearAccountLocalStorage, isSharedDevice } from '../lib/device';
 import { DB_NAME, closeDatabase, deleteDatabase, getAll, setSyncTracking, useDatabaseName } from '../lib/db/database';
 import { type AuthConfig, type ServerUser, type SessionResponse, ApiError, api, setCsrfToken, setOnUnauthorized } from '../lib/server/api';
+import { loginWithPasskey } from '../lib/server/passkeys';
 import { SyncEngine, type SyncStatus } from '../lib/sync/engine';
 
 const MODE_KEY = 'terpgrid.mode';
@@ -41,6 +42,7 @@ interface AuthApi {
   lastAccount: LastAccount | null;
   login(login: string, password: string): Promise<LoginResult>;
   completeMfa(mfaToken: string, code: string): Promise<void>;
+  loginPasskey(): Promise<void>;
   /** Registriert; das Konto wird erst mit enter() geöffnet (nachdem die Recovery-Codes gesichert wurden). */
   register(body: { mode: 'username' | 'generated'; username?: string; displayName?: string; password: string; invite?: string; ageConfirmed: boolean }): Promise<{ user: ServerUser; recoveryCodes: string[] }>;
   enter(user: ServerUser): void;
@@ -181,6 +183,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [activate],
   );
 
+  const loginPasskey = useCallback(async () => {
+    const r = await loginWithPasskey();
+    activate(r.user, false, new Date(Date.now() + 10 * 60_000).toISOString());
+  }, [activate]);
+
   const register = useCallback(
     async (body: Parameters<AuthApi['register']>[0]) => {
       return api<{ user: ServerUser; recoveryCodes: string[] }>('POST', '/api/auth/register', body);
@@ -238,8 +245,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<AuthApi>(
-    () => ({ state, sync, engine, lastAccount, login, completeMfa, register, enter, recover, logout, continueOffline, refresh, reauth, setUser }),
-    [state, sync, engine, lastAccount, login, completeMfa, register, enter, recover, logout, continueOffline, refresh, reauth, setUser],
+    () => ({ state, sync, engine, lastAccount, login, completeMfa, loginPasskey, register, enter, recover, logout, continueOffline, refresh, reauth, setUser }),
+    [state, sync, engine, lastAccount, login, completeMfa, loginPasskey, register, enter, recover, logout, continueOffline, refresh, reauth, setUser],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

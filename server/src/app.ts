@@ -11,6 +11,7 @@ import { adminRoutes } from './routes/admin.js';
 import { authRoutes } from './routes/auth.js';
 import { catalogRoutes } from './routes/catalog.js';
 import { fileRoutes } from './routes/files.js';
+import { passkeyRoutes } from './routes/passkeys.js';
 import { syncRoutes } from './routes/sync.js';
 import { loadSession, sessionCookieName } from './sessions.js';
 
@@ -21,7 +22,7 @@ export function redactUrl(url: string): string {
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 /** Schreibende Endpunkte ohne Session (Login etc.) – nur mit Origin-Prüfung + Custom-Header */
-const PRE_AUTH = new Set(['/api/auth/login', '/api/auth/login/mfa', '/api/auth/register', '/api/auth/recover']);
+const PRE_AUTH = new Set(['/api/auth/login', '/api/auth/login/mfa', '/api/auth/register', '/api/auth/recover', '/api/auth/passkeys/login/options', '/api/auth/passkeys/login/verify']);
 
 export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
   const app = Fastify({
@@ -108,6 +109,7 @@ export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
   });
 
   await app.register(authRoutes(ctx));
+  await app.register(passkeyRoutes(ctx));
   await app.register(accountRoutes(ctx));
   await app.register(syncRoutes(ctx));
   await app.register(fileRoutes(ctx));

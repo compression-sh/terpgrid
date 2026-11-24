@@ -1,8 +1,9 @@
-import { ArrowLeft, KeyRound, Loader2, LogIn, ShieldCheck, Sparkles, UserPlus, UserRound, WifiOff } from 'lucide-react';
+import { ArrowLeft, Fingerprint, KeyRound, Loader2, LogIn, ShieldCheck, Sparkles, UserPlus, UserRound, WifiOff } from 'lucide-react';
 import { type FormEvent, type ReactNode, useEffect, useId, useState } from 'react';
 import { useAuth } from '../../app/auth';
 import { LogoMark, Wordmark } from '../../components/brand/Logo';
 import { ApiError, type ServerUser, api } from '../../lib/server/api';
+import { passkeyErrorText, passkeysSupported } from '../../lib/server/passkeys';
 import { FormError, PasswordField, PasswordStrength, passwordHints } from './fields';
 import { RecoveryCodesPanel } from './RecoveryCodes';
 
@@ -105,6 +106,7 @@ function LoginView({ offline, onMfa, onRegister, onRecover }: { offline: boolean
   const [login, setLogin] = useState(auth.lastAccount?.loginName ?? '');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
+  const [pkBusy, setPkBusy] = useState(false);
   const [error, setError] = useState<string>();
 
   const submit = async (e: FormEvent) => {
@@ -153,6 +155,31 @@ function LoginView({ offline, onMfa, onRegister, onRecover }: { offline: boolean
           {busy ? <Loader2 className="size-4 animate-spin" /> : <LogIn className="size-4" />} Anmelden
         </button>
       </form>
+      {passkeysSupported() && (
+        <>
+          <div className="my-5 flex items-center gap-3 text-[11px] uppercase tracking-[0.14em] text-ink-500">
+            <span className="h-px flex-1 bg-white/[0.06]" /> oder <span className="h-px flex-1 bg-white/[0.06]" />
+          </div>
+          <button
+            type="button"
+            className="btn-ghost w-full py-2.5"
+            disabled={pkBusy}
+            onClick={async () => {
+              setPkBusy(true);
+              setError(undefined);
+              try {
+                await auth.loginPasskey();
+              } catch (err) {
+                setError(passkeyErrorText(err));
+              } finally {
+                setPkBusy(false);
+              }
+            }}
+          >
+            {pkBusy ? <Loader2 className="size-4 animate-spin" /> : <Fingerprint className="size-4" />} Mit Passkey anmelden
+          </button>
+        </>
+      )}
       <div className="mt-6 flex flex-col gap-2 border-t border-white/[0.05] pt-5 text-[13px] sm:flex-row sm:justify-between">
         <button type="button" className="inline-flex items-center gap-1.5 text-ink-300 hover:text-leaf-200" onClick={onRegister}>
           <UserPlus className="size-3.5" /> Konto erstellen
@@ -201,7 +228,7 @@ function MfaView({ token, back }: { token: string; back: () => void }) {
         <button type="submit" className="btn-primary w-full py-2.5" disabled={busy || code.length !== 6}>
           {busy ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />} Bestätigen
         </button>
-        <p className="hint">Kein Zugriff auf die App? Über „Passwort vergessen?“ kannst du dich mit einem Wiederherstellungscode anmelden – 2FA wird dabei deaktiviert.</p>
+        <p className="hint">Kein Zugriff auf die App? Über „Passwort vergessen?“ kannst du dich mit einem Wiederherstellungscode anmelden – 2FA wird dabei deaktiviert und Passkeys werden entfernt.</p>
       </form>
     </Shell>
   );
@@ -365,7 +392,7 @@ function RecoverView({ back }: { back: () => void }) {
   return (
     <Shell
       title="Zugang wiederherstellen"
-      subtitle="Mit einem deiner Wiederherstellungscodes setzt du ein neues Passwort. Der Code ist danach verbraucht; alle anderen Sitzungen werden beendet und 2FA wird deaktiviert."
+      subtitle="Mit einem deiner Wiederherstellungscodes setzt du ein neues Passwort. Der Code ist danach verbraucht; alle Sitzungen werden beendet, 2FA wird deaktiviert und registrierte Passkeys werden entfernt."
       back={back}
     >
       <form onSubmit={submit} className="space-y-4">

@@ -19,7 +19,11 @@ export type AuditType =
   | 'invite.create'
   | 'invite.revoke'
   | 'admin.user.status'
-  | 'import';
+  | 'import'
+  | 'passkey.add'
+  | 'passkey.rename'
+  | 'passkey.remove'
+  | 'keys.rotate';
 
 export async function audit(ctx: AppContext, type: AuditType, opts: { userId?: string | null; ip?: string; meta?: Record<string, string | number | boolean>; client?: Tx } = {}): Promise<void> {
   const q = 'INSERT INTO audit_events(user_id, type, ip_tag, meta) VALUES ($1, $2, $3, $4)';
