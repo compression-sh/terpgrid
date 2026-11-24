@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as CL from '../catalog/cannalib';
@@ -6,7 +8,7 @@ import { decodeEntities, htmlToBlocks } from '../catalog/html';
 import { PoliteClient } from '../catalog/http';
 import { CatalogService, TTL } from '../catalog/service';
 import * as SA from '../catalog/strainapi';
-import { TERPENES, matchTerpene, terpeneLabel } from '../catalog/terpenes';
+import { TERPENES, TERPENE_GROUPS, matchTerpene, matchTerpeneGroup, prettyFormula, terpeneById, terpeneChem, terpeneGroupById, terpeneLabel } from '../catalog/terpenes';
 import { CatalogError } from '../catalog/types';
 import { deleteDatabase, selectDatabase } from '../db/database';
 import cannalibDetail from './fixtures/cannalib-detail.json';
@@ -158,9 +160,41 @@ describe('Terpen-Atlas', () => {
     expect(matchTerpene('beta_myrcene')?.id).toBe('myrcene');
     expect(matchTerpene('Beta-Caryophyllene')?.id).toBe('caryophyllene');
     expect(matchTerpene('delta-Limonene')?.id).toBe('limonene');
-    expect(matchTerpene('alpha_pinene')?.id).toBe('pinene');
-    expect(matchTerpene('trans_nerolidol')).toBeUndefined();
-    expect(terpeneLabel('trans_nerolidol')).toBe('trans-nerolidol');
+    expect(matchTerpene('alpha_pinene')?.id).toBe('alpha-pinene');
+    expect(matchTerpene('trans_nerolidol')?.id).toBe('trans-nerolidol');
+    expect(matchTerpene('Ylangene')).toBeUndefined();
+    expect(terpeneLabel('ylang_ene')).toBe('ylang-ene');
+  });
+  it('ordnet Sammelnamen ohne Isomer keinem bestimmten Isomer zu', () => {
+    for (const n of ['pinene', 'Pinen', 'ocimene', 'terpineol', 'phellandrene', 'nerolidol', 'farnesene']) {
+      expect(matchTerpene(n), n).toBeUndefined();
+      expect(matchTerpeneGroup(n)).toBeDefined();
+    }
+    expect(matchTerpeneGroup('pinene')?.members).toEqual(['alpha-pinene', 'beta-pinene']);
+    expect(terpeneLabel('pinene')).toBe('Pinen');
+    for (const g of TERPENE_GROUPS) for (const m of g.members) expect(TERPENES.some((t) => t.id === m)).toBe(true);
+  });
+  it('chemische Angaben stimmen mit den PubChem-Daten überein', () => {
+    for (const t of TERPENES) {
+      const c = terpeneChem(t.id);
+      expect(c, t.id).toBeDefined();
+      expect(t.pubchemCid).toBe(c!.cid);
+      expect(t.formula).toBe(prettyFormula(c!.formula));
+      expect(t.molarMass).toBe(c!.mw);
+      if (c!.cas) expect(t.cas).toBe(c!.cas);
+      // Struktur: nur Schweratome, Bindungen verweisen auf vorhandene Atome
+      expect(c!.structure.a.length).toBeGreaterThan(5);
+      for (const [a, b] of c!.structure.b) expect(Math.max(a!, b!)).toBeLessThan(c!.structure.a.length);
+      const heavy = c!.structure.a.length;
+      const fromFormula = [...c!.formula.matchAll(/([A-Z][a-z]?)(\d*)/g)].filter((m) => m[1] !== 'H').reduce((n, m) => n + Number(m[2] || 1), 0);
+      expect(heavy, t.id).toBe(fromFormula);
+    }
+  });
+  it('alle Terpen-Kennungen des Servers sind im Atlas bekannt', () => {
+    const src = readFileSync(resolve(__dirname, '../../../server/src/catalog/enrich.ts'), 'utf8');
+    const block = src.slice(src.indexOf('const TERPENE_ALIASES'), src.indexOf('};', src.indexOf('const TERPENE_ALIASES')));
+    const ids = new Set([...block.matchAll(/: '([a-z0-9-]+)'/g)].map((m) => m[1]!));
+    for (const id of ids) expect(terpeneById(id) ?? terpeneGroupById(id), id).toBeDefined();
   });
   it('jeder Eintrag hat Formel, CAS, PubChem-Quelle', () => {
     for (const t of TERPENES) {

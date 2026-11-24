@@ -173,6 +173,19 @@ export interface LibBreederDetail {
   attribution: LibAttribution;
 }
 
+/** Wie viele Katalogsorten ein Terpen NENNEN (Seedbank-Texte bzw. Datenbank-Angaben) – keine Mengen */
+export interface LibTerpeneIndex {
+  terpenes: { id: string; names: string[]; cisp: number; database: number }[];
+  cultivarsWithTerpenes: number;
+}
+export interface LibTerpeneCultivars {
+  id: string;
+  total: number;
+  page: number;
+  totalPages: number;
+  items: (LibCultivar & { terpeneSource: 'seedbank' | 'database' })[];
+}
+
 export interface LibSearchParams {
   q?: string;
   breeder?: string;
@@ -216,6 +229,9 @@ export const library = {
   byName: (slug: string, signal?: AbortSignal) => api<{ slug: string; items: LibCultivar[]; childCount: number }>('GET', `/api/catalog/local/by-name/${encodeURIComponent(slug)}`, undefined, { signal }),
   breeders: (p: { q?: string; letter?: string; sort?: 'name' | 'cultivars'; kind?: 'seedbank' | 'collab'; page?: number; perPage?: number }, signal?: AbortSignal) =>
     api<LibBreederList>('GET', `/api/catalog/local/breeders${qs(p)}`, undefined, { signal }),
+  terpeneIndex: (signal?: AbortSignal) => api<LibTerpeneIndex>('GET', '/api/catalog/local/terpene-index', undefined, { signal }),
+  terpeneCultivars: (id: string, page: number, signal?: AbortSignal) =>
+    api<LibTerpeneCultivars>('GET', `/api/catalog/local/terpenes/${encodeURIComponent(id)}/cultivars?page=${page}`, undefined, { signal }),
   breeder: (id: string, signal?: AbortSignal) => api<LibBreederDetail>('GET', `/api/catalog/local/breeders/${encodeURIComponent(id)}`, undefined, { signal }),
 };
 
