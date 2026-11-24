@@ -1,9 +1,8 @@
-import { BarChart3, BookOpenText, Camera, Leaf, Receipt, Ruler, Scale, Sprout } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { BarChart3, BookOpenText, Camera, Download, FlaskRound, Leaf, Receipt, Ruler, Scale, SlidersHorizontal, Sprout } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useData } from '../app/DataProvider';
 import { href } from '../app/router';
-import { SelectField } from '../components/forms/Fields';
 import { CATEGORY_COLOR, money } from '../components/grow/ExpenseList';
 import { MeasurementCharts } from '../components/grow/MeasurementCharts';
 import { Card } from '../components/ui/Card';
@@ -17,6 +16,8 @@ import { fmt } from '../lib/format';
 import { journalSummary } from './JournalPage';
 import { computeInsights } from '../lib/insights';
 import { METRICS } from '../lib/grow/series';
+import { downloadFile } from '../lib/exporters';
+import { type ExplorerRange, RANGE_LABEL, expenseCsv, journalCsv, labComparison, labCsv, measurementCsv, scopeData } from '../lib/explorer';
 
 const tooltipStyle = { background: '#0e1211', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, fontSize: 12 };
 
@@ -63,15 +64,26 @@ export function AnalyticsPage() {
   const { data, settings } = useData();
   const t = today();
   const [growFilter, setGrowFilter] = useState('');
+  const [range, setRange] = useState<ExplorerRange>('all');
+  const sd = useMemo(() => scopeData(data, { range, growId: growFilter }, t), [data, range, growFilter, t]);
 
-  const durations = useMemo(() => growDurations(data.grows, t), [data.grows, t]);
-  const byCat = useMemo(() => expensesByCategory(data.expenses), [data.expenses]);
-  const byGrow = useMemo(() => expensesByGrow(data.expenses, data.grows), [data.expenses, data.grows]);
-  const harvest = useMemo(() => harvestOutcomes(data.plants, data.strains), [data.plants, data.strains]);
-  const ratings = useMemo(() => strainRatings(data.strains, data.journal), [data.strains, data.journal]);
-  const heat = useMemo(() => photoActivity(data.photos, t, 26), [data.photos, t]);
-  const journal = useMemo(() => journalSummary(data.journal, t), [data.journal, t]);
-  const measurementActs = useMemo(() => data.activities.filter((a) => !growFilter || a.growId === growFilter), [data.activities, growFilter]);
+  const durations = useMemo(() => growDurations(sd.grows, t), [sd.grows, t]);
+  const byCat = useMemo(() => expensesByCategory(sd.expenses), [sd.expenses]);
+  const byGrow = useMemo(() => expensesByGrow(sd.expenses, data.grows), [sd.expenses, data.grows]);
+  const harvest = useMemo(() => harvestOutcomes(sd.plants, data.strains), [sd.plants, data.strains]);
+  const ratings = useMemo(() => strainRatings(data.strains, sd.journal), [data.strains, sd.journal]);
+  const heat = useMemo(() => photoActivity(sd.photos, t, 26), [sd.photos, t]);
+  const journal = useMemo(() => journalSummary(sd.journal, t), [sd.journal, t]);
+  const measurementActs = sd.activities;
+  const lab = useMemo(() => labComparison(sd.labReports, data.strains), [sd.labReports, data.strains]);
+  const scopeLabel = `${RANGE_LABEL[range]}${growFilter ? ` · ${data.grows.find((g) => g.id === growFilter)?.name ?? ''}` : ' · alle Grows'}`;
+  const stamp = t;
+  const exportsList = [
+    { label: `Messwerte (${measurementActs.filter((a) => a.measurements).length})`, run: () => downloadFile(`terpgrid-messwerte-${stamp}.csv`, measurementCsv(measurementActs, data.grows, data.plants), 'text/csv;charset=utf-8') },
+    { label: `Ausgaben (${sd.expenses.length})`, run: () => downloadFile(`terpgrid-ausgaben-${stamp}.csv`, expenseCsv(sd.expenses, data.grows, EXPENSE_CATEGORY_LABEL), 'text/csv;charset=utf-8') },
+    { label: `Journal (${sd.journal.length})`, run: () => downloadFile(`terpgrid-journal-${stamp}.csv`, journalCsv(sd.journal, data.strains), 'text/csv;charset=utf-8') },
+    { label: `Laborberichte (${lab.rows.length})`, run: () => downloadFile(`terpgrid-labor-${stamp}.csv`, labCsv(lab), 'text/csv;charset=utf-8') },
+  ];
 
   const hasAny = data.grows.length + data.journal.length + data.photos.length + data.expenses.length + data.strains.length > 0;
   const weeks: { date: string; count: number }[][] = [];
@@ -92,6 +104,33 @@ export function AnalyticsPage() {
       ) : (
         <div className="space-y-5">
           <InsightsHeader />
+          <section aria-label="Filter für die Auswertungen" className="sticky top-0 z-20 -mx-1 flex flex-wrap items-center gap-2 rounded-2xl border border-white/[0.06] bg-ink-950/85 px-3 py-2.5 backdrop-blur-md">
+            <SlidersHorizontal className="size-4 text-ink-500" aria-hidden />
+            <select aria-label="Zeitraum" className="input-base h-9 w-auto text-[13px]" value={range} onChange={(e) => setRange(e.target.value as ExplorerRange)}>
+              {(Object.keys(RANGE_LABEL) as ExplorerRange[]).map((r) => (
+                <option key={r} value={r}>
+                  {RANGE_LABEL[r]}
+                </option>
+              ))}
+            </select>
+            <select aria-label="Grow" className="input-base h-9 w-auto max-w-[14rem] text-[13px]" value={growFilter} onChange={(e) => setGrowFilter(e.target.value)}>
+              <option value="">Alle Grows</option>
+              {data.grows.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+            <span className="text-[11.5px] text-ink-500" aria-live="polite">
+              {sd.activities.length} Einträge · {sd.expenses.length} Ausgaben · {sd.journal.length} Journal · {sd.photos.length} Fotos
+            </span>
+            <div className="ml-auto">
+              <CsvMenu items={exportsList} />
+            </div>
+          </section>
+          <p className="-mt-2 text-[11.5px] text-ink-500">
+            Die Kacheln oben zeigen den Gesamtstand; alle Auswertungen darunter folgen dem Filter. Journal und Laborberichte erscheinen bei einem Grow-Filter nur, wenn sie über die Sorte einer Pflanze dieses Grows verknüpft sind.
+          </p>
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
             <Card title="Grow-Dauer" subtitle="Tage seit Start; laufende Grows bis heute" icon={<Sprout className="size-4" />}>
               {durations.length === 0 ? (
@@ -163,13 +202,8 @@ export function AnalyticsPage() {
 
           <Card
             title="Messwert-Verlauf"
-            subtitle="Alle dokumentierten Messungen"
+            subtitle={`Dokumentierte Messungen · ${scopeLabel}`}
             icon={<Ruler className="size-4" />}
-            actions={
-              <div className="w-52">
-                <SelectField label="" aria-label="Grow filtern" value={growFilter} onChange={setGrowFilter} placeholder="Alle Grows" options={data.grows.map((g) => ({ value: g.id, label: g.name }))} />
-              </div>
-            }
           >
             <MeasurementCharts activities={measurementActs} />
           </Card>
@@ -250,7 +284,7 @@ export function AnalyticsPage() {
               )}
             </Card>
 
-            <Card title="Journal-Verlauf" subtitle={`${journal.total} Einträge · letzte 12 Monate`} icon={<BookOpenText className="size-4" />}>
+            <Card title="Journal-Verlauf" subtitle={`${journal.total} Einträge im Filter · Monate der letzten 12 Monate`} icon={<BookOpenText className="size-4" />}>
               {journal.total === 0 ? (
                 <NoData text="Das Journal ist optional." />
               ) : (
@@ -268,8 +302,8 @@ export function AnalyticsPage() {
               )}
             </Card>
 
-            <Card title="Foto-Aktivität" subtitle="Aufnahmetage der letzten 26 Wochen" icon={<Camera className="size-4" />}>
-              {data.photos.length === 0 ? (
+            <Card title="Foto-Aktivität" subtitle="Aufnahmetage der letzten 26 Wochen (gefiltert)" icon={<Camera className="size-4" />}>
+              {sd.photos.length === 0 ? (
                 <NoData text="Noch keine Fotos." />
               ) : (
                 <>
@@ -295,8 +329,108 @@ export function AnalyticsPage() {
               )}
             </Card>
           </div>
+
+          <Card title="Laborberichte im Vergleich" subtitle="Eigene Proben nebeneinander – Werte in %, aus mg/g umgerechnet (÷ 10); jede Zeile gilt nur für ihre Probe" icon={<FlaskRound className="size-4" />}>
+            {lab.rows.length === 0 ? (
+              <NoData text="Laborberichte unter „Laborberichte“ erfassen." />
+            ) : (
+              <LabTable cmp={lab} />
+            )}
+          </Card>
         </div>
       )}
+    </div>
+  );
+}
+
+function CsvMenu({ items }: { items: { label: string; run: () => void }[] }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => ref.current && !ref.current.contains(e.target as Node) && setOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+  return (
+    <div className="relative" ref={ref}>
+      <button type="button" className="btn-ghost h-9 py-0 text-[13px]" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <Download className="size-4" aria-hidden /> CSV-Export
+      </button>
+      {open && (
+        <div role="menu" className="absolute right-0 z-30 mt-2 w-60 rounded-xl border border-white/[0.08] bg-ink-850 p-1 shadow-2xl">
+          <p className="px-2.5 pb-1 pt-1.5 text-[10.5px] text-ink-500">Gefilterte Daten · lokal erzeugt, nichts wird hochgeladen</p>
+          {items.map((it) => (
+            <button
+              key={it.label}
+              type="button"
+              role="menuitem"
+              className="flex w-full items-center rounded-md px-2.5 py-2 text-left text-[13px] text-ink-200 hover:bg-white/[0.05] hover:text-ink-50"
+              onClick={() => {
+                it.run();
+                setOpen(false);
+              }}
+            >
+              {it.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LabTable({ cmp }: { cmp: ReturnType<typeof labComparison> }) {
+  const terps = cmp.terpenes.slice(0, 8);
+  const pct = (v?: number) => (v === undefined ? '–' : `${fmt(v, 2)}`);
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[560px] text-left text-[12px]">
+        <caption className="sr-only">Cannabinoide und Terpene eigener Laborberichte in Prozent</caption>
+        <thead className="text-[11px] text-ink-500">
+          <tr>
+            <th className="py-1.5 pr-3 font-medium">Probe</th>
+            <th className="py-1.5 pr-3 text-right font-medium">THC</th>
+            <th className="py-1.5 pr-3 text-right font-medium">THCA</th>
+            <th className="py-1.5 pr-3 text-right font-medium">CBD</th>
+            {terps.map((t) => (
+              <th key={t.id} className="py-1.5 pr-3 text-right font-medium">
+                {t.label}
+              </th>
+            ))}
+            <th className="py-1.5 text-right font-medium">Terpene Σ</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/[0.04] font-mono tabular text-ink-200">
+          {cmp.rows.map((r) => (
+            <tr key={r.id}>
+              <td className="py-2 pr-3 font-sans">
+                <a href={href('lab-reports')} className="text-ink-100 hover:text-leaf-200">
+                  {r.title}
+                </a>
+                <span className="block text-[10.5px] text-ink-500">
+                  {[r.strain, r.labName, r.testDate ? fmtDate(r.testDate) : undefined, r.unit === 'mg/g' ? 'aus mg/g' : undefined].filter(Boolean).join(' · ')}
+                </span>
+              </td>
+              <td className="py-2 pr-3 text-right">{pct(r.thc)}</td>
+              <td className="py-2 pr-3 text-right">{pct(r.thca)}</td>
+              <td className="py-2 pr-3 text-right">{pct(r.cbd)}</td>
+              {terps.map((t) => (
+                <td key={t.id} className="py-2 pr-3 text-right">
+                  {pct(r.terpenes[t.id])}
+                </td>
+              ))}
+              <td className="py-2 text-right">{pct(r.terpeneTotal)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="hint mt-2">Alle Angaben in Prozent. „–“ = im Bericht nicht angegeben. Unterschiede zwischen Proben sind keine Aussage über Ursachen.</p>
     </div>
   );
 }
