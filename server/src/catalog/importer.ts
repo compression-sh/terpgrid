@@ -87,7 +87,8 @@ export async function importDataset(client: pg.PoolClient, data: ParsedDataset, 
   const counts = { breeders: data.breeders.length, cultivars: data.cultivars.length, listings: data.listings.length };
   if (opts.dryRun) return { status: 'dry-run', ...counts };
   const active = await activeImport(client);
-  if (active && active.sha256 === data.report.sha256 && !opts.force) return { status: 'unchanged', importId: active.id, ...counts };
+  const activeParser = (active?.report as { parserVersion?: number } | undefined)?.parserVersion ?? 1;
+  if (active && active.sha256 === data.report.sha256 && activeParser === data.report.parserVersion && !opts.force) return { status: 'unchanged', importId: active.id, ...counts };
 
   await client.query('BEGIN');
   try {

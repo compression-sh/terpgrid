@@ -54,6 +54,9 @@ export interface LibValues {
   geneticsType?: string;
   parents?: LibParent[];
   generation?: string;
+  typeLabel?: string;
+  lineageText?: string;
+  parentsFrom?: 'columns' | 'text';
   terpenes?: string[];
   flavors?: string[];
   effects?: string[];
@@ -99,7 +102,19 @@ export interface LibSearchResult {
   query: string;
 }
 
+export interface LibClaim {
+  field: 'terpenes' | 'thc' | 'cbd' | 'genetics' | 'aroma' | 'description' | 'image' | 'type' | 'flowering' | 'seedType';
+  provider: string;
+  providerName: string;
+  providerUrl?: string;
+  sourceUrl?: string | null;
+  value: unknown;
+  evidence: 'database' | 'breeder' | 'lab';
+  retrievedAt: string;
+}
+
 export interface LibCultivarDetail {
+  claims?: LibClaim[];
   cultivar: LibCultivar & { values: LibValues };
   listings: LibListing[];
   parentMatches: { slug: string; matches: { id: string; name: string; breeder: string; auto: boolean }[] }[];

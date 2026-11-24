@@ -7,15 +7,16 @@ import { href } from '../../app/router';
 import { errorText, useToast } from '../../app/Toasts';
 import { NoData, RangeMeter, TypeBadge, rangeText } from '../../components/discover/Badges';
 import { CatalogFactsRow } from '../../components/discover/CatalogFacts';
+import { EvidenceTag } from '../../components/discover/EvidenceTag';
+import { TerpeneCard } from '../../components/discover/TerpeneCard';
 import { ConnectDialog } from '../../components/discover/ConnectDialog';
 import { DatasetNotice } from '../../components/discover/DatasetNotice';
 import { DiscoverNav } from '../../components/discover/DiscoverNav';
 import { AbstractPlaceholder } from '../../components/discover/StrainVisual';
-import { TerpeneChips } from '../../components/discover/TerpeneChips';
 import { JournalFormModal } from '../../components/forms/PersonalForms';
 import { Card } from '../../components/ui/Card';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { GENETICS_LABEL, type LibCultivar, type LibListing, type LibRange, library, toCatalogStrain } from '../../lib/catalog/library';
+import { GENETICS_LABEL, type LibClaim, type LibCultivar, type LibListing, type LibRange, library, toCatalogStrain } from '../../lib/catalog/library';
 import { fmtDate } from '../../lib/dates';
 import { ensureStrainForExternal, externalKey } from '../../lib/db/repo';
 import { fmt } from '../../lib/format';
@@ -159,6 +160,9 @@ export function CultivarPage({ id }: { id: string }) {
   const inCompare = compare.has(strain.key);
   const plants = mine ? data.plants.filter((p) => p.strainId === mine.id) : [];
   const conflict = (f: string) => c.conflicts.includes(f);
+  const claimOf = (f: LibClaim['field']) => d.claims?.find((k) => k.field === f);
+  const direct = d.listings.some((l) => l.seedBank.toLowerCase().replace(/[^a-z0-9]/g, '') === c.breeder.id);
+  const labForMine = mine ? data.labReports.filter((r) => r.strainId === mine.id) : [];
 
   async function openJournal() {
     try {
@@ -269,6 +273,23 @@ export function CultivarPage({ id }: { id: string }) {
             ) : (
               <NoData />
             )}
+            {(c.thc || c.cbd) && <p className="mt-3"><EvidenceTag kind={c.conflicts.includes('thc') ? 'conflict' : direct ? 'breeder' : 'seedbank'} source="CI-Strains-Pro" /></p>}
+            {(claimOf('thc') || claimOf('cbd')) && (
+              <div className="mt-3 rounded-xl border border-white/[0.06] px-3 py-2 text-[12px] text-ink-300">
+                <p className="mb-1 flex flex-wrap items-center gap-2">
+                  Weitere Quelle <EvidenceTag kind="database" source={(claimOf('thc') ?? claimOf('cbd'))!.providerName} />
+                </p>
+                {(['thc', 'cbd'] as const).map((k) => {
+                  const cl = claimOf(k);
+                  const r = cl?.value as { min?: number; max?: number } | undefined;
+                  return r ? (
+                    <p key={k} className="font-mono">
+                      {k.toUpperCase()} {r.min === r.max ? `${fmt(r.min ?? 0)} %` : `${fmt(r.min ?? 0)}–${fmt(r.max ?? 0)} %`}
+                    </p>
+                  ) : null;
+                })}
+              </div>
+            )}
             <p className="hint mt-3">Shop-Angaben zum Cannabinoidgehalt sind Herstellerangaben und weichen in Untersuchungen häufig vom tatsächlichen Gehalt ab.</p>
           </Card>
 
@@ -324,11 +345,29 @@ export function CultivarPage({ id }: { id: string }) {
                   })}
                 </ul>
                 <p className="hint">Gleichnamige Elternsorten verschiedener Breeder werden nicht automatisch gleichgesetzt.</p>
+                {v.parentsFrom === 'text' && <p className="hint">Eltern aus dem Abstammungstext der Quelle abgeleitet („{v.lineageText}“).</p>}
               </div>
             ) : (
               <NoData text="Keine verwertbare Abstammung in der Quelle." />
             )}
           </Card>
+
+          {(v.lineageText || claimOf('genetics')) && (
+            <Card title="Abstammung laut Text der Quellen" subtitle="Originalwortlaut – kann Zwischenkreuzungen und Selektionen enthalten">
+              <ul className="space-y-1.5 text-[13px] text-ink-200">
+                {v.lineageText && (
+                  <li className="flex flex-wrap items-center gap-2">
+                    „{v.lineageText}“ <EvidenceTag kind={direct ? 'breeder' : 'seedbank'} source="CI-Strains-Pro" />
+                  </li>
+                )}
+                {claimOf('genetics') && (
+                  <li className="flex flex-wrap items-center gap-2">
+                    „{String(claimOf('genetics')!.value)}“ <EvidenceTag kind="database" source={claimOf('genetics')!.providerName} />
+                  </li>
+                )}
+              </ul>
+            </Card>
+          )}
 
           <Card title="Angebote & Quellen" subtitle="Jede Angabe mit Herkunft" icon={<Store className="size-4" />}>
             <ul className="space-y-2">
@@ -340,17 +379,37 @@ export function CultivarPage({ id }: { id: string }) {
         </div>
 
         <div className="min-w-0 space-y-5">
-          <Card title="Aroma & Terpene" subtitle="Nennungen in Shop-Texten, keine Mengen">
-            {(v.terpenes?.length ?? 0) > 0 && (
-              <div className="mb-3">
-                <p className="mb-1.5 text-[11px] uppercase tracking-wider text-ink-500">Terpene (genannt)</p>
-                <TerpeneChips names={v.terpenes ?? []} max={8} size="xs" />
-              </div>
-            )}
+          <TerpeneCard detail={d} labReports={labForMine} />
+
+          {claimOf('description') && (
+            <Card title="Beschreibung" subtitle="Text einer Sortendatenbank – Marketing und Fakten nicht getrennt">
+              <p className="text-[13px] leading-relaxed text-ink-300">{String(claimOf('description')!.value)}</p>
+              <p className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-ink-500">
+                <EvidenceTag kind="database" source={claimOf('description')!.providerName} />
+                {claimOf('description')!.sourceUrl && (
+                  <a href={claimOf('description')!.sourceUrl!} target="_blank" rel="noopener noreferrer nofollow" referrerPolicy="no-referrer" className="text-leaf-300 hover:underline">
+                    Quelle
+                  </a>
+                )}
+              </p>
+            </Card>
+          )}
+
+          <Card title="Aroma & beschriebene Wirkung" subtitle="Shop- und Datenbanktexte – keine Messung, kein Beleg für Terpene">
             {(v.flavors?.length ?? 0) > 0 && (
               <div className="mb-3">
-                <p className="mb-1.5 text-[11px] uppercase tracking-wider text-ink-500">Aroma laut Shop</p>
+                <p className="mb-1.5 flex items-center gap-2 text-[11px] uppercase tracking-wider text-ink-500">
+                  Aroma <EvidenceTag kind={direct ? 'breeder' : 'seedbank'} />
+                </p>
                 <p className="text-[13px] text-ink-300">{v.flavors!.join(', ')}</p>
+              </div>
+            )}
+            {claimOf('aroma') && (
+              <div className="mb-3">
+                <p className="mb-1.5 flex items-center gap-2 text-[11px] uppercase tracking-wider text-ink-500">
+                  Aroma <EvidenceTag kind="database" source={claimOf('aroma')!.providerName} />
+                </p>
+                <p className="text-[13px] text-ink-300">{(claimOf('aroma')!.value as string[]).join(', ')}</p>
               </div>
             )}
             {(v.effects?.length ?? 0) > 0 && (
@@ -360,7 +419,7 @@ export function CultivarPage({ id }: { id: string }) {
                 <p className="hint mt-1">Werbeaussagen der Anbieter – nicht belegt und individuell sehr verschieden.</p>
               </div>
             )}
-            {!v.terpenes?.length && !v.flavors?.length && !v.effects?.length && <NoData />}
+            {!v.flavors?.length && !claimOf('aroma') && !v.effects?.length && <NoData text="Keine Aroma-Angaben in den Quellen." />}
           </Card>
 
           <Card title="Persönlich" icon={<Sprout className="size-4" />}>

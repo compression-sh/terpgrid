@@ -6,6 +6,7 @@
 import type { FastifyInstance } from 'fastify';
 import { attribution, activeImport } from '../catalog/importer.js';
 import { slugify } from '../catalog/cisp.js';
+import { PROVIDERS, normalizeTerpene } from '../catalog/enrich.js';
 import type { AppContext } from '../context.js';
 import { HttpError, requireSession } from '../http.js';
 import fp from '../plugin.js';
@@ -201,7 +202,25 @@ export function libraryRoutes(ctx: AppContext) {
         [c.name_slug, c.id],
       );
       const imp = await activeImport(ctx.db);
+      // Angaben weiterer Quellen – nur freigegebene, nicht abgelaufene (Cache gemäß Nutzungsbedingungen)
+      const claims = (
+        await ctx.db.query(
+          `SELECT field, provider, source_record_id, source_url, normalized, evidence, retrieved_at FROM catalog_claims
+            WHERE cultivar_id = $1 AND review_status = 'accepted' AND (expires_at IS NULL OR expires_at > now()) ORDER BY field, provider`,
+          [c.id],
+        )
+      ).rows.map((k) => ({
+        field: k.field,
+        provider: k.provider,
+        providerName: PROVIDERS[k.provider as keyof typeof PROVIDERS]?.name ?? k.provider,
+        providerUrl: PROVIDERS[k.provider as keyof typeof PROVIDERS]?.url,
+        sourceUrl: k.source_url,
+        value: k.normalized,
+        evidence: k.evidence,
+        retrievedAt: k.retrieved_at,
+      }));
       return {
+        claims,
         cultivar: cultivarOut(c, true),
         listings: listings.rows.map((l) => ({
           id: l.id,
@@ -326,6 +345,50 @@ export function libraryRoutes(ctx: AppContext) {
       // Tiefste Ebene: Sorten mit weiteren dokumentierten Eltern sind gekürzt
       for (const r of level) if (((r.values as { parents?: P[] }).parents ?? []).length) truncated = true;
       return { rootId: root.id, nodes: [...nodes.values()], edges, truncated, maxDepth, attribution };
+    });
+
+    /** Terpen-Nennungen im Katalog je kanonischer Verbindung (CI-Strains-Pro + freigegebene Quellen). */
+    app.get('/api/catalog/local/terpene-index', async (req) => {
+      requireSession(req);
+      const names = (await ctx.db.query<{ t: string; n: string }>('SELECT t, count(*) AS n FROM catalog_cultivars, unnest(terpenes) t GROUP BY t')).rows;
+      const claimed = (
+        await ctx.db.query<{ id: string; n: string }>(
+          `SELECT e->>'id' AS id, count(DISTINCT k.cultivar_id) AS n FROM catalog_claims k, jsonb_array_elements(k.normalized) e
+            WHERE k.field = 'terpenes' AND k.review_status = 'accepted' AND (k.expires_at IS NULL OR k.expires_at > now()) AND e->>'id' IS NOT NULL GROUP BY 1`,
+        )
+      ).rows;
+      const out = new Map<string, { id: string; names: string[]; cisp: number; database: number }>();
+      for (const r of names) {
+        const id = normalizeTerpene(r.t).id ?? `unbekannt:${r.t}`;
+        const e = out.get(id) ?? { id, names: [], cisp: 0, database: 0 };
+        e.names.push(r.t);
+        e.cisp += Number(r.n);
+        out.set(id, e);
+      }
+      for (const r of claimed) {
+        const e = out.get(r.id) ?? { id: r.id, names: [], cisp: 0, database: 0 };
+        e.database += Number(r.n);
+        out.set(r.id, e);
+      }
+      const total = Number((await ctx.db.query<{ n: string }>('SELECT count(*) AS n FROM catalog_cultivars WHERE cardinality(terpenes) > 0')).rows[0]?.n ?? 0);
+      return { terpenes: [...out.values()].sort((a, b) => b.cisp + b.database - (a.cisp + a.database)), cultivarsWithTerpenes: total };
+    });
+
+    /** Sorten, deren Quellen ein Terpen NENNEN (keine Mengen) – paginiert, mit Herkunft. */
+    app.get<{ Params: { id: string }; Querystring: { page?: string } }>('/api/catalog/local/terpenes/:id/cultivars', async (req) => {
+      requireSession(req);
+      if (!/^[a-z0-9-]{2,40}$/.test(req.params.id)) throw new HttpError(400, 'Ungültige Kennung');
+      const page = int(req.query.page, 1, 1, 500);
+      const names = (await ctx.db.query<{ t: string }>('SELECT DISTINCT t FROM catalog_cultivars, unnest(terpenes) t')).rows.map((r) => r.t).filter((t) => normalizeTerpene(t).id === req.params.id);
+      const where = `(c.terpenes && $1::text[]) OR EXISTS (SELECT 1 FROM catalog_claims k, jsonb_array_elements(k.normalized) e WHERE k.cultivar_id = c.id AND k.field = 'terpenes'
+                      AND k.review_status = 'accepted' AND (k.expires_at IS NULL OR k.expires_at > now()) AND e->>'id' = $2)`;
+      const total = Number((await ctx.db.query<{ n: string }>(`SELECT count(*) AS n FROM catalog_cultivars c WHERE ${where}`, [names, req.params.id])).rows[0]?.n ?? 0);
+      const { rows } = await ctx.db.query<CultivarRow & { from_cisp: boolean }>(
+        `SELECT ${SELECT_CULTIVAR}, (c.terpenes && $1::text[]) AS from_cisp FROM catalog_cultivars c JOIN catalog_breeders b ON b.id = c.breeder_id
+          WHERE ${where} ORDER BY c.listing_count DESC, c.name_lower, c.id LIMIT 24 OFFSET $3`,
+        [names, req.params.id, (page - 1) * 24],
+      );
+      return { id: req.params.id, total, page, totalPages: Math.ceil(total / 24), items: rows.map((r) => ({ ...cultivarOut(r), terpeneSource: r.from_cisp ? 'seedbank' : 'database' })) };
     });
 
     app.get<{ Params: { slug: string } }>('/api/catalog/local/by-name/:slug', async (req) => {
