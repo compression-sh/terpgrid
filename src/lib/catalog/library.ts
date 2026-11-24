@@ -249,6 +249,16 @@ export function toCatalogStrain(c: LibCultivar): CatalogStrain {
     flowering: c.flowering ? { minDays: c.flowering.min, maxDays: c.flowering.max } : undefined,
     evidence: {},
     attribution: { provider: 'cisp', name: CISP_ATTRIBUTION_NAME, url: CISP_REPO, recordUrl: undefined },
+    facts: {
+      lineage: c.parents.length === 0 ? 'none' : c.parents.some((p) => p.unknown) ? 'partial-unknown' : 'documented',
+      thc: !!c.thc,
+      cbd: !!c.cbd,
+      terpenes: c.terpenes.length > 0,
+      flowering: !!c.flowering,
+      sources: c.listingCount,
+      image: false,
+      conflicts: c.conflicts,
+    },
   };
 }
 

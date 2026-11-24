@@ -51,7 +51,7 @@ export function BreedersPage() {
   const fav = useFavoriteBreeders();
   const [text, setText] = useState(q.get('q') ?? '');
   const letter = q.get('letter') ?? '';
-  const sort = q.get('sort') === 'cultivars' ? 'cultivars' : 'name';
+  const sort = q.get('sort') === 'name' ? 'name' : 'cultivars';
   const kind = q.get('kind') === 'seedbank' || q.get('kind') === 'collab' ? (q.get('kind') as 'seedbank' | 'collab') : undefined;
   const onlyFav = q.get('fav') === '1';
   const [page, setPage] = useState(1);
@@ -97,9 +97,9 @@ export function BreedersPage() {
             <option value="seedbank">Auch Seedbank</option>
             <option value="collab">Kooperationen</option>
           </select>
-          <select className="input-base h-10 text-[13px]" aria-label="Sortierung" value={sort} onChange={(e) => set({ sort: e.target.value === 'name' ? undefined : e.target.value })}>
-            <option value="name">A–Z</option>
+          <select className="input-base h-10 text-[13px]" aria-label="Sortierung" value={sort} onChange={(e) => set({ sort: e.target.value === 'cultivars' ? undefined : e.target.value })}>
             <option value="cultivars">Meiste Sorten</option>
+            <option value="name">A–Z</option>
           </select>
           <label className="flex h-10 items-center gap-2 rounded-lg border border-white/[0.06] px-2.5 text-[12px] text-ink-300">
             <input type="checkbox" className="accent-leaf-500" checked={onlyFav} onChange={(e) => set({ fav: e.target.checked ? '1' : undefined })} /> Gemerkt

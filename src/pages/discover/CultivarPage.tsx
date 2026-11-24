@@ -6,6 +6,7 @@ import { useAsync, useRememberCultivar } from '../../app/library';
 import { href } from '../../app/router';
 import { errorText, useToast } from '../../app/Toasts';
 import { NoData, RangeMeter, TypeBadge, rangeText } from '../../components/discover/Badges';
+import { CatalogFactsRow } from '../../components/discover/CatalogFacts';
 import { ConnectDialog } from '../../components/discover/ConnectDialog';
 import { DatasetNotice } from '../../components/discover/DatasetNotice';
 import { DiscoverNav } from '../../components/discover/DiscoverNav';
@@ -226,7 +227,13 @@ export function CultivarPage({ id }: { id: string }) {
               <BookOpenText className="size-4" /> Journal
             </button>
           </div>
-          <p className="mt-4 text-[11px] text-ink-500">
+          {strain.facts && (
+            <div className="mt-4">
+              <p className="mb-1 text-[11px] uppercase tracking-wider text-ink-500">Datenlage</p>
+              <CatalogFactsRow facts={strain.facts} />
+            </div>
+          )}
+          <p className="mt-3 text-[11px] text-ink-500">
             Angaben aus {c.listingCount} Seedbank-{c.listingCount === 1 ? 'Angebot' : 'Angeboten'} ({c.seedBanks.join(', ')}) · Quelle: CI-Strains-Pro (CC BY 4.0)
           </p>
         </div>

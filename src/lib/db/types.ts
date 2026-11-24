@@ -368,6 +368,7 @@ export const DASHBOARD_WIDGETS = [
   'journal',
   'calculations',
   'strains',
+  'favorites',
 ] as const;
 export type DashboardWidget = (typeof DASHBOARD_WIDGETS)[number];
 

@@ -64,6 +64,8 @@ export interface CatalogStrain {
   evidence: Partial<Record<string, EvidenceState>>;
   updatedAt?: string;
   attribution: Attribution;
+  /** Lokaler Katalog: welche Angaben vorhanden sind (Vollständigkeit, keine Bewertung) */
+  facts?: CatalogFacts;
   /** Nur bei Detaildaten vorhanden */
   detail?: CatalogStrainDetail;
 }
@@ -146,4 +148,16 @@ export class CatalogError extends Error {
     super(message);
     this.name = 'CatalogError';
   }
+}
+
+/** Vorhandene Angaben einer Katalogsorte. `conflicts` = Angaben widersprechen sich (nicht: fehlen). */
+export interface CatalogFacts {
+  lineage: 'documented' | 'partial-unknown' | 'none';
+  thc: boolean;
+  cbd: boolean;
+  terpenes: boolean;
+  flowering: boolean;
+  sources: number;
+  image: boolean;
+  conflicts: string[];
 }

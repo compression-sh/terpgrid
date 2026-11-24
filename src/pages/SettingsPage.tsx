@@ -24,6 +24,7 @@ const WIDGET_LABEL: Record<DashboardWidget, string> = {
   journal: 'Journal',
   calculations: 'Gespeicherte Berechnungen',
   strains: 'Zuletzt bearbeitete Sorten',
+  favorites: 'Favoriten',
 };
 
 const CURRENCIES = ['EUR', 'CHF', 'USD', 'GBP', 'CAD'];

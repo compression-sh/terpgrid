@@ -20,7 +20,7 @@ const SORTS = [
   { id: 'name', label: 'Name A–Z' },
   { id: 'breeder', label: 'Breeder A–Z' },
   { id: 'thc', label: 'THC-Angabe (absteigend)' },
-  { id: 'listings', label: 'Anzahl Seedbank-Angebote' },
+  { id: 'listings', label: 'Meiste Seedbank-Angebote' },
 ] as const;
 
 const FILTER_KEYS = ['type', 'auto', 'seed', 'lineage', 'thc', 'terpene', 'parent'] as const;
@@ -46,7 +46,7 @@ export function LibraryPage({ status }: { status: LibStatus }) {
       thc: q.get('thc') === '1' ? '1' : undefined,
       terpene: q.get('terpene') || undefined,
       parent: q.get('parent') || undefined,
-      sort: (SORTS.find((s) => s.id === q.get('sort') && (!('needsQuery' in s) || query))?.id ?? (query ? 'relevance' : 'name')) as LibSearchParams['sort'],
+      sort: (SORTS.find((s) => s.id === q.get('sort') && (!('needsQuery' in s) || query))?.id ?? (query ? 'relevance' : 'listings')) as LibSearchParams['sort'],
     }),
     [route.raw], // eslint-disable-line react-hooks/exhaustive-deps
   );

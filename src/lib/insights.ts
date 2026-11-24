@@ -55,7 +55,7 @@ export function computeInsights(
   const weeksCovered = firstPhoto ? Math.min(12, Math.max(1, Math.ceil((dayDiff(firstPhoto, today) + 1) / 7))) : 0;
   const measurementActs = d.activities.filter((a) => a.measurements && Object.keys(a.measurements).length > 0);
   const kinds = new Set<string>();
-  for (const a of measurementActs) for (const [k, v] of Object.entries(a.measurements ?? {})) if (v !== undefined && v !== null && k !== 'custom') kinds.add(k);
+  for (const a of measurementActs) for (const [k, v] of Object.entries(a.measurements ?? {})) if (typeof v === 'number' && Number.isFinite(v)) kinds.add(k); // nur Messgrößen, keine Kontext-/Gerätefelder
   const labStrains = new Set(d.labReports.map((l) => l.strainId).filter(Boolean));
   const ratings = d.journal.map((j) => j.rating).filter((r): r is number => typeof r === 'number');
   const since365 = addDays(today, -365);
