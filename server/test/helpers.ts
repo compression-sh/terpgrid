@@ -47,7 +47,9 @@ export async function setup(overrides: Record<string, string> = {}, opts: { fetc
   await sup.connect();
   for (const [role, pw] of [['terpgrid_owner', 'ownerpw'], ['terpgrid_app', 'apppw']]) {
     const { rowCount } = await sup.query('SELECT 1 FROM pg_roles WHERE rolname = $1', [role]);
+    // Bestehende Rollen (z. B. aus einem vorherigen CI-Schritt) auf das Testpasswort setzen
     if (!rowCount) await sup.query(`CREATE ROLE ${role} LOGIN PASSWORD '${pw}' NOSUPERUSER NOBYPASSRLS`);
+    else await sup.query(`ALTER ROLE ${role} LOGIN PASSWORD '${pw}' NOSUPERUSER NOBYPASSRLS`);
   }
   await sup.query(`CREATE DATABASE ${dbName} OWNER terpgrid_owner`);
   await sup.end();
