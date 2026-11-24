@@ -63,6 +63,11 @@ dargestellt. Alle Werte sind Angaben von Seedbanks/Breedern (Shop-Texte).
   (`genetics_description`/`lineage_description`, ≤ 140 Zeichen, nicht „Unknown…“) im Originalwortlaut. Sind dort genau
   zwei plausible Sortennamen ohne Klammern genannt, werden sie als Eltern übernommen und als „aus Text abgeleitet“
   gekennzeichnet. Ein geänderter Parser löst beim nächsten Import eine Neuverarbeitung derselben Datei aus.
+- **Parser v3 (5.3):** Elternnamen müssen mit Großbuchstabe oder Ziffer beginnen; Aroma- und Werbetexte („notes of …“,
+  „hints of …“, „quality seeds“ u. Ä.) sowie HTML-Reste werden nicht mehr als Eltern übernommen. Kleingeschriebene echte
+  Namen werden bewusst nicht geraten. Auf dem Entwicklungsstand: auffällige Elternangaben 388 → 4, Sorten mit Abstammung
+  11.120 → 10.718, Anreicherungsangaben unverändert. Nach dem Upgrade `./import-catalog.sh` ausführen, damit die neue
+  Parser-Version die Datei neu verarbeitet (nur öffentliche Referenzdaten, keine Nutzerdaten).
 - **Widersprüche:** Überschneiden sich die Spannen zweier Angebote nicht (z. B. THC 20–22 % vs. 25–28 %), wird das Feld als
   widersprüchlich markiert; die Sortenseite zeigt jede Einzelangabe mit Seedbank und Quell-URL.
 
