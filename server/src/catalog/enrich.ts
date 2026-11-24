@@ -84,7 +84,6 @@ export function normalizeStrainApi(raw: unknown): ProviderRecord[] {
       const out = { min: num(v?.min), max: num(v?.max), value: num(v?.value) };
       return out.min === undefined && out.max === undefined && out.value === undefined ? undefined : out;
     };
-    const img = x.image as { url?: unknown } | undefined;
     const aroma = [...strList(x.aroma), ...strList(x.flavor)].flatMap((a) => a.split(/\s*,\s*/)).filter(Boolean);
     return [
       {
@@ -98,7 +97,8 @@ export function normalizeStrainApi(raw: unknown): ProviderRecord[] {
         genetics: str(x.genetics),
         aroma: [...new Set(aroma.map((a) => a.toLowerCase()))].slice(0, 12),
         description: str(x.excerpt) ? plain(String(x.excerpt)) : undefined,
-        image: str(img?.url) ? { url: String(img!.url), credit: 'StrainAPI' } : undefined,
+        // Fotos werden nicht übernommen: Urheber/Lizenz je Bild und Zuordnung zur konkreten Breeder-Linie sind nicht belegt
+        image: undefined,
         type: str(x.type),
         flowering: (x.flowering as { min_days?: unknown; max_days?: unknown } | undefined) ? { min: num((x.flowering as { min_days?: unknown }).min_days), max: num((x.flowering as { max_days?: unknown }).max_days) } : undefined,
         seedType: str(x.seed_type),
@@ -246,7 +246,7 @@ export function decideMatch(rec: ProviderRecord, sameName: CultivarRef[]): Match
 }
 
 /** Feldangaben aus einem zugeordneten Datensatz (nur Felder mit Inhalt). */
-export function claimsFrom(provider: Provider, rec: ProviderRecord) {
+export function claimsFrom(_provider: Provider, rec: ProviderRecord) {
   const out: { field: string; original: unknown; normalized: unknown }[] = [];
   if (rec.terpenes.length) out.push({ field: 'terpenes', original: rec.terpenes, normalized: rec.terpenes.map(normalizeTerpene) });
   const rng = (r?: { min?: number; max?: number; value?: number }, hi = 40) => {
@@ -266,7 +266,6 @@ export function claimsFrom(provider: Provider, rec: ProviderRecord) {
   if (rec.type) out.push({ field: 'type', original: rec.type, normalized: rec.type });
   if (rec.flowering && (rec.flowering.min || rec.flowering.max)) out.push({ field: 'flowering', original: rec.flowering, normalized: rec.flowering });
   if (rec.seedType) out.push({ field: 'seedType', original: rec.seedType, normalized: rec.seedType });
-  if (provider === 'strainapi' && rec.image) out.push({ field: 'image', original: rec.image, normalized: rec.image });
   return out;
 }
 

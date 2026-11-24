@@ -110,7 +110,14 @@ export function CultivarPage({ id }: { id: string }) {
   const remember = useRememberCultivar();
   const [connect, setConnect] = useState<'plant' | 'grow' | null>(null);
   const [journalFor, setJournalFor] = useState<string | null>(null);
-  const strain = useMemo(() => (d ? toCatalogStrain(d.cultivar) : undefined), [d]);
+  const strain = useMemo(() => {
+    if (!d) return undefined;
+    const s = toCatalogStrain(d.cultivar);
+    // Datenlage berücksichtigt freigegebene Datenbank-Angaben (mit eigener Belegart auf der Seite)
+    const has = (f: string) => (d.claims ?? []).some((k) => k.field === f);
+    if (s.facts) s.facts = { ...s.facts, thc: s.facts.thc || has('thc'), cbd: s.facts.cbd || has('cbd'), terpenes: s.facts.terpenes || has('terpenes'), sources: s.facts.sources + new Set((d.claims ?? []).map((k) => k.provider)).size };
+    return s;
+  }, [d]);
 
   useEffect(() => {
     if (d) remember({ id: d.cultivar.id, name: d.cultivar.name, breeder: d.cultivar.breeder.name });
@@ -470,6 +477,15 @@ export function CultivarPage({ id }: { id: string }) {
           </Card>
 
           <DatasetNotice status={{ attribution: d.attribution, version: d.dataset?.version, importedAt: d.dataset?.importedAt }} />
+          {[...new Map((d.claims ?? []).map((k) => [k.provider, k])).values()].map((k) => (
+            <p key={k.provider} className="card p-4 text-[12px] leading-relaxed text-ink-400">
+              Data provided by{' '}
+              <a href={k.providerUrl} target="_blank" rel="noopener noreferrer nofollow" referrerPolicy="no-referrer" className="text-leaf-300 hover:underline">
+                {k.providerName}
+              </a>
+              . Zwischengespeichert gemäß den Nutzungsbedingungen der Quelle, abgerufen am {fmtDate(String(k.retrievedAt).slice(0, 10))}; Angaben einer Sortendatenbank, nicht laborbestätigt.
+            </p>
+          ))}
         </div>
       </div>
 

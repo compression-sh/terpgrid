@@ -56,7 +56,7 @@ const FIELDS: { field: string; label: string; present: string; conflict?: string
   { field: 'height', label: 'Wuchshöhe', present: `(c."values"->'heightIndoorCm') IS NOT NULL OR (c."values"->'heightOutdoorCm') IS NOT NULL` },
   { field: 'yield', label: 'Ertragsangabe', present: `(c."values"->'yieldIndoorGm2') IS NOT NULL OR (c."values"->'yieldOutdoorGPlant') IS NOT NULL` },
   { field: 'description', label: 'Beschreibung', present: 'false', claimField: 'description' },
-  { field: 'image', label: 'Foto mit geklärten Rechten', present: 'false', claimField: 'image' },
+  { field: 'image', label: 'Foto (Rechte und Zuordnung belegt)', present: 'false', claimField: 'image' },
   { field: 'source', label: 'Quellenangabe (URL)', present: 'c.listing_count > 0' },
 ];
 

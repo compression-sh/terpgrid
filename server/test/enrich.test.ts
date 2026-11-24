@@ -53,6 +53,8 @@ describe('Konservativer Abgleich', () => {
   });
   it('keine erfundenen Angaben: leere Felder erzeugen keine Angaben, Ausreißer werden verworfen', () => {
     expect(claimsFrom('strainapi', { id: '7', name: 'X', breeders: ['B'], terpenes: [], aroma: [] })).toEqual([]);
+    // Fotos werden nie als Angabe übernommen (Rechte und Zuordnung zur Breeder-Linie unbelegt)
+    expect(claimsFrom('strainapi', { id: '9', name: 'X', breeders: ['B'], terpenes: [], aroma: [], image: { url: 'https://example.org/x.jpg', credit: 'x' } })).toEqual([]);
     const c = claimsFrom('strainapi', { id: '8', name: 'X', breeders: ['B'], terpenes: [], aroma: [], thc: { min: 20, max: 8211 } });
     expect(c.find((x) => x.field === 'thc')).toBeUndefined();
   });
