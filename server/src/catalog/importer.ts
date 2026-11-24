@@ -49,7 +49,7 @@ function cultivarRow(c: Cultivar, breeders: Map<string, Breeder>, importId: numb
     thc_max: v.thc?.max ?? v.thc?.min ?? null,
     cbd_max: v.cbd?.max ?? v.cbd?.min ?? null,
     has_lineage: !!v.parents?.length,
-    parent_slugs: (v.parents ?? []).map((p) => p.slug),
+    parent_slugs: (v.parents ?? []).map((p) => p.slug).filter(Boolean),
     terpenes: v.terpenes ?? [],
     values: v,
     conflicts: c.conflicts,

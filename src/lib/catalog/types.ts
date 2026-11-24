@@ -4,7 +4,7 @@
  * Fehlende Werte bleiben `undefined` bzw. leere Listen – es wird nichts ergänzt.
  */
 
-export type ProviderId = 'strainapi' | 'cannalib';
+export type ProviderId = 'strainapi' | 'cannalib' | 'cisp';
 
 /** Evidenzstatus laut Quelle (StrainAPI V1). */
 export type EvidenceState = 'supported' | 'reported' | 'disputed' | 'insufficient_data';

@@ -14,6 +14,8 @@ import { Modal } from '../../components/ui/Modal';
 import { Segmented } from '../../components/ui/Segmented';
 import { matchTerpene } from '../../lib/catalog/terpenes';
 import { catalog } from '../../lib/catalog/service';
+import { strainLink } from '../../lib/catalog/links';
+import { library, toCatalogStrain } from '../../lib/catalog/library';
 import type { CatalogImage, CatalogStrain, EvidenceState, TypeClass, ValueRange } from '../../lib/catalog/types';
 import type { Strain } from '../../lib/db/types';
 import { CLAIM_SOURCE_LABEL } from '../../lib/grow/labels';
@@ -53,8 +55,8 @@ function fromCatalog(s: CatalogStrain): CompareItem {
     aroma: s.aroma,
     image: s.image,
     evidence: s.evidence,
-    source: 'StrainAPI',
-    link: `discover/strain/${s.id}`,
+    source: s.provider === 'cisp' ? 'CI-Strains-Pro (Seedbank-Angaben)' : 'StrainAPI',
+    link: strainLink(s),
   };
 }
 
@@ -86,7 +88,15 @@ function useCompareItems(keys: string[]) {
   useEffect(() => {
     const c = new AbortController();
     for (const k of keys) {
-      if (!k.startsWith('strainapi:') || online[k]) continue;
+      if (online[k]) continue;
+      if (k.startsWith('cisp:')) {
+        library
+          .cultivar(k.slice(5), c.signal)
+          .then((r) => setOnline((o) => ({ ...o, [k]: toCatalogStrain(r.cultivar) })))
+          .catch((e) => setOnline((o) => ({ ...o, [k]: { error: catalogErrorText(e) } })));
+        continue;
+      }
+      if (!k.startsWith('strainapi:')) continue;
       catalog
         .detail(k.slice('strainapi:'.length), c.signal)
         .then((r) => setOnline((o) => ({ ...o, [k]: r.strain })))

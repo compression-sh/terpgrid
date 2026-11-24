@@ -187,7 +187,7 @@ export interface Terpene {
 
 /** Verknüpfung einer persönlichen Sorte mit einem externen Katalogeintrag. */
 export interface ExternalStrainRef {
-  provider: 'strainapi' | 'cannalib';
+  provider: 'strainapi' | 'cannalib' | 'cisp';
   id: string;
   name: string;
   breeder?: string;
@@ -299,6 +299,10 @@ export interface AppSettings {
   /** Cannabis 101: gemerkte Artikel und Lesefortschritt (0–1) */
   kbFavorites: string[];
   kbProgress: Record<string, number>;
+  /** Gemerkte Breeder des lokalen Katalogs (IDs) */
+  favoriteBreeders: string[];
+  /** Zuletzt angesehene Katalogsorten (neueste zuerst, max. 12) */
+  recentCultivars: { id: string; name: string; breeder: string }[];
 }
 
 /* ───────────── Laborberichte ───────────── */

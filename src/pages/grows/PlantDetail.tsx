@@ -1,3 +1,4 @@
+import { externalLink } from '../../lib/catalog/links';
 import { Camera, Clapperboard, Columns2, History, Images, Pencil, Plus, Ruler, Scale, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useConfirm } from '../../app/Confirm';
@@ -102,9 +103,9 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
                       <a href={href(`strains/${strain.id}`)} className="text-leaf-300 hover:underline">
                         {strain.name}
                       </a>
-                      {strain.external?.provider === 'strainapi' && (
-                        <a href={href(`discover/strain/${strain.external.id}`)} className="ml-1.5 rounded border border-white/[0.08] px-1.5 py-px text-[10px] text-ink-300 hover:text-ink-50">
-                          Online-Profil
+                      {strain.external && externalLink(strain.external.provider, strain.external.id) && (
+                        <a href={href(externalLink(strain.external.provider, strain.external.id)!)} className="ml-1.5 rounded border border-white/[0.08] px-1.5 py-px text-[10px] text-ink-300 hover:text-ink-50">
+                          Katalogprofil
                         </a>
                       )}
                     </>

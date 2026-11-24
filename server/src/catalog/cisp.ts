@@ -124,7 +124,9 @@ export interface Range {
 
 export interface Parent {
   name: string;
+  /** leer bei unbekanntem Elternteil */
   slug: string;
+  unknown?: boolean;
 }
 
 export interface ListingValues {
@@ -190,7 +192,7 @@ function range(minS: string | undefined, maxS: string | undefined, [lo, hi]: rea
 export function plausibleName(s: string): boolean {
   if (!s || s.length > 48) return false;
   if (s.split(/\s+/).length > 6) return false;
-  if (/[%:!?;]|https?:|\b(lineage|about|days?|thc|cbd|yield|genetics|flowering|gr\/m2)\b/i.test(s)) return false;
+  if (/[%:!?;,]|https?:|\b(lineage|about|days?|thc|cbd|yield|genetics|flowering|gr\/m2|taste|aroma|effects?|flavou?rs?|smell|femini[sz]ed|autoflower\w*)\b/i.test(s)) return false;
   if (/[a-z][A-Z][a-z]/.test(s) && !/^Mc|^Mac/.test(s)) return false; // zusammengeklebte Wörter aus Shop-HTML
   return /[a-z]/i.test(s);
 }
@@ -292,7 +294,9 @@ export function parseRow(cells: string[], h: Header, line: number): Listing | Ro
     const raw = cleanText(g(k));
     if (!raw) continue;
     const nm = titleCase(raw.replace(/\s+strain$/i, '').trim());
-    if (plausibleName(nm)) parents.push({ name: nm, slug: slugify(nm) });
+    // „Unknown …“ ist ein unbekannter Elternteil, keine Sorte
+    if (/^unknown\b/i.test(nm)) parents.push({ name: nm, slug: '', unknown: true });
+    else if (plausibleName(nm)) parents.push({ name: nm, slug: slugify(nm) });
     else rejected.parents = 'not_a_name';
   }
   if (rejected.parents) parents.length = 0; // halbe Abstammung wäre irreführend

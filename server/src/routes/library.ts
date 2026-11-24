@@ -181,7 +181,7 @@ export function libraryRoutes(ctx: AppContext) {
         `SELECT id, seed_bank, breeder_raw, name_original, source_url, scraped_at, "values", rejected FROM catalog_listings WHERE cultivar_id = $1 ORDER BY seed_bank, id`,
         [c.id],
       );
-      const parents = ((c.values as { parents?: { name: string; slug: string }[] }).parents ?? []).map((x) => x.slug);
+      const parents = ((c.values as { parents?: { name: string; slug: string }[] }).parents ?? []).map((x) => x.slug).filter(Boolean);
       const parentMatches = parents.length
         ? (
             await ctx.db.query<{ name_slug: string; id: string; name: string; breeder_name: string; auto: boolean }>(

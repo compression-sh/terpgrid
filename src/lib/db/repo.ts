@@ -216,6 +216,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   discoverNoticeSeen: false,
   kbFavorites: [],
   kbProgress: {},
+  favoriteBreeders: [],
+  recentCultivars: [],
 };
 
 export function normalizeSettings(raw: unknown): AppSettings {
@@ -238,6 +240,13 @@ export function normalizeSettings(raw: unknown): AppSettings {
       s.kbProgress && typeof s.kbProgress === 'object' && !Array.isArray(s.kbProgress)
         ? Object.fromEntries(Object.entries(s.kbProgress).filter(([k, v]) => typeof k === 'string' && typeof v === 'number' && v >= 0 && v <= 1))
         : {},
+    favoriteBreeders: Array.isArray(s.favoriteBreeders) ? s.favoriteBreeders.filter((x): x is string => typeof x === 'string' && /^[a-z0-9]{1,80}$/.test(x)).slice(0, 300) : [],
+    recentCultivars: Array.isArray(s.recentCultivars)
+      ? s.recentCultivars
+          .filter((x): x is { id: string; name: string; breeder: string } => !!x && typeof x === 'object' && typeof x.id === 'string' && typeof x.name === 'string' && typeof x.breeder === 'string')
+          .slice(0, 12)
+          .map((x) => ({ id: x.id.slice(0, 260), name: x.name.slice(0, 120), breeder: x.breeder.slice(0, 120) }))
+      : [],
   };
 }
 
@@ -262,7 +271,7 @@ export async function deleteLabReport(id: string): Promise<void> {
 /* ───────────── Externe Sorten (Online-Katalog) ───────────── */
 
 export interface ExternalStrainSeed {
-  provider: 'strainapi' | 'cannalib';
+  provider: 'strainapi' | 'cannalib' | 'cisp';
   id: string;
   name: string;
   breeder?: string;

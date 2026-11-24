@@ -1,3 +1,4 @@
+import { PROVIDER_LABEL, externalLink } from '../lib/catalog/links';
 import { BadgeCheck, BookOpenText, Camera, Compass, Dna, FlaskRound, GitCompare, Globe, Heart, Leaf, Package, Pencil, Plus, Search, Sprout, Trash2 } from 'lucide-react';
 import { useCompare } from '../app/catalog';
 import { useMemo, useState } from 'react';
@@ -268,18 +269,18 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
         }
         actions={
           <>
+            {strain.external && externalLink(strain.external.provider, strain.external.id) && (
+              <a href={href(externalLink(strain.external.provider, strain.external.id)!)} className="btn-ghost">
+                <Globe className="size-4" /> Katalogprofil
+              </a>
+            )}
             {strain.external?.provider === 'strainapi' && (
-              <>
-                <a href={href(`discover/strain/${strain.external.id}`)} className="btn-ghost">
-                  <Globe className="size-4" /> Online-Profil
-                </a>
-                <a href={href(`discover/genetics/${strain.external.id}`)} className="btn-ghost">
-                  <Dna className="size-4" /> Genetik
-                </a>
-              </>
+              <a href={href(`discover/genetics/${strain.external.id}`)} className="btn-ghost">
+                <Dna className="size-4" /> Genetik
+              </a>
             )}
             {(() => {
-              const key = strain.external?.provider === 'strainapi' ? `strainapi:${strain.external.id}` : `mine:${strain.id}`;
+              const key = strain.external && strain.external.provider !== 'cannalib' ? `${strain.external.provider}:${strain.external.id}` : `mine:${strain.id}`;
               const on = compare.has(key);
               return (
                 <button type="button" className={`btn-ghost ${on ? 'border-sky-400/30 text-sky-200' : ''}`} aria-pressed={on} onClick={() => compare.toggle(key)}>
@@ -314,7 +315,7 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
           {strain.external && (
             <Card title="Quelle" icon={<Globe className="size-4" />}>
               <p className="text-[13px] text-ink-300">
-                Verknüpft mit dem Online-Katalog ({strain.external.provider === 'strainapi' ? 'StrainAPI' : 'CannaLib'}) seit {new Date(strain.external.linkedAt).toLocaleDateString('de-DE')}. Übernommene Werte sind als „Herstellerangabe“ gekennzeichnet; eigene Notizen bleiben lokal.
+                Verknüpft mit dem Katalog ({PROVIDER_LABEL[strain.external.provider]}) seit {new Date(strain.external.linkedAt).toLocaleDateString('de-DE')}. Übernommene Werte sind als „Herstellerangabe“ gekennzeichnet; eigene Notizen bleiben lokal.
               </p>
             </Card>
           )}

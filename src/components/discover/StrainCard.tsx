@@ -3,11 +3,12 @@ import { useCompare, useFavoriteToggle, useLinkedStrains } from '../../app/catal
 import { href } from '../../app/router';
 import type { CatalogStrain } from '../../lib/catalog/types';
 import { externalKey } from '../../lib/db/repo';
+import { strainLink } from '../../lib/catalog/links';
 import { TypeBadge, rangeText } from './Badges';
 import { StrainVisual } from './StrainVisual';
 import { TerpeneChips } from './TerpeneChips';
 
-export function StrainCard({ strain, priority }: { strain: CatalogStrain; priority?: boolean }) {
+export function StrainCard({ strain, priority, matchLabel }: { strain: CatalogStrain; priority?: boolean; matchLabel?: string }) {
   const linked = useLinkedStrains();
   const toggleFav = useFavoriteToggle();
   const compare = useCompare();
@@ -18,18 +19,20 @@ export function StrainCard({ strain, priority }: { strain: CatalogStrain; priori
   const cbd = rangeText(strain.cbd);
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-ink-900/70 transition-all duration-300 hover:-translate-y-0.5 hover:border-white/[0.14] hover:shadow-[0_24px_48px_-28px_rgb(0_0_0/0.9)]">
-      <a href={href(`discover/strain/${strain.id}`)} className="flex flex-1 flex-col focus-visible:outline-offset-[-2px]" aria-label={`${strain.name} – Profil öffnen`}>
+      <a href={href(strainLink(strain))} className="flex flex-1 flex-col focus-visible:outline-offset-[-2px]" aria-label={`${strain.name} – Profil öffnen`}>
         <div className="relative aspect-[4/3] overflow-hidden">
           <StrainVisual image={strain.image} name={strain.name} eager={priority} className="h-full w-full transition-transform duration-700 group-hover:scale-[1.035]" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-ink-950/85 to-transparent" />
-          <div className="absolute left-2.5 top-2.5">
+          <div className="absolute left-2.5 top-2.5 flex flex-wrap gap-1">
             <TypeBadge type={strain.typeClass} label={strain.type} overlay />
+            {strain.seedType?.includes('autoflowering') && <span className="rounded-full border border-white/10 bg-black/55 px-2 py-0.5 text-[11px] font-medium text-ink-100 backdrop-blur">Auto</span>}
           </div>
         </div>
         <div className="flex flex-1 flex-col gap-3 p-3.5">
           <div className="min-w-0">
             <h3 className="truncate text-[15px] font-semibold tracking-tight text-ink-50">{strain.name}</h3>
             <p className="truncate text-[12px] text-ink-400">{strain.breeder ?? 'Breeder: keine Angabe'}</p>
+            {matchLabel && <p className="mt-1 truncate text-[10px] uppercase tracking-wider text-ink-500">Treffer: {matchLabel}</p>}
           </div>
           <dl className="grid grid-cols-2 gap-2">
             <div>

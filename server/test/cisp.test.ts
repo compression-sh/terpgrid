@@ -45,6 +45,8 @@ describe('Bereinigung', () => {
   it('erkennt Fließtext statt Sortennamen', () => {
     expect(plausibleName('OG Kush')).toBe(true);
     expect(plausibleName('Lineage: (Blueberry Thai')).toBe(false);
+    expect(plausibleName('taste, aroma')).toBe(false);
+    expect(plausibleName('effects')).toBe(false);
     expect(plausibleName('About Auto MassassinMonster Mass')).toBe(false);
     expect(plausibleName('Titan F1 AutofloweringCalming, Focus, Physically Relaxing, Uplifting70 - 75 days')).toBe(false);
   });
@@ -77,6 +79,13 @@ describe('Zeilen-Validierung', () => {
     expect(ok.values.parents).toEqual([
       { name: 'Blueberry', slug: 'blueberry' },
       { name: 'Thin Mint Girl Scout Cookies', slug: 'thin-mint-girl-scout-cookies' },
+    ]);
+  });
+  it('kennzeichnet unbekannte Elternteile statt sie als Sorte zu führen', () => {
+    const r = parseRow(row({ parent_1_display: 'Gelato', parent_2_display: 'Unknown Ruderalis' }), H, 2) as Listing;
+    expect(r.values.parents).toEqual([
+      { name: 'Gelato', slug: 'gelato' },
+      { name: 'Unknown Ruderalis', slug: '', unknown: true },
     ]);
   });
   it('lehnt Zeilen ohne Pflichtangaben oder mit unsicherer URL ab', () => {
