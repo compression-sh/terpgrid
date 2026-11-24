@@ -291,7 +291,7 @@ export function Dashboard() {
         }
       >
         {latestPhotos.length === 0 ? (
-          <EmptyState compact icon={<Camera />} title="Noch keine Fotos" text="Fotos bleiben auf diesem Gerät. Standortdaten werden beim Import entfernt." />
+          <EmptyState compact icon={<Camera />} title="Noch keine Fotos" text={server ? 'Fotos werden verschlüsselt auf deinem TERPGRID-Server gespeichert und synchronisiert. Standortdaten (GPS) werden beim Import entfernt.' : 'Fotos bleiben in diesem Browser. Standortdaten (GPS) werden beim Import entfernt.'} />
         ) : (
           <PhotoGrid photos={latestPhotos} group={false} dense />
         )}

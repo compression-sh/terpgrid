@@ -1,3 +1,4 @@
+import { useIsServerMode } from '../../app/auth';
 import { parseTags } from '../../lib/grow/equipment';
 import { Plus, Trash2 } from 'lucide-react';
 import { type FormEvent, useId, useState } from 'react';
@@ -81,6 +82,7 @@ function resolveStrain(strains: Strain[], text: string): { strainId?: string; st
 /* ───────────── Journal ───────────── */
 
 export function JournalFormModal({ open, onClose, entry, strainId }: { open: boolean; onClose: () => void; entry?: JournalEntry; strainId?: string }) {
+  const server = useIsServerMode();
   const { data, settings } = useData();
   const toast = useToast();
   const formId = useId();
@@ -129,7 +131,7 @@ export function JournalFormModal({ open, onClose, entry, strainId }: { open: boo
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={entry ? 'Eintrag bearbeiten' : 'Neuer Journal-Eintrag'} subtitle="Privat und nur auf diesem Gerät." size="lg" footer={<Footer onCancel={onClose} saving={saving} formId={formId} />}>
+    <Modal open={open} onClose={onClose} title={entry ? 'Eintrag bearbeiten' : 'Neuer Journal-Eintrag'} subtitle={server ? 'Privat – nur in deinem Konto, verschlüsselt gespeichert.' : 'Privat – nur in diesem Browser.'} size="lg" footer={<Footer onCancel={onClose} saving={saving} formId={formId} />}>
       <form id={formId} onSubmit={submit} className="space-y-5" noValidate>
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField label="Datum & Uhrzeit" type="datetime-local" value={date} onChange={setDate} required />

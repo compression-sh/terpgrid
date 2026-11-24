@@ -52,7 +52,7 @@ export function SettingsPage() {
 
   return (
     <div>
-      <PageHeader title="Einstellungen" subtitle="Anzeige und Verhalten von TERPGRID – gespeichert nur auf diesem Gerät." />
+      <PageHeader title="Einstellungen" subtitle={server ? 'Anzeige und Verhalten von TERPGRID – mit deinem Konto synchronisiert.' : 'Anzeige und Verhalten von TERPGRID – gespeichert in diesem Browser.'} />
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Card title="Übersicht anpassen" subtitle="Reihenfolge und Sichtbarkeit der Dashboard-Karten" icon={<LayoutDashboard className="size-4" />}>
           <ol className="space-y-1.5">

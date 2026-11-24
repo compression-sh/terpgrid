@@ -2,7 +2,7 @@
 
 **Your personal cannabis space.** Persönliches Dashboard für Growlogs, Fotos, einen Online-Sortenkatalog (Discover), ein persönliches Journal, die eigene Sammlung, Laborberichte und den THC-Rechner (THC Lab).
 
-**Self-hosted · Private Daten geschützt · Kein Tracking.** · Version 5.0.0-rc.1 (Release-Kandidat) · Änderungen: [CHANGELOG.md](CHANGELOG.md)
+**Self-hosted · Private Daten geschützt · Kein Tracking.** · Version 5.1.0-rc.1 (Release-Kandidat) · Änderungen: [CHANGELOG.md](CHANGELOG.md)
 
 TERPGRID läuft in zwei Modi:
 
@@ -25,6 +25,7 @@ TERPGRID läuft in zwei Modi:
 | Bereich | Inhalt |
 | --- | --- |
 | **Katalog** (Servermodus) | Lokal indexierter Datensatz CI-Strains-Pro (CC BY 4.0): Suche über alle 16.710 Sorten mit Trefferarten und echten Summen, Filter, Sortenseiten mit Angeboten je Seedbank, Quell-URL, Widersprüchen, Abstammung und Nachkommen. Siehe [docs/CATALOG.md](docs/CATALOG.md). |
+| **Genetik** (Servermodus) | Abstammungsgraph aus dem Katalog: nur dokumentierte Eltern, gleichnamige Sorten verschiedener Breeder bleiben getrennt, unbekannte und abweichende Angaben gekennzeichnet. |
 | **Breeder** (Servermodus) | Verzeichnis aller 494 Breeder (A–Z, Suche, Kooperationen) mit Profil, Typverteilung, häufigen Elternsorten und Sortenliste; Breeder merken. Keine erfundenen Firmenangaben. |
 | **Discover / Live & Bilder** | Live-Sortenkatalog (StrainAPI): Suche mit Relevanz-Sortierung (Namenstreffer vor Erwähnungen und reinen Volltexttreffern, Gruppen ehrlich ausgewiesen, „Nur Namenstreffer“), Debounce/Abbruch, Filter (Typ, Breeder, Genetik, Terpen, THC/CBD, Favoriten), Sortierung, „Mehr laden“, verlinkbarer URL-Zustand. Filter ohne API-Unterstützung werden als „nur geladene Sorten“ gekennzeichnet; vollständige Ergebnisse nur nach ausdrücklichem „Alle laden“. |
 | **Sortenprofil** | Hero-Bild mit Quellenangabe, Cannabinoid-Spannen mit Evidenzstatus (belegt/berichtet/umstritten/unzureichend), Terpene (Mengen nur aus eigenen Laborberichten), Genetik, Aroma, Botanik, berichtete Erfahrungen (klar als subjektiv gekennzeichnet), Beschreibung (HTML der Quelle nur als Text), optional CannaLib-Forschungsdaten. Merken, mit Pflanze verknüpfen, Grow zuordnen, Journal, Vergleich. |
@@ -38,6 +39,7 @@ TERPGRID läuft in zwei Modi:
 | **Growlogs** | Projekte anlegen, bearbeiten, abschließen, archivieren und löschen. Meilensteine (Keimung … Abgeschlossen) mit berechneten Phasendauern. Projektseite mit Titelbild, Pflanzen, Foto-Zeitleiste, Verlauf, Messwert-Diagrammen, Kalender und Ausgaben. |
 | **Messwerte** | pH/EC mit Messkontext (Gießwasser, Nährlösung, Drainage, Substrat), EC/TDS in mS/cm, µS/cm oder ppm (Skala wählbar), Klima, Wurzelraum, Licht; VPD und DLI berechnet und gekennzeichnet; eigene Zielbereiche, Zeitraum- und Kontextfilter, CSV-Export. |
 | **Grow-Bereiche & Ausrüstung** | Zelte, Räume, Zonen; Geräte mit Leistung, Laufzeit, Garantie, Standort und Wartungsprotokoll; Stromschätzung aus eigenen Angaben. |
+| **Vergleich, Berichte & Experimente** | Bis zu vier Grows nebeneinander (Grow-Tage, Messkontext-Filter), druckbarer Projektbericht (PDF über den Druckdialog), Experimente und Phänotyp-Notizen mit Vergleich, Dokumentationsstand je Grow. |
 | **Schnell-Log & Etiketten** | Beobachtung, Messung oder Pflege in wenigen Taps (Entwurf bleibt erhalten); druckbare Pflanzen-Etiketten mit QR-Link (ohne Anmeldung wirkungslos). |
 | **Pflanzen** | Eigenes Profil je Pflanze: Standort, Tags, Sorte, Typ, eigene Meilensteine, Aktivitäten (Gießen, Düngen, Umtopfen, Messung, Problem …), Messwerte (Höhe, °C, rel. Feuchte, pH, EC, eigene Größen), Fotos und Ernteergebnis. |
 | **Fotos** | Mehrfach-Upload (Drag & Drop, Kamera/Galerie), Filter nach Grow, Pflanze, Phase und Datum, Vollbildansicht, Vorher/Nachher-Schieber, Nebeneinander-Ansicht, Zeitraffer-Diashow mit Geschwindigkeitsregler. |
