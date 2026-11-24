@@ -10,3 +10,6 @@ deploy/state/
 deploy/backup/backup.env
 .sandbox-ca.crt
 *.sandbox
+
+# Heruntergeladene Katalogdateien (CI-Strains-Pro)
+deploy/catalog/

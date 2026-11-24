@@ -2,7 +2,7 @@
 
 **Your personal cannabis space.** Persönliches Dashboard für Growlogs, Fotos, einen Online-Sortenkatalog (Discover), ein persönliches Journal, die eigene Sammlung, Laborberichte und den THC-Rechner (THC Lab).
 
-**Self-hosted · Private Daten geschützt · Kein Tracking.** · Version 4.0.0-rc.1 (Release-Kandidat) · Änderungen: [CHANGELOG.md](CHANGELOG.md)
+**Self-hosted · Private Daten geschützt · Kein Tracking.** · Version 5.0.0-rc.1 (Release-Kandidat) · Änderungen: [CHANGELOG.md](CHANGELOG.md)
 
 TERPGRID läuft in zwei Modi:
 
@@ -12,7 +12,7 @@ TERPGRID läuft in zwei Modi:
 | Speicherort | Eigener Server (PostgreSQL + Dateispeicher), Arbeitskopie je Konto im Browser | nur dieser Browser |
 | Verschlüsselung | Inhalte auf dem Server AES-256-GCM (Envelope, Schlüssel je Konto, rotierbar). **Keine Ende-zu-Ende-Verschlüsselung** – der Server-Betreiber könnte technisch entschlüsseln | keine |
 | Geräte | Synchronisation mit Drei-Wege-Merge und Konfliktauflösung, offline nutzbar, THC-Lab-Entwürfe geräteübergreifend | ein Gerät |
-| Sortendaten | über den Proxy deines Servers | direkt bei StrainAPI/CannaLib |
+| Sortendaten | lokaler Katalog (CI-Strains-Pro, 16.710 Sorten, auf deinem Server indexiert) + StrainAPI/CannaLib über den Proxy | direkt bei StrainAPI/CannaLib |
 
 - Keine Analyse-, Werbe- oder Tracking-Dienste. Persönliche Daten werden nie an Sortendaten-Anbieter gesendet.
 - Fotos werden beim Import verkleinert und neu kodiert. Dabei fallen alle eingebetteten Metadaten weg (inkl. GPS).
@@ -24,7 +24,9 @@ TERPGRID läuft in zwei Modi:
 
 | Bereich | Inhalt |
 | --- | --- |
-| **Discover** | Live-Sortenkatalog (StrainAPI): Suche mit Relevanz-Sortierung (Namenstreffer vor Erwähnungen und reinen Volltexttreffern, Gruppen ehrlich ausgewiesen, „Nur Namenstreffer“), Debounce/Abbruch, Filter (Typ, Breeder, Genetik, Terpen, THC/CBD, Favoriten), Sortierung, „Mehr laden“, verlinkbarer URL-Zustand. Filter ohne API-Unterstützung werden als „nur geladene Sorten“ gekennzeichnet; vollständige Ergebnisse nur nach ausdrücklichem „Alle laden“. |
+| **Katalog** (Servermodus) | Lokal indexierter Datensatz CI-Strains-Pro (CC BY 4.0): Suche über alle 16.710 Sorten mit Trefferarten und echten Summen, Filter, Sortenseiten mit Angeboten je Seedbank, Quell-URL, Widersprüchen, Abstammung und Nachkommen. Siehe [docs/CATALOG.md](docs/CATALOG.md). |
+| **Breeder** (Servermodus) | Verzeichnis aller 494 Breeder (A–Z, Suche, Kooperationen) mit Profil, Typverteilung, häufigen Elternsorten und Sortenliste; Breeder merken. Keine erfundenen Firmenangaben. |
+| **Discover / Live & Bilder** | Live-Sortenkatalog (StrainAPI): Suche mit Relevanz-Sortierung (Namenstreffer vor Erwähnungen und reinen Volltexttreffern, Gruppen ehrlich ausgewiesen, „Nur Namenstreffer“), Debounce/Abbruch, Filter (Typ, Breeder, Genetik, Terpen, THC/CBD, Favoriten), Sortierung, „Mehr laden“, verlinkbarer URL-Zustand. Filter ohne API-Unterstützung werden als „nur geladene Sorten“ gekennzeichnet; vollständige Ergebnisse nur nach ausdrücklichem „Alle laden“. |
 | **Sortenprofil** | Hero-Bild mit Quellenangabe, Cannabinoid-Spannen mit Evidenzstatus (belegt/berichtet/umstritten/unzureichend), Terpene (Mengen nur aus eigenen Laborberichten), Genetik, Aroma, Botanik, berichtete Erfahrungen (klar als subjektiv gekennzeichnet), Beschreibung (HTML der Quelle nur als Text), optional CannaLib-Forschungsdaten. Merken, mit Pflanze verknüpfen, Grow zuordnen, Journal, Vergleich. |
 | **Genetics Explorer** | Interaktiver Abstammungsgraph (Zoom, Pan, Pinch, Tastatur). Nur belegte Beziehungen; alternative Angaben gestrichelt, gleichnamige Sorten verschiedener Breeder als „mehrdeutig“ (nie zusammengeführt), CannaLib-Elternangaben mit Konfidenz. |
 | **Terpen-Atlas** | 7 Terpene mit Formel, molarer Masse, CAS, PubChem-Quelle, Aroma und Vorkommen; Terpen-Rad, Vergleich, Nennungen im Katalog (ohne Mengen), Zusammensetzungen nur aus Laborberichten. |
@@ -34,7 +36,10 @@ TERPGRID läuft in zwei Modi:
 | **Lab Insights** | Laborberichte mit THC/THCA/CBD/CBDA/CBG/CBN, Terpenen, Labor, Charge, Datum, lokalem Originaldokument (PDF/Bild), Herkunftskennzeichnung und Gesamtwerten (THC + 0,877 × THCA, CBD + 0,877 × CBDA). |
 | **Übersicht** | Aktive Grows mit Tageszähler und Phase, neueste Fotos, anstehende Erinnerungen, Journal, Berechnungen, Sorten und Aktivitätsverlauf, ausschließlich aus eigenen Daten. Schnellaktionen; Karten lassen sich sortieren und ausblenden. |
 | **Growlogs** | Projekte anlegen, bearbeiten, abschließen, archivieren und löschen. Meilensteine (Keimung … Abgeschlossen) mit berechneten Phasendauern. Projektseite mit Titelbild, Pflanzen, Foto-Zeitleiste, Verlauf, Messwert-Diagrammen, Kalender und Ausgaben. |
-| **Pflanzen** | Eigenes Profil je Pflanze: Sorte, Typ, eigene Meilensteine, Aktivitäten (Gießen, Düngen, Umtopfen, Messung, Problem …), Messwerte (Höhe, °C, rel. Feuchte, pH, EC, eigene Größen), Fotos und Ernteergebnis. |
+| **Messwerte** | pH/EC mit Messkontext (Gießwasser, Nährlösung, Drainage, Substrat), EC/TDS in mS/cm, µS/cm oder ppm (Skala wählbar), Klima, Wurzelraum, Licht; VPD und DLI berechnet und gekennzeichnet; eigene Zielbereiche, Zeitraum- und Kontextfilter, CSV-Export. |
+| **Grow-Bereiche & Ausrüstung** | Zelte, Räume, Zonen; Geräte mit Leistung, Laufzeit, Garantie, Standort und Wartungsprotokoll; Stromschätzung aus eigenen Angaben. |
+| **Schnell-Log & Etiketten** | Beobachtung, Messung oder Pflege in wenigen Taps (Entwurf bleibt erhalten); druckbare Pflanzen-Etiketten mit QR-Link (ohne Anmeldung wirkungslos). |
+| **Pflanzen** | Eigenes Profil je Pflanze: Standort, Tags, Sorte, Typ, eigene Meilensteine, Aktivitäten (Gießen, Düngen, Umtopfen, Messung, Problem …), Messwerte (Höhe, °C, rel. Feuchte, pH, EC, eigene Größen), Fotos und Ernteergebnis. |
 | **Fotos** | Mehrfach-Upload (Drag & Drop, Kamera/Galerie), Filter nach Grow, Pflanze, Phase und Datum, Vollbildansicht, Vorher/Nachher-Schieber, Nebeneinander-Ansicht, Zeitraffer-Diashow mit Geschwindigkeitsregler. |
 | **THC Lab** | Der bisherige THC-Rechner unverändert: Edibles, Joint, Dosierung, Zeitachse, Werkzeuge, Vergleich, Gespeichert und Quellen. |
 | **Sorten** | Eigene Bibliothek mit Herkunftskennzeichnung je Angabe (eigene Angabe / Herstellerangabe / Laborwert), Terpenen, Aroma, Bewertung und Verknüpfungen zu Grows, Journal und Sammlung. |
@@ -118,7 +123,7 @@ cd server && npm install --legacy-peer-deps
 TEST_PG_URL=postgres://postgres:<pw>@127.0.0.1:5432/postgres npm test
 ```
 
-Server-Verwaltung (im Container: `docker compose exec api node dist/cli.js <befehl>`): `invite`, `promote`/`demote`, `migrate`, `schema-status`, `verify-data`, `rotate-keys` (Server-Schlüssel), `rotate-user-keys`/`key-status`/`purge-retired-keys` (Schlüssel je Konto), `cleanup`. Details: [docs/RUNBOOK.md](docs/RUNBOOK.md).
+Server-Verwaltung (im Container: `docker compose exec api node dist/cli.js <befehl>`): `invite`, `promote`/`demote`, `migrate`, `schema-status`, `verify-data`, `rotate-keys` (Server-Schlüssel), `rotate-user-keys`/`key-status`/`purge-retired-keys` (Schlüssel je Konto), `import-catalog` (Sortenkatalog, besser über `deploy/import-catalog.sh`), `cleanup`. Details: [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
 Tests verwenden gekürzte, echte API-Antworten als Fixtures (`src/lib/__tests__/fixtures`).
 

@@ -88,6 +88,15 @@ docker compose exec api node dist/cli.js promote <kennung>     # Admin-Rolle (be
 
 Weitere Personen lädst du in der App unter **Konto → Administration → Einladungen** ein. Es gibt keinen Standard-Admin und kein Standardpasswort.
 
+### Sortenkatalog importieren (optional, empfohlen)
+
+```bash
+sudo ./import-catalog.sh --dry-run   # Download (raw.githubusercontent.com), Prüfsumme, Qualitätsbericht
+sudo ./import-catalog.sh             # Import im migrate-Container (Owner-Rolle), ca. 5 s, ~70 MB in PostgreSQL
+```
+
+Ohne Import zeigt Discover wie bisher den Live-Katalog (StrainAPI). Details, Lizenz (CC BY 4.0) und Grenzen: [CATALOG.md](CATALOG.md).
+
 ## 5. Konfiguration (`deploy/.env`)
 
 | Variable | Standard | Bedeutung |

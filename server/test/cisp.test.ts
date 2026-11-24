@@ -144,3 +144,12 @@ describe('Datensatz (Auszug aus CI-Strains-Pro)', () => {
     expect(d.listings.every((l) => !/[�Ã]/.test(l.name + l.breederRaw + JSON.stringify(l.values)))).toBe(true);
   });
 });
+
+describe('Deploy-Skript', () => {
+  it('nutzt dieselbe geprüfte Version und Prüfsumme wie der Parser', async () => {
+    const { CISP } = await import('../src/catalog/cisp.js');
+    const sh = readFileSync(join(import.meta.dirname, '..', '..', 'deploy', 'import-catalog.sh'), 'utf8');
+    expect(sh).toContain(`COMMIT="${CISP.commit}"`);
+    expect(sh).toContain(`SHA256="${CISP.sha256}"`);
+  });
+});
