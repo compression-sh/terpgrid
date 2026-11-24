@@ -43,6 +43,7 @@ interface Overview {
   quotaBytes: number;
   recoveryCodesRemaining: number;
   sessions: number;
+  passkeys: number;
   totpEnabled: boolean;
   securityEvents: { type: string; created_at: string }[];
 }
@@ -147,6 +148,7 @@ export function AccountPage() {
       </nav>
 
       {offline && <Callout tone="warn">Offline-Modus: Kontoeinstellungen sind erst wieder verfügbar, wenn der Server erreichbar ist.</Callout>}
+      {ov && <SecurityStatus ov={ov} totp={user.totpEnabled} />}
       {loadError && <Callout tone="danger">{loadError}</Callout>}
 
       <ProfileSection user={user} ov={ov} onSaved={(displayName) => auth.setUser({ displayName })} disabled={offline} />
@@ -691,6 +693,42 @@ function TotpModal({ open, onClose, onDone }: { open: boolean; onClose: () => vo
         </form>
       )}
     </Modal>
+  );
+}
+
+/** Zurückhaltende Übersicht – Status statt Alarm, ohne „100 % sicher“-Versprechen. */
+function SecurityStatus({ ov, totp }: { ov: Overview; totp: boolean }) {
+  const secondFactor = totp || ov.passkeys > 0;
+  const codesOk = ov.recoveryCodesRemaining >= 4;
+  const items: { label: string; value: string; ok: boolean; to: string }[] = [
+    { label: 'Zweiter Faktor', value: totp ? '2FA aktiv' : ov.passkeys > 0 ? 'Passkey' : 'nicht eingerichtet', ok: secondFactor, to: 'sicherheit' },
+    { label: 'Passkeys', value: String(ov.passkeys), ok: true, to: 'passkeys' },
+    { label: 'Recovery-Codes', value: `${ov.recoveryCodesRemaining} / 10`, ok: codesOk, to: 'sicherheit' },
+    { label: 'Aktive Sitzungen', value: String(ov.sessions), ok: true, to: 'sitzungen' },
+  ];
+  return (
+    <div className="card flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
+      <div className="flex items-center gap-3 sm:w-56">
+        <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${secondFactor && codesOk ? 'bg-leaf-500/12 text-leaf-300' : 'bg-amber-400/10 text-amber-200'}`}>
+          <ShieldCheck className="size-5" />
+        </span>
+        <div>
+          <div className="text-[13.5px] font-medium text-ink-50">{secondFactor && codesOk ? 'Gut abgesichert' : 'Absicherung verbessern'}</div>
+          <div className="text-[11.5px] text-ink-500">{secondFactor ? (codesOk ? 'Zweiter Faktor und Recovery-Codes vorhanden' : 'Neue Recovery-Codes empfohlen') : '2FA oder Passkey empfohlen'}</div>
+        </div>
+      </div>
+      <dl className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
+        {items.map((i) => (
+          <button key={i.label} type="button" onClick={() => document.getElementById(i.to)?.scrollIntoView({ behavior: 'smooth' })} className="rounded-lg border border-white/[0.05] bg-white/[0.015] px-3 py-2 text-left hover:border-white/[0.12]">
+            <dt className="text-[11px] text-ink-500">{i.label}</dt>
+            <dd className={`mt-0.5 flex items-center gap-1.5 text-[13px] ${i.ok ? 'text-ink-100' : 'text-amber-200'}`}>
+              <span className={`size-1.5 rounded-full ${i.ok ? 'bg-leaf-400' : 'bg-amber-300'}`} aria-hidden />
+              {i.value}
+            </dd>
+          </button>
+        ))}
+      </dl>
+    </div>
   );
 }
 

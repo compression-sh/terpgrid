@@ -150,7 +150,12 @@ export function CommandPalette() {
           <kbd className="hidden rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-ink-500 sm:block">Esc</kbd>
         </div>
         <ul id="palette-list" ref={listRef} role="listbox" className="max-h-[55vh] overflow-y-auto p-1.5">
-          {items.length === 0 && <li className="px-3 py-6 text-center text-[13px] text-ink-500">Keine Treffer.</li>}
+          {items.length === 0 && (
+            <li className="px-4 py-7 text-center">
+              <div className="text-[13px] text-ink-300">Keine Treffer für „{q}“.</div>
+              <div className="mt-1 text-[12px] text-ink-500">Gesucht wird in deinen Grows, Pflanzen, Sorten, Journal-Einträgen, der Sammlung, Laborberichten und Erinnerungen – nur lokal auf diesem Gerät.</div>
+            </li>
+          )}
           {items.map((it, i) => {
             const header = it.group !== lastGroup ? it.group : null;
             lastGroup = it.group;

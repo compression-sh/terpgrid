@@ -39,6 +39,7 @@ export function accountRoutes(ctx: AppContext) {
       const { rows } = await ctx.db.query('SELECT created_at, last_login_at, password_changed_at, storage_bytes FROM users WHERE id = $1', [s.userId]);
       const rc = await ctx.db.query('SELECT count(*) FILTER (WHERE used_at IS NULL)::int AS remaining FROM recovery_codes WHERE user_id = $1', [s.userId]);
       const sess = await ctx.db.query('SELECT count(*)::int AS n FROM sessions WHERE user_id = $1', [s.userId]);
+      const pk = await ctx.db.query('SELECT count(*)::int AS n FROM webauthn_credentials WHERE user_id = $1', [s.userId]);
       const ev = await ctx.db.query(
         "SELECT type, created_at FROM audit_events WHERE user_id = $1 AND type IN ('login.success','login.failure','password.change','recovery.success','recovery.regenerate','totp.enable','totp.disable','session.revoke') ORDER BY id DESC LIMIT 20",
         [s.userId],
@@ -52,6 +53,7 @@ export function accountRoutes(ctx: AppContext) {
         quotaBytes: ctx.config.userQuotaBytes,
         recoveryCodesRemaining: rc.rows[0].remaining,
         sessions: sess.rows[0].n,
+        passkeys: pk.rows[0].n,
         totpEnabled: s.totpEnabled,
         securityEvents: ev.rows,
       };

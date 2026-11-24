@@ -6,6 +6,7 @@ import {
   Database,
   FlaskRound,
   FlaskConical,
+  History,
   Images,
   LayoutDashboard,
   Leaf,
@@ -36,10 +37,11 @@ export const PRIMARY_NAV: NavItem[] = [
 ];
 
 export const SECONDARY_NAV: NavItem[] = [
+  { id: 'timeline', label: 'Verlauf', to: 'timeline', icon: History, match: ['timeline'] },
   { id: 'photos', label: 'Fotos', to: 'photos', icon: Images, match: ['photos'] },
   { id: 'calendar', label: 'Kalender', to: 'calendar', icon: CalendarDays, match: ['calendar'] },
   { id: 'labreports', label: 'Laborberichte', to: 'lab-reports', icon: FlaskRound, match: ['lab-reports'] },
-  { id: 'analytics', label: 'Analysen', to: 'analytics', icon: BarChart3, match: ['analytics'] },
+  { id: 'analytics', label: 'Insights', to: 'analytics', icon: BarChart3, match: ['analytics'] },
   { id: 'tools', label: 'Werkzeuge', to: 'tools', icon: Wrench, match: ['tools'] },
   { id: 'data', label: 'Daten & Backup', to: 'data', icon: Database, match: ['data'] },
   { id: 'settings', label: 'Einstellungen', to: 'settings', icon: Settings, match: ['settings'] },

@@ -28,8 +28,8 @@ export function Stat({ label, value, range, unit, hint, emphasis, theoretical, r
         emphasis ? 'border-leaf-500/25 bg-gradient-to-b from-leaf-500/[0.08] to-transparent' : 'border-white/[0.06] bg-white/[0.015]'
       }`}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-xs font-medium text-ink-300">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+        <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-ink-300">
           {step !== undefined && <span className="grid size-4 place-items-center rounded-full border border-white/15 font-mono text-[9px] text-ink-400">{step}</span>}
           {label}
         </div>
@@ -39,7 +39,7 @@ export function Stat({ label, value, range, unit, hint, emphasis, theoretical, r
           </span>
         )}
         {range && (
-          <span className="rounded-full border border-amber-400/20 bg-amber-400/[0.06] px-1.5 py-px text-[10px] uppercase tracking-wide text-amber-300/90">
+          <span className="shrink-0 rounded-full border border-amber-400/20 bg-amber-400/[0.06] px-1.5 py-px text-[10px] uppercase tracking-wide text-amber-300/90">
             Schätzung
           </span>
         )}

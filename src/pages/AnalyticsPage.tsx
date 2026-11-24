@@ -15,8 +15,45 @@ import { EXPENSE_CATEGORY_LABEL } from '../lib/grow/labels';
 import { PHASE_COLOR, PHASE_SHORT } from '../lib/grow/phases';
 import { fmt } from '../lib/format';
 import { journalSummary } from './JournalPage';
+import { computeInsights } from '../lib/insights';
+import { METRICS } from '../lib/grow/series';
 
 const tooltipStyle = { background: '#0e1211', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, fontSize: 12 };
+
+function Kpi({ label, value, sub, missing }: { label: string; value: string; sub?: string; missing?: string }) {
+  return (
+    <div className="rounded-xl border border-white/[0.05] bg-white/[0.015] px-3.5 py-3">
+      <div className="text-[11px] text-ink-500">{label}</div>
+      {missing ? (
+        <div className="mt-1 text-[12px] leading-snug text-ink-500">{missing}</div>
+      ) : (
+        <>
+          <div className="mt-0.5 text-xl font-semibold tabular tracking-tight text-ink-50">{value}</div>
+          {sub && <div className="text-[11px] text-ink-500">{sub}</div>}
+        </>
+      )}
+    </div>
+  );
+}
+
+function InsightsHeader() {
+  const { data, settings } = useData();
+  const t = today();
+  const i = useMemo(() => computeInsights(data, t), [data, t]);
+  const d = (n: number | null) => (n === null ? '–' : `${fmt(n, 1)} Tage`);
+  return (
+    <div className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+      <Kpi label="Aktive Grows" value={String(i.activeGrows)} sub={`${i.completedGrows} abgeschlossen`} />
+      <Kpi label="Ø dokumentierte Grow-Dauer" value={d(i.avgGrowDays.value)} sub={`aus ${i.avgGrowDays.n} abgeschlossenen`} missing={i.avgGrowDays.missing} />
+      <Kpi label="Pflanzen in aktiven Grows" value={String(i.activePlants)} sub={i.oldestPlantDays.value !== null ? `älteste ${i.oldestPlantDays.value} Tage · Ø ${fmt(i.avgPlantAgeDays.value ?? 0, 0)}` : undefined} />
+      <Kpi label="Fotos (30 Tage)" value={String(i.photos30d)} sub={i.photosPerWeek12w.value !== null ? `Ø ${fmt(i.photosPerWeek12w.value, 1)} pro Woche (12 Wo.)` : undefined} />
+      <Kpi label="Messungen" value={String(i.measurements)} sub={i.measurementKinds.length ? i.measurementKinds.map((k) => METRICS.find((m) => m.key === k)?.label ?? k).slice(0, 5).join(', ') : 'keine Messwerte erfasst'} />
+      <Kpi label="Eigene Sorten" value={String(i.strains.total)} sub={`${i.strains.favorites} Favoriten · ${i.strains.fromDiscover} aus Discover · ${i.strains.withLab} mit Laborwerten`} />
+      <Kpi label="Journal" value={String(i.journal.total)} sub={`${i.journal.last30d} in 30 Tagen${i.journal.avgRating.value !== null ? ` · Ø Bewertung ${fmt(i.journal.avgRating.value, 1)}` : ''}`} />
+      <Kpi label="Ausgaben (12 Monate)" value={i.expenses12m.value !== null ? money(i.expenses12m.value, settings.currency) : '–'} sub={`${i.expenses12m.n} Posten`} missing={i.expenses12m.missing} />
+    </div>
+  );
+}
 
 function NoData({ text }: { text: string }) {
   return <EmptyState compact title="Noch keine Daten" text={text} />;
@@ -44,13 +81,17 @@ export function AnalyticsPage() {
 
   return (
     <div>
-      <PageHeader title="Analysen" subtitle="Auswertungen ausschließlich aus deinen eigenen Einträgen – fehlende Werte werden nicht ergänzt." />
+      <PageHeader
+        title="Insights"
+        subtitle="Kennzahlen und Auswertungen ausschließlich aus deinen eigenen Einträgen. Fehlende Werte werden nicht ergänzt; reicht die Datengrundlage nicht, steht das dabei. Keine Empfehlungen, keine Vorhersagen."
+      />
       {!hasAny ? (
         <div className="card">
           <EmptyState icon={<BarChart3 />} title="Noch nichts auszuwerten" text="Sobald du Grows, Messwerte, Ausgaben, Sorten oder Journal-Einträge erfasst, erscheinen hier Diagramme. Es werden keine Beispieldaten angezeigt." />
         </div>
       ) : (
         <div className="space-y-5">
+          <InsightsHeader />
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
             <Card title="Grow-Dauer" subtitle="Tage seit Start; laufende Grows bis heute" icon={<Sprout className="size-4" />}>
               {durations.length === 0 ? (

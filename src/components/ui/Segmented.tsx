@@ -26,7 +26,7 @@ export function Segmented<T extends string>({ label, value, options, onChange, s
       <div
         role="radiogroup"
         aria-labelledby={label ? id : undefined}
-        className="flex w-full gap-1 rounded-xl border border-white/[0.06] bg-ink-850 p-1"
+        className="flex w-full gap-1 overflow-x-auto rounded-xl border border-white/[0.06] bg-ink-850 p-1 [scrollbar-width:none]"
       >
         {options.map((o) => {
           const active = o.value === value;
@@ -38,7 +38,7 @@ export function Segmented<T extends string>({ label, value, options, onChange, s
               aria-checked={active}
               title={o.hint}
               onClick={() => onChange(o.value)}
-              className={`flex-1 rounded-lg px-2.5 font-medium transition-all ${
+              className={`flex-1 shrink-0 whitespace-nowrap rounded-lg px-2.5 font-medium transition-all ${
                 size === 'sm' ? 'py-1 text-xs' : 'py-1.5 text-[13px]'
               } ${
                 active

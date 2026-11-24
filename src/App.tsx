@@ -35,6 +35,7 @@ const TerpeneAtlas = lazy(() => import('./pages/discover/TerpeneAtlas').then((m)
 const CompareStudio = lazy(() => import('./pages/discover/CompareStudio').then((m) => ({ default: m.CompareStudio })));
 const VisualExplorer = lazy(() => import('./pages/discover/VisualExplorer').then((m) => ({ default: m.VisualExplorer })));
 const KnowledgeHub = lazy(() => import('./pages/discover/KnowledgeHub').then((m) => ({ default: m.KnowledgeHub })));
+const TimelinePage = lazy(() => import('./pages/TimelinePage').then((m) => ({ default: m.TimelinePage })));
 const LabInsights = lazy(() => import('./pages/LabInsights').then((m) => ({ default: m.LabInsights })));
 const AccountPage = lazy(() => import('./pages/account/AccountPage').then((m) => ({ default: m.AccountPage })));
 const AdminPage = lazy(() => import('./pages/account/AdminPage').then((m) => ({ default: m.AdminPage })));
@@ -127,6 +128,9 @@ function Routes() {
       else if (b === 'sync') page = <SyncPage />;
       else if (!b) page = <AccountGate />;
       else page = <NotFound />;
+      break;
+    case 'timeline':
+      page = <TimelinePage />;
       break;
     case 'admin':
       page = <AdminPage />;
