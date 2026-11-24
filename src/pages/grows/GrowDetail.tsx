@@ -15,8 +15,7 @@ import {
   Receipt,
   Ruler,
   Sprout,
-  Trash2,
-} from 'lucide-react';
+  Trash2, QrCode, NotebookPen } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useConfirm } from '../../app/Confirm';
 import { useData } from '../../app/DataProvider';
@@ -259,7 +258,10 @@ export function GrowDetail({ growId }: { growId: string }) {
 
       {/* Aktionen */}
       <div className="mb-5 flex flex-wrap items-center gap-2">
-        <button type="button" className="btn-primary" onClick={() => setModal('activity')}>
+        <button type="button" className="btn-primary" onClick={() => quick({ kind: 'log', growId })}>
+          <NotebookPen className="size-4" /> Schnell-Log
+        </button>
+        <button type="button" className="btn-ghost" onClick={() => setModal('activity')}>
           <Plus className="size-4" /> Eintrag
         </button>
         <button type="button" className="btn-ghost" onClick={() => setModal('photo')}>
@@ -389,9 +391,16 @@ export function GrowDetail({ growId }: { growId: string }) {
           title="Pflanzen"
           subtitle={`${plants.length} in diesem Grow`}
           actions={
-            <button type="button" className="btn-primary py-1.5" onClick={() => quick({ kind: 'plant', growId })}>
-              <Plus className="size-4" /> Pflanze
-            </button>
+            <div className="flex gap-2">
+              {plants.length > 0 && (
+                <a href={href(`labels?grow=${encodeURIComponent(growId)}`)} className="btn-ghost py-1.5">
+                  <QrCode className="size-4" /> Etiketten
+                </a>
+              )}
+              <button type="button" className="btn-primary py-1.5" onClick={() => quick({ kind: 'plant', growId })}>
+                <Plus className="size-4" /> Pflanze
+              </button>
+            </div>
           }
         >
           {plants.length === 0 ? (

@@ -1,3 +1,4 @@
+import { parseTags } from '../../lib/grow/equipment';
 import { Plus } from 'lucide-react';
 import { type FormEvent, useId, useMemo, useState } from 'react';
 import { useData } from '../../app/DataProvider';
@@ -183,6 +184,9 @@ export function PlantFormModal({
   const [type, setType] = useState<PlantType>(plant?.type ?? 'unknown');
   const [phaseDates, setPhaseDates] = useState<PhaseDates>(plant?.phaseDates ?? {});
   const [notes, setNotes] = useState(plant?.notes ?? '');
+  const [spaceId, setSpaceId] = useState(plant?.spaceId ?? '');
+  const [tags, setTags] = useState((plant?.tags ?? []).join(', '));
+  const spaces = data.inventory.filter((i) => i.category === 'space' && (!i.archived || i.id === plant?.spaceId));
   const [harvestDate, setHarvestDate] = useState(plant?.outcome?.harvestDate ?? '');
   const [wet, setWet] = useState(numText(plant?.outcome?.wetWeightG));
   const [dry, setDry] = useState(numText(plant?.outcome?.dryWeightG));
@@ -215,6 +219,8 @@ export function PlantFormModal({
       phaseDates,
       notes,
       outcome,
+      spaceId: spaceId || undefined,
+      tags: parseTags(tags),
     };
     try {
       const saved = plant ? await updateRecord('plants', plant.id, payload) : await createRecord('plants', payload);
@@ -256,6 +262,17 @@ export function PlantFormModal({
             </Field>
             <TextField label="Startdatum" type="date" value={startDate} onChange={setStartDate} />
             <SelectField label="Typ (falls bekannt)" value={type} onChange={(v) => setType((v || 'unknown') as PlantType)} options={(Object.keys(PLANT_TYPE_LABEL) as PlantType[]).map((v) => ({ value: v, label: PLANT_TYPE_LABEL[v] }))} />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <SelectField
+              label="Standort (Grow-Bereich)"
+              value={spaceId}
+              onChange={setSpaceId}
+              options={spaces.map((s) => ({ value: s.id, label: s.name }))}
+              placeholder={spaces.length ? '—' : 'Noch keine Bereiche'}
+              hint={spaces.length ? undefined : 'Zelte, Räume und Zonen unter Sammlung → Hinzufügen → „Grow-Bereich“.'}
+            />
+            <TextField label="Tags (optional)" value={tags} onChange={setTags} maxLength={200} placeholder="z. B. pheno-a, mutter, links" />
           </div>
           <PhaseDatesEditor value={phaseDates} onChange={setPhaseDates} hint="Optional eigene Meilensteine dieser Pflanze. Leer = es gelten die Daten des Grows." />
           <TextArea label="Notizen" value={notes} onChange={setNotes} />

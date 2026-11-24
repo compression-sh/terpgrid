@@ -175,4 +175,15 @@ input[type='range'].slider:active::-webkit-slider-thumb {
   .no-print {
     display: none !important;
   }
+  /* Etikettendruck: nur die Etiketten, ohne Seitenränder der App */
+  body:has(.label-sheet) main {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  .label-sheet > div {
+    border-color: #999 !important;
+  }
+  @page {
+    margin: 8mm;
+  }
 }

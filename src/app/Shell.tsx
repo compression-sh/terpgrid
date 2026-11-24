@@ -60,6 +60,7 @@ function QuickAddMenu({ align = 'right' }: { align?: 'right' | 'left' }) {
       </button>
       {open && (
         <div role="menu" className={`absolute z-40 mt-2 w-52 rounded-xl border border-white/[0.08] bg-ink-850 p-1 shadow-2xl animate-fade-up ${align === 'right' ? 'right-0' : 'left-0'}`}>
+          {item('Schnell-Log (Beobachtung, Messung)', () => quick({ kind: 'log' }))}
           {item('Neuer Grow', () => quick({ kind: 'grow' }))}
           {item('Pflanze hinzufügen', () => quick({ kind: 'plant' }))}
           {item('Foto hochladen', () => quick({ kind: 'photo' }))}

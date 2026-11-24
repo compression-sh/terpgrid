@@ -18,6 +18,7 @@ import { Dashboard } from './pages/Dashboard';
 const ThcLab = lazy(() => import('./pages/ThcLab').then((m) => ({ default: m.ThcLab })));
 const GrowList = lazy(() => import('./pages/grows/GrowList').then((m) => ({ default: m.GrowList })));
 const GrowDetail = lazy(() => import('./pages/grows/GrowDetail').then((m) => ({ default: m.GrowDetail })));
+const LabelsPage = lazy(() => import('./pages/grows/LabelsPage').then((m) => ({ default: m.LabelsPage })));
 const PlantDetail = lazy(() => import('./pages/grows/PlantDetail').then((m) => ({ default: m.PlantDetail })));
 const PhotosPage = lazy(() => import('./pages/PhotosPage').then((m) => ({ default: m.PhotosPage })));
 const StrainsPage = lazy(() => import('./pages/StrainsPage').then((m) => ({ default: m.StrainsPage })));
@@ -86,6 +87,9 @@ function Routes() {
       if (!b) page = <GrowList />;
       else if (c === 'plants' && d) page = <PlantDetail growId={b} plantId={d} />;
       else page = <GrowDetail growId={b} />;
+      break;
+    case 'labels':
+      page = <LabelsPage />;
       break;
     case 'photos':
       page = <PhotosPage />;

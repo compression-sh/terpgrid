@@ -1,5 +1,6 @@
+import { useQuickActions } from '../../app/QuickActions';
 import { externalLink } from '../../lib/catalog/links';
-import { Camera, Clapperboard, Columns2, History, Images, Pencil, Plus, Ruler, Scale, Trash2 } from 'lucide-react';
+import { Camera, Clapperboard, Columns2, History, Images, Pencil, Plus, Ruler, Scale, Trash2, QrCode, NotebookPen } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useConfirm } from '../../app/Confirm';
 import { useData } from '../../app/DataProvider';
@@ -30,6 +31,7 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
   const route = useRoute();
   const toast = useToast();
   const confirm = useConfirm();
+  const quick = useQuickActions();
   const [modal, setModal] = useState<'edit' | 'activity' | 'photo' | 'measure' | 'thresholds' | null>(null);
   const tab = (['log', 'photos', 'measurements', 'outcome'].includes(route.query.get('tab') ?? '') ? route.query.get('tab') : 'log') as Tab;
 
@@ -52,6 +54,7 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
   const cover = plant.coverPhotoId ?? sortedPhotos[0]?.id;
   const latest = METRICS.map((m) => ({ m, p: metricSeries(activities, m.key).at(-1) })).filter((x) => x.p);
   const o = plant.outcome;
+  const space = plant.spaceId ? data.inventory.find((i) => i.id === plant.spaceId) : undefined;
 
   async function remove() {
     const ok = await confirm({
@@ -125,6 +128,10 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
               <PhaseChip phase={phase} />
               <Chip>{PLANT_TYPE_LABEL[plant.type]}</Chip>
               {!ownPhases && <Chip title="Diese Pflanze hat keine eigenen Meilensteine">Phasen vom Grow</Chip>}
+              {space && <Chip tone="sky">Standort: {space.name}</Chip>}
+              {(plant.tags ?? []).map((t) => (
+                <Chip key={t}>#{t}</Chip>
+              ))}
             </div>
             {latest.length > 0 && (
               <dl className="flex flex-wrap gap-x-5 gap-y-1">
@@ -139,7 +146,10 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
               </dl>
             )}
             <div className="mt-auto flex flex-wrap gap-2">
-              <button type="button" className="btn-primary" onClick={() => setModal('activity')}>
+              <button type="button" className="btn-primary" onClick={() => quick({ kind: 'log', plantId })}>
+                <NotebookPen className="size-4" /> Schnell-Log
+              </button>
+              <button type="button" className="btn-ghost" onClick={() => setModal('activity')}>
                 <Plus className="size-4" /> Eintrag
               </button>
               <button type="button" className="btn-ghost" onClick={() => setModal('measure')}>
@@ -151,6 +161,9 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
               <button type="button" className="btn-ghost" onClick={() => setModal('edit')}>
                 <Pencil className="size-4" /> Bearbeiten
               </button>
+              <a href={href(`labels?grow=${encodeURIComponent(growId)}&plants=${encodeURIComponent(plant.id)}`)} className="btn-ghost">
+                <QrCode className="size-4" /> Etikett
+              </a>
               <button type="button" className="btn-ghost text-rose-300/90 hover:text-rose-200" onClick={remove} aria-label="Pflanze löschen">
                 <Trash2 className="size-4" />
               </button>

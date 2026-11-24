@@ -1,6 +1,7 @@
 import { type ReactNode, createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { GrowFormModal, PlantFormModal } from '../components/forms/GrowForms';
 import { JournalFormModal } from '../components/forms/PersonalForms';
+import { QuickLogModal } from '../components/forms/QuickLogModal';
 import { type PhotoTarget, PhotoUploadModal } from '../components/photos/PhotoUpload';
 import { navigate } from './router';
 
@@ -8,7 +9,8 @@ type Action =
   | { kind: 'grow' }
   | { kind: 'plant'; growId?: string }
   | { kind: 'photo'; target?: PhotoTarget }
-  | { kind: 'journal' };
+  | { kind: 'journal' }
+  | { kind: 'log'; plantId?: string; growId?: string };
 
 const Ctx = createContext<(a: Action) => void>(() => {});
 
@@ -25,6 +27,7 @@ export function QuickActionsProvider({ children }: { children: ReactNode }) {
       {action?.kind === 'plant' && <PlantFormModal open onClose={close} growId={action.growId} />}
       {action?.kind === 'photo' && <PhotoUploadModal open onClose={close} target={action.target} selectable />}
       {action?.kind === 'journal' && <JournalFormModal open onClose={close} />}
+      {action?.kind === 'log' && <QuickLogModal onClose={close} plantId={action.plantId} growId={action.growId} />}
     </Ctx.Provider>
   );
 }

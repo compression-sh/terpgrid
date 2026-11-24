@@ -23,8 +23,7 @@ import {
   Bell,
   Flag,
   FlaskRound,
-  Gauge,
-} from 'lucide-react';
+  Gauge, NotebookPen } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useData, useLookup } from '../app/DataProvider';
 import { useQuickActions } from '../app/QuickActions';
@@ -140,6 +139,7 @@ export function GrowCard({ grow, compact }: { grow: GrowProject; compact?: boole
 }
 
 export function Dashboard() {
+  const activeGrowCount = useData().data.grows.filter((g) => g.status === 'active').length;
   const server = useIsServerMode();
   const { data, settings, updateSettings, ready } = useData();
   const lookup = useLookup();
@@ -398,7 +398,8 @@ export function Dashboard() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+        {activeGrowCount > 0 && <QuickAction icon={NotebookPen} label="Schnell-Log" onClick={() => quick({ kind: 'log' })} />}
         <QuickAction icon={Sprout} label="Neuer Grow" onClick={() => quick({ kind: 'grow' })} />
         <QuickAction icon={Plus} label="Pflanze hinzufügen" onClick={() => quick({ kind: 'plant' })} disabled={data.grows.length === 0} hint={data.grows.length === 0 ? 'Erst einen Grow anlegen' : undefined} />
         <QuickAction icon={Camera} label="Foto hochladen" onClick={() => quick({ kind: 'photo' })} />

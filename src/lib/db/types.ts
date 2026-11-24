@@ -73,6 +73,9 @@ export interface Plant extends BaseRecord {
   notes: string;
   outcome?: PlantOutcome;
   coverPhotoId?: string;
+  /** Standort: Grow-Bereich (Zelt, Raum, Zone …) */
+  spaceId?: string;
+  tags?: string[];
 }
 
 export const ACTIVITY_TYPES = [
@@ -149,7 +152,12 @@ export interface Activity extends BaseRecord {
   volumeMl?: number;
   measurements?: Measurements;
   photoIds?: string[];
+  /** Strukturierte Beobachtung (Kategorien) – subjektiv, keine Diagnose */
+  observations?: ObservationKind[];
 }
+
+export const OBSERVATION_KINDS = ['appearance', 'leafColor', 'change', 'growth', 'symptom', 'environment', 'aroma', 'personal'] as const;
+export type ObservationKind = (typeof OBSERVATION_KINDS)[number];
 
 /* ───────────────────────── Fotos ───────────────────────── */
 
@@ -268,7 +276,9 @@ export interface JournalEntry extends BaseRecord {
 
 /* ───────────────────────── Sammlung ───────────────────────── */
 
-export const INVENTORY_CATEGORIES = ['cannabis', 'seeds', 'accessory', 'equipment', 'nutrients', 'other'] as const;
+export const INVENTORY_CATEGORIES = ['cannabis', 'seeds', 'accessory', 'equipment', 'space', 'nutrients', 'other'] as const;
+export const SPACE_KINDS = ['tent', 'room', 'greenhouse', 'outdoor', 'zone'] as const;
+export type SpaceKind = (typeof SPACE_KINDS)[number];
 export type InventoryCategory = (typeof INVENTORY_CATEGORIES)[number];
 
 export interface InventoryItem extends BaseRecord {
@@ -283,6 +293,21 @@ export interface InventoryItem extends BaseRecord {
   /** Optionale Verknüpfung, z. B. Ernte aus einem abgeschlossenen Grow. */
   growId?: string;
   coverPhotoId?: string;
+  /** Grow-Bereich (Kategorie „space“): Art und Maße */
+  spaceKind?: SpaceKind;
+  dimensions?: string;
+  /** Ausrüstung: Hersteller, Modell, Leistung, Laufzeit, Garantie, Standort */
+  manufacturer?: string;
+  model?: string;
+  powerW?: number;
+  /** Eigene Angabe: durchschnittliche Betriebsstunden pro Tag (für die Stromschätzung) */
+  hoursPerDay?: number;
+  warrantyUntil?: DateString;
+  /** Standort: ID eines Grow-Bereichs (Inventar-Eintrag der Kategorie „space“) */
+  spaceId?: string;
+  maintenanceLog?: { date: DateString; note: string }[];
+  tags?: string[];
+  archived?: boolean;
 }
 
 export const EXPENSE_CATEGORIES = ['equipment', 'seeds', 'nutrients', 'medium', 'electricity', 'water', 'other'] as const;

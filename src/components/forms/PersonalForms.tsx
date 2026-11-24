@@ -1,3 +1,4 @@
+import { parseTags } from '../../lib/grow/equipment';
 import { Plus, Trash2 } from 'lucide-react';
 import { type FormEvent, useId, useState } from 'react';
 import { useData } from '../../app/DataProvider';
@@ -10,6 +11,8 @@ import {
   type ConsumptionMethod,
   INVENTORY_CATEGORIES,
   type InventoryCategory,
+  SPACE_KINDS,
+  type SpaceKind,
   type InventoryItem,
   type JournalEntry,
   REMINDER_CATEGORIES,
@@ -24,6 +27,7 @@ import {
   CLAIM_SOURCE_LABEL,
   INVENTORY_CATEGORY_LABEL,
   METHOD_LABEL,
+  SPACE_KIND_LABEL,
   MOOD_OPTIONS,
   REMINDER_CATEGORY_LABEL,
   TERPENE_SUGGESTIONS,
@@ -284,10 +288,21 @@ export function InventoryFormModal({ open, onClose, item, defaults }: { open: bo
   const [notes, setNotes] = useState(base?.notes ?? '');
   const [strain, setStrain] = useState(base?.strainId ? (data.strains.find((s) => s.id === base.strainId)?.name ?? '') : '');
   const [growId, setGrowId] = useState(base?.growId ?? '');
+  const [spaceKind, setSpaceKind] = useState<SpaceKind | ''>(base?.spaceKind ?? '');
+  const [dimensions, setDimensions] = useState(base?.dimensions ?? '');
+  const [manufacturer, setManufacturer] = useState(base?.manufacturer ?? '');
+  const [model, setModel] = useState(base?.model ?? '');
+  const [powerW, setPowerW] = useState(numText(base?.powerW));
+  const [hours, setHours] = useState(numText(base?.hoursPerDay));
+  const [warranty, setWarranty] = useState(base?.warrantyUntil ?? '');
+  const [spaceId, setSpaceId] = useState(base?.spaceId ?? '');
+  const [tags, setTags] = useState((base?.tags ?? []).join(', '));
+  const [archived, setArchived] = useState(!!base?.archived);
   const [saving, setSaving] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const nameErr = submitted && !name.trim() ? 'Bitte einen Namen eingeben.' : undefined;
-  const numErr = numberError(quantity, { min: 0, max: 1_000_000 }) || numberError(cost, { min: 0, max: 1_000_000 });
+  const numErr = numberError(quantity, { min: 0, max: 1_000_000 }) || numberError(cost, { min: 0, max: 1_000_000 }) || numberError(powerW, { min: 0, max: 100_000 }) || numberError(hours, { min: 0, max: 24 });
+  const spaces = data.inventory.filter((i) => i.category === 'space' && i.id !== item?.id && !i.archived);
   const completedGrows = data.grows.filter((g) => g.status !== 'active' || g.id === growId);
 
   async function submit(e: FormEvent) {
@@ -306,6 +321,17 @@ export function InventoryFormModal({ open, onClose, item, defaults }: { open: bo
       notes,
       strainId: match?.id,
       growId: growId || undefined,
+      spaceKind: category === 'space' ? spaceKind || undefined : undefined,
+      dimensions: category === 'space' ? dimensions.trim() || undefined : undefined,
+      manufacturer: category === 'equipment' ? manufacturer.trim() || undefined : undefined,
+      model: category === 'equipment' ? model.trim() || undefined : undefined,
+      powerW: category === 'equipment' ? toOptionalNumber(powerW) : undefined,
+      hoursPerDay: category === 'equipment' ? toOptionalNumber(hours) : undefined,
+      warrantyUntil: category === 'equipment' ? warranty || undefined : undefined,
+      spaceId: category !== 'space' ? spaceId || undefined : undefined,
+      tags: parseTags(tags),
+      archived: archived || undefined,
+      maintenanceLog: item?.maintenanceLog,
     };
     try {
       if (item) await updateRecord('inventory', item.id, payload);
@@ -343,7 +369,33 @@ export function InventoryFormModal({ open, onClose, item, defaults }: { open: bo
             <SelectField label="Aus Grow (optional)" value={growId} onChange={setGrowId} options={completedGrows.map((g) => ({ value: g.id, label: g.name }))} placeholder="—" hint="Verknüpfung, z. B. Ernte eines abgeschlossenen Grows." />
           </div>
         )}
+        {category === 'space' && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <SelectField label="Art des Bereichs" value={spaceKind} onChange={(v) => setSpaceKind(v as SpaceKind | '')} options={SPACE_KINDS.map((k) => ({ value: k, label: SPACE_KIND_LABEL[k] }))} placeholder="—" />
+            <TextField label="Maße (optional)" value={dimensions} onChange={setDimensions} maxLength={40} placeholder="z. B. 80 × 80 × 160 cm" />
+          </div>
+        )}
+        {category === 'equipment' && (
+          <div className="space-y-4 rounded-xl border border-white/[0.06] p-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <TextField label="Hersteller" value={manufacturer} onChange={setManufacturer} maxLength={60} />
+              <TextField label="Modell" value={model} onChange={setModel} maxLength={60} />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <OptionalNumber label="Leistung" unit="W" text={powerW} onText={setPowerW} min={0} max={100_000} hint="laut Typenschild" />
+              <OptionalNumber label="Betrieb pro Tag" unit="h" text={hours} onText={setHours} min={0} max={24} hint="eigene Schätzung" />
+              <TextField label="Garantie bis" type="date" value={warranty} onChange={setWarranty} />
+            </div>
+          </div>
+        )}
+        {category !== 'space' && spaces.length > 0 && (
+          <SelectField label="Standort (Grow-Bereich)" value={spaceId} onChange={setSpaceId} options={spaces.map((s) => ({ value: s.id, label: s.name }))} placeholder="—" />
+        )}
+        <TextField label="Tags (optional)" value={tags} onChange={setTags} maxLength={200} placeholder="durch Komma getrennt, z. B. zelt-1, ersatz" />
         <TextArea label="Notizen" value={notes} onChange={setNotes} />
+        <label className="flex items-center gap-2 text-[13px] text-ink-300">
+          <input type="checkbox" className="accent-leaf-500" checked={archived} onChange={(e) => setArchived(e.target.checked)} /> Archiviert (in der Liste ausgeblendet, Daten bleiben erhalten)
+        </label>
         <p className="hint">Mengen werden nie automatisch verändert – nur über dieses Formular oder die bestätigten Schnellanpassungen.</p>
       </form>
     </Modal>
@@ -352,16 +404,16 @@ export function InventoryFormModal({ open, onClose, item, defaults }: { open: bo
 
 /* ───────────── Erinnerung ───────────── */
 
-export function ReminderFormModal({ open, onClose, reminder, date, growId }: { open: boolean; onClose: () => void; reminder?: Reminder; date?: string; growId?: string }) {
+export function ReminderFormModal({ open, onClose, reminder, date, growId, plantId, defaults }: { open: boolean; onClose: () => void; reminder?: Reminder; date?: string; growId?: string; plantId?: string; defaults?: { title?: string; category?: ReminderCategory } }) {
   const { data } = useData();
   const toast = useToast();
   const formId = useId();
-  const [title, setTitle] = useState(reminder?.title ?? '');
+  const [title, setTitle] = useState(reminder?.title ?? defaults?.title ?? '');
   const [d, setD] = useState(reminder?.date ?? date ?? today());
   const [time, setTime] = useState(reminder?.time ?? '');
-  const [category, setCategory] = useState<ReminderCategory>(reminder?.category ?? 'watering');
+  const [category, setCategory] = useState<ReminderCategory>(reminder?.category ?? defaults?.category ?? 'watering');
   const [gid, setGid] = useState(reminder?.growId ?? growId ?? '');
-  const [pid, setPid] = useState(reminder?.plantId ?? '');
+  const [pid, setPid] = useState(reminder?.plantId ?? plantId ?? '');
   const [repeatKind, setRepeatKind] = useState<RepeatRule['kind']>(reminder?.repeat.kind ?? 'none');
   const [interval, setInterval] = useState(String(reminder && reminder.repeat.kind !== 'none' ? reminder.repeat.interval : 1));
   const [until, setUntil] = useState(reminder && reminder.repeat.kind !== 'none' ? (reminder.repeat.until ?? '') : '');
