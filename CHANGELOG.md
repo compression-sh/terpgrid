@@ -11,7 +11,14 @@ Cannabis 101 & Terpen-Atlas, Expansion 2.1. Migration 006 (nur Katalog-Metadaten
 - **Terpen-Atlas 3.0:** 27 Verbindungen mit PubChem-Identität, 2D-Strukturformel, belegtem Geruch, Cannabis-Beleg aus geprüfter Literatur, Sammelnamen ohne Isomer-Zuordnung, Katalogsorten je Terpen, Vergleich, Filter.
 - **Academy:** 17 Kategorien, 18 neue Leitfäden (30 Artikel), Lernpfade, Glossar (auch in Strg+K), interaktive Diagramme (VPD, DLI, Lebenszyklus, Narbenstufen), Kontexthilfe in Growlogs, Laborberichten und Grow-Vergleich.
 
+### Nach PR-Prüfung ergänzt
+- Gedrosselte Aktualisierung abgelaufener StrainAPI-Angaben (`enrich-catalog --refresh`, `deploy/refresh-catalog.sh`, optionaler systemd-Timer, nicht automatisch aktiv).
+
 ### Korrigiert
+- Belegart Breeder/Seedbank je Feld statt je Sorte.
+- Quellenangabe Smith et al. (2022): PLoS One statt Nature Plants (falsche DOI aus Phase 5).
+- Kontexthilfe auf schmalen Bildschirmen abgeschnitten.
+- Beim erneuten Abruf entfallen Felder, die die Quelle nicht mehr liefert.
 - „Pinen“ ohne Isomerangabe wurde als α-Pinen gedeutet; jetzt Sammelname.
 - Lesefortschritt erreicht am Seitenende 100 %.
 - StrainAPI-Fotos werden nicht übernommen (Rechte und Zuordnung nicht belegt).

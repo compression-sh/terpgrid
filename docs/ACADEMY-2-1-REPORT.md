@@ -106,10 +106,86 @@ Der größte Zuwachs kommt aus dem bereits lizenzierten Datensatz selbst (Parser
 
 - Terpen-Mengen und weitere Cannabinoide fehlen im Katalog vollständig – keine nutzbare Quelle.
 - Find My Seeds und CannaLib wären nur mit ausdrücklicher Genehmigung bzw. API-Schlüssel der Betreiber nutzbar.
-- Der Ablauf der StrainAPI-Angaben (30 Tage) erfordert einen wiederkehrenden Lauf (`enrich-catalog --index`); ein Zeitplan ist nicht eingerichtet.
-- Academy-Inhalte sind nicht fachlich extern begutachtet; sie geben die zitierten Studien wieder.
+- StrainAPI-Angaben laufen nach 30 Tagen ab. Ein gedrosselter Refresh (`refresh-catalog.sh`, optionaler Timer) ist vorbereitet, aber auf keinem Server aktiviert.
+- Academy- und Atlas-Inhalte sind nicht extern fachlich begutachtet – siehe Abschnitt „Externe fachliche Begutachtung“.
 - Ein 401 beim Seitenstart (Sitzungsprüfung vor der Anmeldung) erscheint in der Browser-Konsole; erwartetes Verhalten, kein Fehler.
+
+## Prüfung nach Erstellung von PR #6 (24.11.2026)
+
+### CI
+Alle erforderlichen Checks auf dem ursprünglichen PR-Stand grün (2 Läufe): Frontend (Typecheck, Lint, Tests, Build, Audit),
+Backend (Typecheck, Migrationen, Integrations- und Isolationstests, Audit), Browser-Smoke-Test, Deployment-Konfiguration,
+Secret-Scan. Keine Reviews oder Kommentare. Branch konfliktfrei zu `main`. Ergebnisse für den neuen Stand: siehe PR.
+
+### Gefundene und behobene Fehler
+| # | Fehler | Auswirkung | Behebung |
+|---|---|---|---|
+| 1 | Belegart „Breeder-Angabe“ wurde je Sorte vergeben, sobald irgendein Angebot vom Breeder-Shop stammte | Felder, die nur Händler nannten, erschienen als Breeder-Angabe (Terpene: 2 Sorten; bei THC, Aroma u. a. mehr) | Belegart je Feld (`listingEvidence`, Audit mit `direct_keys`); Test |
+| 2 | Quellenangabe Smith et al. (2022) mit falscher Zeitschrift und DOI (aus Phase 5) | Nicht nachvollziehbare Quelle in 2 Artikeln | Per PubMed geprüft: PLoS One 17(5):e0267498; Aussage genauer gefasst |
+| 3 | Kontexthilfe ragte auf schmalen Bildschirmen 203 px aus dem Bild bzw. wurde unter der Kopfzeile abgeschnitten | Hilfe mobil nicht lesbar | Mobil als Leiste über der Navigation (Portal), Desktop unverändert |
+| 4 | Beim erneuten Abruf blieben Felder, die die Quelle nicht mehr liefert, bis zum Ablauf sichtbar | Veraltete Angaben bis zu 30 Tage | Gemeinsamer Schreibpfad entfernt nicht mehr gelieferte Felder; Test |
+| 5 | Artikel „Forschung richtig einordnen“ nannte veraltete Belegart-Bezeichnungen | Inkonsistenz zur Oberfläche | Text aktualisiert |
+
+### Neu seit PR-Erstellung
+- `enrich-catalog --refresh` + `deploy/refresh-catalog.sh` + optionaler systemd-Timer (nicht aktiviert): ruft nur bei bald ablaufenden
+  Angaben und höchstens alle 20 h ab; Fehler lassen gültige Angaben stehen; danach Entfernen abgelaufener Angaben.
+- Tests: 30-Tage-Ablauf, Drosselung, Fehlerfall, entfernte Felder, Nutzerdaten/Verknüpfungen/Admin-Entscheidungen unverändert,
+  Neuimport erhält Anreicherung, weitere Fälle gegen falsche Zuordnung (Kooperationen, fremde Breeder, Teilnamen),
+  Belegart je Feld, In-App-Links der Artikel.
+
+### Prüfergebnisse
+- **571 Sorten mit Terpen-Nennung** = 541 aus Seedbank-/Breeder-Texten + 30 aus Datenbank-Angaben (keine Überschneidung).
+  Alle 21 im Datensatz vorkommenden Terpen-Namen werden einem Atlas-Eintrag oder Sammelnamen zugeordnet.
+- **37 exakte StrainAPI-Zuordnungen** einzeln geprüft: Name und Breeder identisch (nur Schreibweisen wie „N.Y.Ceeds“/„NYCeeds“).
+  Die 2 „zu prüfen“-Fälle (Kooperation „Barney's Farm x Doja Exclusive“, „Wizard Trees“ vs. „Wizard Trees Genetics“) wurden korrekt nicht übernommen.
+- **30-Tage-Gültigkeit:** `expires_at = retrieved_at + 30 Tage` (Test), abgelaufene Angaben werden in Sortenseite, Atlas-Index und Audit ausgeblendet (Test).
+- **Atlas:** 27/27 Verbindungen erneut gegen PubChem geprüft (0 Abweichungen); alle 27 Detail- und 6 Sammelseiten laden.
+- **Quellen:** 31 DOIs aus Academy, Wissensartikeln und Atlas gegen Europe PMC/PubMed geprüft – 30 korrekt, 1 korrigiert (Nr. 2 oben).
+- **Mobil:** 71 Seiten (30 Artikel, 27 Terpene, 6 Sammelnamen, Atlas, Academy, Kategorie, 2 Sortenseiten, Messwerte,
+  Grow-Vergleich, Laborberichte) bei 360 und 390 px: kein horizontaler Überlauf, keine Konsolenfehler.
+  Glossar-Suche, Lernpfad-Fortschritt, DLI-/VPD-Regler, Kontexthilfe und eigene Laborwerte (mg/g) im Atlas funktionieren.
+- **Tests:** Frontend 235, Server 157 (inkl. Isolationstests über alle 12 Sync-Bereiche), ESLint, TypeScript, shellcheck.
+
+### Sicherheitsbewertung
+- **Admin-Endpunkte** (`/api/admin/catalog/*`): jeder Handler prüft zuerst die Admin-Rolle; Nutzer erhalten 403 (Test);
+  Schreibzugriffe brauchen gültiges CSRF-Token (global); Eingaben per Schema begrenzt (Batch ≤ 25, IDs per Regex);
+  nur ein Lauf gleichzeitig; Aktionen im Audit-Log.
+- **Neue Lese-Endpunkte** (Terpen-Index, Sorten je Terpen) liefern nur öffentliche Katalogdaten und verlangen eine Sitzung.
+- **Kontentrennung:** keine neuen Nutzerdaten-Tabellen; Lernfortschritt liegt in den verschlüsselten Kontoeinstellungen
+  (von der Isolationssuite abgedeckt). Private Laborberichte werden nie an Quellen gesendet oder in den Katalog übernommen.
+- **Migration 006:** nur neue Tabellen; Laufzeitrolle erhält SELECT/INSERT/UPDATE/DELETE ausschließlich auf die drei
+  Anreicherungstabellen, der Kernkatalog bleibt schreibgeschützt (Test). Fremdschlüssel: Angaben entfallen mit einer
+  entfernten Sorte (CASCADE), Abgleiche behalten ihre Entscheidung (SET NULL). Läuft in der bestehenden Migrations-Transaktion.
+- **Abhängigkeiten:** keine neuen; `npm audit --omit=dev` für Frontend und Server: 0 Schwachstellen.
+- **Externe Abrufe:** nur `https://`, keine Weiterleitungen, Timeout, Drosselung; Anfragen enthalten nur Sortennamen.
+- **Backup/Restore** (isoliert, gleiche Kette wie `backup.sh`/`restore-test.sh`: `pg_dump -Fc` → `pg_restore --exit-on-error`
+  in eine separate Datenbank, zweite API-Instanz): Zeilenzahlen aller relevanten Tabellen identisch; ein Testkonto mit
+  Lernfortschritt, Merkliste, Laborbericht (mg/g) und verknüpfter Katalogsorte war nach dem Restore unverändert lesbar
+  (verschlüsselt, mit dem Schlüsselring entschlüsselt); Katalogangaben und Terpen-Index identisch (Prüfsumme);
+  Rechte der Laufzeitrolle wiederhergestellt; `--refresh` lief auf der wiederhergestellten DB mit der Laufzeitrolle.
+  Atlas- und Academy-Inhalte sind Teil des ausgelieferten Programms, nicht der Datenbank. Der vollständige Docker-Restore-Test
+  (`restore-test.sh` mit restic) wurde in dieser Runde nicht erneut ausgeführt (zuletzt in 5.1 bestanden).
+
+### Externe fachliche Begutachtung erforderlich
+Die folgenden Inhalte geben Studien bzw. Datenbanken wieder, wurden aber nicht von Fachleuten geprüft:
+1. **Gesundheit und Risiken** (ärztlich/toxikologisch): „Edibles und Autofahren“ sowie die bestehenden Artikel Wirkungsdauer,
+   Toleranz, Konsumformen, Risikominimierung, THC und CBD. Die pharmakologischen Aussagen der älteren Artikel (Grotenhermen 2003,
+   Huestis 2007, Hirvonen 2012) wurden in dieser Runde nur bibliografisch, nicht im Volltext erneut geprüft.
+2. **Pflanzenbau** (Gartenbau/Agrarwissenschaft): Licht, Photoperiode, Fernrot (Einzelstudie), UV, VPD (Bereiche nur als
+   Sekundärangabe), pH/EC, NPK-Optima (eine Sorte, Hydrokultur), Düngung, Bewässerung, Erntezeitpunkt, Trocknung.
+3. **Pflanzenschutz** (Phytopathologie/Entomologie): Krankheiten, Schädlinge, Blattsymptome – inklusive der Frage, welche
+   Maßnahmen in Deutschland zulässig sind.
+4. **Genetik** (Pflanzengenetik): Geschlecht/Einhäusigkeit, Aussagen zu Sortennamen und Etiketten.
+5. **Chemie** (Analytische Chemie): Zuordnung von Geruchsbeschreibungen zu Aromafamilien und deren deutsche Übersetzung,
+   Stereochemie-Hinweise, Formulierung „vorläufig identifiziert“ (Janta & Vimolmangkang), Isomer-Gruppen.
+6. **Recht:** Hinweis zum rechtlichen Rahmen im Anbau-Überblick; Nutzungsbedingungen der Datenquellen vor produktiver Nutzung.
+
+### Freigabe-Einschätzung
+Aus technischer Sicht ist PR #6 nach diesen Korrekturen mergebereit, sofern die CI auf dem neuen Stand grün ist: keine
+offenen Fehler, keine neuen Abhängigkeiten, Migration additiv, Backup/Restore geprüft. Vor einer **produktiven** Nutzung der
+Academy-Inhalte empfiehlt sich die oben genannte fachliche Begutachtung; vor Aktivierung der StrainAPI-Anreicherung auf einem
+Server sollten die Nutzungsbedingungen erneut geprüft werden. Merge und Deployment erfolgen nur nach deiner Freigabe.
 
 ## Screenshots
 
-`docs/screenshots/academy-2-1/`: Atlas vorher/nachher, Detailseite Linalool, Sammelname Pinen, Verbindung ohne Cannabis-Beleg, Sortenseite mit Datenbank-Angaben, Sortenseite ohne Terpenprofil, Admin-Katalogqualität, Academy-Start, Artikel mit VPD-Diagramm, Narbenstufen-Diagramm, mobile Ansichten.
+`docs/screenshots/academy-2-1/`: Atlas vorher/nachher, Sortenseite vorher (5.1)/nachher, Academy vorher (5.1)/nachher, Kontexthilfe mobil, Detailseite Linalool, Sammelname Pinen, Verbindung ohne Cannabis-Beleg, Sortenseite mit Datenbank-Angaben, Sortenseite ohne Terpenprofil, Admin-Katalogqualität, Academy-Start, Artikel mit VPD-Diagramm, Narbenstufen-Diagramm, mobile Ansichten.

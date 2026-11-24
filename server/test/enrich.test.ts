@@ -168,6 +168,16 @@ describe.skipIf(!hasDb)('Anreicherungslauf (Datenbank, Quelle simuliert)', () =>
     expect(calls).toBeGreaterThan(0);
   });
 
+  it('Neuimport des Katalogs erhält Anreicherung und Admin-Entscheidungen (Upsert statt Neuaufbau)', async () => {
+    const claims = (await owner.query('SELECT count(*)::int AS n FROM catalog_claims')).rows[0].n;
+    const matches = (await owner.query("SELECT provider_id, status, decided_by, cultivar_id FROM catalog_matches ORDER BY provider_id")).rows;
+    expect(claims).toBeGreaterThan(0);
+    const r = await importDataset(owner as unknown as pg.PoolClient, parseDataset(readFileSync(join(import.meta.dirname, 'fixtures', 'cisp-sample.csv'))), { force: true });
+    expect(r.status).toBe('imported');
+    expect((await owner.query('SELECT count(*)::int AS n FROM catalog_claims')).rows[0].n).toBe(claims);
+    expect((await owner.query("SELECT provider_id, status, decided_by, cultivar_id FROM catalog_matches ORDER BY provider_id")).rows).toEqual(matches);
+  });
+
   it('Laufzeitrolle: Kernkatalog bleibt schreibgeschützt', async () => {
     const app = new pg.Client({ connectionString: env.appUrl });
     await app.connect();
