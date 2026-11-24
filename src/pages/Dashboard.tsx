@@ -1,3 +1,4 @@
+import { ActiveGrowRow } from '../components/grow/ActiveGrowPanel';
 import { fmt } from '../lib/format';
 import { METRICS, metricSeries } from '../lib/grow/series';
 import { CONTEXT_LABEL } from '../lib/grow/measure';
@@ -47,7 +48,7 @@ import { PHASE_COLOR, currentPhase, growDay, phaseSpans } from '../lib/grow/phas
 
 const WIDGET_META: Record<DashboardWidget, { label: string; span: string }> = {
   stats: { label: 'Kennzahlen', span: 'lg:col-span-3' },
-  grows: { label: 'Aktive Grows', span: 'lg:col-span-2' },
+  grows: { label: 'Aktive Grows', span: 'lg:col-span-3' },
   reminders: { label: 'Anstehende Erinnerungen', span: 'lg:col-span-1' },
   photos: { label: 'Neueste Fotos', span: 'lg:col-span-2' },
   activity: { label: 'Letzte Aktivitäten', span: 'lg:col-span-1' },
@@ -55,19 +56,17 @@ const WIDGET_META: Record<DashboardWidget, { label: string; span: string }> = {
   journal: { label: 'Journal', span: 'lg:col-span-1' },
   calculations: { label: 'Gespeicherte Berechnungen', span: 'lg:col-span-1' },
   strains: { label: 'Zuletzt bearbeitete Sorten', span: 'lg:col-span-1' },
+  favorites: { label: 'Favoriten', span: 'lg:col-span-1' },
 };
 
-function QuickAction({ icon: Icon, label, onClick, to, disabled, hint }: { icon: LucideIcon; label: string; onClick?: () => void; to?: string; disabled?: boolean; hint?: string }) {
-  const cls = `group flex min-h-[4.25rem] items-center gap-3 rounded-xl border border-white/[0.06] bg-ink-900/70 px-3.5 py-3 text-left transition-all hover:border-leaf-500/25 hover:bg-ink-850 disabled:cursor-not-allowed disabled:opacity-45`;
+function QuickAction({ icon: Icon, label, onClick, to, disabled, hint, primary }: { icon: LucideIcon; label: string; onClick?: () => void; to?: string; disabled?: boolean; hint?: string; primary?: boolean }) {
+  const cls = `inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border px-3.5 text-[13px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${
+    primary ? 'border-leaf-500/40 bg-leaf-500 text-ink-950 hover:bg-leaf-400' : 'border-white/[0.07] bg-ink-900/70 text-ink-100 hover:border-white/[0.16] hover:bg-ink-850'
+  }`;
   const inner = (
     <>
-      <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-leaf-500/20 bg-leaf-500/10 text-leaf-400 transition-colors group-hover:bg-leaf-500/15">
-        <Icon className="size-4" />
-      </span>
-      <span className="min-w-0">
-        <span className="block text-[13px] font-medium leading-tight text-ink-100">{label}</span>
-        {hint && <span className="mt-0.5 hidden truncate text-[11px] text-ink-500 sm:block">{hint}</span>}
-      </span>
+      <Icon className={`size-4 ${primary ? '' : 'text-leaf-400'}`} />
+      {label}
     </>
   );
   return to ? (
@@ -81,12 +80,19 @@ function QuickAction({ icon: Icon, label, onClick, to, disabled, hint }: { icon:
   );
 }
 
+function greeting(now = new Date()): string {
+  const h = now.getHours();
+  return h < 5 ? 'Gute Nacht' : h < 11 ? 'Guten Morgen' : h < 18 ? 'Hallo' : 'Guten Abend';
+}
+
 function StatTile({ label, value, to, sub }: { label: string; value: number | string; to: string; sub?: string }) {
   return (
-    <a href={href(to)} className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-4 transition-colors hover:border-white/[0.12]">
-      <div className="text-xs text-ink-400">{label}</div>
-      <div className="mt-1 font-mono text-2xl font-semibold tabular text-ink-50">{value}</div>
-      {sub && <div className="mt-0.5 text-[11px] text-ink-500">{sub}</div>}
+    <a href={href(to)} className="flex items-baseline justify-between gap-2 rounded-xl border border-white/[0.06] bg-white/[0.015] px-3.5 py-2.5 transition-colors hover:border-white/[0.12]">
+      <span className="min-w-0">
+        <span className="block truncate text-[12px] text-ink-400">{label}</span>
+        {sub && <span className="block truncate text-[11px] text-ink-500">{sub}</span>}
+      </span>
+      <span className="font-mono text-xl font-semibold tabular text-ink-50">{value}</span>
     </a>
   );
 }
@@ -160,6 +166,7 @@ export function Dashboard() {
   const late = overdue(data.reminders, t, 14);
   const recentJournal = [...data.journal].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
   const recentCalcs = [...data.calculations].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 4);
+  const favorites = data.strains.filter((x) => x.favorite).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 5);
   const recentStrains = [...data.strains].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 4);
 
   // Aktivitätsverlauf: dieselbe Ableitung wie die Seite „Verlauf“ (keine doppelte Logik)
@@ -201,7 +208,7 @@ export function Dashboard() {
     .slice(0, 6);
   const widgets: Record<DashboardWidget, ReactNode> = {
     stats: (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <StatTile label="Aktive Grows" value={activeGrows.length} to="grows" sub={`${data.grows.length} insgesamt`} />
         <StatTile label="Pflanzen (aktiv)" value={trackedPlants.length} to="grows" sub={`${data.plants.length} insgesamt`} />
         <StatTile label="Fotos" value={data.photos.length} to="photos" />
@@ -221,11 +228,11 @@ export function Dashboard() {
         {activeGrows.length === 0 ? (
           <EmptyState compact icon={<Sprout />} title="Kein aktiver Grow" text="Lege ein Projekt an, um Pflanzen, Fotos und Messwerte zu dokumentieren." action={<button type="button" className="btn-primary" onClick={() => quick({ kind: 'grow' })}><Plus className="size-4" /> Neuer Grow</button>} />
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <ul className={`grid gap-2.5 ${activeGrows.length > 1 ? 'xl:grid-cols-2' : ''}`}>
             {activeGrows.slice(0, 4).map((g) => (
-              <GrowCard key={g.id} grow={g} compact />
+              <ActiveGrowRow key={g.id} grow={g} />
             ))}
-          </div>
+          </ul>
         )}
       </Card>
     ),
@@ -284,7 +291,7 @@ export function Dashboard() {
         }
       >
         {latestPhotos.length === 0 ? (
-          <EmptyState compact icon={<Camera />} title="Noch keine Fotos" text="Fotos bleiben auf diesem Gerät. Standortdaten werden beim Import entfernt." />
+          <EmptyState compact icon={<Camera />} title="Noch keine Fotos" text={server ? 'Fotos werden verschlüsselt auf deinem TERPGRID-Server gespeichert und synchronisiert. Standortdaten (GPS) werden beim Import entfernt.' : 'Fotos bleiben in diesem Browser. Standortdaten (GPS) werden beim Import entfernt.'} />
         ) : (
           <PhotoGrid photos={latestPhotos} group={false} dense />
         )}
@@ -414,14 +421,39 @@ export function Dashboard() {
         )}
       </Card>
     ),
+    favorites: (
+      <Card title="Favoriten" icon={<Bookmark className="size-4" />} actions={<a href={href('strains')} className="btn-ghost py-1.5 text-xs">Meine Sorten</a>}>
+        {favorites.length === 0 ? (
+          <EmptyState compact title="Noch keine Favoriten" text="Sorten in „Meine Sorten“ oder im Katalog merken." action={<a href={href('discover')} className="btn-ghost">Katalog öffnen</a>} />
+        ) : (
+          <ul className="space-y-1.5">
+            {favorites.map((s) => (
+              <li key={s.id}>
+                <a href={href(`strains/${s.id}`)} className="flex items-center gap-3 rounded-lg p-1 hover:bg-white/[0.03]">
+                  <PhotoImg photoId={s.coverPhotoId} alt="" className="size-9 shrink-0 rounded-lg" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[13px] font-medium text-ink-100">{s.name}</span>
+                    <span className="block truncate text-[11px] text-ink-500">{s.breeder || 'Breeder: keine Angabe'}{s.external ? ' · Katalog' : ''}</span>
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+    ),
   };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between animate-fade-up">
         <div>
-          <div className="text-xs text-ink-500">{fmtDateLong(t)}</div>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink-50 sm:text-[28px]">Übersicht</h1>
+          <div className="text-xs text-ink-400">{fmtDateLong(t)}</div>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink-50 sm:text-[28px]">{greeting()}</h1>
+          <p className="mt-0.5 text-[13px] text-ink-400">
+            {activeGrows.length ? `${activeGrows.length} aktive${activeGrows.length === 1 ? 'r Grow' : ' Grows'} · ${trackedPlants.length} ${trackedPlants.length === 1 ? 'Pflanze' : 'Pflanzen'}` : 'Deine Übersicht'}
+            {next.length > 0 && ` · ${next.length} anstehende Aufgabe${next.length === 1 ? '' : 'n'} (14 Tage)`}
+          </p>
         </div>
         {!isEmpty && (
           <button type="button" className={`btn-ghost py-1.5 ${customize ? 'border-leaf-500/30 text-leaf-200' : ''}`} onClick={() => setCustomize((c) => !c)} aria-pressed={customize}>
@@ -430,14 +462,14 @@ export function Dashboard() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
-        {activeGrowCount > 0 && <QuickAction icon={NotebookPen} label="Schnell-Log" onClick={() => quick({ kind: 'log' })} />}
+      <nav aria-label="Schnellaktionen" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 [&::-webkit-scrollbar]:hidden">
+        {activeGrowCount > 0 && <QuickAction icon={NotebookPen} label="Schnell-Log" onClick={() => quick({ kind: 'log' })} primary />}
         <QuickAction icon={Sprout} label="Neuer Grow" onClick={() => quick({ kind: 'grow' })} />
-        <QuickAction icon={Plus} label="Pflanze hinzufügen" onClick={() => quick({ kind: 'plant' })} disabled={data.grows.length === 0} hint={data.grows.length === 0 ? 'Erst einen Grow anlegen' : undefined} />
-        <QuickAction icon={Camera} label="Foto hochladen" onClick={() => quick({ kind: 'photo' })} />
-        <QuickAction icon={BookOpenText} label="Journal-Eintrag" onClick={() => quick({ kind: 'journal' })} />
+        <QuickAction icon={Plus} label="Pflanze" onClick={() => quick({ kind: 'plant' })} disabled={data.grows.length === 0} hint={data.grows.length === 0 ? 'Erst einen Grow anlegen' : undefined} />
+        <QuickAction icon={Camera} label="Foto" onClick={() => quick({ kind: 'photo' })} />
+        <QuickAction icon={BookOpenText} label="Journal" onClick={() => quick({ kind: 'journal' })} />
         <QuickAction icon={Calculator} label="THC berechnen" to="lab/edibles" />
-      </div>
+      </nav>
 
       {isEmpty ? (
         <Card className="overflow-hidden" bodyClassName="p-0">

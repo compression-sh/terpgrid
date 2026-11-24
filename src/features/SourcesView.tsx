@@ -96,7 +96,7 @@ export function SourcesView() {
           <span className="inline-flex items-center gap-1">
             <Lock className="size-3" /> Kein Tracking. Berechnungen laufen lokal im Browser.
           </span>{' '}
-          {server ? 'Eingaben bleiben auf diesem Gerät; gespeicherte Berechnungen werden mit deinem Konto synchronisiert.' : 'Eingaben und gespeicherte Berechnungen bleiben im lokalen Speicher dieses Browsers.'}
+          {server ? 'Eingaben werden als Entwurf und gespeicherte Berechnungen als Datensätze verschlüsselt mit deinem Konto synchronisiert.' : 'Eingaben und gespeicherte Berechnungen bleiben im lokalen Speicher dieses Browsers.'}
         </Callout>
       </div>
     </div>

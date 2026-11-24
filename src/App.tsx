@@ -19,6 +19,9 @@ const ThcLab = lazy(() => import('./pages/ThcLab').then((m) => ({ default: m.Thc
 const GrowList = lazy(() => import('./pages/grows/GrowList').then((m) => ({ default: m.GrowList })));
 const GrowDetail = lazy(() => import('./pages/grows/GrowDetail').then((m) => ({ default: m.GrowDetail })));
 const LabelsPage = lazy(() => import('./pages/grows/LabelsPage').then((m) => ({ default: m.LabelsPage })));
+const GrowCompare = lazy(() => import('./pages/grows/GrowCompare').then((m) => ({ default: m.GrowCompare })));
+const GrowReport = lazy(() => import('./pages/grows/GrowReport').then((m) => ({ default: m.GrowReport })));
+const ExperimentsPage = lazy(() => import('./pages/grows/ExperimentsPage').then((m) => ({ default: m.ExperimentsPage })));
 const PlantDetail = lazy(() => import('./pages/grows/PlantDetail').then((m) => ({ default: m.PlantDetail })));
 const PhotosPage = lazy(() => import('./pages/PhotosPage').then((m) => ({ default: m.PhotosPage })));
 const StrainsPage = lazy(() => import('./pages/StrainsPage').then((m) => ({ default: m.StrainsPage })));
@@ -36,6 +39,8 @@ const BreedersPage = lazy(() => import('./pages/discover/BreedersPage').then((m)
 const BreederProfile = lazy(() => import('./pages/discover/BreedersPage').then((m) => ({ default: m.BreederProfile })));
 const StrainProfile = lazy(() => import('./pages/discover/StrainProfile').then((m) => ({ default: m.StrainProfile })));
 const GeneticsExplorer = lazy(() => import('./pages/discover/GeneticsExplorer').then((m) => ({ default: m.GeneticsExplorer })));
+const CatalogGenetics = lazy(() => import('./pages/discover/GeneticsExplorer').then((m) => ({ default: m.CatalogGenetics })));
+const GeneticsHome = lazy(() => import('./pages/discover/GeneticsExplorer').then((m) => ({ default: m.GeneticsHome })));
 const TerpeneAtlas = lazy(() => import('./pages/discover/TerpeneAtlas').then((m) => ({ default: m.TerpeneAtlas })));
 const CompareStudio = lazy(() => import('./pages/discover/CompareStudio').then((m) => ({ default: m.CompareStudio })));
 const VisualExplorer = lazy(() => import('./pages/discover/VisualExplorer').then((m) => ({ default: m.VisualExplorer })));
@@ -85,6 +90,9 @@ function Routes() {
       break;
     case 'grows':
       if (!b) page = <GrowList />;
+      else if (b === 'compare') page = <GrowCompare />;
+      else if (c === 'report') page = <GrowReport growId={b} />;
+      else if (c === 'experiments') page = <ExperimentsPage growId={b} />;
       else if (c === 'plants' && d) page = <PlantDetail growId={b} plantId={d} />;
       else page = <GrowDetail growId={b} />;
       break;
@@ -120,6 +128,9 @@ function Routes() {
       else if (b === 'cultivar' && c) page = <CultivarPage key={c} id={c} />;
       else if (b === 'breeders') page = c ? <BreederProfile key={c} id={c} /> : <BreedersPage />;
       else if (b === 'live') page = <DiscoverPage />;
+      else if (b === 'genetics' && c === 'c') page = <CatalogGenetics key={d ?? ''} id={d} />;
+      else if (b === 'genetics' && c === 'live') page = <GeneticsExplorer />;
+      else if (b === 'genetics' && !c) page = <GeneticsHome />;
       else if (b === 'genetics') page = <GeneticsExplorer key={c ?? ''} slug={c} />;
       else if (b === 'terpenes') page = <TerpeneAtlas terpeneId={c} />;
       else if (b === 'compare') page = <CompareStudio />;

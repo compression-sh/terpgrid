@@ -1,3 +1,4 @@
+import { growCompleteness } from '../../lib/grow/summary';
 import {
   Archive,
   ArchiveRestore,
@@ -15,7 +16,7 @@ import {
   Receipt,
   Ruler,
   Sprout,
-  Trash2, QrCode, NotebookPen } from 'lucide-react';
+  Trash2, QrCode, NotebookPen, FileText, FlaskConical } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useConfirm } from '../../app/Confirm';
 import { useData } from '../../app/DataProvider';
@@ -273,6 +274,12 @@ export function GrowDetail({ growId }: { growId: string }) {
         <button type="button" className="btn-ghost" onClick={() => setModal('edit')}>
           <Pencil className="size-4" /> Bearbeiten
         </button>
+        <a href={href(`grows/${growId}/report`)} className="btn-ghost">
+          <FileText className="size-4" /> Bericht
+        </a>
+        <a href={href(`grows/${growId}/experiments`)} className="btn-ghost">
+          <FlaskConical className="size-4" /> Experimente
+        </a>
         <div className="ml-auto">
           <StatusMenu grow={grow} />
         </div>
@@ -315,6 +322,24 @@ export function GrowDetail({ growId }: { growId: string }) {
           </div>
           <Card title="Phasen" subtitle="Aus erfassten Meilensteinen berechnet – keine Prognose">
             <PhaseTimeline dates={grow.phaseDates} endDate={grow.completedDate} />
+          </Card>
+          <Card title="Dokumentation" subtitle="Was ist erfasst? Bestandsaufnahme, keine Bewertung des Grows">
+            <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {growCompleteness(grow, { plants, activities, photos, expenses: data.expenses.filter((e) => e.growId === growId) }).map((c) => (
+                <li key={c.id} className="flex items-start gap-2.5 rounded-xl border border-white/[0.05] bg-white/[0.015] px-3 py-2.5">
+                  <span className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-full text-[11px] font-bold ${c.state === 'ok' ? 'bg-leaf-500/15 text-leaf-300' : c.state === 'partial' ? 'bg-amber-400/15 text-amber-300' : 'bg-white/[0.05] text-ink-400'}`} aria-hidden>
+                    {c.state === 'ok' ? '✓' : c.state === 'partial' ? '◐' : '–'}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[13px] text-ink-100">
+                      {c.label}
+                      <span className="sr-only">: {c.state === 'ok' ? 'vollständig' : c.state === 'partial' ? 'teilweise' : 'fehlt'}</span>
+                    </span>
+                    <span className="block text-[11px] text-ink-400">{c.detail}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
           </Card>
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
             <div className="space-y-5">

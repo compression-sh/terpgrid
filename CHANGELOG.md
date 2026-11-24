@@ -1,5 +1,26 @@
 # Änderungsprotokoll
 
+## 5.1.0-rc.1 – 24.11.2026 (Release-Kandidat, nicht veröffentlicht)
+
+Abschluss offener Punkte aus Phase 5. Keine Datenbank-Migration; neue Felder sind optionale Teile bestehender, verschlüsselter Datensätze.
+
+### Neu
+- **Genetics Explorer mit dem lokalen Katalog:** Abstammungsgraph aus dokumentierten Elternangaben (bis 4 Generationen), mehrdeutige Namen bleiben getrennt (Kandidaten einzeln als Zentrum öffnen), unbekannte Eltern und abweichende Angaben anderer Seedbanks gekennzeichnet, Textalternative.
+- **Grow-Vergleich** für bis zu vier Projekte: Kennzahlen, Verlauf in Grow-Tagen, Messkontext- und Zeitraumfilter, Warnung bei vermischten Messkontexten, Fotos.
+- **Projektbericht** mit wählbaren Abschnitten, Diagrammen und Foto-Auswahl; druckoptimiert, PDF über den Druckdialog.
+- **Experimente & Phänotyp-Journal** je Grow: Ziel, Pflanzen, Zeitraum, Messgrößen, Beobachtungen, Ergebnis; Phänotyp-Notizen mit Nebeneinander-Vergleich.
+- **Dokumentationsstand** je Grow und **Datenlage** je Katalogsorte (vorhanden / fehlt / widersprüchlich) – ohne Punktwerte.
+
+### Oberfläche
+- Übersicht neu: Begrüßung mit Kurzstatus, kompakte Schnellaktionen, Statuskarten aktiver Grows (Phasen, letzte Messwerte, Höhenverlauf, nächste Aufgabe, Dokumentationsstand), Widget „Favoriten“.
+- Katalogkarten ohne Foto im kompakten Format; Standard-Sortierung nach Seedbank-Angeboten bzw. Sortenzahl.
+- Barrierefreiheit: axe (WCAG 2.1 A/AA) auf 17 Kernseiten ohne Verstöße; Kalender-Semantik und Kontoübersicht korrigiert.
+- Korrigierte Texte: Hinweise „nur auf diesem Gerät“ waren im Servermodus falsch (Fotos, Journal, Einstellungen und THC-Lab-Eingaben werden synchronisiert).
+
+### Betrieb
+- Restore-Test zählt den Sortenkatalog; Backup/Restore inkl. Katalog und ein abgebrochener Import in Docker geprüft (siehe BACKUP.md).
+- Fix: Insights zählte Kontext-/Gerätefelder als Messgrößen.
+
 ## 5.0.0-rc.1 – 24.11.2026 (Release-Kandidat, nicht veröffentlicht)
 
 ### Sortenkatalog & Breeder

@@ -73,6 +73,16 @@ Branch-Schutz für `main`: Pull Requests verpflichtend, Status-Checks „Fronten
 
 Siehe [THREAT-MODEL.md](THREAT-MODEL.md) (Restrisiken) und `docs/FINAL-REPORT.md` (Einschränkungen). Wichtigste: keine E2EE (Betreiber mit Shell-Zugriff kann entschlüsseln), unverschlüsselte Browser-Kopie, In-Memory-Ratenbegrenzung (eine API-Instanz), Metadaten (Anzahl/Größe/Zeitpunkte) auf dem Server lesbar.
 
+### Teilen von Grows – bewusst nicht umgesetzt (Stand 5.1.0-rc.1)
+
+Das Teilen eines Grows mit einem anderen Konto ist **nicht** implementiert und auch nicht versteckt vorhanden. Gründe aus der Prüfung des Datenmodells:
+
+- Datensätze und Dateien sind mit dem **Schlüssel des Eigentümerkontos** (DEK-Generationen) verschlüsselt und per RLS strikt an `user_id` gebunden. Teilen erfordert entweder serverseitiges Umschlüsseln in das Empfängerkonto (Kopie, keine gemeinsame Bearbeitung) oder projektbezogene Schlüssel mit neuer RLS-Logik für `records` **und** `files`.
+- Die Synchronisation arbeitet je Konto (eine IndexedDB je Konto, Outbox, Drei-Wege-Merge). Fremde, gemeinsam bearbeitete Datensätze bräuchten eigene Versionierung, Konfliktregeln und Widerrufslogik (inkl. Entfernen bereits synchronisierter Kopien auf fremden Geräten).
+- Erforderliche Nachweise vor einer Freigabe: Isolationstests für jeden Store und jede Dateiart, Lese-/Schreibrechte, Widerruf mit laufenden Sessions, verschachtelte Pflanzen/Fotos, Bericht/Export, gelöschte Einladungen.
+
+Bis diese Arbeit vollständig und getestet ist, bleibt Teilen aus. Ein Bericht (PDF) kann bewusst selbst weitergegeben werden.
+
 ## 7. Sicherheitsprobleme melden
 
 Bitte vertraulich an die Betreiberin/den Betreiber der Instanz bzw. als privates Security Advisory im Repository – nicht als öffentliches Issue.

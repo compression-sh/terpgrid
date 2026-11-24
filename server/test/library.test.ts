@@ -108,6 +108,39 @@ describe.skipIf(!hasDb)('Lokaler Katalog (CI-Strains-Pro)', () => {
     expect(own.total).toBe(p.breeder.cultivarCount);
   });
 
+  it('Abstammungsgraph: nur dokumentierte Eltern, gleichnamige Sorten bleiben getrennt', async () => {
+    const withParents = (await owner.query("SELECT id FROM catalog_cultivars WHERE has_lineage ORDER BY listing_count DESC, id")).rows.map((r) => r.id as string);
+    expect(withParents.length).toBeGreaterThan(0);
+    let sawResolved = false;
+    for (const id of withParents) {
+      const g = (await c.get(`/api/catalog/local/lineage/${id}?depth=4`)).json;
+      expect(g.rootId).toBe(id);
+      expect(g.nodes.filter((n: { kind: string }) => n.kind === 'root')).toHaveLength(1);
+      expect(g.nodes.length).toBeLessThanOrEqual(80);
+      const ids = new Set(g.nodes.map((n: { id: string }) => n.id));
+      for (const e of g.edges) {
+        expect(ids.has(e.from) && ids.has(e.to)).toBe(true);
+        expect(['documented', 'alternative']).toContain(e.kind);
+      }
+      for (const n of g.nodes as { kind: string; id: string; candidates?: { id: string; breeder: { id: string } }[] }[]) {
+        if (n.kind === 'ambiguous') {
+          expect(n.candidates!.length).toBeGreaterThan(1);
+          expect(new Set(n.candidates!.map((x) => x.id)).size).toBe(n.candidates!.length);
+        }
+        if (n.kind === 'strain') {
+          sawResolved = true;
+          expect((await owner.query('SELECT 1 FROM catalog_cultivars WHERE id = $1', [n.id])).rowCount).toBe(1);
+        }
+      }
+      // Jede dokumentierte Elternangabe der Wurzel erscheint als Kante zur Wurzel
+      const root = (await owner.query('SELECT "values" FROM catalog_cultivars WHERE id = $1', [id])).rows[0].values;
+      expect(g.edges.filter((e: { to: string; kind: string }) => e.to === id && e.kind === 'documented').length).toBe(new Set((root.parents ?? []).map((p: { slug: string; unknown?: boolean }, i: number) => (p.unknown || !p.slug ? `u${i}` : p.slug))).size);
+    }
+    void sawResolved;
+    expect((await c.get('/api/catalog/local/lineage/gibt-es-nicht')).status).toBe(404);
+    expect((await new Client(env.app).get(`/api/catalog/local/lineage/${withParents[0]}`)).status).toBe(401);
+  });
+
   it('Laufzeitrolle darf den Katalog nur lesen', async () => {
     const app = new pg.Client({ connectionString: env.appUrl });
     await app.connect();

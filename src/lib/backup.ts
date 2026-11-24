@@ -226,7 +226,7 @@ export function sanitizeData(data: BackupData, photoIdsWithData?: Set<string>): 
   const cover = <T extends { coverPhotoId?: string }>(r: T): T => (r.coverPhotoId && !photos.has(r.coverPhotoId) ? { ...r, coverPhotoId: undefined } : r);
   return {
     ...data,
-    grows: data.grows.map(cover),
+    grows: data.grows.map((g) => cover(g.experiments ? { ...g, experiments: g.experiments.map((x) => ({ ...x, plantIds: x.plantIds.filter((id) => plants.has(id)) })) } : g)),
     plants: plantsKept.map((p) => cover({ ...p, strainId: p.strainId && strains.has(p.strainId) ? p.strainId : undefined, spaceId: p.spaceId && inventory.has(p.spaceId) ? p.spaceId : undefined })),
     activities: data.activities
       .filter((a) => grows.has(a.growId))

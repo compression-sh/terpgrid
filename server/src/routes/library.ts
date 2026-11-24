@@ -222,6 +222,112 @@ export function libraryRoutes(ctx: AppContext) {
       };
     });
 
+    /**
+     * Abstammungsgraph aus dokumentierten Elternangaben (Breitensuche, max. 4 Generationen, max. 80 Knoten).
+     * Ein Elternname wird nur aufgelöst, wenn genau EINE Sorte im Katalog so heißt; sonst „mehrdeutig“
+     * (Kandidaten verschiedener Breeder werden nicht gleichgesetzt) bzw. „nicht im Katalog“.
+     * Widersprüchliche Elternangaben verschiedener Seedbanks erscheinen als alternative Kanten.
+     */
+    app.get<{ Params: { id: string }; Querystring: { depth?: string } }>('/api/catalog/local/lineage/:id', async (req) => {
+      requireSession(req);
+      if (!ID_RE.test(req.params.id)) throw new HttpError(400, 'Ungültige Kennung');
+      const maxDepth = int(req.query.depth, 3, 1, 4);
+      const MAX_NODES = 80;
+      type P = { name: string; slug: string; unknown?: boolean };
+      type Row = CultivarRow & { name_slug: string };
+      const load = async (where: string, arg: unknown) =>
+        (await ctx.db.query<Row>(`SELECT ${SELECT_CULTIVAR}, c.name_slug FROM catalog_cultivars c JOIN catalog_breeders b ON b.id = c.breeder_id WHERE ${where} ORDER BY c.listing_count DESC, c.id`, [arg])).rows;
+      const root = (await load('c.id = $1', req.params.id))[0];
+      if (!root) throw new HttpError(404, 'Sorte nicht im Katalog');
+      interface N {
+        id: string;
+        kind: 'root' | 'strain' | 'ambiguous' | 'unresolved' | 'unknown';
+        label: string;
+        depth: number;
+        cultivar?: ReturnType<typeof cultivarOut>;
+        candidates?: ReturnType<typeof cultivarOut>[];
+        flags: string[];
+        expanded: boolean;
+      }
+      const nodes = new Map<string, N>();
+      const edges: { from: string; to: string; kind: 'documented' | 'alternative' }[] = [];
+      let truncated = false;
+      const addEdge = (from: string, to: string, kind: 'documented' | 'alternative') => {
+        if (!edges.some((e) => e.from === from && e.to === to)) edges.push({ from, to, kind });
+      };
+      nodes.set(root.id, { id: root.id, kind: 'root', label: root.name, depth: 0, cultivar: cultivarOut(root), flags: root.conflicts.includes('parents') ? ['conflict'] : [], expanded: true });
+      let level: Row[] = [root];
+      for (let depth = 0; level.length && depth < maxDepth; depth++) {
+        // Elternangaben je Sorte: primär + abweichende Angaben anderer Seedbanks
+        const sets = new Map<string, { primary: P[]; alternatives: P[][] }>();
+        for (const c of level) {
+          const primary = ((c.values as { parents?: P[] }).parents ?? []) as P[];
+          const alternatives: P[][] = [];
+          if (c.conflicts.includes('parents')) {
+            const ls = await ctx.db.query<{ values: { parents?: P[] } }>(`SELECT "values" FROM catalog_listings WHERE cultivar_id = $1`, [c.id]);
+            const key = (ps: P[]) => ps.map((x) => x.slug || x.name).sort().join('×');
+            const seen = new Set([key(primary)]);
+            for (const l of ls.rows) {
+              const ps = l.values.parents ?? [];
+              if (ps.length && !seen.has(key(ps))) {
+                seen.add(key(ps));
+                alternatives.push(ps);
+              }
+            }
+          }
+          sets.set(c.id, { primary, alternatives: alternatives.slice(0, 3) });
+        }
+        const slugs = [...new Set([...sets.values()].flatMap((s) => [...s.primary, ...s.alternatives.flat()]).filter((p) => !p.unknown && p.slug).map((p) => p.slug))];
+        const found = slugs.length ? await load('c.name_slug = ANY($1)', slugs) : [];
+        const bySlug = new Map<string, Row[]>();
+        for (const r of found) bySlug.set(r.name_slug, [...(bySlug.get(r.name_slug) ?? []), r]);
+        const next: Row[] = [];
+        for (const c of level) {
+          const s = sets.get(c.id)!;
+          const place = (p: P, i: number, kind: 'documented' | 'alternative') => {
+            if (nodes.size >= MAX_NODES) {
+              truncated = true;
+              return;
+            }
+            if (p.unknown || !p.slug) {
+              const id = `unknown:${c.id}:${kind}:${i}`;
+              nodes.set(id, { id, kind: 'unknown', label: p.name, depth: depth + 1, flags: ['unknown'], expanded: true });
+              return addEdge(id, c.id, kind);
+            }
+            const hits = bySlug.get(p.slug) ?? [];
+            if (hits.length === 1) {
+              const h = hits[0]!;
+              if (!nodes.has(h.id)) {
+                nodes.set(h.id, { id: h.id, kind: 'strain', label: h.name, depth: depth + 1, cultivar: cultivarOut(h), flags: h.conflicts.includes('parents') ? ['conflict'] : [], expanded: false });
+                next.push(h);
+              }
+              return addEdge(h.id, c.id, kind);
+            }
+            const id = hits.length > 1 ? `ambiguous:${p.slug}` : `name:${p.slug}`;
+            if (!nodes.has(id))
+              nodes.set(id, {
+                id,
+                kind: hits.length > 1 ? 'ambiguous' : 'unresolved',
+                label: p.name,
+                depth: depth + 1,
+                candidates: hits.length > 1 ? hits.slice(0, 12).map((h) => cultivarOut(h)) : undefined,
+                flags: hits.length > 1 ? [`${hits.length} gleichnamige Sorten`, ...(hits.some((h) => h.breeder_id === c.breeder_id) ? ['same-breeder-candidate'] : [])] : ['not-in-catalog'],
+                expanded: true,
+              });
+            addEdge(id, c.id, kind);
+          };
+          s.primary.forEach((p, i) => place(p, i, 'documented'));
+          s.alternatives.forEach((alt, j) => alt.forEach((p, i) => place(p, j * 10 + i, 'alternative')));
+          const n = nodes.get(c.id);
+          if (n) n.expanded = true;
+        }
+        level = next;
+      }
+      // Tiefste Ebene: Sorten mit weiteren dokumentierten Eltern sind gekürzt
+      for (const r of level) if (((r.values as { parents?: P[] }).parents ?? []).length) truncated = true;
+      return { rootId: root.id, nodes: [...nodes.values()], edges, truncated, maxDepth, attribution };
+    });
+
     app.get<{ Params: { slug: string } }>('/api/catalog/local/by-name/:slug', async (req) => {
       requireSession(req);
       const slug = slugify(req.params.slug);

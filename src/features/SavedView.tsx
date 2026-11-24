@@ -30,7 +30,7 @@ export function SavedView({ items, onOpen, onDelete, onClear, onImport }: Props)
     <div className="space-y-5">
       {server ? (
         <Callout tone="ok" title="Mit deinem Konto synchronisiert">
-          Gespeicherte Berechnungen gehören zu deinem Konto und werden verschlüsselt auf deinem TERPGRID-Server gespeichert. Die aktuellen Eingabefelder bleiben auf diesem Gerät.
+          Gespeicherte Berechnungen gehören zu deinem Konto und werden verschlüsselt auf deinem TERPGRID-Server gespeichert. Auch die aktuellen Eingaben werden als Entwurf mit deinem Konto synchronisiert.
         </Callout>
       ) : (
         <Callout tone="ok" title="Nur auf diesem Gerät gespeichert">

@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { addMonths, fmtMonth, monthGrid, startOfMonth, today } from '../../lib/dates';
+import { addMonths, fmtMonth, monthGrid, startOfMonth, today, fmtDate } from '../../lib/dates';
 
 export interface DayMarker {
   color: string;
@@ -52,7 +52,7 @@ export function MonthCalendar({
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-1" role="grid" aria-label={fmtMonth(month)}>
+      <div className="grid grid-cols-7 gap-1" role="group" aria-label={`Tage im ${fmtMonth(month)}`}>
         {days.map((d) => {
           const inMonth = d.slice(0, 7) === m;
           const mk = markers.get(d) ?? [];
@@ -62,9 +62,9 @@ export function MonthCalendar({
             <button
               key={d}
               type="button"
-              role="gridcell"
-              aria-selected={isSel}
-              aria-label={`${d}${mk.length ? `: ${mk.map((x) => x.label).join(', ')}` : ''}`}
+              aria-pressed={isSel}
+              aria-current={isToday ? 'date' : undefined}
+              aria-label={`${fmtDate(d)}${isToday ? ' (heute)' : ''}${mk.length ? `: ${mk.map((x) => x.label).join(', ')}` : ''}`}
               onClick={() => onSelect?.(d)}
               className={`relative flex flex-col items-center rounded-lg border transition-colors ${compact ? 'h-10 pt-1' : 'h-14 pt-1.5 sm:h-20'} ${
                 isSel ? 'border-leaf-500/50 bg-leaf-500/10' : 'border-transparent hover:border-white/[0.08] hover:bg-white/[0.02]'
