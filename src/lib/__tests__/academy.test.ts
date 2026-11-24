@@ -72,6 +72,11 @@ describe('Academy', () => {
     expect(kbSearch('VPD').map((a) => a.id)).toContain('klima-vpd');
   });
 
+  it('jeder Artikel trägt einen Prüfstatus; ältere Artikel sind nicht als Volltext-geprüft ausgewiesen', () => {
+    for (const a of KB_ARTICLES) expect(a.review, a.id).toBeDefined();
+    for (const id of ['wirkungsdauer', 'toleranz', 'konsumformen', 'risikominimierung', 'thc-cbd']) expect(KB_ARTICLES.find((a) => a.id === id)!.review!.level).toBe('bibliografisch');
+  });
+
   it('Academy-Quellen sind DOI-Links', () => {
     for (const s of Object.values(SRC)) expect(s.url).toMatch(/^https:\/\/doi\.org\/10\./);
   });

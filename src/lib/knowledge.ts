@@ -44,6 +44,17 @@ export interface KbSection {
   diagram?: KbDiagram;
 }
 
+/**
+ * Prüfstatus der Quellen: volltext = Aussagen gegen die Volltexte der zitierten Arbeiten geprüft ·
+ * teilweise = einzelne Quellen im Volltext/Abstract, andere nur bibliografisch · bibliografisch = nur
+ * Existenz und Titel der Quellen geprüft. Eine externe fachliche Begutachtung steht für alle Artikel aus.
+ */
+export interface KbReview {
+  level: 'volltext' | 'teilweise' | 'bibliografisch';
+  checked: string;
+  note?: string;
+}
+
 export interface KbArticle {
   id: string;
   title: string;
@@ -54,6 +65,7 @@ export interface KbArticle {
   sections: KbSection[];
   related: string[];
   sources: KbSource[];
+  review?: KbReview;
 }
 
 import { ACADEMY_ARTICLES } from './academy/articles';
@@ -74,6 +86,7 @@ const S = {
   schwabe2023: { label: 'Schwabe AL et al. (2023). Uncomfortably high: Testing reveals inflated THC potency on retail Cannabis labels. PLOS ONE 18(4):e0282396.', url: 'https://doi.org/10.1371/journal.pone.0282396' },
   hirvonen: { label: 'Hirvonen J et al. (2012). Reversible and regionally selective downregulation of brain cannabinoid CB1 receptors in chronic daily cannabis smokers. Mol Psychiatry 17:642–649.', url: 'https://doi.org/10.1038/mp.2011.82' },
   freeman: { label: "Freeman TP, Lorenzetti V (2020). 'Standard THC units'. Addiction 115(7):1207–1216.", url: 'https://doi.org/10.1111/add.14842' },
+  pubchemThc: { label: 'PubChem: Tetrahydrocannabinol (CID 16078, 314,5 g/mol) und Δ9-Tetrahydrocannabinolsäure (CID 98523, 358,5 g/mol)', url: 'https://pubchem.ncbi.nlm.nih.gov/compound/16078' },
   huestis: { label: 'Huestis MA (2007). Human cannabinoid pharmacokinetics. Chem Biodivers 4(8):1770–1804.', url: 'https://doi.org/10.1002/cbdv.200790152' },
 };
 
@@ -106,7 +119,8 @@ const BASE_ARTICLES: KbArticle[] = [
       },
     ],
     related: ['thc-cbd', 'begriffe', 'terpene'],
-    sources: [S.elsohly, S.wang, S.grotenhermen],
+    sources: [S.elsohly, S.wang, S.grotenhermen, S.pubchemThc],
+    review: { level: 'teilweise', checked: '2026-11-24', note: 'Umrechnungsfaktor 0,877 aus den PubChem-Molmassen nachgerechnet; übrige Aussagen nur bibliografisch geprüft.' },
   },
   {
     id: 'thc-cbd',
@@ -140,6 +154,7 @@ const BASE_ARTICLES: KbArticle[] = [
     ],
     related: ['cannabinoide', 'wirkungsdauer', 'toleranz'],
     sources: [S.grotenhermen, S.hcEffects, S.schwabe2023],
+    review: { level: 'bibliografisch', checked: '2026-11-24', note: 'Quellen existieren und passen zum Titel (Europe PMC/PubMed); Aussagen nicht im Volltext geprüft.' },
   },
   {
     id: 'terpene',
@@ -166,6 +181,7 @@ const BASE_ARTICLES: KbArticle[] = [
     ],
     related: ['cannabinoide', 'genetik', 'begriffe'],
     sources: [S.booth, S.hanus, S.russo],
+    review: { level: 'bibliografisch', checked: '2026-11-24', note: 'Quellen existieren und passen zum Titel (Europe PMC/PubMed); Aussagen nicht im Volltext geprüft.' },
   },
   {
     id: 'botanik',
@@ -192,6 +208,7 @@ const BASE_ARTICLES: KbArticle[] = [
     ],
     related: ['lebenszyklus', 'genetik'],
     sources: [S.elsohly, S.booth],
+    review: { level: 'bibliografisch', checked: '2026-11-24', note: 'Quellen existieren und passen zum Titel (Europe PMC/PubMed); Aussagen nicht im Volltext geprüft.' },
   },
   {
     id: 'genetik',
@@ -210,7 +227,7 @@ const BASE_ARTICLES: KbArticle[] = [
       {
         heading: 'Namen sind keine Garantie',
         paragraphs: [
-          'Genetische Untersuchungen fanden, dass Proben mit demselben Sortennamen teils weniger verwandt waren als Proben verschiedener Namen.',
+          'Eine genetische Untersuchung von Proben aus verschiedenen Abgabestellen fand bei den meisten Sorten mindestens einen genetischen Ausreißer unter Proben gleichen Namens. Für die übliche Einteilung in Sativa, Hybrid und Indica fand sie keine klare genetische Entsprechung.',
           'Eine Analyse von Cannabinoid- und Terpengehalten kommerzieller Proben aus sechs US-Bundesstaaten zeigte, dass die üblichen Etiketten (etwa „Indica“, „Sativa“ oder Sortennamen) nicht verlässlich zur gemessenen Chemie passen – einzelne Etiketten zeigten allerdings eine Tendenz zu bestimmten Chemotypen.',
         ],
         note: 'TERPGRID führt gleichnamige Sorten verschiedener Breeder deshalb nie automatisch zusammen.',
@@ -218,6 +235,7 @@ const BASE_ARTICLES: KbArticle[] = [
     ],
     related: ['botanik', 'terpene', 'forschung'],
     sources: [S.schwabe2019, S.smith2022],
+    review: { level: 'teilweise', checked: '2026-11-24', note: 'Schwabe et al. 2019 im Volltext, Smith et al. 2022 im Abstract (PubMed) geprüft.' },
   },
   {
     id: 'lebenszyklus',
@@ -241,6 +259,7 @@ const BASE_ARTICLES: KbArticle[] = [
     ],
     related: ['botanik', 'begriffe'],
     sources: [S.booth],
+    review: { level: 'bibliografisch', checked: '2026-11-24', note: 'Quellen existieren und passen zum Titel (Europe PMC/PubMed); Aussagen nicht im Volltext geprüft.' },
   },
   {
     id: 'konsumformen',
@@ -269,6 +288,7 @@ const BASE_ARTICLES: KbArticle[] = [
     ],
     related: ['wirkungsdauer', 'risikominimierung', 'toleranz'],
     sources: [S.grotenhermen, S.huestis, S.hcEffects, S.lrcug],
+    review: { level: 'bibliografisch', checked: '2026-11-24', note: 'Quellen existieren und passen zum Titel (Europe PMC/PubMed); Aussagen nicht im Volltext geprüft.' },
   },
   {
     id: 'wirkungsdauer',
@@ -292,6 +312,7 @@ const BASE_ARTICLES: KbArticle[] = [
     ],
     related: ['konsumformen', 'toleranz'],
     sources: [S.hcEffects, S.grotenhermen],
+    review: { level: 'bibliografisch', checked: '2026-11-24', note: 'Quellen existieren und passen zum Titel (Europe PMC/PubMed); Aussagen nicht im Volltext geprüft.' },
   },
   {
     id: 'toleranz',
@@ -315,6 +336,7 @@ const BASE_ARTICLES: KbArticle[] = [
     ],
     related: ['risikominimierung', 'thc-cbd'],
     sources: [S.hirvonen, S.lrcug],
+    review: { level: 'bibliografisch', checked: '2026-11-24', note: 'Quellen existieren und passen zum Titel (Europe PMC/PubMed); Aussagen nicht im Volltext geprüft.' },
   },
   {
     id: 'risikominimierung',
@@ -339,6 +361,7 @@ const BASE_ARTICLES: KbArticle[] = [
     ],
     related: ['toleranz', 'konsumformen', 'wirkungsdauer'],
     sources: [S.lrcug, S.hcEffects],
+    review: { level: 'bibliografisch', checked: '2026-11-24', note: 'Quellen existieren und passen zum Titel (Europe PMC/PubMed); Aussagen nicht im Volltext geprüft.' },
   },
   {
     id: 'forschung',
@@ -366,6 +389,7 @@ const BASE_ARTICLES: KbArticle[] = [
     ],
     related: ['genetik', 'begriffe'],
     sources: [S.schwabe2023, S.smith2022, S.freeman],
+    review: { level: 'teilweise', checked: '2026-11-24', note: 'Schwabe et al. 2023 im Volltext, Smith et al. 2022 im Abstract; Freeman & Lorenzetti 2020 nur bibliografisch.' },
   },
   {
     id: 'begriffe',
@@ -391,7 +415,8 @@ const BASE_ARTICLES: KbArticle[] = [
       },
     ],
     related: ['cannabinoide', 'genetik', 'forschung'],
-    sources: [S.freeman, S.elsohly, S.wang],
+    sources: [S.freeman, S.elsohly, S.wang, S.pubchemThc],
+    review: { level: 'teilweise', checked: '2026-11-24', note: 'Faktor 0,877 über PubChem bestätigt; übrige Definitionen nur bibliografisch geprüft.' },
   },
 ];
 

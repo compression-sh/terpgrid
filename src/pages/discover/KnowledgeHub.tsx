@@ -8,7 +8,24 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { GLOSSARY, searchGlossary } from '../../lib/academy/glossary';
 import { LEARNING_PATHS, pathProgress } from '../../lib/academy/paths';
 import { fmtDateLong } from '../../lib/dates';
-import { KB_ARTICLES, KB_CATEGORIES, type KbArticle, type KbCategory, kbSearch, readingMinutes } from '../../lib/knowledge';
+import { KB_ARTICLES, KB_CATEGORIES, type KbArticle, type KbCategory, type KbReview, kbSearch, readingMinutes } from '../../lib/knowledge';
+
+const REVIEW_LABEL: Record<KbReview['level'], string> = { volltext: 'Quellen im Volltext geprüft', teilweise: 'Quellen teilweise im Volltext geprüft', bibliografisch: 'Quellen nur bibliografisch geprüft' };
+const REVIEW_TONE: Record<KbReview['level'], string> = {
+  volltext: 'border-leaf-500/25 bg-leaf-500/[0.05] text-leaf-100/90',
+  teilweise: 'border-sky-400/25 bg-sky-400/[0.05] text-sky-100/90',
+  bibliografisch: 'border-amber-400/25 bg-amber-400/[0.06] text-amber-100/90',
+};
+
+function ReviewNotice({ r }: { r: KbReview }) {
+  return (
+    <aside className={`mt-5 rounded-xl border px-4 py-3 text-[13px] leading-relaxed ${REVIEW_TONE[r.level]}`} aria-label="Prüfstatus">
+      <p className="font-medium">{REVIEW_LABEL[r.level]} · Stand {fmtDateLong(r.checked)}</p>
+      {r.note && <p className="mt-0.5 opacity-90">{r.note}</p>}
+      <p className="mt-0.5 opacity-90">Eine externe fachliche Begutachtung steht noch aus.</p>
+    </aside>
+  );
+}
 
 const CAT_COLOR: Record<KbCategory, string> = {
   Grundlagen: '#9ef0bd',
@@ -119,6 +136,8 @@ function ArticleView({ a }: { a: KbArticle }) {
               <Bookmark className={`size-3.5 ${fav ? 'fill-current' : ''}`} /> {fav ? 'Gemerkt' : 'Merken'}
             </button>
           </div>
+
+          {a.review && <ReviewNotice r={a.review} />}
 
           {a.sections.map((s) => (
             <section key={s.heading} id={anchor(s.heading)} className="mt-9 scroll-mt-20">
@@ -422,7 +441,9 @@ export function KnowledgeHub({ articleId }: { articleId?: string }) {
                 <span className="flex items-center gap-1">
                   <Clock className="size-3" /> {readingMinutes(a)} Min.{a.level ? ` · ${a.level}` : ''}
                 </span>
-                <span>{a.sources.length} Quellen</span>
+                <span title={a.review ? REVIEW_LABEL[a.review.level] : undefined}>
+                  {a.sources.length} Quellen{a.review ? ` · ${a.review.level === 'volltext' ? 'Volltext' : a.review.level === 'teilweise' ? 'teilw. Volltext' : 'bibliografisch'}` : ''}
+                </span>
               </div>
             </a>
           ))}
