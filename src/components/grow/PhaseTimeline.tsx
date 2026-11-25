@@ -39,7 +39,7 @@ export function PhaseTimeline({ dates, endDate }: { dates: PhaseDates; endDate?:
         <p className="hint">Noch keine erreichten Meilensteine erfasst. Phasen-Daten lassen sich über „Bearbeiten“ eintragen.</p>
       )}
 
-      <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <ol className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         {GROW_PHASES.map((p) => {
           const span = spans.find((s) => s.phase === p);
           const date = dates[p];
