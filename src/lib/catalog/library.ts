@@ -239,11 +239,6 @@ export const library = {
   breeder: (id: string, signal?: AbortSignal) => api<LibBreederDetail>('GET', `/api/catalog/local/breeders/${encodeURIComponent(id)}`, undefined, { signal }),
 };
 
-export function resetLibraryStatus() {
-  statusCache = null;
-  lastLibraryStatus = undefined;
-}
-
 export const CISP_ATTRIBUTION_NAME = 'CI-Strains-Pro';
 export const CISP_REPO = 'https://github.com/Shannon-Goddard/ci-strains-pro';
 

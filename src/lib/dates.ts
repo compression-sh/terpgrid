@@ -5,10 +5,6 @@
 
 const DAY_MS = 86_400_000;
 
-export function isDateString(v: unknown): v is string {
-  return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(`${v}T00:00:00Z`));
-}
-
 export function parseDay(d: string): number {
   return Date.parse(`${d.slice(0, 10)}T00:00:00Z`);
 }
@@ -58,11 +54,6 @@ export function startOfWeek(d: string): string {
 
 export function startOfMonth(d: string): string {
   return `${d.slice(0, 7)}-01`;
-}
-
-export function daysInMonth(d: string): number {
-  const [y, m] = d.split('-').map(Number) as [number, number];
-  return new Date(Date.UTC(y, m, 0)).getUTCDate();
 }
 
 /** 6×7-Raster (Mo–So) für eine Monatsansicht. */

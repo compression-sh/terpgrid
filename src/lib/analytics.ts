@@ -144,4 +144,3 @@ export const fahrenheitToCelsius = (f: number) => ((f - 32) * 5) / 9;
 export const GRAMS_PER_OUNCE = 28.349523125;
 export const LITERS_PER_GALLON = 3.785411784;
 export const CM_PER_INCH = 2.54;
-export const LUMEN_PER_LUX_M2 = 1; // 1 lx = 1 lm/m²

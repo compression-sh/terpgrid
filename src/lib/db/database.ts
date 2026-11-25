@@ -340,10 +340,6 @@ export async function writeBatch(batch: WriteBatch, opts: { fromSync?: boolean }
   notify(...stores);
 }
 
-export async function deleteOne(store: StoreName, key: string): Promise<void> {
-  await writeBatch({ delete: { [store]: [key] } });
-}
-
 /* ───────────── Hilfen ───────────── */
 
 export function newId(): string {
