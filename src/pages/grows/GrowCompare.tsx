@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowLeft, Columns3, FileText } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Columns3, Download, FileText } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useData } from '../../app/DataProvider';
@@ -9,7 +9,9 @@ import { Card } from '../../components/ui/Card';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ContextHelp } from '../../components/academy/ContextHelp';
 import { PageHeader } from '../../components/ui/PageHeader';
-import { fmtDate } from '../../lib/dates';
+import { fmtDate, today } from '../../lib/dates';
+import { compareSeriesCsv, compareSummaryCsv } from '../../lib/explorer';
+import { downloadFile } from '../../lib/exporters';
 import { MEASURE_CONTEXTS, type MeasureContext } from '../../lib/db/types';
 import { fmt } from '../../lib/format';
 import { CONTEXT_LABEL } from '../../lib/grow/measure';
@@ -119,7 +121,19 @@ export function GrowCompare() {
       ) : (
         <div className="space-y-5">
           {/* Kennzahlen: Desktop als Tabelle, mobil als Karten je Projekt */}
-          <Card title="Kennzahlen" bodyClassName="p-0">
+          <Card
+            title="Kennzahlen"
+            bodyClassName="p-0"
+            actions={
+              <button
+                type="button"
+                className="btn-ghost py-1.5 text-xs"
+                onClick={() => downloadFile(`terpgrid-grow-vergleich-${today()}.csv`, compareSummaryCsv(grows.map((g) => g.name), rows.map((r) => ({ label: r.label, values: grows.map((_, i) => r.value(i)) }))), 'text/csv')}
+              >
+                <Download className="size-3.5" /> CSV
+              </button>
+            }
+          >
             <div className="hidden overflow-x-auto md:block">
               <table className="w-full text-left text-[13px]">
                 <thead>
@@ -172,7 +186,27 @@ export function GrowCompare() {
             </div>
           </Card>
 
-          <Card title="Verlauf" subtitle="X-Achse: Tage seit Projektstart. Nur gemessene Punkte; Linien verbinden Messungen.">
+          <Card
+            title="Verlauf"
+            subtitle="X-Achse: Tage seit Projektstart. Nur gemessene Punkte; Linien verbinden Messungen."
+            actions={
+              available.length > 0 && (
+                <button
+                  type="button"
+                  className="btn-ghost py-1.5 text-xs"
+                  onClick={() =>
+                    downloadFile(
+                      `terpgrid-grow-vergleich-${metric}-${today()}.csv`,
+                      compareSeriesCsv(`${def?.label ?? der?.label ?? metric}${unit ? ` (${unit})` : ''}`, ctxMetric ? (context ? (context === 'none' ? 'ohne Angabe' : CONTEXT_LABEL[context]) : 'alle Kontexte') : '', series.map(({ g, pts }) => ({ name: g.name, pts }))),
+                      'text/csv',
+                    )
+                  }
+                >
+                  <Download className="size-3.5" /> CSV
+                </button>
+              )
+            }
+          >
             {available.length === 0 ? (
               <EmptyState compact title="Keine Messwerte in diesen Projekten" />
             ) : (

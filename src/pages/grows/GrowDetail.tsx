@@ -28,6 +28,7 @@ import { ReminderFormModal } from '../../components/forms/PersonalForms';
 import { ActivityTimeline } from '../../components/grow/ActivityTimeline';
 import { ExpenseList, money } from '../../components/grow/ExpenseList';
 import { ContextHelp } from '../../components/academy/ContextHelp';
+import { GrowEquipmentCard, GrowStrainsCard, GrowTasksCard } from '../../components/grow/GrowContextCards';
 import { MeasurementCharts } from '../../components/grow/MeasurementCharts';
 import { ThresholdsModal } from '../../components/forms/ThresholdsModal';
 import { type DayMarker, MonthCalendar } from '../../components/grow/MonthCalendar';
@@ -92,7 +93,7 @@ export function PlantCard({ plant, growId }: { plant: Plant; growId: string }) {
   );
 }
 
-function StatusMenu({ grow }: { grow: GrowProject }) {
+function StatusMenu({ grow, extra = [] }: { grow: GrowProject; extra?: { icon: ReactNode; label: string; run: () => void }[] }) {
   const toast = useToast();
   const confirm = useConfirm();
   const [open, setOpen] = useState(false);
@@ -144,6 +145,14 @@ function StatusMenu({ grow }: { grow: GrowProject }) {
       </button>
       {open && (
         <div role="menu" className="absolute right-0 z-30 mt-2 w-56 rounded-xl border border-white/[0.08] bg-ink-850 p-1 shadow-2xl">
+          {extra.length > 0 && (
+            <div className="sm:hidden">
+              {extra.map((x) => (
+                <div key={x.label}>{item(x.icon, x.label, x.run)}</div>
+              ))}
+              <div className="my-1 h-px bg-white/[0.06]" />
+            </div>
+          )}
           {grow.status !== 'completed' && item(<CheckCircle2 className="size-4" />, 'Als abgeschlossen markieren', () => setStatus('completed'))}
           {grow.status !== 'archived' && item(<Archive className="size-4" />, 'Archivieren', () => setStatus('archived'))}
           {grow.status !== 'active' && item(<ArchiveRestore className="size-4" />, 'Wieder aktivieren', () => setStatus('active'))}
@@ -259,30 +268,39 @@ export function GrowDetail({ growId }: { growId: string }) {
       </section>
 
       {/* Aktionen */}
-      <div className="mb-5 flex flex-wrap items-center gap-2">
+      <div className="mb-5 flex items-center gap-2 sm:flex-wrap">
         <button type="button" className="btn-primary" onClick={() => quick({ kind: 'log', growId })}>
           <NotebookPen className="size-4" /> Schnell-Log
         </button>
         <button type="button" className="btn-ghost" onClick={() => setModal('activity')}>
           <Plus className="size-4" /> Eintrag
         </button>
-        <button type="button" className="btn-ghost" onClick={() => setModal('photo')}>
+        <button type="button" className="btn-ghost hidden sm:inline-flex" onClick={() => setModal('photo')}>
           <Camera className="size-4" /> Fotos
         </button>
-        <button type="button" className="btn-ghost" onClick={() => quick({ kind: 'plant', growId })}>
+        <button type="button" className="btn-ghost hidden sm:inline-flex" onClick={() => quick({ kind: 'plant', growId })}>
           <Sprout className="size-4" /> Pflanze
         </button>
-        <button type="button" className="btn-ghost" onClick={() => setModal('edit')}>
+        <button type="button" className="btn-ghost hidden sm:inline-flex" onClick={() => setModal('edit')}>
           <Pencil className="size-4" /> Bearbeiten
         </button>
-        <a href={href(`grows/${growId}/report`)} className="btn-ghost">
+        <a href={href(`grows/${growId}/report`)} className="btn-ghost hidden sm:inline-flex">
           <FileText className="size-4" /> Bericht
         </a>
-        <a href={href(`grows/${growId}/experiments`)} className="btn-ghost">
+        <a href={href(`grows/${growId}/experiments`)} className="btn-ghost hidden sm:inline-flex">
           <FlaskConical className="size-4" /> Experimente
         </a>
         <div className="ml-auto">
-          <StatusMenu grow={grow} />
+          <StatusMenu
+            grow={grow}
+            extra={[
+              { icon: <Camera className="size-4" />, label: 'Fotos hochladen', run: () => setModal('photo') },
+              { icon: <Sprout className="size-4" />, label: 'Pflanze hinzufügen', run: () => quick({ kind: 'plant', growId }) },
+              { icon: <Pencil className="size-4" />, label: 'Grow bearbeiten', run: () => setModal('edit') },
+              { icon: <FileText className="size-4" />, label: 'Bericht', run: () => navigate(`grows/${growId}/report`) },
+              { icon: <FlaskConical className="size-4" />, label: 'Experimente', run: () => navigate(`grows/${growId}/experiments`) },
+            ]}
+          />
         </div>
       </div>
 
@@ -401,6 +419,9 @@ export function GrowDetail({ growId }: { growId: string }) {
                 )}
                 {lastActivity && <p className="hint mt-3">Letzte Aktivität: {fmtDateTime(lastActivity.date)} ({daysBetween(lastActivity.date.slice(0, 10), t)} Tage her)</p>}
               </Card>
+              <GrowTasksCard reminders={reminders} today={t} onAdd={() => setModal('reminder')} />
+              <GrowStrainsCard plants={plants} strains={data.strains} />
+              <GrowEquipmentCard plants={plants} inventory={data.inventory} />
               {(grow.description || grow.notes) && (
                 <Card title="Notizen">
                   {grow.description && <p className="text-[13px] leading-relaxed text-ink-200">{grow.description}</p>}

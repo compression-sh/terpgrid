@@ -2,7 +2,8 @@ import { withQuantityChange } from '../../lib/inventory';
 import { useIsServerMode } from '../../app/auth';
 import { parseTags } from '../../lib/grow/equipment';
 import { Plus, Trash2 } from 'lucide-react';
-import { type FormEvent, useId, useState } from 'react';
+import { type FormEvent, useEffect, useId, useState } from 'react';
+import { clearDraft, loadDraft, saveDraft } from '../../lib/drafts';
 import { useData } from '../../app/DataProvider';
 import { errorText, useToast } from '../../app/Toasts';
 import { nowLocal, today } from '../../lib/dates';
@@ -82,6 +83,19 @@ function resolveStrain(strains: Strain[], text: string): { strainId?: string; st
 
 /* ───────────── Journal ───────────── */
 
+interface JournalDraft {
+  date: string;
+  strain: string;
+  method: string;
+  amount: string;
+  unit: NonNullable<JournalEntry['amount']>['unit'];
+  thc: string;
+  notes: string;
+  moods: string[];
+  duration: string;
+  rating?: number;
+}
+
 export function JournalFormModal({ open, onClose, entry, strainId }: { open: boolean; onClose: () => void; entry?: JournalEntry; strainId?: string }) {
   const server = useIsServerMode();
   const { data, settings } = useData();
@@ -90,17 +104,41 @@ export function JournalFormModal({ open, onClose, entry, strainId }: { open: boo
   const initialStrain = entry?.strainId
     ? (data.strains.find((s) => s.id === entry.strainId)?.name ?? '')
     : (entry?.strainName ?? data.strains.find((s) => s.id === strainId)?.name ?? '');
-  const [date, setDate] = useState(entry?.date ?? nowLocal());
-  const [strain, setStrain] = useState(initialStrain);
-  const [method, setMethod] = useState<ConsumptionMethod>(entry?.method ?? 'vaporizer');
-  const [amount, setAmount] = useState(numText(entry?.amount?.value));
-  const [unit, setUnit] = useState<NonNullable<JournalEntry['amount']>['unit']>(entry?.amount?.unit ?? 'g');
-  const [thc, setThc] = useState(numText(entry?.thcPercent));
-  const [notes, setNotes] = useState(entry?.notes ?? '');
-  const [moods, setMoods] = useState<string[]>(entry?.moods ?? []);
-  const [duration, setDuration] = useState(entry?.durationNote ?? '');
-  const [rating, setRating] = useState<number | undefined>(entry?.rating);
+  // Entwurf nur für neue Einträge (nicht beim Bearbeiten und nicht bei vorgewählter Sorte)
+  const [draft] = useState(() => (!entry && !strainId ? loadDraft<JournalDraft>('journal', (d) => typeof d.method === 'string' && typeof d.notes === 'string') : null));
+  const [date, setDate] = useState(entry?.date ?? draft?.date ?? nowLocal());
+  const [strain, setStrain] = useState(draft?.strain ?? initialStrain);
+  const [method, setMethod] = useState<ConsumptionMethod>(entry?.method ?? (CONSUMPTION_METHODS.includes(draft?.method as ConsumptionMethod) ? (draft!.method as ConsumptionMethod) : 'vaporizer'));
+  const [amount, setAmount] = useState(draft?.amount ?? numText(entry?.amount?.value));
+  const [unit, setUnit] = useState<NonNullable<JournalEntry['amount']>['unit']>(entry?.amount?.unit ?? draft?.unit ?? 'g');
+  const [thc, setThc] = useState(draft?.thc ?? numText(entry?.thcPercent));
+  const [notes, setNotes] = useState(entry?.notes ?? draft?.notes ?? '');
+  const [moods, setMoods] = useState<string[]>(entry?.moods ?? (Array.isArray(draft?.moods) ? draft!.moods.filter((m) => typeof m === 'string') : []));
+  const [duration, setDuration] = useState(entry?.durationNote ?? draft?.duration ?? '');
+  const [rating, setRating] = useState<number | undefined>(entry?.rating ?? (typeof draft?.rating === 'number' ? draft.rating : undefined));
   const [saving, setSaving] = useState(false);
+  const [restored, setRestored] = useState(!!draft);
+  const trackDraft = !entry && !strainId;
+  useEffect(() => {
+    if (!trackDraft) return;
+    const touched = notes.trim() || strain.trim() || amount || thc || moods.length || duration.trim() || rating !== undefined;
+    if (touched) saveDraft('journal', { date, strain, method, amount, unit, thc, notes, moods, duration, rating } satisfies JournalDraft);
+    else clearDraft('journal');
+  }, [trackDraft, date, strain, method, amount, unit, thc, notes, moods, duration, rating]);
+  const discardDraft = () => {
+    clearDraft('journal');
+    setDate(nowLocal());
+    setStrain('');
+    setMethod('vaporizer');
+    setAmount('');
+    setUnit('g');
+    setThc('');
+    setNotes('');
+    setMoods([]);
+    setDuration('');
+    setRating(undefined);
+    setRestored(false);
+  };
   const err = numberError(amount, { min: 0, max: 100000 }) || numberError(thc, { min: 0, max: 100 });
 
   async function submit(e: FormEvent) {
@@ -122,6 +160,7 @@ export function JournalFormModal({ open, onClose, entry, strainId }: { open: boo
     try {
       if (entry) await updateRecord('journal', entry.id, { strainId: undefined, strainName: undefined, ...payload });
       else await createRecord('journal', payload);
+      if (trackDraft) clearDraft('journal');
       toast('Journal-Eintrag gespeichert');
       onClose();
     } catch (e2) {
@@ -134,6 +173,14 @@ export function JournalFormModal({ open, onClose, entry, strainId }: { open: boo
   return (
     <Modal open={open} onClose={onClose} title={entry ? 'Eintrag bearbeiten' : 'Neuer Journal-Eintrag'} subtitle={server ? 'Privat – nur in deinem Konto, verschlüsselt gespeichert.' : 'Privat – nur in diesem Browser.'} size="lg" footer={<Footer onCancel={onClose} saving={saving} formId={formId} />}>
       <form id={formId} onSubmit={submit} className="space-y-5" noValidate>
+        {restored && (
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-leaf-500/20 bg-leaf-500/[0.06] px-3 py-2 text-[12.5px] text-leaf-100" role="status">
+            Entwurf wiederhergestellt (nur in diesem Tab gespeichert).
+            <button type="button" className="shrink-0 text-ink-300 underline-offset-2 hover:text-ink-50 hover:underline" onClick={discardDraft}>
+              Verwerfen
+            </button>
+          </div>
+        )}
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField label="Datum & Uhrzeit" type="datetime-local" value={date} onChange={setDate} required />
           <StrainInput value={strain} onChange={setStrain} />

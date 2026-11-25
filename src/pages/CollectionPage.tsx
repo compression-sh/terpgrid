@@ -1,14 +1,15 @@
 import { withQuantityChange } from '../lib/inventory';
+import { focusId, useFocusTarget } from '../app/useFocusTarget';
 import { Camera, Minus, Package, Pencil, Plus, Receipt, Search, Trash2, Wrench, Zap } from 'lucide-react';
 import { MaintenanceModal } from '../components/forms/MaintenanceModal';
 import { spaceEnergy, spacePlants, warrantyState } from '../lib/grow/equipment';
 import { SPACE_KIND_LABEL } from '../lib/grow/labels';
 import { today } from '../lib/dates';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useConfirm } from '../app/Confirm';
 import { useData, useLookup } from '../app/DataProvider';
 import { errorText, useToast } from '../app/Toasts';
-import { href } from '../app/router';
+import { href, useRoute } from '../app/router';
 import { SelectField } from '../components/forms/Fields';
 import { InventoryFormModal } from '../components/forms/PersonalForms';
 import { ExpenseList, money } from '../components/grow/ExpenseList';
@@ -71,7 +72,7 @@ function ItemRow({ item }: { item: InventoryItem }) {
   }
 
   return (
-    <li className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-ink-900/60 p-2.5">
+    <li id={focusId('item', item.id)} className="flex scroll-mt-24 items-center gap-3 rounded-xl border border-white/[0.06] bg-ink-900/60 p-2.5">
       <button type="button" onClick={() => setModal('photo')} className="relative size-14 shrink-0 overflow-hidden rounded-lg" aria-label={cover ? 'Weiteres Foto hinzufügen' : 'Foto hinzufügen'}>
         <PhotoImg photoId={cover} alt="" className="h-full w-full" />
         {!cover && <Camera className="absolute bottom-1 right-1 size-3 text-ink-400" />}
@@ -179,6 +180,7 @@ function ItemRow({ item }: { item: InventoryItem }) {
 }
 
 export function CollectionPage() {
+  useFocusTarget('item', 'item');
   const { data, settings } = useData();
   const [tab, setTab] = useState<'inventory' | 'expenses' | 'strains'>('inventory');
   const [creating, setCreating] = useState(false);
@@ -187,6 +189,19 @@ export function CollectionPage() {
   const [showArchived, setShowArchived] = useState(false);
   const [tag, setTag] = useState('');
   const allTags = useMemo(() => [...new Set(data.inventory.flatMap((i) => i.tags ?? []))].sort((a, b) => a.localeCompare(b, 'de')), [data.inventory]);
+  // Deeplink auf einen archivierten oder gefilterten Eintrag: Ansicht so öffnen, dass er sichtbar ist
+  const target = useRoute().query.get('item');
+  const handled = useRef<string | null>(null);
+  useEffect(() => {
+    const it = target ? data.inventory.find((i) => i.id === target) : undefined;
+    if (!it || handled.current === target) return;
+    handled.current = target;
+    setTab('inventory');
+    setCategory('');
+    setTag('');
+    setQ('');
+    if (it.archived) setShowArchived(true);
+  }, [target, data.inventory]);
 
   const items = useMemo(() => {
     const needle = q.trim().toLowerCase();

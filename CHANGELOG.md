@@ -1,5 +1,30 @@
 # Änderungsprotokoll
 
+## 5.3.1-rc.1 – 25.11.2026 (Release-Kandidat, nicht veröffentlicht)
+
+Phase 5.3 „Grow Studio“: Verbindungen zwischen bestehenden Bereichen, Grow-Workspace und mobile Bedienung.
+Keine Datenbank-Migration, keine neuen Abhängigkeiten, keine Server-Änderungen.
+
+### Neu
+- **Grow-Übersicht:** Karten „Anstehend“ (offene Erinnerungen je Serie), „Sorten & Genetik“ (Breeder, Katalog- und
+  Abstammungslink nur bei echter Katalogverknüpfung) und „Bereich & Ausrüstung“ (über die Bereichs-Zuordnung der
+  Pflanzen; Strom nur als Schätzung aus vollständigen eigenen Angaben).
+- **Suche:** Treffer aus Journal, Sammlung und Laborberichten öffnen den konkreten Eintrag und heben ihn hervor.
+- **Kalender:** Listenansicht (Agenda über 30 Tage, Erinnerungen abhakbar) und Pflanzenfilter innerhalb eines Grows.
+- **Grow-Vergleich:** CSV-Export für Kennzahlen und gemessenen Verlauf.
+- **Genetik:** Abstammungsgraph im Vollbild (Escape beendet).
+- **Journal:** Entwurf eines neuen Eintrags bleibt im Tab erhalten (nur sessionStorage, je Konto getrennt).
+
+### Verbessert
+- Foto-Raster nach Monat gruppiert, Aufnahmedatum je Kachel.
+- Mobil: kompakte Aktionsleiste im Grow (weitere Aktionen im Menü), Phasen zweispaltig,
+  Discover-Filter einklappbar mit Anzahl aktiver Filter.
+- Touch-Ziele: Terpen-Chips und Brotkrumen der Sortenseite mindestens 24 px.
+
+### Korrigiert
+- Befehlspalette: direkt nach Strg+K getippte Zeichen gingen verloren.
+- Kalender: Wiederholungstext liest beschädigte Regeln sicher.
+
 ## 5.3.0-rc.1 – 25.11.2026 (Release-Kandidat, nicht veröffentlicht)
 
 Phase 5.3: Premium Experience, Feature-Integration und Produktionsqualität. Keine Datenbank-Migration; neue Felder sind

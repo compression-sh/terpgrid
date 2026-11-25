@@ -1,5 +1,5 @@
 import { BellOff, CalendarDays, Check, ChevronLeft, ChevronRight, Download, Pencil, Plus, Repeat, Trash2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { useConfirm } from '../app/Confirm';
 import { useData, useLookup } from '../app/DataProvider';
 import { errorText, useToast } from '../app/Toasts';
@@ -14,7 +14,7 @@ import { Chip } from '../components/ui/Chip';
 import { EmptyState } from '../components/ui/EmptyState';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Segmented } from '../components/ui/Segmented';
-import { type Occurrence, occurrencesInRange, overdue, remindersToIcs } from '../lib/calendar';
+import { type Occurrence, occurrencesInRange, overdue, remindersToIcs, safeRepeat } from '../lib/calendar';
 import { addDays, fmtDateLong, fmtDateShort, monthGrid, startOfMonth, startOfWeek, today, weekDays } from '../lib/dates';
 import { deleteSimple, toggleReminderCompletion } from '../lib/db/repo';
 import { REMINDER_CATEGORIES, type Reminder } from '../lib/db/types';
@@ -44,11 +44,15 @@ interface CalEvent {
 }
 
 function repeatText(r: Reminder): string {
-  if (r.repeat.kind === 'none') return 'einmalig';
-  const n = r.repeat.interval;
-  const base = r.repeat.kind === 'daily' ? (n === 1 ? 'täglich' : `alle ${n} Tage`) : n === 1 ? 'wöchentlich' : `alle ${n} Wochen`;
-  return r.repeat.until ? `${base} bis ${fmtDateShort(r.repeat.until)}` : base;
+  const rep = safeRepeat(r.repeat);
+  if (rep.kind === 'none') return 'einmalig';
+  const n = rep.interval;
+  const base = rep.kind === 'daily' ? (n === 1 ? 'täglich' : `alle ${n} Tage`) : n === 1 ? 'wöchentlich' : `alle ${n} Wochen`;
+  return rep.until ? `${base} bis ${fmtDateShort(rep.until)}` : base;
 }
+
+/** Listenansicht: Zeitraum ab dem gewählten Tag */
+const LIST_DAYS = 30;
 
 export function CalendarPage() {
   const { data } = useData();
@@ -57,10 +61,16 @@ export function CalendarPage() {
   const toast = useToast();
   const confirm = useConfirm();
   const t = today();
-  const [view, setView] = useState<'month' | 'week'>('month');
+  const [view, setView] = useState<'month' | 'week' | 'list'>(() => (['week', 'list'].includes(route.query.get('view') ?? '') ? (route.query.get('view') as 'week' | 'list') : 'month'));
   const [cursor, setCursor] = useState(t);
   const [selected, setSelected] = useState(t);
-  const [growId, setGrowId] = useState(route.query.get('grow') ?? '');
+  const [growId, setGrowIdRaw] = useState(route.query.get('grow') ?? '');
+  const [plantId, setPlantId] = useState('');
+  const setGrowId = (g: string) => {
+    setGrowIdRaw(g);
+    setPlantId('');
+  };
+  const growPlants = growId ? data.plants.filter((p) => p.growId === growId).sort((a, b) => a.name.localeCompare(b.name, 'de')) : [];
   const [kinds, setKinds] = useState<Set<Kind>>(new Set(['reminder', 'activity', 'photo', 'milestone']));
   const [form, setForm] = useState<{ reminder?: Reminder; date?: string } | null>(null);
 
@@ -76,6 +86,7 @@ export function CalendarPage() {
       const g = monthGrid(cursor);
       return { from: g[0]!, to: g[41]! };
     }
+    if (view === 'list') return { from: cursor, to: addDays(cursor, LIST_DAYS - 1) };
     const w = weekDays(cursor);
     return { from: w[0]!, to: w[6]! };
   }, [view, cursor]);
@@ -102,6 +113,7 @@ export function CalendarPage() {
       for (const a of data.activities) {
         const d = a.date.slice(0, 10);
         if (!inRange(d) || !growOk(a.growId) || a.type === 'photo') continue;
+        if (plantId && a.plantId !== plantId) continue;
         const g = lookup.grow.get(a.growId);
         const p = a.plantId ? lookup.plant.get(a.plantId) : undefined;
         out.push({ key: `a-${a.id}`, kind: 'activity', date: d, time: a.date.slice(11, 16), title: a.title || ACTIVITY_LABEL[a.type], sub: [g?.name, p?.name].filter(Boolean).join(' · '), to: `grows/${a.growId}${p ? `/plants/${p.id}` : '?tab=log'}`, color: a.type === 'issue' ? '#fbbf24' : KIND_META.activity.color });
@@ -111,7 +123,7 @@ export function CalendarPage() {
       const byDay = new Map<string, number>();
       for (const p of data.photos) {
         const d = p.takenAt.slice(0, 10);
-        if (inRange(d) && growOk(p.growId)) byDay.set(d, (byDay.get(d) ?? 0) + 1);
+        if (inRange(d) && growOk(p.growId) && (!plantId || p.plantId === plantId)) byDay.set(d, (byDay.get(d) ?? 0) + 1);
       }
       for (const [d, n] of byDay) out.push({ key: `p-${d}`, kind: 'photo', date: d, title: n === 1 ? '1 Foto' : `${n} Fotos`, to: `photos?from=${d}&to=${d}${growId ? `&grow=${growId}` : ''}`, color: KIND_META.photo.color });
     }
@@ -130,7 +142,7 @@ export function CalendarPage() {
       }
     }
     return out.sort((a, b) => (a.date + (a.time ?? '')).localeCompare(b.date + (b.time ?? '')));
-  }, [data, range, kinds, growId, lookup]);
+  }, [data, range, kinds, growId, plantId, lookup]);
 
   const markers = new Map<string, DayMarker[]>();
   for (const e of events) markers.set(e.date, [...(markers.get(e.date) ?? []), { color: e.color, label: e.title }]);
@@ -199,7 +211,7 @@ export function CalendarPage() {
           <div className="text-[11px] text-ink-500">
             {e.time && `${e.time} · `}
             {e.sub}
-            {r && r.repeat.kind !== 'none' && (
+            {r && safeRepeat(r.repeat).kind !== 'none' && (
               <span className="ml-1 inline-flex items-center gap-0.5">
                 · <Repeat className="size-3" /> {repeatText(r)}
               </span>
@@ -252,11 +264,12 @@ export function CalendarPage() {
             </button>
           ))}
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:w-[28rem]">
+        <div className={`grid gap-3 sm:grid-cols-2 ${growPlants.length ? 'lg:w-[40rem] lg:grid-cols-3' : 'lg:w-[28rem]'}`}>
           <SelectField label="Grow" value={growId} onChange={setGrowId} placeholder="Alle Grows" options={data.grows.map((g) => ({ value: g.id, label: g.name }))} />
+          {growPlants.length > 0 && <SelectField label="Pflanze" value={plantId} onChange={setPlantId} placeholder="Alle Pflanzen" options={growPlants.map((p) => ({ value: p.id, label: p.name }))} />}
           <div className="space-y-1.5">
             <span className="label">Ansicht</span>
-            <Segmented size="sm" value={view} onChange={setView} options={[{ value: 'month', label: 'Monat' }, { value: 'week', label: 'Woche' }]} />
+            <Segmented size="sm" value={view} onChange={setView} options={[{ value: 'month', label: 'Monat' }, { value: 'week', label: 'Woche' }, { value: 'list', label: 'Liste' }]} />
           </div>
         </div>
       </div>
@@ -265,6 +278,8 @@ export function CalendarPage() {
         <Card bodyClassName="p-4 sm:p-5">
           {view === 'month' ? (
             <MonthCalendar month={startOfMonth(cursor)} onMonth={setCursor} markers={markers} selected={selected} onSelect={setSelected} />
+          ) : view === 'list' ? (
+            <AgendaList from={range.from} to={range.to} today={t} events={events} onShift={(days) => setCursor(addDays(cursor, days))} onToday={() => setCursor(t)} render={(e) => <EventRow key={e.key} e={e} />} />
           ) : (
             <div>
               <div className="mb-3 flex items-center justify-between">
@@ -371,6 +386,48 @@ export function CalendarPage() {
         </div>
       </div>
       {form && <ReminderFormModal open onClose={() => setForm(null)} reminder={form.reminder} date={form.date} growId={growId || undefined} />}
+    </div>
+  );
+}
+
+/** Agenda: alle Ereignisse des Zeitraums nach Tagen gruppiert; Erinnerungen direkt abhakbar. */
+function AgendaList({ from, to, today: t, events, onShift, onToday, render }: { from: string; to: string; today: string; events: CalEvent[]; onShift: (days: number) => void; onToday: () => void; render: (e: CalEvent) => ReactNode }) {
+  const days = [...new Set(events.map((e) => e.date))].sort();
+  return (
+    <div>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <button type="button" className="btn-ghost p-1.5" aria-label={`${LIST_DAYS} Tage zurück`} onClick={() => onShift(-LIST_DAYS)}>
+          <ChevronLeft className="size-4" />
+        </button>
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-[14px] font-semibold text-ink-50">
+            {fmtDateShort(from)} – {fmtDateShort(to)}
+          </span>
+          {from !== t && (
+            <button type="button" className="btn-ghost py-1 text-xs" onClick={onToday}>
+              Heute
+            </button>
+          )}
+        </div>
+        <button type="button" className="btn-ghost p-1.5" aria-label={`${LIST_DAYS} Tage weiter`} onClick={() => onShift(LIST_DAYS)}>
+          <ChevronRight className="size-4" />
+        </button>
+      </div>
+      {days.length === 0 ? (
+        <EmptyState compact icon={<CalendarDays />} title="Keine Ereignisse in diesem Zeitraum" text="Filter oben anpassen oder eine Erinnerung anlegen." />
+      ) : (
+        <ol className="space-y-4">
+          {days.map((d) => (
+            <li key={d}>
+              <h3 className={`mb-1.5 text-[12px] font-semibold uppercase tracking-[0.08em] ${d === t ? 'text-leaf-300' : 'text-ink-400'}`}>
+                {fmtDateLong(d)}
+                {d === t && ' · Heute'}
+              </h3>
+              <ul className="space-y-1.5">{events.filter((e) => e.date === d).map(render)}</ul>
+            </li>
+          ))}
+        </ol>
+      )}
     </div>
   );
 }
