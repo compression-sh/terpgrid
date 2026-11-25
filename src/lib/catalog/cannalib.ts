@@ -10,7 +10,6 @@ import { CatalogError } from './types';
 
 import { cannalibBase } from './endpoint';
 
-export const CANNALIB_BASE = 'https://api.cannalib.org';
 export const CANNALIB_ATTRIBUTION = { provider: 'cannalib' as const, name: 'CannaLib', url: 'https://cannalib.org/' };
 
 const finite = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);

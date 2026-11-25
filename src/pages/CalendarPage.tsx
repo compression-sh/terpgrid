@@ -14,7 +14,7 @@ import { Chip } from '../components/ui/Chip';
 import { EmptyState } from '../components/ui/EmptyState';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Segmented } from '../components/ui/Segmented';
-import { type Occurrence, occurrencesInRange, overdue, remindersToIcs, safeRepeat } from '../lib/calendar';
+import { type Occurrence, occurrencesInRange, overdue, remindersToIcs, repeatLabel, safeRepeat } from '../lib/calendar';
 import { addDays, fmtDateLong, fmtDateShort, monthGrid, startOfMonth, startOfWeek, today, weekDays } from '../lib/dates';
 import { deleteSimple, toggleReminderCompletion } from '../lib/db/repo';
 import { REMINDER_CATEGORIES, type Reminder } from '../lib/db/types';
@@ -44,11 +44,11 @@ interface CalEvent {
 }
 
 function repeatText(r: Reminder): string {
+  const base = repeatLabel(r.repeat);
+  if (!base) return 'einmalig';
   const rep = safeRepeat(r.repeat);
-  if (rep.kind === 'none') return 'einmalig';
-  const n = rep.interval;
-  const base = rep.kind === 'daily' ? (n === 1 ? 'täglich' : `alle ${n} Tage`) : n === 1 ? 'wöchentlich' : `alle ${n} Wochen`;
-  return rep.until ? `${base} bis ${fmtDateShort(rep.until)}` : base;
+  const until = rep.kind === 'none' ? undefined : rep.until;
+  return until ? `${base} bis ${fmtDateShort(until)}` : base;
 }
 
 /** Listenansicht: Zeitraum ab dem gewählten Tag */

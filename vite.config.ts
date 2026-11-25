@@ -46,11 +46,19 @@ function swVersionPlugin(): Plugin {
   return {
     name: 'sw-version',
     apply: 'build',
-    writeBundle(options) {
+    writeBundle(options, bundle) {
       const file = `${options.dir ?? 'dist'}/sw.js`;
+      // Alle gehashten Assets der App-Hülle (JS, CSS, Schriften) – damit die App schon nach dem
+      // ersten Besuch offline startet, nicht erst nach einem weiteren Online-Laden.
+      const precache = Object.keys(bundle)
+        .filter((f) => f.startsWith('assets/') && /\.(js|css|woff2)$/.test(f))
+        .sort();
       try {
         const src = readFileSync(file, 'utf8');
-        writeFileSync(file, src.replace('__TERPGRID_SW_VERSION__', `${pkg.version}-${Date.now().toString(36)}`));
+        writeFileSync(
+          file,
+          src.replace('__TERPGRID_SW_VERSION__', `${pkg.version}-${Date.now().toString(36)}`).replace('/*__TERPGRID_PRECACHE__*/', precache.map((f) => JSON.stringify(f)).join(', ')),
+        );
       } catch {
         /* kein Service Worker im Build */
       }

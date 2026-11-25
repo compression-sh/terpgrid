@@ -1,4 +1,4 @@
-import type { Activity, MeasureContext, Measurements } from '../db/types';
+import type { Activity, MeasureContext } from '../db/types';
 import { dli, vpd } from './measure';
 
 export type MetricKey =
@@ -120,13 +120,6 @@ export function seriesStats(points: SeriesPoint[]): SeriesStats {
     latest: points[points.length - 1],
     maxGapDays: points.length > 1 ? Math.round(maxGap * 10) / 10 : undefined,
   };
-}
-
-export function hasAnyMeasurement(m?: Measurements): boolean {
-  if (!m) return false;
-  return (
-    METRICS.some((d) => typeof m[d.key] === 'number' && Number.isFinite(m[d.key] as number)) || (m.custom?.length ?? 0) > 0
-  );
 }
 
 /** Abgeleitete Reihen – aus Rohwerten derselben Messung berechnet, nie gespeichert. */

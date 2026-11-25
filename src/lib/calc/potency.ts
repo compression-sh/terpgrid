@@ -11,10 +11,6 @@ export function makeRange(low: number, mid: number, high: number): Range {
   return { low: Math.min(low, mid), mid, high: Math.max(high, mid) };
 }
 
-export function scaleRange(r: Range, factor: number): Range {
-  return makeRange(r.low * factor, r.mid * factor, r.high * factor);
-}
-
 /**
  * Wie wurde der THC-Gehalt angegeben?
  * - `total`: Gesamt-THC (bereits "potentielles THC" inkl. umgerechnetem THCA,

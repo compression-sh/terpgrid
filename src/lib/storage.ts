@@ -83,10 +83,3 @@ export function createSaved<T>(
   };
 }
 
-export function clearSaved(store: KeyValueStore | null = defaultStore()): void {
-  try {
-    store?.removeItem(STORAGE_KEY);
-  } catch {
-    /* ignore */
-  }
-}

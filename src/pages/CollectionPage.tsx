@@ -72,14 +72,15 @@ function ItemRow({ item }: { item: InventoryItem }) {
   }
 
   return (
-    <li id={focusId('item', item.id)} className="flex scroll-mt-24 items-center gap-3 rounded-xl border border-white/[0.06] bg-ink-900/60 p-2.5">
+    <li id={focusId('item', item.id)} className="flex scroll-mt-24 flex-wrap items-start gap-3 rounded-xl sm:flex-nowrap sm:items-center border border-white/[0.06] bg-ink-900/60 p-2.5">
       <button type="button" onClick={() => setModal('photo')} className="relative size-14 shrink-0 overflow-hidden rounded-lg" aria-label={cover ? 'Weiteres Foto hinzufügen' : 'Foto hinzufügen'}>
         <PhotoImg photoId={cover} alt="" className="h-full w-full" />
         {!cover && <Camera className="absolute bottom-1 right-1 size-3 text-ink-400" />}
       </button>
-      <div className="min-w-0 flex-1">
+      {/* Mobil: Inhalt neben dem Foto, Mengen- und Aktionsknöpfe darunter; ab sm alles in einer Zeile */}
+      <div className="min-w-0 flex-1 basis-[calc(100%-4.25rem)] sm:basis-auto">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="truncate text-[14px] font-medium text-ink-50">{item.name}</span>
+          <span className="min-w-0 max-w-full truncate text-[14px] font-medium text-ink-50">{item.name}</span>
           <Chip>{item.category === 'space' && item.spaceKind ? SPACE_KIND_LABEL[item.spaceKind] : INVENTORY_CATEGORY_LABEL[item.category]}</Chip>
           {item.archived && <Chip tone="amber">archiviert</Chip>}
           {(item.tags ?? []).map((t) => (
@@ -139,7 +140,7 @@ function ItemRow({ item }: { item: InventoryItem }) {
           </details>
         )}
       </div>
-      <div className="flex shrink-0 items-center gap-1">
+      <div className="-mt-1 flex w-full shrink-0 items-center justify-end gap-1 border-t border-white/[0.04] pt-1.5 sm:mt-0 sm:w-auto sm:border-0 sm:pt-0">
         {item.quantity !== undefined && (
           <>
             <button type="button" className="btn-ghost p-1.5" aria-label="Menge verringern" onClick={() => adjust(-1)} disabled={(item.quantity ?? 0) <= 0}>
