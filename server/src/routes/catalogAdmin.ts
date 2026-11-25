@@ -6,6 +6,8 @@ import type { FastifyInstance } from 'fastify';
 import { audit } from '../audit.js';
 import { type AuditReport, catalogAudit } from '../catalog/audit.js';
 import { MAX_BATCH, PROVIDERS, type Provider, enrichBatch } from '../catalog/enrich.js';
+import { catalogQuality } from '../catalog/quality.js';
+import { PERMISSION_LABEL, SOURCES } from '../catalog/sources.js';
 import type { AppContext } from '../context.js';
 import { HttpError, requireAdmin } from '../http.js';
 import fp from '../plugin.js';
@@ -22,6 +24,36 @@ export function catalogAdminRoutes(ctx: AppContext) {
       if (!cache || req.query.refresh === '1' || Date.now() - cache.at > 10 * 60_000) cache = { at: Date.now(), report: await catalogAudit(ctx.db) };
       const imp = (await ctx.db.query("SELECT version, imported_at, report->>'parserVersion' AS parser FROM catalog_imports WHERE status = 'active'")).rows[0];
       return { ...cache.report, dataset: imp ?? null, cachedAt: new Date(cache.at).toISOString() };
+    });
+
+    // Reproduzierbare Datenqualitätsprüfung (nur lesend, Ergebnis 10 Min. zwischengespeichert)
+    let qcache: { at: number; report: Awaited<ReturnType<typeof catalogQuality>> } | null = null;
+    app.get<{ Querystring: { refresh?: string } }>('/api/admin/catalog/validation', async (req) => {
+      requireAdmin(req);
+      if (!qcache || req.query.refresh === '1' || Date.now() - qcache.at > 10 * 60_000) qcache = { at: Date.now(), report: await catalogQuality(ctx.db) };
+      return { ...qcache.report, cachedAt: new Date(qcache.at).toISOString() };
+    });
+
+    // Quellenregister mit Laufzeitstatus (letzter Import/Lauf je Quelle)
+    app.get('/api/admin/catalog/sources', async (req) => {
+      requireAdmin(req);
+      const cisp = (await ctx.db.query(`SELECT max(imported_at) FILTER (WHERE status = 'active') AS last_ok, max(imported_at) AS last_try FROM catalog_imports WHERE source = 'cisp'`)).rows[0];
+      const runs = (await ctx.db.query(`SELECT provider, max(finished_at) FILTER (WHERE status = 'done') AS last_ok, max(started_at) AS last_try, (array_agg(status ORDER BY id DESC))[1] AS last_status FROM catalog_enrichment_runs GROUP BY provider`)).rows;
+      const samples = (await ctx.db.query(`SELECT source, max(finished_at) FILTER (WHERE status = 'active') AS last_ok, max(started_at) AS last_try, (array_agg(status ORDER BY id DESC))[1] AS last_status, (array_agg(error ORDER BY id DESC))[1] AS last_error FROM catalog_sample_imports GROUP BY source`)).rows;
+      return {
+        sources: SOURCES.map((s) => {
+          const r = s.runtime;
+          const st = !r ? undefined : r.kind === 'cisp' ? cisp : r.kind === 'enrichment' ? runs.find((x) => x.provider === r.key) : samples.find((x) => x.source === r.key);
+          return {
+            ...s,
+            permissionLabel: PERMISSION_LABEL[s.permission],
+            lastSuccess: st?.last_ok ?? null,
+            lastAttempt: st?.last_try ?? null,
+            status: st ? (st.last_status ?? (st.last_ok ? 'active' : null)) : null,
+            error: st?.last_error ?? null,
+          };
+        }),
+      };
     });
 
     app.get('/api/admin/catalog/runs', async (req) => {

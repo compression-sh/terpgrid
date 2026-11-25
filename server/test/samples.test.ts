@@ -136,6 +136,31 @@ describe.skipIf(!hasDb)('Laborproben im Katalog', () => {
   it('erfordert Anmeldung', async () => {
     expect((await new Client(env.app).get('/api/catalog/local/terpenes/myrcene/cultivars')).status).toBe(401);
   });
+
+  it('Datenqualität, Quellenregister und Audit: nur für Admins, mit Probenabdeckung', async () => {
+    expect((await c.get('/api/admin/catalog/validation')).status).toBe(403);
+    expect((await c.get('/api/admin/catalog/sources')).status).toBe(403);
+    const adm = new Client(env.app);
+    await adm.register('proben_admin');
+    await owner.query("UPDATE users SET role = 'admin' WHERE login_name = 'proben_admin'");
+    await adm.post('/api/auth/logout', {});
+    await adm.post('/api/auth/login', { login: 'proben_admin', password: 'sehr-sicheres-passwort-42' });
+    const v = (await adm.get('/api/admin/catalog/validation')).json;
+    expect(v.findings.length).toBeGreaterThan(5);
+    const sev = ['critical', 'high', 'medium', 'low', 'info'];
+    expect(v.findings.map((f: { severity: string }) => sev.indexOf(f.severity))).toEqual([...v.findings.map((f: { severity: string }) => sev.indexOf(f.severity))].sort((a, b) => a - b));
+    // Testdaten sind nicht die geprüfte Version → hoher Befund
+    expect(v.findings.find((f: { id: string }) => f.id === 'samples-version')).toMatchObject({ severity: 'high', count: 1 });
+    expect(v.findings.find((f: { id: string }) => f.id === 'samples-ambiguous-name').count).toBeGreaterThanOrEqual(1);
+    const src = (await adm.get('/api/admin/catalog/sources')).json.sources as { id: string; permission: string; lastSuccess: string | null; status: string | null }[];
+    expect(src.find((s) => s.id === 'smith2022')).toMatchObject({ permission: 'approved', status: 'active' });
+    expect(src.find((s) => s.id === 'smith2022')!.lastSuccess).toBeTruthy();
+    expect(src.find((s) => s.id === 'cisp')!.lastSuccess).toBeTruthy();
+    expect(src.find((s) => s.id === 'leafly')!.permission).toBe('unsuitable');
+    const a = (await adm.get('/api/admin/catalog/quality?refresh=1')).json;
+    expect(a.samples).toMatchObject({ source: 'smith2022', samples: 7, terpeneSamples: 4 });
+    expect(a.fields.find((f: { field: string }) => f.field === 'sampleTerpenes')).toMatchObject({ nameOnly: true });
+  });
 });
 
 describe('Deploy-Skript', () => {

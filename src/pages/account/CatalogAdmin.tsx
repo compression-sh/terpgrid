@@ -11,7 +11,8 @@ interface FieldStat {
   missing: number;
   conflicting: number | null;
   questionable: number | null;
-  evidence: { breeder: number; seedbank: number; database: number; lab: number };
+  evidence: { breeder: number; seedbank: number; database: number; lab: number; science?: number };
+  nameOnly?: boolean;
 }
 interface Quality {
   generatedAt: string;
@@ -20,6 +21,7 @@ interface Quality {
   listings: number;
   fields: FieldStat[];
   providers: { provider: string; matchedCultivars: number; claims: number; byStatus: Record<string, number> }[];
+  samples?: { source: string; version: string; samples: number; terpeneSamples: number; names: number; linkedNames: number; linkedCultivars: number; ambiguousNames: number; linkedSamples: number };
   dataset: { version: string; imported_at: string; parser: string | null } | null;
   cachedAt: string;
 }
@@ -140,13 +142,17 @@ export function CatalogAdmin() {
                 <th className="py-1.5 pr-3 text-right font-medium">Seedbank</th>
                 <th className="py-1.5 pr-3 text-right font-medium">Datenbank</th>
                 <th className="py-1.5 pr-3 text-right font-medium">Labor</th>
+                <th className="py-1.5 pr-3 text-right font-medium">Wissenschaft</th>
                 <th className="py-1.5 text-right font-medium">Widersprüchlich</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {q.fields.map((f) => (
                 <tr key={f.field}>
-                  <td className="py-1.5 pr-3 text-ink-200">{f.label}</td>
+                  <td className="py-1.5 pr-3 text-ink-200">
+                    {f.label}
+                    {f.nameOnly && <span className="ml-1 text-[10.5px] text-amber-300/90">nur Namensgleichheit</span>}
+                  </td>
                   <td className="py-1.5 pr-3">
                     <span className="flex items-center gap-2">
                       <span className="h-1.5 w-20 rounded-full bg-ink-700" aria-hidden>
@@ -161,6 +167,7 @@ export function CatalogAdmin() {
                   <td className="py-1.5 pr-3 text-right tabular text-ink-300">{f.evidence.seedbank.toLocaleString('de-DE')}</td>
                   <td className="py-1.5 pr-3 text-right tabular text-ink-300">{f.evidence.database.toLocaleString('de-DE')}</td>
                   <td className="py-1.5 pr-3 text-right tabular text-ink-300">{f.evidence.lab.toLocaleString('de-DE')}</td>
+                  <td className="py-1.5 pr-3 text-right tabular text-ink-300">{(f.evidence.science ?? 0).toLocaleString('de-DE')}</td>
                   <td className="py-1.5 text-right tabular text-ink-400">{f.conflicting === null ? '–' : f.conflicting.toLocaleString('de-DE')}</td>
                 </tr>
               ))}
@@ -169,6 +176,14 @@ export function CatalogAdmin() {
           <p className="hint mt-2">
             „Labor“ zählt nur Angaben mit Probe, Labor und Datum. Private Laborberichte der Nutzer fließen nie in den Katalog ein. Stand: {dt(q.generatedAt)}.
           </p>
+          {q.samples && (
+            <p className="hint mt-1">
+              Öffentliche Laborproben ({q.samples.source}, Stand {q.samples.version.slice(0, 7)}): {q.samples.samples.toLocaleString('de-DE')} Proben, davon{' '}
+              {q.samples.terpeneSamples.toLocaleString('de-DE')} mit Terpenen, {q.samples.names.toLocaleString('de-DE')} Produktnamen. Im Katalog gleichnamig:{' '}
+              {q.samples.linkedNames.toLocaleString('de-DE')} Namen → {q.samples.linkedCultivars.toLocaleString('de-DE')} Sorten ({q.samples.linkedSamples.toLocaleString('de-DE')} Proben);{' '}
+              {q.samples.ambiguousNames.toLocaleString('de-DE')} Namen tragen mehrere Breeder. Zuordnung nur über den Namen – keine Identitätsbestätigung.
+            </p>
+          )}
         </div>
       )}
 
