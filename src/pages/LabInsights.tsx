@@ -382,7 +382,7 @@ function ReportDetail({ report, onEdit }: { report: LabReport; onEdit: () => voi
                 <BarChart data={cannabinoids} margin={{ top: 8, right: 8, bottom: 0, left: -10 }}>
                   <CartesianGrid vertical={false} />
                   <XAxis dataKey="label" tickLine={false} axisLine={false} />
-                  <YAxis tickLine={false} axisLine={false} unit={` ${report.unit}`} width={58} />
+                  <YAxis tickLine={false} axisLine={false} unit={` ${report.unit}`} width={76} />
                   <Tooltip cursor={{ fill: 'rgba(255,255,255,0.03)' }} contentStyle={tooltipStyle} formatter={(v: number) => [`${fmt(v)} ${report.unit}`, 'Wert']} />
                   <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={44} isAnimationActive={false}>
                     {cannabinoids.map((c) => (
