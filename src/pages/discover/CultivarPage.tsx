@@ -8,6 +8,7 @@ import { errorText, useToast } from '../../app/Toasts';
 import { NoData, RangeMeter, TypeBadge, rangeText } from '../../components/discover/Badges';
 import { CatalogFactsRow } from '../../components/discover/CatalogFacts';
 import { EvidenceTag } from '../../components/discover/EvidenceTag';
+import { SamplesCard } from '../../components/discover/SamplesCard';
 import { TerpeneCard } from '../../components/discover/TerpeneCard';
 import { ConnectDialog } from '../../components/discover/ConnectDialog';
 import { DatasetNotice } from '../../components/discover/DatasetNotice';
@@ -386,7 +387,8 @@ export function CultivarPage({ id }: { id: string }) {
         </div>
 
         <div className="min-w-0 space-y-5">
-          <TerpeneCard detail={d} labReports={labForMine} />
+          <TerpeneCard detail={d} labReports={labForMine} hasSamples={!!d.samples?.terpeneSamples} />
+          {d.samples && <SamplesCard s={d.samples} cultivarName={[d.cultivar.name, d.cultivar.version].filter(Boolean).join(' ')} ownReports={labForMine} />}
 
           {claimOf('description') && (
             <Card title="Beschreibung" subtitle="Text einer Sortendatenbank – Marketing und Fakten nicht getrennt">

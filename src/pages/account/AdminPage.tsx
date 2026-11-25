@@ -8,6 +8,7 @@ import { Callout } from '../../components/ui/Callout';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Modal } from '../../components/ui/Modal';
 import { PageHeader } from '../../components/ui/PageHeader';
+import { CatalogDataQuality } from './CatalogDataQuality';
 import { CatalogAdmin } from './CatalogAdmin';
 import { formatBytes } from '../../lib/media/images';
 import { ApiError, api } from '../../lib/server/api';
@@ -389,6 +390,7 @@ export function AdminPage() {
       )}
 
       <CatalogAdmin />
+      <CatalogDataQuality />
 
       <Modal open={!!newInvite} onClose={() => setNewInvite(null)} title="Einladungslink" subtitle={`Einmalig nutzbar, ${newInvite?.expiresInDays ?? 7} Tage gültig. Wird nur jetzt angezeigt.`}>
         {newInvite && (

@@ -97,6 +97,13 @@ sudo ./import-catalog.sh             # Import im migrate-Container (Owner-Rolle)
 
 Ohne Import zeigt Discover wie bisher den Live-Katalog (StrainAPI). Details, Lizenz (CC BY 4.0) und Grenzen: [CATALOG.md](CATALOG.md).
 
+Optional zusätzlich öffentliche Laborproben (Smith et al. 2022, CC0, ca. 20 MB):
+
+```bash
+sudo ./import-samples.sh --dry-run
+sudo ./import-samples.sh
+```
+
 ## 5. Konfiguration (`deploy/.env`)
 
 | Variable | Standard | Bedeutung |

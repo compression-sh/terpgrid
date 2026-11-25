@@ -18,7 +18,9 @@ export interface FieldStat {
   /** Beim Import als unplausibel verworfene Werte (mind. ein Angebot betroffen) */
   questionable: number;
   /** Belegart der vorhandenen Werte */
-  evidence: { breeder: number; seedbank: number; database: number; lab: number };
+  evidence: { breeder: number; seedbank: number; database: number; lab: number; science?: number };
+  /** Zuordnung nur über gleichlautenden Namen (keine Identitätsbestätigung) */
+  nameOnly?: boolean;
 }
 
 export interface AuditReport {
@@ -28,6 +30,8 @@ export interface AuditReport {
   listings: number;
   fields: FieldStat[];
   providers: { provider: string; matchedCultivars: number; claims: number; byStatus: Record<string, number> }[];
+  /** Öffentliche Laborproben (je Probe) und ihr Namensabgleich mit dem Katalog */
+  samples?: { source: string; version: string; samples: number; terpeneSamples: number; names: number; linkedNames: number; linkedCultivars: number; ambiguousNames: number; linkedSamples: number };
 }
 
 /**
@@ -112,6 +116,47 @@ export async function catalogAudit(db: Q): Promise<AuditReport> {
       evidence: { breeder: Number(row[`b${i}`]), seedbank: Number(row[`s${i}`]), database: Number(row[`d${i}`]), lab: 0 },
     });
   });
+  let samples: AuditReport['samples'];
+  const hasSamples = (await db.query<{ ok: boolean }>(`SELECT to_regclass('catalog_sample_stats') IS NOT NULL AS ok`)).rows[0]!.ok;
+  if (hasSamples) {
+    const s = (
+      await db.query<Record<string, string | null>>(
+        `WITH k AS (SELECT c.id, c.breeder_id, catalog_name_key(c.name_slug, c.version) AS key, cardinality(c.terpenes) > 0 AS mention FROM catalog_cultivars c WHERE NOT c.auto),
+              m AS (SELECT k.*, s.samples, s.terpene_samples FROM k JOIN catalog_sample_stats s ON s.name_key = k.key)
+         SELECT (SELECT source FROM catalog_sample_imports WHERE status = 'active' ORDER BY id DESC LIMIT 1) AS source,
+                (SELECT version FROM catalog_sample_imports WHERE status = 'active' ORDER BY id DESC LIMIT 1) AS version,
+                (SELECT count(*) FROM catalog_samples) AS samples,
+                (SELECT count(*) FROM catalog_samples WHERE terpenes IS NOT NULL) AS terpene_samples,
+                (SELECT count(*) FROM catalog_sample_stats) AS names,
+                (SELECT count(DISTINCT key) FROM m) AS linked_names,
+                (SELECT count(*) FROM m) AS linked_cultivars,
+                (SELECT count(*) FROM (SELECT key FROM m GROUP BY key HAVING count(DISTINCT breeder_id) > 1) a) AS ambiguous_names,
+                (SELECT coalesce(sum(st.samples), 0) FROM catalog_sample_stats st WHERE st.name_key IN (SELECT key FROM m)) AS linked_samples,
+                (SELECT count(*) FROM m WHERE terpene_samples > 0) AS c_terp,
+                (SELECT count(*) FROM m) AS c_cann,
+                (SELECT count(*) FROM catalog_cultivars c WHERE cardinality(c.terpenes) > 0 OR c.id IN (SELECT id FROM m WHERE terpene_samples > 0)) AS c_any`,
+      )
+    ).rows[0]!;
+    if (s.source) {
+      samples = {
+        source: s.source,
+        version: s.version ?? '',
+        samples: Number(s.samples),
+        terpeneSamples: Number(s.terpene_samples),
+        names: Number(s.names),
+        linkedNames: Number(s.linked_names),
+        linkedCultivars: Number(s.linked_cultivars),
+        ambiguousNames: Number(s.ambiguous_names),
+        linkedSamples: Number(s.linked_samples),
+      };
+      const add = (field: string, label: string, present: number) =>
+        fields.push({ field, label, total, present, missing: total - present, conflicting: 0, questionable: 0, evidence: { breeder: 0, seedbank: 0, database: 0, lab: 0, science: present }, nameOnly: true });
+      add('sampleTerpenes', 'Terpene (Laborproben gleichnamiger Produkte)', Number(s.c_terp));
+      add('sampleCannabinoids', 'Cannabinoide (Laborproben gleichnamiger Produkte)', Number(s.c_cann));
+      const any = Number(s.c_any);
+      fields.push({ field: 'terpenesAny', label: 'Terpene (Nennung oder Laborprobe)', total, present: any, missing: total - any, conflicting: 0, questionable: 0, evidence: { breeder: 0, seedbank: 0, database: 0, lab: 0 } });
+    }
+  }
   const providers: AuditReport['providers'] = [];
   if (hasClaims) {
     const rows = (await db.query<{ provider: string; status: string; n: string }>(`SELECT provider, status, count(*) AS n FROM catalog_matches GROUP BY 1, 2 ORDER BY 1, 2`)).rows;
@@ -128,5 +173,5 @@ export async function catalogAudit(db: Q): Promise<AuditReport> {
       });
     }
   }
-  return { generatedAt: new Date().toISOString(), cultivars: total, breeders: Number(base.breeders), listings: Number(base.listings), fields, providers };
+  return { generatedAt: new Date().toISOString(), cultivars: total, breeders: Number(base.breeders), listings: Number(base.listings), fields, providers, samples };
 }

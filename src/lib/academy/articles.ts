@@ -552,6 +552,13 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
         ],
       },
       {
+        heading: 'Gleicher Name, andere Probe',
+        paragraphs: [
+          'Smith et al. (2022) veröffentlichten Laborwerte von rund 90.000 Blütenproben aus sechs US-Bundesstaaten; Labore und Hersteller sind darin anonymisiert, einen Breeder nennt der Datensatz nicht. Wie stark Proben gleichen Namens streuen, zeigt eine Auswertung dieser Daten für „Blue Dream“: Bei den mittleren 50 % der 1.793 Proben lag der berechnete Gesamt-THC-Gehalt zwischen 16,7 und 20,4 %, Myrcen bei den mittleren 50 % der 552 Proben mit Terpenmessung zwischen 0,42 und 0,93 %.',
+          'Ein Produktname belegt also weder eine bestimmte Genetik noch eine bestimmte Zusammensetzung. TERPGRID zeigt solche Proben deshalb nur als „Laborproben gleichnamiger Produkte“ – mit Anzahl, Streuung und dem Hinweis, dass sie keinem Breeder zugeordnet sind.',
+        ],
+      },
+      {
         heading: 'Was das für TERPGRID bedeutet',
         paragraphs: [
           'Seedbank- und Datenbanktexte nennen Terpene, aber keine Mengen. TERPGRID zeigt sie als Nennungen mit Herkunft. Eigene Laborberichte werden als Messwert der jeweiligen Probe angezeigt – mit Labor, Datum und Einheit – und nie auf andere Chargen übertragen. Fehlt ein Beleg, steht dort: „Kein belegtes Terpenprofil verfügbar.“',
@@ -561,7 +568,7 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
     ],
     related: ['terpene', 'laborberichte-lesen', 'trocknen-curen'],
     review: FULL,
-    sources: [SRC.booth2017, SRC.rodriguez2021, SRC.birenboim2024, SRC.janta2024],
+    sources: [SRC.booth2017, SRC.rodriguez2021, SRC.birenboim2024, SRC.janta2024, SRC.smith2022],
   },
   {
     id: 'laborberichte-lesen',

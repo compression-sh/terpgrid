@@ -15,7 +15,8 @@ import { Segmented } from '../../components/ui/Segmented';
 import { matchTerpene } from '../../lib/catalog/terpenes';
 import { catalog } from '../../lib/catalog/service';
 import { strainLink } from '../../lib/catalog/links';
-import { library, toCatalogStrain } from '../../lib/catalog/library';
+import { type LibSampleSummary, library, toCatalogStrain } from '../../lib/catalog/library';
+import { SAMPLE_TERPENES } from '../../lib/catalog/samples';
 import type { CatalogImage, CatalogStrain, EvidenceState, TypeClass, ValueRange } from '../../lib/catalog/types';
 import type { Strain } from '../../lib/db/types';
 import { CLAIM_SOURCE_LABEL } from '../../lib/grow/labels';
@@ -39,6 +40,8 @@ interface CompareItem {
   evidence: Partial<Record<string, EvidenceState>>;
   source: string;
   link: string;
+  /** Öffentliche Laborproben gleichnamiger Produkte (nur Katalogsorten, keine Breeder-Zuordnung) */
+  samples?: LibSampleSummary;
 }
 
 function fromCatalog(s: CatalogStrain): CompareItem {
@@ -85,6 +88,7 @@ function fromMine(s: Strain): CompareItem {
 function useCompareItems(keys: string[]) {
   const { data } = useData();
   const [online, setOnline] = useState<Record<string, CatalogStrain | { error: string }>>({});
+  const [samples, setSamples] = useState<Record<string, LibSampleSummary | undefined>>({});
   useEffect(() => {
     const c = new AbortController();
     for (const k of keys) {
@@ -92,7 +96,10 @@ function useCompareItems(keys: string[]) {
       if (k.startsWith('cisp:')) {
         library
           .cultivar(k.slice(5), c.signal)
-          .then((r) => setOnline((o) => ({ ...o, [k]: toCatalogStrain(r.cultivar) })))
+          .then((r) => {
+            setSamples((x) => ({ ...x, [k]: r.samples }));
+            setOnline((o) => ({ ...o, [k]: toCatalogStrain(r.cultivar) }));
+          })
           .catch((e) => setOnline((o) => ({ ...o, [k]: { error: catalogErrorText(e) } })));
         continue;
       }
@@ -112,7 +119,7 @@ function useCompareItems(keys: string[]) {
     const o = online[k];
     if (!o) return { key: k, loading: true as const };
     if ('error' in o) return { key: k, error: o.error };
-    return { key: k, item: fromCatalog(o) };
+    return { key: k, item: { ...fromCatalog(o), samples: samples[k] } };
   });
 }
 
@@ -272,6 +279,44 @@ export function CompareStudio() {
           <NoData />
         ),
       value: (i) => i.terpenes.map((t) => matchTerpene(t)?.id ?? t).sort().join(','),
+    },
+    {
+      label: 'Laborproben (gleichnamig)',
+      render: (i) =>
+        i.samples ? (
+          <span className="text-[12px] text-ink-300">
+            <span className="font-mono tabular text-ink-100">{i.samples.samples.toLocaleString('de-DE')}</span> Proben
+            {i.samples.stats.thc_total && (
+              <>
+                {' '}
+                · Gesamt-THC Median <span className="font-mono tabular text-ink-100">{i.samples.stats.thc_total.median.toLocaleString('de-DE', { maximumFractionDigits: 1 })} %</span>
+              </>
+            )}
+            <span className="block text-[10.5px] text-amber-200/80">ohne Breeder-Zuordnung{i.samples.sameNameBreeders > 1 ? ` · Name bei ${i.samples.sameNameBreeders} Breedern` : ''}</span>
+          </span>
+        ) : (
+          <NoData />
+        ),
+      value: (i) => (i.samples ? String(i.samples.stats.thc_total?.median ?? '') : ''),
+    },
+    {
+      label: 'Terpene laut Proben (Median)',
+      render: (i) => {
+        const top = i.samples
+          ? SAMPLE_TERPENES.map((t) => ({ t, st: i.samples!.stats[t.column] }))
+              .filter((x) => x.st && x.st.median > 0)
+              .sort((a, b) => b.st!.median - a.st!.median)
+              .slice(0, 3)
+          : [];
+        return top.length ? (
+          <span className="text-[12px] text-ink-300">
+            {top.map((x) => `${x.t.label}${x.t.isomerSum ? ' (Σ)' : ''} ${x.st!.median.toLocaleString('de-DE', { maximumFractionDigits: 2 })} %`).join(' · ')}
+          </span>
+        ) : (
+          <NoData />
+        );
+      },
+      value: (i) => (i.samples ? SAMPLE_TERPENES.map((t) => i.samples!.stats[t.column]?.median ?? '').join(',') : ''),
     },
     { label: 'Aroma', render: (i) => (i.aroma.length ? <span className="text-ink-300">{i.aroma.join(', ')}</span> : <NoData />), value: (i) => i.aroma.map((a) => a.toLowerCase()).sort().join(',') },
     {

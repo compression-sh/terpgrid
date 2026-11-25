@@ -1,5 +1,32 @@
 # Änderungsprotokoll
 
+## 5.4.0-rc.1 – 25.11.2026 (Release-Kandidat, nicht veröffentlicht)
+
+Phase 5.4 „Data Intelligence“. Migration 007 (nur öffentliche Katalogtabellen); Nutzerdaten unverändert.
+Baut auf PR #10 (5.3.2-rc.1) auf. Bericht: `docs/PHASE5-4-DATA-INTELLIGENCE-REPORT.md`.
+
+### Neu
+- **Öffentliche Laborproben** (Smith et al. 2022, PLoS ONE, CC0): 89.923 Blütenproben mit berechneten
+  Cannabinoid-Gesamtwerten und 14 Terpenen je Probe (`import-samples`, `deploy/import-samples.sh`).
+  - Anzeige nur bei photoperiodischen Sorten mit exakt gleichem Namen inkl. Version.
+  - Gekennzeichnet als „Wissenschaftliche Quelle“ und „Nicht eindeutig zugeordnet“, mit Anzahl gleichnamiger Breeder.
+  - Verteilung (Median, mittlere 50 %, Nachweisquote, n). Es entsteht kein Sortenprofil.
+- **Terpen-Atlas:** Messwerte je Verbindung und Produktnamen mit höchstem Median. Isomer-Summen (Ocimen, Nerolidol)
+  sind gekennzeichnet.
+- **Discover:** Filter „Mit Laborproben“.
+- **Vergleich:** Zeilen „Laborproben (gleichnamig)“ und „Terpene laut Proben“.
+- **Eigene Laborberichte** lassen sich auf der Sortenseite im Browser neben die öffentlichen Proben stellen (privat,
+  keine Übertragung).
+- **Datenqualität:** `catalog-validate` sowie Admin-Bereich mit Prüfregeln nach Schweregrad, Beispielen und
+  empfohlener Aktion (nur lesend).
+- **Quellenregister:** 12 geprüfte Quellen mit Lizenz, Einstufung und Entscheidung, dazu der letzte Import bzw. Lauf.
+- **Audit:** Abdeckung durch Laborproben, mit Kennzeichnung „nur Namensgleichheit“.
+- **Academy:** Abschnitt „Gleicher Name, andere Probe“.
+
+### Verbessert
+- **CISP-Parser v4:** Doppelt kodierte Elternnamen werden repariert statt abgeschnitten (486 Felder).
+  Nach dem Upgrade `./import-catalog.sh` ausführen.
+
 ## 5.3.2-rc.1 – 25.11.2026 (Release-Kandidat, nicht veröffentlicht)
 
 Abschluss-Review der Phase 5.3 (Bericht: `docs/PHASE5-3-REVIEW.md`). Keine Migration, keine neuen Abhängigkeiten.

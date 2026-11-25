@@ -68,6 +68,10 @@ dargestellt. Alle Werte sind Angaben von Seedbanks/Breedern (Shop-Texte).
   Namen werden bewusst nicht geraten. Auf dem Entwicklungsstand: auffällige Elternangaben 388 → 4, Sorten mit Abstammung
   11.120 → 10.718, Anreicherungsangaben unverändert. Nach dem Upgrade `./import-catalog.sh` ausführen, damit die neue
   Parser-Version die Datei neu verarbeitet (nur öffentliche Referenzdaten, keine Nutzerdaten).
+- **Parser v4 (5.4):** Mehrfach falsch dekodierte Texte (z. B. „Nevilâ€™s Wreck“) werden über Windows-1252/Latin-1 →
+  UTF-8 zurückgewandelt, solange das Ergebnis gültiges UTF-8 ist (echte Sonderzeichen wie „São“ bleiben unverändert).
+  Betrifft 486 Elternfelder; danach +4 Sorten mit Abstammung, +15 eindeutig auflösbare Elternverweise. Typografische
+  Apostrophe werden vereinheitlicht, ein kyrillisches „х“ zwischen zwei Namen gilt als Kreuzungszeichen.
 - **Widersprüche:** Überschneiden sich die Spannen zweier Angebote nicht (z. B. THC 20–22 % vs. 25–28 %), wird das Feld als
   widersprüchlich markiert; die Sortenseite zeigt jede Einzelangabe mit Seedbank und Quell-URL.
 
@@ -224,3 +228,41 @@ Quellen derzeit nicht erreichbar. Details: `docs/ACADEMY-2-1-REPORT.md`.
   Mehrdeutige Kandidaten lassen sich einzeln als neues Zentrum öffnen; abweichende Elternangaben anderer Seedbanks
   erscheinen als gestrichelte Kanten.
 - Im Lokalmodus (ohne Server) steht der Katalog nicht zur Verfügung; Discover nutzt dort wie bisher StrainAPI.
+
+
+## Öffentliche Laborproben (5.4)
+
+Quelle: Smith CJ, Vergara D, Keegan B, Jikomes N (2022). *The phytochemical diversity of commercial Cannabis in the
+United States.* PLoS ONE 17(5): e0267498. Datensatz `data/preproc_lab_data_pub_20220218.csv` im Repository der
+Autorinnen und Autoren (Commit `e71c838`, SHA-256 `1850b918…`), Lizenz **CC0 1.0**.
+
+- **Inhalt:** 89.923 Blütenproben aus sechs US-Bundesstaaten (WA, OR, CA, MI, AK, FL), Labore und Hersteller anonymisiert.
+  Je Probe berechnete Gesamtwerte von THC, CBD, CBG, CBC, CBN und THCV (neutrale Form + 0,877 bzw. 0,8668 × Säureform,
+  fehlende Säureformen von den Autoren als 0 angenommen) sowie 14 Terpene. Ocimen und Nerolidol liegen nur als Summe
+  ihrer Isomere vor. Einheit: Gewichtsprozent. Leere Werte = nicht gemessen, „0“ = nicht nachgewiesen bzw. unter der
+  Bestimmungsgrenze. Die Autoren haben auffällige Terpendaten bereits entfernt.
+- **Speicherung:** `catalog_samples` (je Probe, Originalspalten als Schlüssel), `catalog_sample_stats` (Verteilung je
+  Produktname: n, nachgewiesen, Minimum, 25 %, Median, 75 %, Maximum – nur aus vorhandenen Messwerten),
+  `catalog_sample_imports` (Version, Prüfsumme, Zählwerte). Die Laufzeitrolle darf nur lesen.
+- **Zuordnung:** Die Proben tragen nur einen normalisierten Produktnamen, keinen Breeder. Sie erscheinen deshalb nur bei
+  photoperiodischen Katalogsorten mit exakt gleichem Namen einschließlich Version (`catalog_name_key`), gekennzeichnet als
+  „Wissenschaftliche Quelle“ und „Nicht eindeutig zugeordnet“, mit der Zahl der Breeder, die eine Sorte dieses Namens
+  führen. Autoflower-Sorten sind ausgenommen. Es entsteht **kein** Sortenprofil, und die Katalogsorte selbst wird
+  nicht verändert.
+- **Abdeckung (Entwicklungsstand):** 73.414 Proben mit Produktnamen (3.087 Namen); davon 1.463 Namen gleichlautend im
+  Katalog → 2.904 Sorten (Cannabinoide), 2.686 Sorten mit Terpenproben; 577 Namen tragen mehrere Breeder.
+
+```bash
+sudo ./import-samples.sh --dry-run   # Download (raw.githubusercontent.com), Prüfsumme, Zählwerte
+sudo ./import-samples.sh             # Import im migrate-Container, ca. 5 s; idempotent, ersetzt die Quelle vollständig
+```
+
+Ohne Import bleiben Sortenseiten unverändert; die Probenkarte erscheint nur, wenn Proben vorhanden sind.
+
+## Datenqualität und Quellenregister (5.4)
+
+- `catalog-validate` (CLI) bzw. **Administration → Datenqualität des Katalogs**: reproduzierbare Regeln mit Schweregrad
+  (z. B. Selbst-/Doppel-Eltern, gegenseitige Elternangaben, THC über 35 %, ungeprüfte Abgleiche, Probenversion). Nur
+  lesend – Entscheidungen trifft ein Mensch.
+- **Quellenregister** (`server/src/catalog/sources.ts`, Administration → Quellenregister): jede geprüfte Quelle mit Lizenz,
+  Einstufung (freigegeben, eingeschränkt, nur Referenz, Lizenz unklar, nicht zugänglich, ungeeignet) und Begründung.
