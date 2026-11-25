@@ -10,7 +10,7 @@ import type { GlossaryTerm } from '../lib/academy/glossary';
 import type { KbArticle } from '../lib/knowledge';
 import { type LibBreeder, type LibCultivar, library } from '../lib/catalog/library';
 import { useLibraryStatus } from './library';
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { searchRecords, type SearchHit, normalize } from '../lib/search';
 import { useAuth } from './auth';
 import { useConfirm } from './Confirm';
@@ -93,11 +93,12 @@ export function CommandPalette() {
       window.removeEventListener('terpgrid:palette', onOpen);
     };
   }, []);
-  useEffect(() => {
+  // Fokus sofort beim Öffnen (Layout-Phase), damit direkt getippte Zeichen nicht verloren gehen.
+  useLayoutEffect(() => {
     if (open) {
       setQ('');
       setActive(0);
-      setTimeout(() => inputRef.current?.focus(), 0);
+      inputRef.current?.focus();
     }
   }, [open]);
 
@@ -173,6 +174,7 @@ export function CommandPalette() {
           <Search className="size-4 shrink-0 text-ink-500" />
           <input
             ref={inputRef}
+            autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => {
