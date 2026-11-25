@@ -129,7 +129,7 @@ export function CatalogAdmin() {
       </div>
 
       {q && (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Feldabdeckung (horizontal scrollbar)">
           <table className="w-full min-w-[640px] text-left text-[12.5px]">
             <caption className="sr-only">Feldabdeckung des Sortenkatalogs nach Belegart</caption>
             <thead className="text-[11px] text-ink-500">

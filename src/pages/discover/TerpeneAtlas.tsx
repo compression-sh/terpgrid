@@ -199,8 +199,8 @@ function MeasuredSamples({ m, label }: { m: LibMeasuredTerpene; label: string })
           <ul className="space-y-1">
             {m.topNames.map((n) => (
               <li key={n.nameKey} className="grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)_auto] items-center gap-2 text-[12px]">
-                <a href={href(`discover?q=${encodeURIComponent(n.nameKey.replace(/-/g, ' '))}&samples=1`)} className="truncate text-ink-200 hover:underline">
-                  {n.nameKey.replace(/-/g, ' ')}
+                <a href={href(`discover?q=${encodeURIComponent(n.nameKey.replace(/-/g, ' '))}&samples=1`)} className="inline-flex min-h-6 min-w-0 items-center hover:underline"><span className="truncate text-ink-200">
+                  {n.nameKey.replace(/-/g, ' ')}</span>
                 </a>
                 <span className="h-1.5 rounded-full bg-ink-700" aria-hidden>
                   <span className="block h-full rounded-full bg-teal-400/70" style={{ width: `${(n.median / max) * 100}%` }} />

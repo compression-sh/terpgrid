@@ -108,12 +108,12 @@ export function CatalogDataQuality() {
                         </p>
                         {f.count > 0 && f.examples.length > 0 && (
                           <details className="mt-1 text-[11.5px] text-ink-400">
-                            <summary className="cursor-pointer hover:text-ink-200">Beispiele und Aktion</summary>
+                            <summary className="inline-flex min-h-6 cursor-pointer items-center hover:text-ink-200">Beispiele und Aktion</summary>
                             <ul className="mt-1 flex flex-wrap gap-1">
                               {f.examples.map((e, i) => (
                                 <li key={i}>
                                   {e.id ? (
-                                    <a href={`#/discover/cultivar/${encodeURIComponent(e.id)}`} className="rounded border border-white/[0.07] px-1.5 py-0.5 hover:border-white/20">
+                                    <a href={`#/discover/cultivar/${encodeURIComponent(e.id)}`} className="inline-flex min-h-6 items-center rounded border border-white/[0.07] px-1.5 py-0.5 hover:border-white/20">
                                       {e.label}
                                     </a>
                                   ) : (
@@ -143,7 +143,7 @@ export function CatalogDataQuality() {
           <p className="hint mt-0.5">Geprüfte Quellen mit Lizenz und Entscheidung. Öffentliche Sichtbarkeit allein erlaubt keine Übernahme.</p>
         </div>
         {sources && (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Quellenregister (horizontal scrollbar)">
             <table className="w-full min-w-[760px] text-left text-[12px]">
               <caption className="sr-only">Quellen des Sortenkatalogs mit Lizenz, Einstufung und letztem Import</caption>
               <thead className="text-[11px] text-ink-500">

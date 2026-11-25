@@ -40,7 +40,7 @@ export function SamplesCard({ s, cultivarName, ownReports }: { s: LibSampleSumma
         {cannabinoids.length > 0 && (
           <section aria-label="Cannabinoide der Proben">
             <h3 className="mb-1.5 text-[12px] font-semibold text-ink-200">Cannabinoide (berechnete Gesamtwerte)</h3>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Cannabinoid-Tabelle (horizontal scrollbar)">
               <table className="w-full min-w-[22rem] text-left text-[12px]">
                 <thead className="text-[11px] text-ink-500">
                   <tr>
