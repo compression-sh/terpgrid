@@ -16,6 +16,7 @@ import { migrate, schemaStatus } from './migrate.js';
 import { readFileSync } from 'node:fs';
 import { CISP, cispUrl, parseDataset } from './catalog/cisp.js';
 import { importDataset } from './catalog/importer.js';
+import { SMITH2022, importSamples, parseSmith2022, sampleUrl } from './catalog/samples.js';
 import { catalogAudit } from './catalog/audit.js';
 import { MAX_BATCH, PROVIDERS, type Provider, enrichBatch, enrichFromStrainApiIndex, purgeExpiredClaims, refreshStrainApi } from './catalog/enrich.js';
 import pg from 'pg';
@@ -40,6 +41,7 @@ function help(): never {
                               Ausgemusterte Schlüssel löschen (Standard 200 Tage; nur ohne Verwendung)
   cleanup                     Abgelaufene Sessions löschen, Datei-Papierkorb leeren
   import-catalog [--file PFAD | --commit SHA] [--dry-run] [--force] [--report DATEI]
+  import-samples [--file PFAD] [--dry-run] [--force]  Öffentliche Laborproben (Smith et al. 2022, CC0) – je Probe, ohne Breeder
                               CI-Strains-Pro (CC BY 4.0) in den lokalen Katalog importieren.
                               Ohne --file: geprüfte Version von GitHub laden (Prüfsumme wird verglichen).
                               --dry-run: nur prüfen und Qualitätsbericht ausgeben, nichts schreiben.
@@ -171,6 +173,42 @@ async function main() {
         const res = await importDataset(client as unknown as pg.PoolClient, data, { force: args.includes('--force'), log: (m) => console.log(`  ${m}`) });
         if (res.status === 'unchanged') console.log('Diese Version ist bereits aktiv – nichts zu tun (mit --force erneut importieren).');
         else console.log(`✓ Import ${res.importId} aktiv (${((Date.now() - t0) / 1000).toFixed(1)} s) · entfernt: ${res.removed?.cultivars ?? 0} Sorten, ${res.removed?.listings ?? 0} Angebote, ${res.removed?.breeders ?? 0} Breeder`);
+      } finally {
+        await client.end();
+      }
+      return;
+    }
+    case 'import-samples': {
+      const c = loadConfig();
+      const opt = (k: string) => (args.includes(k) ? args[args.indexOf(k) + 1] : undefined);
+      const file = opt('--file');
+      let buf: Buffer;
+      if (file) buf = readFileSync(file);
+      else {
+        console.log(`Lade ${sampleUrl(SMITH2022)} …`);
+        const res = await fetch(sampleUrl(SMITH2022), { redirect: 'error', signal: AbortSignal.timeout(180_000) });
+        if (!res.ok) throw new Error(`Download fehlgeschlagen (HTTP ${res.status})`);
+        const len = Number(res.headers.get('content-length') ?? 0);
+        if (len > 50_000_000) throw new Error('Datei unerwartet groß – Abbruch');
+        buf = Buffer.from(await res.arrayBuffer());
+      }
+      const data = parseSmith2022(buf);
+      if (!data.checksumMatches && !args.includes('--force')) throw new Error(`Prüfsumme weicht von der geprüften Version ab (${data.sha256}). Abbruch – mit --force trotzdem importieren.`);
+      console.log(`Quelle: ${SMITH2022.name} · Lizenz ${SMITH2022.license} · Commit ${SMITH2022.commit.slice(0, 12)} · SHA-256 ${data.sha256.slice(0, 16)}…${data.checksumMatches ? ' (geprüft)' : ' (NICHT geprüfte Version)'}`);
+      const withName = data.samples.filter((s) => s.nameKey).length;
+      const withTerp = data.samples.filter((s) => s.terpenes).length;
+      console.log(`Zeilen: ${data.rows} · übernommen: ${data.samples.length} (mit Produktname ${withName}, mit Terpenwerten ${withTerp}) · abgelehnt: ${data.rows - data.samples.length} ${JSON.stringify(data.rejected)}`);
+      if (args.includes('--dry-run')) {
+        console.log('Probelauf – es wurde nichts geschrieben.');
+        return;
+      }
+      const client = new pg.Client({ connectionString: c.migrateDatabaseUrl });
+      await client.connect();
+      try {
+        const t0 = Date.now();
+        const r = await importSamples(client as unknown as pg.PoolClient, data, { force: args.includes('--force'), log: (m) => console.log(`  ${m}`) });
+        if (r.status === 'unchanged') console.log('Diese Version ist bereits aktiv – nichts zu tun (mit --force erneut importieren).');
+        else console.log(`✓ Probenimport ${r.importId} aktiv (${((Date.now() - t0) / 1000).toFixed(1)} s) · ${r.samples} Proben · ${r.names} Produktnamen`);
       } finally {
         await client.end();
       }

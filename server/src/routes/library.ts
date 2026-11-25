@@ -4,6 +4,7 @@
  * Suchanfragen verlassen den eigenen Server nicht.
  */
 import type { FastifyInstance } from 'fastify';
+import { SMITH2022, SMITH_ATLAS } from '../catalog/samples.js';
 import { attribution, activeImport } from '../catalog/importer.js';
 import { slugify } from '../catalog/cisp.js';
 import { PROVIDERS, normalizeTerpene } from '../catalog/enrich.js';
@@ -140,6 +141,9 @@ export function libraryRoutes(ctx: AppContext) {
       if (qs.seed === 'feminisiert' || qs.seed === 'regulär') where.push(`${p(qs.seed)} = ANY(c.seed_types)`);
       if (qs.lineage === '1') where.push('c.has_lineage');
       if (qs.thc === '1') where.push('c.thc_max IS NOT NULL');
+      // Öffentliche Laborproben gleichnamiger Produkte (nur photoperiodisch, Name inkl. Version exakt)
+      if (qs.samples === '1')
+        where.push(`NOT c.auto AND EXISTS (SELECT 1 FROM catalog_sample_stats s WHERE s.source = ${p(SMITH2022.id)} AND s.name_key = catalog_name_key(c.name_slug, c.version) AND s.terpene_samples > 0)`);
       const thcMin = Number(qs.thcMin);
       if (qs.thcMin && Number.isFinite(thcMin)) where.push(`c.thc_max >= ${p(thcMin)}`);
       const cbdMin = Number(qs.cbdMin);
@@ -217,6 +221,7 @@ export function libraryRoutes(ctx: AppContext) {
         [c.breeder_id, c.id],
       );
       const imp = await activeImport(ctx.db);
+      const samples = await sampleSummary(ctx.db, c.id);
       // Angaben weiterer Quellen – nur freigegebene, nicht abgelaufene (Cache gemäß Nutzungsbedingungen)
       const claims = (
         await ctx.db.query(
@@ -254,6 +259,7 @@ export function libraryRoutes(ctx: AppContext) {
         siblings: siblings.rows.map((r) => cultivarOut(r)),
         breederMore: breederMore.rows.map((r) => cultivarOut(r)),
         dataset: imp ? { version: imp.version, importedAt: imp.imported_at } : undefined,
+        samples,
         attribution,
       };
     });
@@ -405,7 +411,14 @@ export function libraryRoutes(ctx: AppContext) {
           WHERE ${where} ORDER BY c.listing_count DESC, c.name_lower, c.id LIMIT 24 OFFSET $3`,
         [names, req.params.id, (page - 1) * 24],
       );
-      return { id: req.params.id, total, page, totalPages: Math.ceil(total / 24), items: rows.map((r) => ({ ...cultivarOut(r), terpeneSource: r.from_cisp ? 'seedbank' : 'database' })) };
+      return {
+        id: req.params.id,
+        total,
+        page,
+        totalPages: Math.ceil(total / 24),
+        items: rows.map((r) => ({ ...cultivarOut(r), terpeneSource: r.from_cisp ? 'seedbank' : 'database' })),
+        measured: page === 1 ? await measuredTerpene(ctx.db, req.params.id) : undefined,
+      };
     });
 
     app.get<{ Params: { slug: string } }>('/api/catalog/local/by-name/:slug', async (req) => {
@@ -492,4 +505,68 @@ export function libraryRoutes(ctx: AppContext) {
       };
     });
   });
+}
+
+/**
+ * Öffentliche Laborproben GLEICHNAMIGER Handelsprodukte (Smith et al. 2022, CC0).
+ * Nur für photoperiodische Sorten (Autoflower sind eigene Identitäten) und nur bei exakt gleichem
+ * Namen inkl. Version. Die Proben haben keinen Breeder – es ist eine Namens-, keine Identitätszuordnung.
+ */
+async function sampleSummary(db: AppContext['db'], cultivarId: string) {
+  const r = await db.query<{ name_key: string; samples: number; terpene_samples: number; regions: Record<string, number>; stats: Record<string, unknown>; breeders: string; version: string }>(
+    `SELECT s.name_key, s.samples, s.terpene_samples, s.regions, s.stats, i.version,
+            (SELECT count(DISTINCT o.breeder_id) FROM catalog_cultivars o WHERE NOT o.auto AND catalog_name_key(o.name_slug, o.version) = s.name_key) AS breeders
+       FROM catalog_cultivars c
+       JOIN catalog_sample_stats s ON s.source = $2 AND s.name_key = catalog_name_key(c.name_slug, c.version)
+       JOIN catalog_sample_imports i ON i.source = s.source AND i.status = 'active'
+      WHERE c.id = $1 AND NOT c.auto`,
+    [cultivarId, SMITH2022.id],
+  );
+  const x = r.rows[0];
+  if (!x) return undefined;
+  return {
+    source: { id: SMITH2022.id, name: SMITH2022.name, citation: SMITH2022.citation, doi: SMITH2022.doi, repository: SMITH2022.repository, license: SMITH2022.license, licenseUrl: SMITH2022.licenseUrl, version: x.version },
+    nameKey: x.name_key,
+    unit: SMITH2022.unit,
+    samples: x.samples,
+    terpeneSamples: x.terpene_samples,
+    regions: x.regions,
+    stats: x.stats,
+    sameNameBreeders: Number(x.breeders),
+  };
+}
+
+/** Messwerte einer Atlas-Verbindung in öffentlichen Laborproben (je Probe gemessen; keine Sortenprofile). */
+async function measuredTerpene(db: AppContext['db'], atlasId: string) {
+  const m = SMITH_ATLAS[atlasId];
+  if (!m) return undefined;
+  const col = m.column;
+  const agg = await db.query<{ measured: string; detected: string; median: string | null }>(
+    `SELECT count(*) FILTER (WHERE terpenes ? $2) AS measured,
+            count(*) FILTER (WHERE (terpenes->>$2)::numeric > 0) AS detected,
+            percentile_cont(0.5) WITHIN GROUP (ORDER BY (terpenes->>$2)::numeric) FILTER (WHERE terpenes ? $2) AS median
+       FROM catalog_samples WHERE source = $1 AND terpenes IS NOT NULL`,
+    [SMITH2022.id, col],
+  );
+  const a = agg.rows[0];
+  if (!a || Number(a.measured) === 0) return undefined;
+  // Produktnamen mit den höchsten Medianwerten – nur mit mindestens 20 gemessenen Proben
+  const top = await db.query<{ name_key: string; n: number; median: string; catalog: string }>(
+    `SELECT s.name_key, (s.stats->$2->>'n')::int AS n, s.stats->$2->>'median' AS median,
+            (SELECT count(*) FROM catalog_cultivars c WHERE NOT c.auto AND catalog_name_key(c.name_slug, c.version) = s.name_key) AS catalog
+       FROM catalog_sample_stats s
+      WHERE s.source = $1 AND (s.stats->$2->>'n')::int >= 20
+      ORDER BY (s.stats->$2->>'median')::numeric DESC, s.name_key LIMIT 10`,
+    [SMITH2022.id, col],
+  );
+  return {
+    source: { id: SMITH2022.id, citation: SMITH2022.citation, doi: SMITH2022.doi, license: SMITH2022.license },
+    column: col,
+    isomerSum: m.isomerSum,
+    unit: SMITH2022.unit,
+    samples: Number(a.measured),
+    detected: Number(a.detected),
+    median: a.median === null ? null : Math.round(Number(a.median) * 10000) / 10000,
+    topNames: top.rows.map((r) => ({ nameKey: r.name_key, samples: r.n, median: Number(r.median), catalogCultivars: Number(r.catalog) })),
+  };
 }
