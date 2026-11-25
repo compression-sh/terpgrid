@@ -184,12 +184,12 @@ export function CultivarPage({ id }: { id: string }) {
     <div>
       <DiscoverNav />
       <nav aria-label="Brotkrumen" className="mb-4 flex min-w-0 items-center gap-1.5 text-[12px] text-ink-400">
-        <a href={href('discover')} className="inline-flex items-center gap-1 hover:text-ink-100">
+        <a href={href('discover')} className="inline-flex min-h-6 items-center gap-1 hover:text-ink-100">
           <ArrowLeft className="size-3.5" /> Katalog
         </a>
         <span className="text-ink-600">/</span>
-        <a href={href(`discover/breeders/${c.breeder.id}`)} className="truncate hover:text-ink-100">
-          {c.breeder.name}
+        <a href={href(`discover/breeders/${c.breeder.id}`)} className="inline-flex min-h-6 min-w-0 items-center hover:text-ink-100">
+          <span className="truncate">{c.breeder.name}</span>
         </a>
       </nav>
 

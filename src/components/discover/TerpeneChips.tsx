@@ -25,7 +25,7 @@ export function TerpeneChips({ names, max = 4, size = 'sm', link = true }: { nam
             href={href(`discover/terpenes/${target}`)}
             title={g ? `${g.name}: ${g.note}` : undefined}
             onClick={(e) => e.stopPropagation()}
-            className={`inline-flex items-center gap-1 rounded-full border bg-white/[0.03] text-ink-200 hover:border-white/20 ${g ? 'border-dashed border-white/[0.14]' : 'border-white/[0.07]'} ${cls}`}
+            className={`inline-flex min-h-6 items-center gap-1 rounded-full border bg-white/[0.03] text-ink-200 hover:border-white/20 ${g ? 'border-dashed border-white/[0.14]' : 'border-white/[0.07]'} ${cls}`}
           >
             {body}
           </a>
