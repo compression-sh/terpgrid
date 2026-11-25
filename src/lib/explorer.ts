@@ -166,3 +166,14 @@ export function labCsv(cmp: ReturnType<typeof labComparison>): string {
     cmp.rows.map((r) => [r.title, r.strain ?? '', r.labName ?? '', r.testDate ?? '', r.unit, r.thc, r.thca, r.cbd, ...terps.map((t) => r.terpenes[t.id]), r.terpeneTotal]),
   );
 }
+
+/** Grow-Vergleich: Kennzahlen als Tabelle (eine Spalte je Grow, Werte wie angezeigt). */
+export function compareSummaryCsv(names: string[], rows: { label: string; values: string[] }[]): string {
+  return toTableCsv(['Kennzahl', ...names], rows.map((r) => [r.label, ...r.values]));
+}
+
+/** Grow-Vergleich: gemessene Punkte im Langformat – nur Messungen, keine interpolierten Werte. */
+export function compareSeriesCsv(valueHeader: string, context: string, series: { name: string; pts: { day: number; date: string; value: number }[] }[]): string {
+  const rows = series.flatMap((s) => s.pts.map((p) => [s.name, p.day, p.date.replace('T', ' ').slice(0, 16), p.value, context]));
+  return toTableCsv(['Grow', 'Grow-Tag', 'Datum', valueHeader, 'Messkontext'], rows);
+}

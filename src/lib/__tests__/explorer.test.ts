@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Activity, Expense, GrowProject, JournalEntry, LabReport, Photo, Plant, Strain } from '../db/types';
-import { expenseCsv, labComparison, labCsv, measurementCsv, rangeStart, scopeData } from '../explorer';
+import { compareSeriesCsv, compareSummaryCsv, expenseCsv, labComparison, labCsv, measurementCsv, rangeStart, scopeData } from '../explorer';
 
 const b = { createdAt: '', updatedAt: '' };
 const grows = [{ ...b, id: 'g1', name: 'A' }, { ...b, id: 'g2', name: 'B' }] as GrowProject[];
@@ -78,5 +78,19 @@ describe('Journal: Monatsgruppen', () => {
       ['2026-11', 'November 2026', 2],
       ['2026-10', 'Oktober 2026', 1],
     ]);
+  });
+});
+
+describe('Grow-Vergleich: CSV', () => {
+  it('Kennzahlen: eine Spalte je Grow, Werte wie angezeigt', () => {
+    const csv = compareSummaryCsv(['Herbst', 'Sommer; Balkon'], [{ label: 'Pflanzen', values: ['2', '1'] }]);
+    expect(csv.split('\r\n')).toEqual(['﻿Kennzahl;Herbst;"Sommer; Balkon"', 'Pflanzen;2;1']);
+  });
+  it('Verlauf: nur gemessene Punkte im Langformat mit Dezimalkomma', () => {
+    const csv = compareSeriesCsv('pH', 'Nährlösung', [
+      { name: 'A', pts: [{ day: 3, date: '2026-09-04T10:00', value: 6.1 }] },
+      { name: 'B', pts: [] },
+    ]);
+    expect(csv.split('\r\n')).toEqual(['﻿Grow;Grow-Tag;Datum;pH;Messkontext', 'A;3;2026-09-04 10:00;6,1;Nährlösung']);
   });
 });
