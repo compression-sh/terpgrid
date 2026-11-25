@@ -5,11 +5,11 @@ import { MaintenanceModal } from '../components/forms/MaintenanceModal';
 import { spaceEnergy, spacePlants, warrantyState } from '../lib/grow/equipment';
 import { SPACE_KIND_LABEL } from '../lib/grow/labels';
 import { today } from '../lib/dates';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useConfirm } from '../app/Confirm';
 import { useData, useLookup } from '../app/DataProvider';
 import { errorText, useToast } from '../app/Toasts';
-import { href } from '../app/router';
+import { href, useRoute } from '../app/router';
 import { SelectField } from '../components/forms/Fields';
 import { InventoryFormModal } from '../components/forms/PersonalForms';
 import { ExpenseList, money } from '../components/grow/ExpenseList';
@@ -189,6 +189,19 @@ export function CollectionPage() {
   const [showArchived, setShowArchived] = useState(false);
   const [tag, setTag] = useState('');
   const allTags = useMemo(() => [...new Set(data.inventory.flatMap((i) => i.tags ?? []))].sort((a, b) => a.localeCompare(b, 'de')), [data.inventory]);
+  // Deeplink auf einen archivierten oder gefilterten Eintrag: Ansicht so öffnen, dass er sichtbar ist
+  const target = useRoute().query.get('item');
+  const handled = useRef<string | null>(null);
+  useEffect(() => {
+    const it = target ? data.inventory.find((i) => i.id === target) : undefined;
+    if (!it || handled.current === target) return;
+    handled.current = target;
+    setTab('inventory');
+    setCategory('');
+    setTag('');
+    setQ('');
+    if (it.archived) setShowArchived(true);
+  }, [target, data.inventory]);
 
   const items = useMemo(() => {
     const needle = q.trim().toLowerCase();
