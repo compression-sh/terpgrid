@@ -165,6 +165,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => setOnUnauthorized(null);
   }, [refresh]);
 
+  // Offline-Zustand (Server nicht erreichbar): bei Netzrückkehr und regelmäßig erneut prüfen.
+  // Ist die Sitzung noch gültig, wird online weitergearbeitet und die Outbox synchronisiert;
+  // andernfalls geht es zur Anmeldung – lokale Änderungen bleiben erhalten.
+  const isOffline = (state.kind === 'authenticated' || state.kind === 'anonymous') && !!state.offline;
+  useEffect(() => {
+    if (!isOffline) return;
+    let busy = false;
+    const retry = () => {
+      if (busy || (typeof navigator !== 'undefined' && navigator.onLine === false)) return;
+      busy = true;
+      // Erst prüfen, ob der Server antwortet – sonst würde refresh() den Offline-Modus beenden.
+      void api<AuthConfig>('GET', '/api/auth/config')
+        .then((c) => (typeof c?.inviteOnly === 'boolean' ? refresh() : undefined))
+        .catch(() => undefined)
+        .finally(() => (busy = false));
+    };
+    window.addEventListener('online', retry);
+    const t = window.setInterval(retry, 30_000);
+    return () => {
+      window.removeEventListener('online', retry);
+      window.clearInterval(t);
+    };
+  }, [isOffline, refresh]);
+
   const login = useCallback(
     async (login: string, password: string): Promise<LoginResult> => {
       const r = await api<{ status: 'ok' | 'mfa'; mfaToken?: string; user?: ServerUser }>('POST', '/api/auth/login', { login, password });

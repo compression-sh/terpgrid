@@ -9,8 +9,16 @@ const CACHE = `terpgrid-shell-${VERSION}`;
 const scope = new URL(self.registration.scope);
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'favicon.svg', 'icon-192.png'].map((p) => new URL(p, scope).href);
 
+// Beim Build eingesetzt: gehashte JS-/CSS-/Schrift-Dateien (öffentlich, keine Nutzerdaten)
+const PRECACHE = [/*__TERPGRID_PRECACHE__*/].map((p) => new URL(p, scope).href);
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  event.waitUntil(
+    caches
+      .open(CACHE)
+      .then((c) => c.addAll(SHELL).then(() => Promise.all(PRECACHE.map((u) => c.add(u).catch(() => {})))))
+      .then(() => self.skipWaiting()),
+  );
 });
 
 self.addEventListener('activate', (event) => {
@@ -39,13 +47,14 @@ self.addEventListener('fetch', (event) => {
           if (res.ok) caches.open(CACHE).then((c) => c.put(new URL('index.html', scope).href, res.clone()));
           return res;
         })
-        .catch(() => caches.match(new URL('index.html', scope).href)),
+        .catch(() => caches.match(new URL('index.html', scope).href, { ignoreVary: true })),
     );
     return;
   }
-  // Statische Dateien (Dateinamen mit Hash): Cache zuerst
+  // Statische Dateien (Dateinamen mit Hash): Cache zuerst. ignoreVary: öffentliche, unveränderliche
+  // Dateien – ein „Vary: Origin“ des Servers darf den Treffer nicht verhindern (Modul-Skripte senden Origin).
   event.respondWith(
-    caches.match(req).then(
+    caches.match(req, { ignoreVary: true }).then(
       (hit) =>
         hit ||
         fetch(req).then((res) => {
