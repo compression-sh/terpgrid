@@ -64,7 +64,13 @@ export function CalendarPage() {
   const [view, setView] = useState<'month' | 'week' | 'list'>(() => (['week', 'list'].includes(route.query.get('view') ?? '') ? (route.query.get('view') as 'week' | 'list') : 'month'));
   const [cursor, setCursor] = useState(t);
   const [selected, setSelected] = useState(t);
-  const [growId, setGrowId] = useState(route.query.get('grow') ?? '');
+  const [growId, setGrowIdRaw] = useState(route.query.get('grow') ?? '');
+  const [plantId, setPlantId] = useState('');
+  const setGrowId = (g: string) => {
+    setGrowIdRaw(g);
+    setPlantId('');
+  };
+  const growPlants = growId ? data.plants.filter((p) => p.growId === growId).sort((a, b) => a.name.localeCompare(b.name, 'de')) : [];
   const [kinds, setKinds] = useState<Set<Kind>>(new Set(['reminder', 'activity', 'photo', 'milestone']));
   const [form, setForm] = useState<{ reminder?: Reminder; date?: string } | null>(null);
 
@@ -107,6 +113,7 @@ export function CalendarPage() {
       for (const a of data.activities) {
         const d = a.date.slice(0, 10);
         if (!inRange(d) || !growOk(a.growId) || a.type === 'photo') continue;
+        if (plantId && a.plantId !== plantId) continue;
         const g = lookup.grow.get(a.growId);
         const p = a.plantId ? lookup.plant.get(a.plantId) : undefined;
         out.push({ key: `a-${a.id}`, kind: 'activity', date: d, time: a.date.slice(11, 16), title: a.title || ACTIVITY_LABEL[a.type], sub: [g?.name, p?.name].filter(Boolean).join(' · '), to: `grows/${a.growId}${p ? `/plants/${p.id}` : '?tab=log'}`, color: a.type === 'issue' ? '#fbbf24' : KIND_META.activity.color });
@@ -116,7 +123,7 @@ export function CalendarPage() {
       const byDay = new Map<string, number>();
       for (const p of data.photos) {
         const d = p.takenAt.slice(0, 10);
-        if (inRange(d) && growOk(p.growId)) byDay.set(d, (byDay.get(d) ?? 0) + 1);
+        if (inRange(d) && growOk(p.growId) && (!plantId || p.plantId === plantId)) byDay.set(d, (byDay.get(d) ?? 0) + 1);
       }
       for (const [d, n] of byDay) out.push({ key: `p-${d}`, kind: 'photo', date: d, title: n === 1 ? '1 Foto' : `${n} Fotos`, to: `photos?from=${d}&to=${d}${growId ? `&grow=${growId}` : ''}`, color: KIND_META.photo.color });
     }
@@ -135,7 +142,7 @@ export function CalendarPage() {
       }
     }
     return out.sort((a, b) => (a.date + (a.time ?? '')).localeCompare(b.date + (b.time ?? '')));
-  }, [data, range, kinds, growId, lookup]);
+  }, [data, range, kinds, growId, plantId, lookup]);
 
   const markers = new Map<string, DayMarker[]>();
   for (const e of events) markers.set(e.date, [...(markers.get(e.date) ?? []), { color: e.color, label: e.title }]);
@@ -257,8 +264,9 @@ export function CalendarPage() {
             </button>
           ))}
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:w-[28rem]">
+        <div className={`grid gap-3 sm:grid-cols-2 ${growPlants.length ? 'lg:w-[40rem] lg:grid-cols-3' : 'lg:w-[28rem]'}`}>
           <SelectField label="Grow" value={growId} onChange={setGrowId} placeholder="Alle Grows" options={data.grows.map((g) => ({ value: g.id, label: g.name }))} />
+          {growPlants.length > 0 && <SelectField label="Pflanze" value={plantId} onChange={setPlantId} placeholder="Alle Pflanzen" options={growPlants.map((p) => ({ value: p.id, label: p.name }))} />}
           <div className="space-y-1.5">
             <span className="label">Ansicht</span>
             <Segmented size="sm" value={view} onChange={setView} options={[{ value: 'month', label: 'Monat' }, { value: 'week', label: 'Woche' }, { value: 'list', label: 'Liste' }]} />
