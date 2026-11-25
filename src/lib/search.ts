@@ -61,10 +61,10 @@ export function searchRecords(d: SearchData, query: string, limit = 20): SearchH
   for (const s of d.strains) add({ kind: 'strain', id: s.id, title: s.name, subtitle: 'Sorte', to: `strains/${s.id}` }, '');
   for (const j of d.journal) {
     const name = (j.strainId && strain.get(j.strainId)) || 'Journal-Eintrag';
-    add({ kind: 'journal', id: j.id, title: name, subtitle: `Journal · ${j.date.slice(0, 10)}`, to: 'journal' }, j.notes ?? '');
+    add({ kind: 'journal', id: j.id, title: name, subtitle: `Journal · ${j.date.slice(0, 10)}`, to: `journal?entry=${encodeURIComponent(j.id)}` }, j.notes ?? '');
   }
-  for (const i of d.inventory) add({ kind: 'inventory', id: i.id, title: i.name, subtitle: 'Sammlung', to: 'collection' }, i.notes ?? '');
-  for (const l of d.labReports) add({ kind: 'labReport', id: l.id, title: l.title, subtitle: `Laborbericht${l.labName ? ` · ${l.labName}` : ''}`, to: 'lab-reports' }, l.notes ?? '');
-  for (const r of d.reminders) add({ kind: 'reminder', id: r.id, title: r.title, subtitle: `Erinnerung · ${r.date}`, to: 'calendar' }, r.notes ?? '');
+  for (const i of d.inventory) add({ kind: 'inventory', id: i.id, title: i.name, subtitle: 'Sammlung', to: `collection?item=${encodeURIComponent(i.id)}` }, i.notes ?? '');
+  for (const l of d.labReports) add({ kind: 'labReport', id: l.id, title: l.title, subtitle: `Laborbericht${l.labName ? ` · ${l.labName}` : ''}`, to: `lab-reports?report=${encodeURIComponent(l.id)}` }, l.notes ?? '');
+  for (const r of d.reminders) add({ kind: 'reminder', id: r.id, title: r.title, subtitle: `Erinnerung · ${r.date}`, to: 'calendar?view=list' }, r.notes ?? '');
   return hits.sort((a, b) => b.score - a.score || a.title.localeCompare(b.title, 'de')).slice(0, limit);
 }

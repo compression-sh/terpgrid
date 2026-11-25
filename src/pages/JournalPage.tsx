@@ -1,4 +1,5 @@
 import { BookOpenText, CalendarDays, HeartHandshake, List, Paperclip, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { focusId, useFocusTarget } from '../app/useFocusTarget';
 import { useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useConfirm } from '../app/Confirm';
@@ -74,7 +75,7 @@ function EntryCard({ entry }: { entry: JournalEntry }) {
   }
 
   return (
-    <article className="rounded-xl border border-white/[0.06] bg-ink-900/60 p-4">
+    <article id={focusId('journal', entry.id)} className="scroll-mt-24 rounded-xl border border-white/[0.06] bg-ink-900/60 p-4">
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -148,6 +149,7 @@ function EntryCard({ entry }: { entry: JournalEntry }) {
 }
 
 export function JournalPage() {
+  useFocusTarget('journal', 'entry');
   const { data, settings } = useData();
   const lookup = useLookup();
   const [view, setView] = useState<'list' | 'calendar'>('list');

@@ -1,4 +1,4 @@
-import { CircleHelp, Dna, ExternalLink, Loader2, Maximize2, Microscope, Minus, Plus, Search, X } from 'lucide-react';
+import { CircleHelp, Dna, Expand, ExternalLink, Loader2, Maximize2, Microscope, Minus, Plus, Search, Shrink, X } from 'lucide-react';
 import { type PointerEvent as RPointerEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { catalogErrorText, useStrainDetail } from '../../app/catalog';
 import { useData } from '../../app/DataProvider';
@@ -89,6 +89,7 @@ function Graph({ graph, selected, onSelect }: { graph: LineageGraph; selected?: 
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const pinch = useRef<{ d: number; k: number } | null>(null);
   const moved = useRef(false);
+  const [full, setFull] = useState(false);
 
   const fit = useCallback(() => {
     const el = box.current;
@@ -101,6 +102,20 @@ function Graph({ graph, selected, onSelect }: { graph: LineageGraph; selected?: 
     setView({ k, x: Math.max(16, (el.clientWidth - w * k) / 2), y: (el.clientHeight - h * k) / 2 });
   }, [width, height]);
   useEffect(fit, [fit]);
+  // Vollbild: Seite nicht mitscrollen, Escape beendet, danach neu einpassen.
+  useEffect(() => {
+    const raf = requestAnimationFrame(fit);
+    if (!full) return () => cancelAnimationFrame(raf);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setFull(false);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      cancelAnimationFrame(raf);
+      document.body.style.overflow = prev;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [full, fit]);
 
   const zoomAt = (factor: number, cx?: number, cy?: number) =>
     setView((v) => {
@@ -157,10 +172,10 @@ function Graph({ graph, selected, onSelect }: { graph: LineageGraph; selected?: 
 
   const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
   return (
-    <div className="relative">
+    <div className={full ? 'fixed inset-0 z-[70] bg-ink-950 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:p-5' : 'relative'} role={full ? 'dialog' : undefined} aria-modal={full || undefined} aria-label={full ? 'Abstammungsgraph im Vollbild' : undefined}>
       <div
         ref={box}
-        className="relative h-[60vh] min-h-[420px] w-full touch-none select-none overflow-hidden rounded-2xl border border-white/[0.06] bg-[radial-gradient(circle_at_1px_1px,rgb(255_255_255/0.05)_1px,transparent_0)] bg-[length:22px_22px] cursor-grab active:cursor-grabbing"
+        className={`relative w-full ${full ? 'h-full' : 'h-[60vh] min-h-[420px]'} touch-none select-none overflow-hidden rounded-2xl border border-white/[0.06] bg-[radial-gradient(circle_at_1px_1px,rgb(255_255_255/0.05)_1px,transparent_0)] bg-[length:22px_22px] cursor-grab active:cursor-grabbing`}
         onPointerDown={down}
         onPointerMove={move}
         onPointerUp={up}
@@ -254,7 +269,10 @@ function Graph({ graph, selected, onSelect }: { graph: LineageGraph; selected?: 
           <div className="pointer-events-none absolute inset-x-0 bottom-6 text-center text-[13px] text-ink-400">Für diese Sorte ist keine Abstammung dokumentiert.</div>
         )}
       </div>
-      <div className="absolute right-3 top-3 flex flex-col gap-1">
+      <div className={`absolute flex flex-col gap-1 ${full ? 'right-4 top-4 sm:right-8 sm:top-8' : 'right-3 top-3'}`}>
+        <button type="button" className="btn-ghost bg-ink-900/90 p-2" aria-label={full ? 'Vollbild beenden (Esc)' : 'Vollbild'} aria-pressed={full} onClick={() => setFull((f) => !f)}>
+          {full ? <Shrink className="size-4" /> : <Expand className="size-4" />}
+        </button>
         <button type="button" className="btn-ghost bg-ink-900/90 p-2" aria-label="Vergrößern" onClick={() => zoomAt(1.25)}>
           <Plus className="size-4" />
         </button>

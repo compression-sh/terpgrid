@@ -1,4 +1,4 @@
-import { Bookmark, Clock, Database, Loader2, RotateCcw, Search, Sprout, X } from 'lucide-react';
+import { Bookmark, ChevronDown, Clock, Database, Loader2, RotateCcw, Search, SlidersHorizontal, Sprout, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useData } from '../../app/DataProvider';
 import { useFavoriteBreeders } from '../../app/library';
@@ -35,6 +35,7 @@ export function LibraryPage({ status }: { status: LibStatus }) {
   const { settings } = useData();
   const favBreeders = useFavoriteBreeders();
   const [text, setText] = useState(q.get('q') ?? '');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const query = (q.get('q') ?? '').trim();
   const params: LibSearchParams = useMemo(
     () => ({
@@ -97,6 +98,7 @@ export function LibraryPage({ status }: { status: LibStatus }) {
   const d = res.data;
   const field = 'input-base py-1.5 text-[13px]';
 
+  const activeFilters = ['type', 'auto', 'seed', 'terpene', 'lineage', 'thc'].filter((k) => q.get(k)).length;
   return (
     <div>
       <DiscoverNav />
@@ -127,7 +129,20 @@ export function LibraryPage({ status }: { status: LibStatus }) {
             </button>
           )}
         </div>
-        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-7">
+        <button
+          type="button"
+          className="mt-2 flex w-full items-center justify-between rounded-lg border border-white/[0.06] px-3 py-2 text-[13px] text-ink-200 sm:hidden"
+          aria-expanded={filtersOpen}
+          aria-controls="katalog-filter"
+          onClick={() => setFiltersOpen((o) => !o)}
+        >
+          <span className="flex items-center gap-2">
+            <SlidersHorizontal className="size-4 text-ink-400" /> Filter & Sortierung
+            {activeFilters > 0 && <span className="rounded-full bg-leaf-500/15 px-1.5 text-[11px] text-leaf-300">{activeFilters} aktiv</span>}
+          </span>
+          <ChevronDown className={`size-4 text-ink-400 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
+        </button>
+        <div id="katalog-filter" className={`mt-2 grid-cols-2 gap-2 sm:grid sm:grid-cols-3 lg:grid-cols-7 ${filtersOpen ? 'grid' : 'hidden'}`}>
           <select className={field} aria-label="Genetischer Typ" value={q.get('type') ?? ''} onChange={(e) => set({ type: e.target.value || undefined })}>
             <option value="">Typ: alle</option>
             <option value="indica">Indica-dominant</option>

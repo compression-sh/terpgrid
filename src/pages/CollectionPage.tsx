@@ -1,4 +1,5 @@
 import { withQuantityChange } from '../lib/inventory';
+import { focusId, useFocusTarget } from '../app/useFocusTarget';
 import { Camera, Minus, Package, Pencil, Plus, Receipt, Search, Trash2, Wrench, Zap } from 'lucide-react';
 import { MaintenanceModal } from '../components/forms/MaintenanceModal';
 import { spaceEnergy, spacePlants, warrantyState } from '../lib/grow/equipment';
@@ -71,7 +72,7 @@ function ItemRow({ item }: { item: InventoryItem }) {
   }
 
   return (
-    <li className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-ink-900/60 p-2.5">
+    <li id={focusId('item', item.id)} className="flex scroll-mt-24 items-center gap-3 rounded-xl border border-white/[0.06] bg-ink-900/60 p-2.5">
       <button type="button" onClick={() => setModal('photo')} className="relative size-14 shrink-0 overflow-hidden rounded-lg" aria-label={cover ? 'Weiteres Foto hinzufügen' : 'Foto hinzufügen'}>
         <PhotoImg photoId={cover} alt="" className="h-full w-full" />
         {!cover && <Camera className="absolute bottom-1 right-1 size-3 text-ink-400" />}
@@ -179,6 +180,7 @@ function ItemRow({ item }: { item: InventoryItem }) {
 }
 
 export function CollectionPage() {
+  useFocusTarget('item', 'item');
   const { data, settings } = useData();
   const [tab, setTab] = useState<'inventory' | 'expenses' | 'strains'>('inventory');
   const [creating, setCreating] = useState(false);
