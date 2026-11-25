@@ -537,7 +537,20 @@ async function sampleSummary(db: AppContext['db'], cultivarId: string) {
 }
 
 /** Messwerte einer Atlas-Verbindung in öffentlichen Laborproben (je Probe gemessen; keine Sortenprofile). */
+// Ergebnis hängt nur vom aktiven Probenimport ab → je Import-ID zwischenspeichern
+const measuredCache = new Map<string, { importId: number; value: Awaited<ReturnType<typeof measuredTerpeneUncached>> }>();
 async function measuredTerpene(db: AppContext['db'], atlasId: string) {
+  if (!SMITH_ATLAS[atlasId]) return undefined;
+  const imp = (await db.query<{ id: number }>(`SELECT id FROM catalog_sample_imports WHERE source = $1 AND status = 'active'`, [SMITH2022.id])).rows[0];
+  if (!imp) return undefined;
+  const hit = measuredCache.get(atlasId);
+  if (hit && hit.importId === imp.id) return hit.value;
+  const value = await measuredTerpeneUncached(db, atlasId);
+  measuredCache.set(atlasId, { importId: imp.id, value });
+  return value;
+}
+
+async function measuredTerpeneUncached(db: AppContext['db'], atlasId: string) {
   const m = SMITH_ATLAS[atlasId];
   if (!m) return undefined;
   const col = m.column;
