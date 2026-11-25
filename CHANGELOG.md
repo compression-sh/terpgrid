@@ -1,5 +1,20 @@
 # Änderungsprotokoll
 
+## 5.3.2-rc.1 – 25.11.2026 (Release-Kandidat, nicht veröffentlicht)
+
+Abschluss-Review der Phase 5.3 (Bericht: `docs/PHASE5-3-REVIEW.md`). Keine Migration, keine neuen Abhängigkeiten.
+
+### Korrigiert
+- PWA: Die App startet schon nach dem ersten Besuch offline (Vorab-Cache aller gehashten Dateien; bisher leere Seite).
+- PWA: Cache-Treffer trotz „Vary: Origin“ des Servers (nur öffentliche, gehashte Dateien).
+- „Offline weiter“: Nach Rückkehr des Servers wird automatisch synchronisiert. Bei weiterhin unerreichbarem
+  Server bleibt der Offline-Modus bestehen.
+- Sammlung mobil: Einträge lesbar, Mengen- und Aktionsknöpfe unter dem Inhalt.
+- Lab Insights mobil: Y-Achse des Cannabinoid-Diagramms nicht mehr abgeschnitten.
+
+### Aufgeräumt
+- Doppelte Wiederholungslogik im Kalender zusammengeführt; neun ungenutzte Exporte entfernt.
+
 ## 5.3.1-rc.1 – 25.11.2026 (Release-Kandidat, nicht veröffentlicht)
 
 Phase 5.3 „Grow Studio“: Verbindungen zwischen bestehenden Bereichen, Grow-Workspace und mobile Bedienung.
