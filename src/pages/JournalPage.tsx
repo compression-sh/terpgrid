@@ -23,6 +23,17 @@ import { METHOD_LABEL, MOOD_OPTIONS } from '../lib/grow/labels';
 import { fmt } from '../lib/format';
 
 /** Rein beschreibende Zusammenfassung der erfassten Einträge (keine Wertung, keine Prognose). */
+const MONTH_FMT = new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+/** Einträge nach Monat gruppieren (Reihenfolge der Eingabe bleibt erhalten). */
+export function byMonth<T extends { date: string }>(entries: T[]): [string, string, T[]][] {
+  const out = new Map<string, T[]>();
+  for (const e of entries) {
+    const k = e.date.slice(0, 7);
+    out.set(k, [...(out.get(k) ?? []), e]);
+  }
+  return [...out.entries()].map(([k, v]) => [k, /^\d{4}-\d{2}$/.test(k) ? MONTH_FMT.format(new Date(`${k}-01T00:00:00Z`)) : 'Ohne Datum', v]);
+}
+
 export function journalSummary(entries: JournalEntry[], ref: string) {
   const byMethod = CONSUMPTION_METHODS.map((m) => ({ method: m, count: entries.filter((e) => e.method === m).length })).filter((x) => x.count > 0);
   const rated = entries.filter((e) => e.rating !== undefined);
@@ -163,6 +174,8 @@ export function JournalPage() {
   for (const e of filtered) markers.set(e.date.slice(0, 10), [...(markers.get(e.date.slice(0, 10)) ?? []), { color: '#5fe39a', label: METHOD_LABEL[e.method] }]);
   const dayEntries = day ? filtered.filter((e) => e.date.startsWith(day)) : [];
 
+  const activeFilters = [method, strain, mood].filter(Boolean).length;
+  const wide = typeof window !== 'undefined' && window.matchMedia('(min-width: 640px)').matches;
   return (
     <div>
       <PageHeader
@@ -191,15 +204,24 @@ export function JournalPage() {
       ) : (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)]">
           <div className="min-w-0 space-y-5">
-            <div className="card grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
-              <label className="relative block space-y-1.5 sm:col-span-2 lg:col-span-1">
+            <div className="card space-y-3 p-4">
+              <label className="relative block space-y-1.5">
                 <span className="label">Suche</span>
                 <Search className="pointer-events-none absolute left-3 top-[2.35rem] size-4 text-ink-500" />
                 <input className="input-base pl-9" placeholder="Notizen, Sorte …" value={q} onChange={(e) => setQ(e.target.value)} />
               </label>
-              <SelectField label="Konsumform" value={method} onChange={setMethod} placeholder="Alle" options={CONSUMPTION_METHODS.map((m) => ({ value: m, label: METHOD_LABEL[m] }))} />
-              <SelectField label="Sorte" value={strain} onChange={setStrain} placeholder="Alle" options={[...data.strains.map((s) => ({ value: s.id, label: s.name })), { value: '__free', label: 'Ohne Bibliotheks-Sorte' }]} />
-              <SelectField label="Stimmung" value={mood} onChange={setMood} placeholder="Alle" options={MOOD_OPTIONS.map((m) => ({ value: m, label: m }))} />
+              {/* Mobil eingeklappt, damit Einträge ohne Scrollen sichtbar sind; ab sm immer offen */}
+              <details className="group sm:[&>summary]:hidden" open={wide || activeFilters > 0 || undefined}>
+                <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg border border-white/[0.06] px-3 py-2 text-[13px] text-ink-300 [&::-webkit-details-marker]:hidden">
+                  <span>Filter{activeFilters > 0 ? ` (${activeFilters} aktiv)` : ''}</span>
+                  <span className="text-ink-500 group-open:rotate-180">▾</span>
+                </summary>
+                <div className="mt-3 grid gap-3 sm:mt-0 sm:grid-cols-3">
+                  <SelectField label="Konsumform" value={method} onChange={setMethod} placeholder="Alle" options={CONSUMPTION_METHODS.map((m) => ({ value: m, label: METHOD_LABEL[m] }))} />
+                  <SelectField label="Sorte" value={strain} onChange={setStrain} placeholder="Alle" options={[...data.strains.map((s) => ({ value: s.id, label: s.name })), { value: '__free', label: 'Ohne Bibliotheks-Sorte' }]} />
+                  <SelectField label="Stimmung" value={mood} onChange={setMood} placeholder="Alle" options={MOOD_OPTIONS.map((m) => ({ value: m, label: m }))} />
+                </div>
+              </details>
             </div>
             <div className="flex items-center justify-between gap-3">
               <span className="text-xs text-ink-400">
@@ -223,9 +245,21 @@ export function JournalPage() {
                   <EmptyState compact title="Keine Treffer" />
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {filtered.map((e) => (
-                    <EntryCard key={e.id} entry={e} />
+                <div className="space-y-6">
+                  {byMonth(filtered).map(([key, label, entries]) => (
+                    <section key={key} aria-label={label}>
+                      <h2 className="mb-2 flex items-baseline justify-between px-1 text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-400">
+                        {label}
+                        <span className="font-normal normal-case tracking-normal text-ink-500">
+                          {entries.length} {entries.length === 1 ? 'Eintrag' : 'Einträge'}
+                        </span>
+                      </h2>
+                      <div className="space-y-3">
+                        {entries.map((e) => (
+                          <EntryCard key={e.id} entry={e} />
+                        ))}
+                      </div>
+                    </section>
                   ))}
                 </div>
               )

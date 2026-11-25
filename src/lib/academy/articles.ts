@@ -7,6 +7,7 @@ import type { KbArticle } from '../knowledge';
 import { SRC } from './sources';
 
 const U = '2026-11-24';
+const FULL = { level: 'volltext', checked: U, note: 'Aussagen gegen die Volltexte der zitierten Open-Access-Studien geprüft (Europe PMC).' } as const;
 
 export const ACADEMY_ARTICLES: KbArticle[] = [
   {
@@ -54,6 +55,7 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
       },
     ],
     related: ['licht-ppfd-dli', 'photoperiode', 'lebenszyklus'],
+    review: FULL,
     sources: [SRC.rodriguez2021, SRC.ahrens2023, SRC.massuela2026],
   },
   {
@@ -91,6 +93,7 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
       },
     ],
     related: ['uv-licht', 'photoperiode', 'klima-vpd'],
+    review: FULL,
     sources: [SRC.rodriguez2021, SRC.llewellyn2022],
   },
   {
@@ -123,6 +126,7 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
       },
     ],
     related: ['licht-ppfd-dli', 'anbau-ueberblick', 'lebenszyklus'],
+    review: FULL,
     sources: [SRC.ahrens2023, SRC.peterswald2025],
   },
   {
@@ -149,6 +153,7 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
       },
     ],
     related: ['licht-ppfd-dli', 'photoperiode'],
+    review: FULL,
     sources: [SRC.llewellyn2022],
   },
   {
@@ -185,6 +190,7 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
       },
     ],
     related: ['krankheiten', 'licht-ppfd-dli', 'bewaesserung'],
+    review: FULL,
     sources: [SRC.corredor2025, SRC.punja2021],
   },
   {
@@ -219,6 +225,7 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
       },
     ],
     related: ['naehrstoffe-npk', 'organisch-mineralisch', 'bewaesserung'],
+    review: FULL,
     sources: [SRC.bevan2021],
   },
   {
@@ -252,6 +259,7 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
       },
     ],
     related: ['ph-ec', 'organisch-mineralisch', 'mangel-erkennen'],
+    review: FULL,
     sources: [SRC.bevan2021, SRC.massuela2023],
   },
   {
@@ -283,6 +291,7 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
       },
     ],
     related: ['naehrstoffe-npk', 'ph-ec'],
+    review: FULL,
     sources: [SRC.massuela2023],
   },
   {
@@ -310,6 +319,7 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
       },
     ],
     related: ['krankheiten', 'klima-vpd', 'ph-ec'],
+    review: FULL,
     sources: [SRC.massuela2026, SRC.punja2021],
   },
   {
@@ -346,6 +356,7 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
       },
     ],
     related: ['schaedlinge', 'krankheiten', 'ph-ec'],
+    review: FULL,
     sources: [SRC.pulkoski2024, SRC.punja2021],
   },
   {
@@ -378,6 +389,7 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
       },
     ],
     related: ['klima-vpd', 'trocknen-curen', 'mangel-erkennen'],
+    review: FULL,
     sources: [SRC.punja2021],
   },
   {
@@ -409,6 +421,7 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
       },
     ],
     related: ['mangel-erkennen', 'krankheiten'],
+    review: FULL,
     sources: [SRC.pulkoski2024],
   },
   {
@@ -440,6 +453,7 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
       },
     ],
     related: ['genetik', 'botanik'],
+    review: FULL,
     sources: [SRC.garcia2024],
   },
   {
@@ -474,6 +488,7 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
       },
     ],
     related: ['trocknen-curen', 'cannabinoide', 'anbau-ueberblick'],
+    review: FULL,
     sources: [SRC.tran2025],
   },
   {
@@ -506,6 +521,7 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
       },
     ],
     related: ['erntezeitpunkt', 'krankheiten', 'terpene-analytik'],
+    review: FULL,
     sources: [SRC.baek2025, SRC.birenboim2024],
   },
   {
@@ -544,6 +560,7 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
       },
     ],
     related: ['terpene', 'laborberichte-lesen', 'trocknen-curen'],
+    review: FULL,
     sources: [SRC.booth2017, SRC.rodriguez2021, SRC.birenboim2024, SRC.janta2024],
   },
   {
@@ -572,6 +589,7 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
       },
     ],
     related: ['thc-cbd', 'terpene-analytik', 'forschung'],
+    review: FULL,
     sources: [SRC.schwabe2023],
   },
   {
@@ -598,6 +616,7 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
       },
     ],
     related: ['wirkungsdauer', 'risikominimierung', 'konsumformen'],
+    review: FULL,
     sources: [SRC.lefoll2026],
   },
 ];

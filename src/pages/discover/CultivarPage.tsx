@@ -16,7 +16,7 @@ import { AbstractPlaceholder } from '../../components/discover/StrainVisual';
 import { JournalFormModal } from '../../components/forms/PersonalForms';
 import { Card } from '../../components/ui/Card';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { GENETICS_LABEL, type LibClaim, type LibCultivar, type LibListing, type LibRange, library, toCatalogStrain } from '../../lib/catalog/library';
+import { GENETICS_LABEL, type LibClaim, type LibCultivar, type LibListing, type LibRange, type LibValues, library, listingEvidence, toCatalogStrain } from '../../lib/catalog/library';
 import { fmtDate } from '../../lib/dates';
 import { ensureStrainForExternal, externalKey } from '../../lib/db/repo';
 import { fmt } from '../../lib/format';
@@ -168,7 +168,7 @@ export function CultivarPage({ id }: { id: string }) {
   const plants = mine ? data.plants.filter((p) => p.strainId === mine.id) : [];
   const conflict = (f: string) => c.conflicts.includes(f);
   const claimOf = (f: LibClaim['field']) => d.claims?.find((k) => k.field === f);
-  const direct = d.listings.some((l) => l.seedBank.toLowerCase().replace(/[^a-z0-9]/g, '') === c.breeder.id);
+  const ev = (...keys: (keyof LibValues)[]) => listingEvidence(d, keys);
   const labForMine = mine ? data.labReports.filter((r) => r.strainId === mine.id) : [];
 
   async function openJournal() {
@@ -280,7 +280,7 @@ export function CultivarPage({ id }: { id: string }) {
             ) : (
               <NoData />
             )}
-            {(c.thc || c.cbd) && <p className="mt-3"><EvidenceTag kind={c.conflicts.includes('thc') ? 'conflict' : direct ? 'breeder' : 'seedbank'} source="CI-Strains-Pro" /></p>}
+            {(c.thc || c.cbd) && <p className="mt-3"><EvidenceTag kind={c.conflicts.includes('thc') || c.conflicts.includes('cbd') ? 'conflict' : ev('thc', 'cbd')} source="CI-Strains-Pro" /></p>}
             {(claimOf('thc') || claimOf('cbd')) && (
               <div className="mt-3 rounded-xl border border-white/[0.06] px-3 py-2 text-[12px] text-ink-300">
                 <p className="mb-1 flex flex-wrap items-center gap-2">
@@ -364,7 +364,7 @@ export function CultivarPage({ id }: { id: string }) {
               <ul className="space-y-1.5 text-[13px] text-ink-200">
                 {v.lineageText && (
                   <li className="flex flex-wrap items-center gap-2">
-                    „{v.lineageText}“ <EvidenceTag kind={direct ? 'breeder' : 'seedbank'} source="CI-Strains-Pro" />
+                    „{v.lineageText}“ <EvidenceTag kind={ev('lineageText')} source="CI-Strains-Pro" />
                   </li>
                 )}
                 {claimOf('genetics') && (
@@ -406,7 +406,7 @@ export function CultivarPage({ id }: { id: string }) {
             {(v.flavors?.length ?? 0) > 0 && (
               <div className="mb-3">
                 <p className="mb-1.5 flex items-center gap-2 text-[11px] uppercase tracking-wider text-ink-500">
-                  Aroma <EvidenceTag kind={direct ? 'breeder' : 'seedbank'} />
+                  Aroma <EvidenceTag kind={ev('flavors')} />
                 </p>
                 <p className="text-[13px] text-ink-300">{v.flavors!.join(', ')}</p>
               </div>
@@ -462,6 +462,25 @@ export function CultivarPage({ id }: { id: string }) {
           {d.sameName.length > 0 && (
             <Card title={`„${c.name}“ bei anderen Breedern`} subtitle="Eigenständige Linien – nicht zusammengeführt">
               <MiniList items={d.sameName} />
+            </Card>
+          )}
+
+          {(d.siblings?.length ?? 0) > 0 && (
+            <Card title="Gleiche Elternangaben" subtitle={`Andere Sorten, deren Quellen dieselben zwei Eltern nennen – Namensgleichheit der Eltern, keine geprüfte Verwandtschaft`}>
+              <MiniList items={d.siblings!} />
+            </Card>
+          )}
+
+          {(d.breederMore?.length ?? 0) > 0 && (
+            <Card
+              title={`Weitere Sorten von ${c.breeder.name}`}
+              actions={
+                <a href={href(`discover/breeders/${c.breeder.id}`)} className="btn-ghost py-1.5 text-xs">
+                  Alle
+                </a>
+              }
+            >
+              <MiniList items={d.breederMore!} />
             </Card>
           )}
 

@@ -14,7 +14,7 @@ function SideLink({ item, active }: { item: NavItem; active: boolean }) {
     <a
       href={href(item.to)}
       aria-current={active ? 'page' : undefined}
-      className={`group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors ${
+      className={`group relative flex items-center gap-3 rounded-lg px-3 py-[7px] text-[13px] font-medium transition-colors ${
         active ? 'bg-white/[0.06] text-ink-50' : 'text-ink-400 hover:bg-white/[0.03] hover:text-ink-100'
       }`}
     >
@@ -105,7 +105,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <kbd className="ml-auto rounded border border-white/10 px-1 text-[10px]">Strg K</kbd>
           </button>
         </div>
-        <nav aria-label="Hauptnavigation" className="flex-1 space-y-6 overflow-y-auto px-4 py-2">
+        <nav aria-label="Hauptnavigation" className="flex-1 space-y-5 overflow-y-auto px-4 pt-2 pb-6 [mask-image:linear-gradient(to_bottom,black_calc(100%-28px),transparent)]">
           <div className="space-y-0.5">
             {PRIMARY_NAV.map((n) => (
               <SideLink key={n.id} item={n} active={isActive(n, route.path)} />

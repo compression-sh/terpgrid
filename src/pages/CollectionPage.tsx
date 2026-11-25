@@ -1,3 +1,4 @@
+import { withQuantityChange } from '../lib/inventory';
 import { Camera, Minus, Package, Pencil, Plus, Receipt, Search, Trash2, Wrench, Zap } from 'lucide-react';
 import { MaintenanceModal } from '../components/forms/MaintenanceModal';
 import { spaceEnergy, spacePlants, warrantyState } from '../lib/grow/equipment';
@@ -52,7 +53,7 @@ function ItemRow({ item }: { item: InventoryItem }) {
     });
     if (!ok) return;
     try {
-      await updateRecord('inventory', item.id, { quantity: next });
+      await updateRecord('inventory', item.id, { quantity: next, quantityLog: withQuantityChange(item.quantityLog, current, next, new Date().toISOString()) });
       toast('Menge aktualisiert');
     } catch (e) {
       toast(errorText(e), { tone: 'error' });
@@ -124,6 +125,18 @@ function ItemRow({ item }: { item: InventoryItem }) {
           )}
         </div>
         {item.notes && <p className="mt-1 line-clamp-1 text-xs text-ink-400">{item.notes}</p>}
+        {(item.quantityLog?.length ?? 0) > 0 && (
+          <details className="mt-1 text-[11px] text-ink-500">
+            <summary className="cursor-pointer hover:text-ink-300">Mengenverlauf ({item.quantityLog!.length})</summary>
+            <ol className="mt-1 space-y-0.5 font-mono">
+              {[...item.quantityLog!].reverse().slice(0, 8).map((c) => (
+                <li key={c.at}>
+                  {fmtDate(c.at.slice(0, 10))}: {fmt(c.from)} → {fmt(c.to)} {item.unit}
+                </li>
+              ))}
+            </ol>
+          </details>
+        )}
       </div>
       <div className="flex shrink-0 items-center gap-1">
         {item.quantity !== undefined && (
@@ -172,15 +185,18 @@ export function CollectionPage() {
   const [category, setCategory] = useState('');
   const [q, setQ] = useState('');
   const [showArchived, setShowArchived] = useState(false);
+  const [tag, setTag] = useState('');
+  const allTags = useMemo(() => [...new Set(data.inventory.flatMap((i) => i.tags ?? []))].sort((a, b) => a.localeCompare(b, 'de')), [data.inventory]);
 
   const items = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return data.inventory
       .filter((i) => !category || i.category === category)
       .filter((i) => showArchived || !i.archived)
+      .filter((i) => !tag || (i.tags ?? []).includes(tag))
       .filter((i) => !needle || [i.name, i.notes, i.manufacturer ?? '', i.model ?? '', ...(i.tags ?? [])].some((x) => x.toLowerCase().includes(needle)))
       .sort((a, b) => a.name.localeCompare(b.name, 'de'));
-  }, [data.inventory, category, q, showArchived]);
+  }, [data.inventory, category, q, showArchived, tag]);
   const archivedCount = data.inventory.filter((i) => i.archived).length;
 
   const purchaseTotal = data.inventory.reduce((s, i) => s + (i.cost ?? 0), 0);
@@ -246,6 +262,15 @@ export function CollectionPage() {
                 </label>
                 <SelectField label="" aria-label="Kategorie" value={category} onChange={setCategory} placeholder="Alle Kategorien" options={INVENTORY_CATEGORIES.map((c) => ({ value: c, label: INVENTORY_CATEGORY_LABEL[c] }))} />
               </div>
+              {allTags.length > 0 && (
+                <div className="mb-3 flex flex-wrap gap-1.5" role="group" aria-label="Nach Tag filtern">
+                  {allTags.map((t) => (
+                    <button key={t} type="button" aria-pressed={tag === t} onClick={() => setTag(tag === t ? '' : t)} className={`rounded-full border px-2.5 py-0.5 text-[12px] ${tag === t ? 'border-leaf-500/40 bg-leaf-500/15 text-leaf-100' : 'border-white/[0.08] text-ink-400 hover:text-ink-200'}`}>
+                      #{t}
+                    </button>
+                  ))}
+                </div>
+              )}
               {items.length === 0 ? (
                 <EmptyState compact title="Keine Treffer" />
               ) : (

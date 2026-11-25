@@ -63,6 +63,11 @@ dargestellt. Alle Werte sind Angaben von Seedbanks/Breedern (Shop-Texte).
   (`genetics_description`/`lineage_description`, ≤ 140 Zeichen, nicht „Unknown…“) im Originalwortlaut. Sind dort genau
   zwei plausible Sortennamen ohne Klammern genannt, werden sie als Eltern übernommen und als „aus Text abgeleitet“
   gekennzeichnet. Ein geänderter Parser löst beim nächsten Import eine Neuverarbeitung derselben Datei aus.
+- **Parser v3 (5.3):** Elternnamen müssen mit Großbuchstabe oder Ziffer beginnen; Aroma- und Werbetexte („notes of …“,
+  „hints of …“, „quality seeds“ u. Ä.) sowie HTML-Reste werden nicht mehr als Eltern übernommen. Kleingeschriebene echte
+  Namen werden bewusst nicht geraten. Auf dem Entwicklungsstand: auffällige Elternangaben 388 → 4, Sorten mit Abstammung
+  11.120 → 10.718, Anreicherungsangaben unverändert. Nach dem Upgrade `./import-catalog.sh` ausführen, damit die neue
+  Parser-Version die Datei neu verarbeitet (nur öffentliche Referenzdaten, keine Nutzerdaten).
 - **Widersprüche:** Überschneiden sich die Spannen zweier Angebote nicht (z. B. THC 20–22 % vs. 25–28 %), wird das Feld als
   widersprüchlich markiert; die Sortenseite zeigt jede Einzelangabe mit Seedbank und Quell-URL.
 
@@ -168,6 +173,32 @@ npx tsx src/cli.ts catalog-audit [--json datei.json]                 # Vollstän
 npx tsx src/cli.ts enrich-catalog --provider strainapi --index        # Verzeichnis abgleichen (≈8 Seiten, 1,5 s Pause)
 npx tsx src/cli.ts enrich-catalog --provider strainapi --limit 25 [--dry-run] [--resume LAUF]
 ```
+
+**Aktualisierung nach 30 Tagen:** StrainAPI-Angaben sind ein Zwischenspeicher mit Ablaufdatum (`expires_at`).
+Abgelaufene Angaben werden ab dem Ablaufzeitpunkt nirgends mehr angezeigt (Sortenseite, Atlas-Index, Audit).
+Für die Aktualisierung gibt es einen gedrosselten Modus:
+
+```bash
+# Produktion (im api-Container, Laufzeitrolle – darf nur die Anreicherungstabellen schreiben):
+sudo /opt/terpgrid/deploy/refresh-catalog.sh
+# Entwicklung:
+npx tsx src/cli.ts enrich-catalog --provider strainapi --refresh [--within-days 7] [--force]
+```
+
+- Abgerufen wird nur, wenn freigegebene Angaben innerhalb von 7 Tagen ablaufen **und** der letzte Lauf
+  (auch ein fehlgeschlagener) mindestens 20 Stunden zurückliegt. Ein Abruf sind höchstens 8 Seitenanfragen mit 1,5 s Pause.
+- Erst **nach** dem Abruf werden abgelaufene Angaben entfernt. Schlägt der Abruf fehl, bleiben gültige Angaben bis zu
+  ihrem Ablauf stehen; abgelaufene werden trotzdem entfernt (Nutzungsbedingungen: kein Archiv).
+- Liefert die Quelle ein Feld nicht mehr, wird diese Angabe entfernt. Admin-Entscheidungen und abgelehnte Angaben
+  bleiben erhalten; persönliche Daten und der importierte Kernkatalog werden nicht berührt (Tests in `server/test/enrich.test.ts`).
+- Optionaler Timer (wird von `install.sh` **nicht** aktiviert):
+  `sudo cp deploy/systemd/terpgrid-catalog-refresh.* /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl enable --now terpgrid-catalog-refresh.timer`
+  – prüft täglich, ruft aber nur bei Bedarf ab (bei 30 Tagen Gültigkeit etwa alle drei Wochen).
+- Ein Neuimport des Sortenkatalogs erhält Anreicherung und Abgleichsentscheidungen (Upsert); nur Angaben zu Sorten, die
+  im neuen Datensatz fehlen, entfallen mit der Sorte.
+
+**Belegart Breeder/Seedbank:** je Feld bestimmt – „Breeder-Angabe“ nur, wenn ein Angebot aus dem Shop des Breeders
+genau dieses Feld enthält (Sortenseite und Audit).
 
 Admin-Oberfläche: *Administration → Sortenkatalog* (Feldabdeckung, Läufe, Batch bis 25 Sorten mit Probelauf,
 Prüfliste „zu prüfen/mehrdeutig“ – Freigabe nur für eine Sorte aus den Kandidaten). Die Qualitätsberechnung dauert

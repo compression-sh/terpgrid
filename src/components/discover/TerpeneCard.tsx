@@ -1,6 +1,6 @@
 import { FlaskConical } from 'lucide-react';
 import { href } from '../../app/router';
-import type { LibCultivarDetail } from '../../lib/catalog/library';
+import { type LibCultivarDetail, listingEvidence } from '../../lib/catalog/library';
 import type { LabReport } from '../../lib/db/types';
 import { fmtDate } from '../../lib/dates';
 import { fmt } from '../../lib/format';
@@ -15,7 +15,6 @@ import { TerpeneChips } from './TerpeneChips';
  */
 export function TerpeneCard({ detail, labReports }: { detail: LibCultivarDetail; labReports: LabReport[] }) {
   const c = detail.cultivar;
-  const direct = detail.listings.some((l) => l.seedBank.toLowerCase().replace(/[^a-z0-9]/g, '') === c.breeder.id);
   const shop = c.values.terpenes ?? [];
   const db = (detail.claims ?? []).filter((k) => k.field === 'terpenes');
   const labs = labReports.filter((r) => r.terpenes.length > 0);
@@ -69,7 +68,7 @@ export function TerpeneCard({ detail, labReports }: { detail: LibCultivarDetail;
           {shop.length > 0 && (
             <section>
               <p className="mb-1.5">
-                <EvidenceTag kind={direct ? 'breeder' : 'seedbank'} source="CI-Strains-Pro" />
+                <EvidenceTag kind={listingEvidence(detail, ['terpenes'])} source="CI-Strains-Pro" />
               </p>
               <TerpeneChips names={shop} max={10} size="xs" />
             </section>

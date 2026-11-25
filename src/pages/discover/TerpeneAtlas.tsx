@@ -411,6 +411,13 @@ function GroupDetail({ g }: { g: TerpeneGroup }) {
 }
 
 const CLASSES = [...new Set(TERPENES.map((t) => t.className))];
+/** Gliederung: Monoterpene C10 (2 Isopren-Einheiten), Sesquiterpene C15 (3 Einheiten); Terpenoide tragen Sauerstoff */
+const TAXONOMY: { title: string; hint: string; classes: TerpeneInfo['className'][] }[] = [
+  { title: 'Monoterpene', hint: 'C₁₀-Kohlenwasserstoffe ohne Sauerstoff', classes: ['Monoterpen', 'Aromatischer Monoterpen-Kohlenwasserstoff'] },
+  { title: 'Monoterpenoide', hint: 'C₁₀ mit Sauerstoff (Alkohol, Ether, Keton)', classes: ['Monoterpenoid (Alkohol)', 'Monoterpenoid (Ether)', 'Monoterpenoid (Keton)'] },
+  { title: 'Sesquiterpene', hint: 'C₁₅-Kohlenwasserstoffe', classes: ['Sesquiterpen'] },
+  { title: 'Sesquiterpenoide', hint: 'C₁₅ mit Sauerstoff (Alkohol, Epoxid)', classes: ['Sesquiterpenoid (Alkohol)', 'Sesquiterpenoid (Epoxid)'] },
+];
 
 export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
   const { data } = useData();
@@ -503,7 +510,7 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
               <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-500" />
               <input className="input-base pl-9" placeholder="Name oder Schreibweise …" value={q} onChange={(e) => setQ(e.target.value)} />
             </label>
-            <select aria-label="Aromafamilie" className="input-base w-auto" value={fam} onChange={(e) => setFam(e.target.value as AromaFamily | '')}>
+            <select aria-label="Aromafamilie" className="input-base w-auto max-w-full" value={fam} onChange={(e) => setFam(e.target.value as AromaFamily | '')}>
               <option value="">Alle Aromafamilien</option>
               {AROMA_FAMILIES.map((f) => (
                 <option key={f.id} value={f.id}>
@@ -511,13 +518,13 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
                 </option>
               ))}
             </select>
-            <select aria-label="Stoffklasse" className="input-base w-auto" value={cls} onChange={(e) => setCls(e.target.value)}>
+            <select aria-label="Stoffklasse" className="input-base w-auto max-w-full" value={cls} onChange={(e) => setCls(e.target.value)}>
               <option value="">Alle Stoffklassen</option>
               {CLASSES.map((c) => (
                 <option key={c}>{c}</option>
               ))}
             </select>
-            <select aria-label="Beleg für Cannabis" className="input-base w-auto" value={evidence} onChange={(e) => setEvidence(e.target.value as '' | 'lit' | 'none')}>
+            <select aria-label="Beleg für Cannabis" className="input-base w-auto max-w-full" value={evidence} onChange={(e) => setEvidence(e.target.value as '' | 'lit' | 'none')}>
               <option value="">Alle Belege</option>
               <option value="lit">In Cannabis belegt</option>
               <option value="none">Nicht belegt</option>
@@ -562,13 +569,42 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
           <div className="flex flex-wrap gap-1.5 pt-1">
             <span className="text-[11px] text-ink-500">Sammelnamen:</span>
             {TERPENE_GROUPS.map((g) => (
-              <a key={g.id} href={href(`discover/terpenes/${g.id}`)} className="rounded-full border border-dashed border-white/[0.12] px-2 py-0.5 text-[11px] text-ink-300 hover:border-white/25">
+              <a key={g.id} href={href(`discover/terpenes/${g.id}`)} className="rounded-full border border-dashed border-white/[0.12] inline-flex min-h-6 items-center px-2 py-0.5 text-[11px] text-ink-300 hover:border-white/25">
                 {g.name.replace(' (Isomer nicht angegeben)', '')}
               </a>
             ))}
           </div>
         </div>
       </div>
+
+      <Card title="Chemische Systematik" subtitle="Grundgerüst (Isopren-Einheiten) und funktionelle Gruppe – nach PubChem-Summenformel" className="mt-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {TAXONOMY.map((grp) => (
+            <section key={grp.title} aria-label={grp.title}>
+              <h3 className="text-[13px] font-semibold text-ink-100">{grp.title}</h3>
+              <p className="text-[11px] text-ink-500">{grp.hint}</p>
+              {grp.classes.map((cl) => {
+                const items = TERPENES.filter((t) => t.className === cl);
+                if (!items.length) return null;
+                return (
+                  <div key={cl} className="mt-2.5">
+                    <p className="text-[10.5px] uppercase tracking-wider text-ink-500">
+                      {cl.replace(/^(Mono|Sesqui)terpen(oid)? ?/, '').replace(/[()]/g, '') || 'Kohlenwasserstoff'} · {items.length}
+                    </p>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {items.map((t) => (
+                        <a key={t.id} href={href(`discover/terpenes/${t.id}`)} className="rounded-full border border-white/[0.08] inline-flex min-h-6 items-center px-2 py-0.5 text-[11.5px] text-ink-200 hover:border-white/20" style={{ boxShadow: `inset 3px 0 0 ${t.color}` }}>
+                          {t.name}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </section>
+          ))}
+        </div>
+      </Card>
 
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Card title="Terpene vergleichen" subtitle="Bis zu drei Verbindungen nebeneinander">
@@ -599,7 +635,7 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
                       <th key={t.id} className="py-1.5 pr-3 align-top font-semibold" style={{ color: t.color }}>
                         <div className="flex items-start justify-between gap-1">
                           {t.name}
-                          <button type="button" aria-label={`${t.name} entfernen`} className="text-ink-500 hover:text-ink-100" onClick={() => setCompare((c) => c.filter((x) => x !== t.id))}>
+                          <button type="button" aria-label={`${t.name} entfernen`} className="-m-1 inline-grid size-6 shrink-0 place-items-center rounded text-ink-500 hover:text-ink-100" onClick={() => setCompare((c) => c.filter((x) => x !== t.id))}>
                             ×
                           </button>
                         </div>

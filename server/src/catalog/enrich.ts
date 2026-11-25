@@ -389,18 +389,7 @@ export async function enrichBatch(db: Q, opts: EnrichOptions): Promise<EnrichRes
         if (effective.status !== 'exact' && effective.status !== 'probable') continue;
         if (!effective.cultivar_id) continue;
         if (effective.status === 'exact') result.matched++;
-        const review = effective.status === 'exact' ? 'accepted' : 'pending';
-        for (const cl of claimsFrom(opts.provider, rec)) {
-          await db.query(
-            `INSERT INTO catalog_claims(cultivar_id, field, provider, source_record_id, source_url, original, normalized, evidence, license, retrieved_at, expires_at, review_status)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, 'database', $8, now(), now() + make_interval(days => $9), $10)
-             ON CONFLICT (cultivar_id, field, provider, source_record_id) DO UPDATE SET source_url = EXCLUDED.source_url, original = EXCLUDED.original,
-               normalized = EXCLUDED.normalized, retrieved_at = now(), expires_at = EXCLUDED.expires_at,
-               review_status = CASE WHEN catalog_claims.review_status = 'rejected' THEN 'rejected' ELSE EXCLUDED.review_status END`,
-            [effective.cultivar_id, cl.field, opts.provider, rec.id, rec.url?.startsWith('https://') ? rec.url : null, JSON.stringify(cl.original), JSON.stringify(cl.normalized), P.license, P.ttlDays, review],
-          );
-          result.claims++;
-        }
+        result.claims += await writeClaims(db, opts.provider, rec, effective.cultivar_id, effective.status === 'exact' ? 'accepted' : 'pending');
       }
       if (!recs.length) {
         result.decisions.none = (result.decisions.none ?? 0) + 1;
@@ -422,6 +411,34 @@ export async function enrichBatch(db: Q, opts: EnrichOptions): Promise<EnrichRes
   const failed = result.errors.length > 0 && result.errors.length === result.processed;
   await db.query('UPDATE catalog_enrichment_runs SET status = $2, finished_at = now() WHERE id = $1', [runId, failed ? 'failed' : 'done']);
   return result;
+}
+
+/**
+ * Feldangaben eines zugeordneten Quelldatensatzes schreiben (Upsert, neues Ablaufdatum).
+ * Felder, die die Quelle beim erneuten Abruf nicht mehr liefert, werden entfernt – sonst blieben veraltete
+ * Angaben bis zu ihrem Ablauf sichtbar. Vom Admin abgelehnte Angaben bleiben abgelehnt.
+ * Wird nur nach einem erfolgreichen Abruf aufgerufen; ein Fehler beim Abruf lässt bestehende Angaben unberührt.
+ */
+async function writeClaims(db: Q, provider: Provider, rec: ProviderRecord, cultivarId: string, review: 'accepted' | 'pending'): Promise<number> {
+  const P = PROVIDERS[provider];
+  const claims = claimsFrom(provider, rec);
+  await db.query('DELETE FROM catalog_claims WHERE provider = $1 AND source_record_id = $2 AND cultivar_id = $3 AND NOT (field = ANY($4))', [
+    provider,
+    rec.id,
+    cultivarId,
+    claims.map((c) => c.field),
+  ]);
+  for (const cl of claims) {
+    await db.query(
+      `INSERT INTO catalog_claims(cultivar_id, field, provider, source_record_id, source_url, original, normalized, evidence, license, retrieved_at, expires_at, review_status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'database', $8, now(), now() + make_interval(days => $9), $10)
+       ON CONFLICT (cultivar_id, field, provider, source_record_id) DO UPDATE SET source_url = EXCLUDED.source_url, original = EXCLUDED.original,
+         normalized = EXCLUDED.normalized, retrieved_at = now(), expires_at = EXCLUDED.expires_at,
+         review_status = CASE WHEN catalog_claims.review_status = 'rejected' THEN 'rejected' ELSE EXCLUDED.review_status END`,
+      [cultivarId, cl.field, provider, rec.id, rec.url?.startsWith('https://') ? rec.url : null, JSON.stringify(cl.original), JSON.stringify(cl.normalized), P.license, P.ttlDays, review],
+    );
+  }
+  return claims.length;
 }
 
 /** Abgelaufene Angaben entfernen (Cache-Pflege gemäß Nutzungsbedingungen). */
@@ -478,17 +495,7 @@ export async function enrichFromStrainApiIndex(db: Q, opts: { maxPages?: number;
       );
       if (!eff.cultivar_id || (eff.status !== 'exact' && eff.status !== 'probable')) continue;
       if (eff.status === 'exact') result.matched++;
-      for (const cl of claimsFrom('strainapi', rec)) {
-        await db.query(
-          `INSERT INTO catalog_claims(cultivar_id, field, provider, source_record_id, source_url, original, normalized, evidence, license, retrieved_at, expires_at, review_status)
-           VALUES ($1, $2, 'strainapi', $3, $4, $5, $6, 'database', $7, now(), now() + make_interval(days => $8), $9)
-           ON CONFLICT (cultivar_id, field, provider, source_record_id) DO UPDATE SET source_url = EXCLUDED.source_url, original = EXCLUDED.original,
-             normalized = EXCLUDED.normalized, retrieved_at = now(), expires_at = EXCLUDED.expires_at,
-             review_status = CASE WHEN catalog_claims.review_status = 'rejected' THEN 'rejected' ELSE EXCLUDED.review_status END`,
-          [eff.cultivar_id, cl.field, rec.id, rec.url?.startsWith('https://') ? rec.url : null, JSON.stringify(cl.original), JSON.stringify(cl.normalized), P.license, P.ttlDays, eff.status === 'exact' ? 'accepted' : 'pending'],
-        );
-        result.claims++;
-      }
+      result.claims += await writeClaims(db, 'strainapi', rec, eff.cultivar_id, eff.status === 'exact' ? 'accepted' : 'pending');
     }
     await db.query('UPDATE catalog_enrichment_runs SET processed = $2, matched = $3, claims = $4, errors = $5, checkpoint = $6 WHERE id = $1', [runId, result.processed, result.matched, result.claims, JSON.stringify(result.errors), `page:${page}`]);
     opts.log?.(`  Seite ${page}/${Math.min(totalPages, maxPages)}: ${recs.length} Datensätze · bisher ${result.matched} exakt`);
@@ -497,4 +504,50 @@ export async function enrichFromStrainApiIndex(db: Q, opts: { maxPages?: number;
   }
   await db.query('UPDATE catalog_enrichment_runs SET status = $2, finished_at = now(), processed = $3, matched = $4, claims = $5, errors = $6 WHERE id = $1', [runId, result.errors.length ? 'failed' : 'done', result.processed, result.matched, result.claims, JSON.stringify(result.errors)]);
   return result;
+}
+
+export interface RefreshResult {
+  /** run = abgerufen · nothing-due = keine Angabe läuft bald ab · too-soon = letzter Abruf liegt weniger als minHours zurück */
+  action: 'run' | 'nothing-due' | 'too-soon';
+  expiring: number;
+  lastRunAt: string | null;
+  run?: EnrichResult;
+  purged: number;
+}
+
+/**
+ * Gedrosselte Aktualisierung zwischengespeicherter StrainAPI-Angaben (für einen täglichen Timer gedacht):
+ * Ruft das StrainAPI-Verzeichnis nur ab, wenn freigegebene Angaben innerhalb von `withinDays` ablaufen und der
+ * letzte erfolgreiche Abruf mindestens `minHours` zurückliegt. Ein Abruf = höchstens 8 Seitenanfragen mit Pause.
+ * Erst NACH dem Abruf werden abgelaufene Angaben entfernt; ein fehlgeschlagener Abruf lässt gültige Angaben stehen.
+ * Persönliche Daten und der Kernkatalog werden nicht berührt.
+ */
+export async function refreshStrainApi(
+  db: Q,
+  opts: { withinDays?: number; minHours?: number; force?: boolean; fetchImpl?: typeof fetch; sleep?: (ms: number) => Promise<void>; log?: (m: string) => void },
+): Promise<RefreshResult> {
+  const withinDays = Math.max(1, Math.min(29, opts.withinDays ?? 7));
+  const minHours = Math.max(1, opts.minHours ?? 20);
+  const expiring = Number(
+    (
+      await db.query<{ n: string }>(
+        "SELECT count(*) AS n FROM catalog_claims WHERE provider = 'strainapi' AND review_status <> 'rejected' AND expires_at IS NOT NULL AND expires_at < now() + make_interval(days => $1)",
+        [withinDays],
+      )
+    ).rows[0]?.n ?? 0,
+  );
+  const last = (
+    await db.query<{ started_at: Date }>(
+      "SELECT started_at FROM catalog_enrichment_runs WHERE provider = 'strainapi' AND NOT dry_run AND status IN ('running', 'done', 'failed') ORDER BY started_at DESC LIMIT 1",
+    )
+  ).rows[0];
+  const lastRunAt = last ? new Date(last.started_at).toISOString() : null;
+  const tooSoon = !!last && Date.now() - new Date(last.started_at).getTime() < minHours * 3_600_000;
+  let action: RefreshResult['action'] = 'run';
+  if (!opts.force && expiring === 0) action = 'nothing-due';
+  else if (!opts.force && tooSoon) action = 'too-soon';
+  let run: EnrichResult | undefined;
+  if (action === 'run') run = await enrichFromStrainApiIndex(db, { fetchImpl: opts.fetchImpl, sleep: opts.sleep, log: opts.log, startedBy: 'refresh' });
+  const purged = await purgeExpiredClaims(db);
+  return { action, expiring, lastRunAt, run, purged };
 }

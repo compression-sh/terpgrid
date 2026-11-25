@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getOne } from '../../lib/db/database';
+import { getOne, subscribe } from '../../lib/db/database';
 
 /**
  * Objekt-URLs für lokal gespeicherte Bilder mit kleinem LRU-Cache.
@@ -64,17 +64,47 @@ export function usePhotoUrl(id: string | undefined, variant: 'thumb' | 'full' = 
       return;
     }
     let alive = true;
+    let off: (() => void) | undefined;
     const hit = cache.get(`${id}:${variant}`);
     if (hit) setState({ url: hit, loading: false });
     else {
       setState((s) => ({ url: s.url, loading: true }));
-      loadPhotoUrl(id, variant).then((url) => alive && setState({ url, loading: false }));
+      off = watchPhotoUrl(id, variant, (url) => alive && setState({ url, loading: false }));
     }
     return () => {
       alive = false;
+      off?.();
     };
   }, [id, variant]);
   return state;
+}
+
+/**
+ * Lädt die Bild-URL und meldet sie über `onUrl`. Sind die Bilddaten noch nicht lokal vorhanden
+ * (z. B. direkt nach der Anmeldung auf einem neuen Gerät), wird erst `null` gemeldet und erneut geladen,
+ * sobald die Synchronisierung Bilddaten gespeichert hat. Rückgabe: Abmeldefunktion.
+ */
+export function watchPhotoUrl(id: string, variant: 'thumb' | 'full', onUrl: (url: string | null) => void): () => void {
+  let alive = true;
+  let off: (() => void) | undefined;
+  void loadPhotoUrl(id, variant).then((url) => {
+    if (!alive) return;
+    onUrl(url);
+    if (url) return;
+    off = subscribe((changed) => {
+      if (!changed.has('photoData')) return;
+      void loadPhotoUrl(id, variant).then((u) => {
+        if (!alive || !u) return;
+        off?.();
+        off = undefined;
+        onUrl(u);
+      });
+    });
+  });
+  return () => {
+    alive = false;
+    off?.();
+  };
 }
 
 /** Gibt alle Bild-URLs frei (Abmelden/Kontowechsel – keine Bilder des vorherigen Kontos im Speicher). */

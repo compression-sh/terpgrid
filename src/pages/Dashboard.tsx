@@ -39,7 +39,7 @@ import { PhotoImg } from '../components/photos/PhotoImg';
 import { Card } from '../components/ui/Card';
 import { Chip, PhaseChip } from '../components/ui/Chip';
 import { EmptyState } from '../components/ui/EmptyState';
-import { overdue, upcoming } from '../lib/calendar';
+import { nextPerReminder, repeatLabel } from '../lib/calendar';
 import { fmtDateLong, fmtDateShort, fmtDateTime, relativeDay, today } from '../lib/dates';
 import { toggleReminderCompletion } from '../lib/db/repo';
 import { DASHBOARD_WIDGETS, type DashboardWidget, type GrowProject } from '../lib/db/types';
@@ -162,8 +162,7 @@ export function Dashboard() {
   const activeIds = new Set(activeGrows.map((g) => g.id));
   const trackedPlants = data.plants.filter((p) => activeIds.has(p.growId));
   const latestPhotos = useMemo(() => [...data.photos].sort((a, b) => b.takenAt.localeCompare(a.takenAt)).slice(0, 12), [data.photos]);
-  const next = upcoming(data.reminders, t, 14, 6);
-  const late = overdue(data.reminders, t, 14);
+  const nextRem = useMemo(() => nextPerReminder(data.reminders, t, 14), [data.reminders, t]);
   const recentJournal = [...data.journal].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
   const recentCalcs = [...data.calculations].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 4);
   const favorites = data.strains.filter((x) => x.favorite).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 5);
@@ -247,11 +246,11 @@ export function Dashboard() {
           </a>
         }
       >
-        {next.length === 0 && late.length === 0 ? (
+        {nextRem.length === 0 ? (
           <EmptyState compact title="Nichts geplant" text="Eigene Erinnerungen erscheinen hier und im Kalender." action={<a href={href('calendar?new=1')} className="btn-ghost"><Plus className="size-4" /> Erinnerung</a>} />
         ) : (
           <ul className="space-y-1.5">
-            {[...late.map((o) => ({ ...o, late: true })), ...next.map((o) => ({ ...o, late: false }))].slice(0, 7).map((o) => (
+            {nextRem.slice(0, 6).map((o) => (
               <li key={`${o.reminder.id}-${o.date}`} className="flex items-center gap-3 rounded-lg px-1 py-1.5">
                 <button
                   type="button"
@@ -263,9 +262,11 @@ export function Dashboard() {
                 </button>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[13px] text-ink-100">{o.reminder.title}</div>
-                  <div className="text-[11px] text-ink-500">
-                    {REMINDER_CATEGORY_LABEL[o.reminder.category]}
+                  <div className="truncate text-[11px] text-ink-500">
+                    {REMINDER_CATEGORY_LABEL[o.reminder.category] ?? 'Sonstiges'}
+                    {repeatLabel(o.reminder.repeat) && ` · ${repeatLabel(o.reminder.repeat)}`}
                     {o.reminder.growId && ` · ${lookup.grow.get(o.reminder.growId)?.name ?? ''}`}
+                    {o.more > 0 && ` · +${o.more} weitere in 14 Tagen`}
                   </div>
                 </div>
                 <span className={`shrink-0 text-[11px] ${o.late ? 'text-amber-300' : o.date === t ? 'text-leaf-300' : 'text-ink-400'}`}>{o.late ? `überfällig · ${fmtDateShort(o.date)}` : relativeDay(o.date, t)}</span>
@@ -452,7 +453,8 @@ export function Dashboard() {
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink-50 sm:text-[28px]">{greeting()}</h1>
           <p className="mt-0.5 text-[13px] text-ink-400">
             {activeGrows.length ? `${activeGrows.length} aktive${activeGrows.length === 1 ? 'r Grow' : ' Grows'} · ${trackedPlants.length} ${trackedPlants.length === 1 ? 'Pflanze' : 'Pflanzen'}` : 'Deine Übersicht'}
-            {next.length > 0 && ` · ${next.length} anstehende Aufgabe${next.length === 1 ? '' : 'n'} (14 Tage)`}
+            {nextRem.length > 0 && ` · ${nextRem.length} Erinnerung${nextRem.length === 1 ? '' : 'en'} in 14 Tagen`}
+            {nextRem.some((o) => o.late) && `, ${nextRem.filter((o) => o.late).length} überfällig`}
           </p>
         </div>
         {!isEmpty && (

@@ -50,6 +50,12 @@ describe('Bereinigung', () => {
     expect(plausibleName('About Auto MassassinMonster Mass')).toBe(false);
     expect(plausibleName('Titan F1 AutofloweringCalming, Focus, Physically Relaxing, Uplifting70 - 75 days')).toBe(false);
   });
+  it('Aroma- und Werbetexte sind keine Eltern (Parser v3)', () => {
+    for (const bad of ['with hints of cream', 'pastry', 'sweet', 'skunky aromas', 'pungent fuel notes', 'earthy and spicy undertones', 'creamy Gelato #41', 'Citrus Notes For A Refined Experience', "Neville's Haze exclusively with us", 'euphoria with our quality seeds', 'Sweetness Of Mango'])
+      expect(plausibleName(bad), bad).toBe(false);
+    for (const ok of ['Fruity Pebbles OG', 'Sour Cream', 'Gorilla Glue #4', '4 Assed Monkey', 'RS-11', 'Pink Panty “X”', 'Cream D', 'Do-Si-Dos', 'G13', 'Afghani'])
+      expect(plausibleName(ok), ok).toBe(true);
+  });
 });
 
 describe('Zeilen-Validierung', () => {

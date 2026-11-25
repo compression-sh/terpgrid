@@ -60,7 +60,7 @@ export function ActiveGrowRow({ grow }: { grow: GrowProject }) {
   )[0];
   const doc = growCompleteness(grow, d, t);
   return (
-    <li className="group relative grid gap-3 rounded-2xl border border-white/[0.06] bg-ink-900/60 p-3 transition-colors hover:border-white/[0.12] sm:grid-cols-[6.5rem_minmax(0,1fr)_auto] sm:items-center sm:gap-4">
+    <li className="group relative grid grid-cols-[minmax(0,1fr)] gap-3 rounded-2xl border border-white/[0.06] bg-ink-900/60 p-3 transition-colors hover:border-white/[0.12] sm:grid-cols-[6.5rem_minmax(0,1fr)_auto] sm:items-center sm:gap-4">
       <PhotoImg photoId={cover} alt="" className="hidden aspect-square w-full rounded-xl sm:block" />
       <div className="min-w-0 space-y-2">
         <div className="flex items-start justify-between gap-3">
@@ -97,7 +97,7 @@ export function ActiveGrowRow({ grow }: { grow: GrowProject }) {
           {chips.length > 0 && <span className="text-[10px] text-ink-500">zuletzt {relativeDay(d.activities.map((a) => a.date).sort().at(-1)!.slice(0, 10), t)}</span>}
         </div>
       </div>
-      <div className="relative z-10 flex items-center justify-between gap-3 border-t border-white/[0.05] pt-2.5 sm:flex-col sm:items-end sm:border-0 sm:pt-0">
+      <div className="relative z-10 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-t border-white/[0.05] pt-2.5 sm:flex-col sm:items-end sm:border-0 sm:pt-0">
         <Sparkline values={heights.slice(-12).map((p) => p.value)} label={`Höhe: ${heights.length} Messungen`} />
         <div className="flex items-center gap-1" role="img" title={doc.map((c) => `${c.label}: ${c.detail}`).join('\n')} aria-label={`Dokumentation: ${doc.map((c) => `${c.label} ${c.state === 'ok' ? 'vollständig' : c.state === 'partial' ? 'teilweise' : 'fehlt'}`).join(', ')}`}>
           {doc.map((c) => (

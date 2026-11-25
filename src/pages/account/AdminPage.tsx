@@ -32,7 +32,13 @@ interface SystemData {
   http: { uptimeSeconds: number; requestsTotal: number; window: { minutes: number; requests: number; p50Ms: number | null; p95Ms: number | null; p99Ms: number | null; serverErrorRate: number } };
   db: { ok: boolean; latencyMs?: number; sizeBytes?: number; connections?: number };
   schema: { applied: number; pending: string[]; unknown: string[] };
-  storage: { trashBlobs: number };
+  storage: { trashBlobs: number; userFilesBytes?: number };
+  catalog?: {
+    dataset: { version: string; importedAt: string; cultivars: number } | null;
+    claims: { active: number; expiringIn7d: number; expired: number; nextExpiry: string | null };
+    lastRun: { id: number; status: string; startedBy: string; startedAt: string; finishedAt: string | null; errors: number } | null;
+    status: 'unused' | 'ok' | 'due' | 'overdue';
+  };
   keys: { rotationsInProgress: number };
   tasks: { failures: Record<string, number>; lastFailure: string | null };
 }
@@ -174,7 +180,21 @@ export function AdminPage() {
               ['DB-Verbindungen', String(sys.db.connections ?? '–'), false],
               ['Schema', sys.schema.unknown.length ? 'neuer als Programm!' : sys.schema.pending.length ? `${sys.schema.pending.length} ausstehend` : `${sys.schema.applied} Migrationen, aktuell`, sys.schema.unknown.length + sys.schema.pending.length > 0],
               ['Speicher API (RSS)', formatBytes(sys.memory.rssBytes), false],
+              ['Nutzerdateien gesamt', sys.storage.userFilesBytes !== undefined ? formatBytes(sys.storage.userFilesBytes) : '–', false],
               ['Datei-Papierkorb', `${sys.storage.trashBlobs} Blobs`, false],
+              ['Sortenkatalog', sys.catalog?.dataset ? `${sys.catalog.dataset.cultivars.toLocaleString('de-DE')} Sorten · ${dt(sys.catalog.dataset.importedAt)}` : 'nicht importiert', !sys.catalog?.dataset],
+              [
+                'StrainAPI-Zwischenspeicher',
+                !sys.catalog || sys.catalog.status === 'unused'
+                  ? 'nicht genutzt'
+                  : sys.catalog.status === 'overdue'
+                    ? `${sys.catalog.claims.expired} Angaben abgelaufen – Aktualisierung lief nicht`
+                    : sys.catalog.status === 'due'
+                      ? `${sys.catalog.claims.expiringIn7d} laufen in 7 Tagen ab`
+                      : `${sys.catalog.claims.active} gültig · nächster Ablauf ${dt(sys.catalog.claims.nextExpiry)}`,
+                sys.catalog?.status === 'overdue',
+              ],
+              ['Letzter Anreicherungslauf', sys.catalog?.lastRun ? `#${sys.catalog.lastRun.id} ${sys.catalog.lastRun.status === 'done' ? 'fertig' : sys.catalog.lastRun.status === 'failed' ? 'fehlgeschlagen' : sys.catalog.lastRun.status} · ${dt(sys.catalog.lastRun.startedAt)}${sys.catalog.lastRun.startedBy === 'refresh' ? ' (Timer)' : ''}` : 'noch keiner', sys.catalog?.lastRun?.status === 'failed'],
               ['Schlüsselrotationen aktiv', String(sys.keys.rotationsInProgress), sys.keys.rotationsInProgress > 0],
               ['Hintergrundaufgaben', Object.keys(sys.tasks.failures).length ? `Fehler: ${Object.entries(sys.tasks.failures).map(([k, v]) => `${k} ${v}×`).join(', ')}` : 'ohne Fehler', Object.keys(sys.tasks.failures).length > 0],
               ['Version / Node', `${sys.version} · ${sys.node}`, false],

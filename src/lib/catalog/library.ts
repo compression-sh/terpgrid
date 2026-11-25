@@ -121,6 +121,10 @@ export interface LibCultivarDetail {
   children: LibCultivar[];
   childCount: number;
   sameName: LibCultivar[];
+  /** Sorten mit identischen dokumentierten Eltern (beide) */
+  siblings?: LibCultivar[];
+  /** Weitere Sorten desselben Breeders (meistgelistet zuerst) */
+  breederMore?: LibCultivar[];
   dataset?: { version: string; importedAt: string };
   attribution: LibAttribution;
 }
@@ -291,6 +295,16 @@ export function toCatalogStrain(c: LibCultivar): CatalogStrain {
       conflicts: c.conflicts,
     },
   };
+}
+
+/**
+ * Belegart einer Katalogangabe je Feld: „Breeder-Angabe“ nur, wenn ein Angebot aus dem Shop des Breeders
+ * genau dieses Feld enthält – sonst stammt der Wert von Händlern („Seedbank-Angabe“).
+ */
+export function listingEvidence(detail: Pick<LibCultivarDetail, 'cultivar' | 'listings'>, keys: (keyof LibValues)[]): 'breeder' | 'seedbank' {
+  const has = (v: unknown) => v !== undefined && v !== null && v !== '' && !(Array.isArray(v) && v.length === 0);
+  const own = detail.listings.filter((l) => l.seedBank.toLowerCase().replace(/[^a-z0-9]/g, '') === detail.cultivar.breeder.id);
+  return own.some((l) => keys.some((k) => has(l.values?.[k]))) ? 'breeder' : 'seedbank';
 }
 
 export const MATCH_LABEL: Record<MatchTier, string> = {

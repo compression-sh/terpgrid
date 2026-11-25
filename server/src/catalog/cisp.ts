@@ -22,7 +22,7 @@ export const CISP = {
   commit: '80fbe5d40fac8dda5120f50b946f069c4961f253',
   sha256: '469fb653819f0f97c29d17ca6e58451f3e4972da72424ab9ca6d1cd319d9103c',
   /** Version der Import-Regeln – eine neue Version erzwingt einen erneuten Import derselben Datei */
-  parserVersion: 2,
+  parserVersion: 3,
   changes: 'Von TERPGRID verändert: Zeichenkodierung bereinigt, unplausible Werte verworfen, Angebote je Breeder und Sorte gruppiert, Breeder-Schreibweisen zusammengeführt.',
 } as const;
 
@@ -202,6 +202,11 @@ export function plausibleName(s: string): boolean {
   if (s.split(/\s+/).length > 6) return false;
   if (/[%:!?;,]|https?:|\b(lineage|about|days?|thc|cbd|yield|genetics|flowering|gr\/m2|taste|aroma|effects?|flavou?rs?|smell|femini[sz]ed|autoflower\w*)\b/i.test(s)) return false;
   if (/[a-z][A-Z][a-z]/.test(s) && !/^Mc|^Mac/.test(s)) return false; // zusammengeklebte Wörter aus Shop-HTML
+  // Sortennamen beginnen mit Großbuchstabe oder Ziffer; ganz klein geschriebene Teile sind Beschreibungstext
+  // („with hints of cream“, „earthy“, „sweet strawberries“)
+  if (!/^["“'(]?[\p{Lu}\d]/u.test(s)) return false;
+  // Aroma- und Werbesprache aus Shop-Beschreibungen (auch groß geschrieben)
+  if (/\b(notes|aromas|hints?\s+of|undertones?|sweetness|experience|refined|exclusively|quality seeds|with us|for a)\b/i.test(s)) return false;
   return /[a-z]/i.test(s);
 }
 
@@ -307,7 +312,15 @@ export function parseRow(cells: string[], h: Header, line: number): Listing | Ro
   for (const k of ['parent_1_display', 'parent_2_display']) {
     const raw = cleanText(g(k));
     if (!raw) continue;
-    const nm = titleCase(raw.replace(/\s+strain$/i, '').trim());
+    // HTML-Reste („</strong> Name“) und lose Klammern/Sternchen am Rand entfernen, bevor geprüft wird
+    const nm = titleCase(
+      raw
+        .replace(/<\/?[a-z][^>]*>/gi, ' ')
+        .replace(/^[\s[(*-]+|[\s\])*]+$/g, '')
+        .replace(/\s+strain$/i, '')
+        .replace(/\s+/g, ' ')
+        .trim(),
+    );
     // „Unknown …“ ist ein unbekannter Elternteil, keine Sorte
     if (/^unknown\b/i.test(nm)) parents.push({ name: nm, slug: '', unknown: true });
     else if (plausibleName(nm)) parents.push({ name: nm, slug: slugify(nm) });

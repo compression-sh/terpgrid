@@ -91,6 +91,10 @@ describe.skipIf(!hasDb)('Lokaler Katalog (CI-Strains-Pro)', () => {
     expect(d.listings.length).toBeGreaterThan(0);
     expect(d.listings.every((l: { sourceUrl: string }) => l.sourceUrl.startsWith('https://'))).toBe(true);
     expect(d.sameName.every((s: { breeder: { id: string } }) => s.breeder.id !== d.cultivar.breeder.id || s.id !== id)).toBe(true);
+    // Verwandte Sorten: gleicher Breeder, keine Selbstreferenz; Geschwister nur bei identischen dokumentierten Eltern
+    expect(Array.isArray(d.breederMore) && d.breederMore.every((x: { id: string; breeder: { id: string } }) => x.id !== id && x.breeder.id === d.cultivar.breeder.id)).toBe(true);
+    expect(Array.isArray(d.siblings)).toBe(true);
+    for (const sib of d.siblings as { parents: { slug: string }[] }[]) expect(new Set(sib.parents.map((p) => p.slug))).toEqual(new Set(d.cultivar.parents.map((p: { slug: string }) => p.slug)));
     expect((await c.get('/api/catalog/local/cultivars/gibt-es-nicht')).status).toBe(404);
     expect((await c.get('/api/catalog/local/cultivars/UNGUELTIG!')).status).toBe(400);
   });

@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { GLOSSARY, searchGlossary } from '../academy/glossary';
 import { LEARNING_PATHS, pathProgress } from '../academy/paths';
@@ -30,6 +32,19 @@ describe('Academy', () => {
     }
   });
 
+  it('In-App-Links der Artikel zeigen auf vorhandene Bereiche', () => {
+    const app = readFileSync(resolve(__dirname, '../../App.tsx'), 'utf8');
+    const top = new Set([...app.matchAll(/case '([a-z-]+)':/g)].map((m) => m[1]));
+    const discover = new Set(['learn', 'terpenes', 'genetics', 'cultivar', 'breeders', 'strain', 'live']);
+    for (const a of KB_ARTICLES)
+      for (const sec of a.sections)
+        for (const l of sec.links ?? []) {
+          const [first, second] = l.to.split('?')[0]!.split('/');
+          expect(top.has(first!), `${a.id} → ${l.to}`).toBe(true);
+          if (first === 'discover' && second) expect(discover.has(second), `${a.id} → ${l.to}`).toBe(true);
+        }
+  });
+
   it('Lernpfade und Glossar verweisen nur auf vorhandene Artikel', () => {
     for (const p of LEARNING_PATHS) for (const id of p.articles) expect(ids.has(id), `${p.id} → ${id}`).toBe(true);
     for (const g of GLOSSARY) expect(ids.has(g.article), `${g.id} → ${g.article}`).toBe(true);
@@ -55,6 +70,11 @@ describe('Academy', () => {
   it('Suche findet neue Leitfäden', () => {
     expect(kbSearch('Narbe')[0]?.id).toBe('erntezeitpunkt');
     expect(kbSearch('VPD').map((a) => a.id)).toContain('klima-vpd');
+  });
+
+  it('jeder Artikel trägt einen Prüfstatus; ältere Artikel sind nicht als Volltext-geprüft ausgewiesen', () => {
+    for (const a of KB_ARTICLES) expect(a.review, a.id).toBeDefined();
+    for (const id of ['wirkungsdauer', 'toleranz', 'konsumformen', 'risikominimierung', 'thc-cbd']) expect(KB_ARTICLES.find((a) => a.id === id)!.review!.level).toBe('bibliografisch');
   });
 
   it('Academy-Quellen sind DOI-Links', () => {

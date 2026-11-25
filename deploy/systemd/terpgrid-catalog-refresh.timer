@@ -1,0 +1,10 @@
+[Unit]
+Description=TERPGRID Sortenkatalog-Aktualisierung täglich prüfen (ruft nur bei Bedarf ab)
+
+[Timer]
+OnCalendar=*-*-* 05:23:00
+RandomizedDelaySec=30m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

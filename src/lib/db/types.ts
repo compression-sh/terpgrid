@@ -309,6 +309,12 @@ export const SPACE_KINDS = ['tent', 'room', 'greenhouse', 'outdoor', 'zone'] as 
 export type SpaceKind = (typeof SPACE_KINDS)[number];
 export type InventoryCategory = (typeof INVENTORY_CATEGORIES)[number];
 
+export interface QuantityChange {
+  at: Timestamp;
+  from: number;
+  to: number;
+}
+
 export interface InventoryItem extends BaseRecord {
   name: string;
   category: InventoryCategory;
@@ -334,6 +340,8 @@ export interface InventoryItem extends BaseRecord {
   /** Standort: ID eines Grow-Bereichs (Inventar-Eintrag der Kategorie „space“) */
   spaceId?: string;
   maintenanceLog?: { date: DateString; note: string }[];
+  /** Historie der Mengenänderungen (neueste zuletzt, höchstens 50 Einträge) */
+  quantityLog?: QuantityChange[];
   tags?: string[];
   archived?: boolean;
 }

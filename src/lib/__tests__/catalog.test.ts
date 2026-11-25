@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { listingEvidence } from '../catalog/library';
 import * as CL from '../catalog/cannalib';
 import { namesIn, parseGenetics } from '../catalog/genetics';
 import { decodeEntities, htmlToBlocks } from '../catalog/html';
@@ -409,5 +410,32 @@ describe('Abstammungsgraph', () => {
     for (const p of pos.values()) cols.set(p.x, [...(cols.get(p.x) ?? []), p.y]);
     for (const ys of cols.values()) expect(new Set(ys).size).toBe(ys.length);
     expect(pos.get(g.nodes[0]!.id)!.x).toBe(0);
+  });
+});
+
+describe('Belegart je Feld', () => {
+  const detail = {
+    cultivar: { breeder: { id: 'barneysfarm', name: "Barney's Farm" } },
+    listings: [
+      { seedBank: "Barney's Farm", values: { thc: { min: 20, max: 22 }, terpenes: [] } },
+      { seedBank: 'Seedsman', values: { terpenes: ['Myrcene'], flavors: ['citrus'] } },
+    ],
+  } as unknown as Parameters<typeof listingEvidence>[0];
+  it('Breeder-Angabe nur, wenn das Breeder-Angebot genau dieses Feld liefert', () => {
+    expect(listingEvidence(detail, ['thc'])).toBe('breeder');
+    expect(listingEvidence(detail, ['terpenes'])).toBe('seedbank'); // leere Liste beim Breeder zählt nicht
+    expect(listingEvidence(detail, ['flavors'])).toBe('seedbank');
+  });
+});
+
+describe('Atlas: Stoffklasse passt zur PubChem-Summenformel', () => {
+  it('Monoterpen(oid)e haben 10 C, Sesquiterpen(oid)e 15 C; Terpenoide enthalten O, Kohlenwasserstoffe nicht', async () => {
+    const { TERPENES, terpeneChem } = await import('../catalog/terpenes');
+    for (const t of TERPENES) {
+      const f = terpeneChem(t.id)!.formula;
+      const c = Number(/C(\d+)/.exec(f)![1]);
+      expect(c, t.id).toBe(t.className.startsWith('Sesqui') ? 15 : 10);
+      expect(/O/.test(f), t.id).toBe(/oid/.test(t.className));
+    }
   });
 });

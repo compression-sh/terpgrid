@@ -1,3 +1,4 @@
+import { withQuantityChange } from '../../lib/inventory';
 import { useIsServerMode } from '../../app/auth';
 import { parseTags } from '../../lib/grow/equipment';
 import { Plus, Trash2 } from 'lucide-react';
@@ -333,6 +334,7 @@ export function InventoryFormModal({ open, onClose, item, defaults }: { open: bo
       spaceId: category !== 'space' ? spaceId || undefined : undefined,
       tags: parseTags(tags),
       archived: archived || undefined,
+      quantityLog: item ? withQuantityChange(item.quantityLog, item.quantity, toOptionalNumber(quantity), new Date().toISOString()) : undefined,
       maintenanceLog: item?.maintenanceLog,
     };
     try {

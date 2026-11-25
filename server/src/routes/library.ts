@@ -175,7 +175,7 @@ export function libraryRoutes(ctx: AppContext) {
     app.get<{ Params: { id: string } }>('/api/catalog/local/cultivars/:id', async (req) => {
       requireSession(req);
       if (!ID_RE.test(req.params.id)) throw new HttpError(400, 'Ungültige Kennung');
-      const { rows } = await ctx.db.query<CultivarRow & { name_slug: string }>(`SELECT ${SELECT_CULTIVAR}, c.name_slug FROM catalog_cultivars c JOIN catalog_breeders b ON b.id = c.breeder_id WHERE c.id = $1`, [req.params.id]);
+      const { rows } = await ctx.db.query<CultivarRow & { name_slug: string; parent_slugs: string[] }>(`SELECT ${SELECT_CULTIVAR}, c.name_slug, c.parent_slugs FROM catalog_cultivars c JOIN catalog_breeders b ON b.id = c.breeder_id WHERE c.id = $1`, [req.params.id]);
       const c = rows[0];
       if (!c) throw new HttpError(404, 'Sorte nicht im Katalog');
       const listings = await ctx.db.query(
@@ -200,6 +200,21 @@ export function libraryRoutes(ctx: AppContext) {
       const sameName = await ctx.db.query<CultivarRow>(
         `SELECT ${SELECT_CULTIVAR} FROM catalog_cultivars c JOIN catalog_breeders b ON b.id = c.breeder_id WHERE c.name_slug = $1 AND c.id <> $2 ORDER BY b.name, c.id LIMIT 30`,
         [c.name_slug, c.id],
+      );
+      // Gleiche dokumentierte Elternangaben (beide Eltern identisch, Reihenfolge egal) – keine Verwandtschaft geraten
+      const siblings =
+        c.parent_slugs.length === 2
+          ? await ctx.db.query<CultivarRow>(
+              `SELECT ${SELECT_CULTIVAR} FROM catalog_cultivars c JOIN catalog_breeders b ON b.id = c.breeder_id
+                WHERE c.parent_slugs @> $1::text[] AND cardinality(c.parent_slugs) = 2 AND c.id <> $2 AND c.name_slug <> $3
+                ORDER BY c.listing_count DESC, c.name_lower, c.id LIMIT 12`,
+              [c.parent_slugs, c.id, c.name_slug],
+            )
+          : { rows: [] as CultivarRow[] };
+      const breederMore = await ctx.db.query<CultivarRow>(
+        `SELECT ${SELECT_CULTIVAR} FROM catalog_cultivars c JOIN catalog_breeders b ON b.id = c.breeder_id
+          WHERE c.breeder_id = $1 AND c.id <> $2 ORDER BY c.listing_count DESC, c.name_lower, c.id LIMIT 8`,
+        [c.breeder_id, c.id],
       );
       const imp = await activeImport(ctx.db);
       // Angaben weiterer Quellen – nur freigegebene, nicht abgelaufene (Cache gemäß Nutzungsbedingungen)
@@ -236,6 +251,8 @@ export function libraryRoutes(ctx: AppContext) {
         children: children.rows.map((r) => cultivarOut(r)),
         childCount: Number(childCount.rows[0]?.n ?? 0),
         sameName: sameName.rows.map((r) => cultivarOut(r)),
+        siblings: siblings.rows.map((r) => cultivarOut(r)),
+        breederMore: breederMore.rows.map((r) => cultivarOut(r)),
         dataset: imp ? { version: imp.version, importedAt: imp.imported_at } : undefined,
         attribution,
       };

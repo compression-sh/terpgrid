@@ -1,5 +1,35 @@
 # Änderungsprotokoll
 
+## 5.3.0-rc.1 – 25.11.2026 (Release-Kandidat, nicht veröffentlicht)
+
+Phase 5.3: Premium Experience, Feature-Integration und Produktionsqualität. Keine Datenbank-Migration; neue Felder sind
+optionale Teile bestehender, verschlüsselter Datensätze. Baut auf den Korrekturen aus PR #7 auf.
+
+### Neu
+- **Insights als persönlicher Daten-Explorer:** Zeitraum- und Grow-Filter für alle Karten, CSV-Exporte (Messwerte,
+  Ausgaben, Journal, Laborberichte; Excel-tauglich), Vergleichstabelle eigener Laborberichte ohne aufgefüllte Lücken.
+- **Monitoring:** Systemansicht zeigt Sortenkatalog (Version, Stand), StrainAPI-Zwischenspeicher (gültig, bald/abgelaufen),
+  letzten Anreicherungslauf und die gesamte Dateibelegung.
+- **Sortenseite:** „Gleiche Elternangaben“ und „Weitere Sorten von …“ – nur aus dokumentierten Daten, keine abgeleitete Verwandtschaft.
+- **Academy:** Prüfstatus je Artikel (Volltext, teilweise, bibliografisch) mit Hinweis auf ausstehende externe Fachprüfung.
+- **Terpen-Atlas:** chemische Systematik (Mono-/Sesquiterpene und Terpenoide nach funktioneller Gruppe).
+- **Sammlung:** Mengenverlauf je Eintrag und Filter nach Tags.
+- **Pflanzenprofil:** Phänotyp-Notizen aus Experimenten direkt sichtbar; lange Verläufe werden schrittweise geladen.
+
+### Verbessert
+- Dashboard-Erinnerungen je Serie mit Rhythmus statt mehrfacher Einträge derselben Erinnerung.
+- Journal mobil: Suche immer sichtbar, weitere Filter einklappbar, Monatsgruppen.
+- Seitenleiste auf niedrigen Bildschirmen nicht mehr abgeschnitten.
+- Mobil: kein horizontaler Überlauf bei 360 px; Touch-Ziele in Atlas und Academy mindestens 24 px.
+- **CISP-Parser v3:** Aroma- und Werbetext wird nicht mehr als Elternsorte übernommen (auffällige Angaben 388 → 4).
+  Nach dem Upgrade `./import-catalog.sh` ausführen.
+
+### Korrigiert
+- Eine einzelne Ansicht mit fehlerhaftem Datensatz legt nicht mehr die ganze App lahm (Fehlergrenze je Seite).
+- Unbekannte oder beschädigte Wiederholungsregeln im Kalender führten zu einem leeren Bildschirm.
+- Fotos erschienen nach der Anmeldung auf einem neuen Gerät erst nach einem Neuladen.
+- Academy: Aussagen älterer Artikel (Genetik, Cannabinoide, Begriffe) gegen die Quellen geprüft und korrigiert; PubChem-Beleg für THC/THCA-Umrechnung.
+
 ## 5.2.0-rc.1 – 24.11.2026 (Release-Kandidat, nicht veröffentlicht)
 
 Cannabis 101 & Terpen-Atlas, Expansion 2.1. Migration 006 (nur Katalog-Metadaten); Nutzerdaten unverändert.
@@ -11,7 +41,14 @@ Cannabis 101 & Terpen-Atlas, Expansion 2.1. Migration 006 (nur Katalog-Metadaten
 - **Terpen-Atlas 3.0:** 27 Verbindungen mit PubChem-Identität, 2D-Strukturformel, belegtem Geruch, Cannabis-Beleg aus geprüfter Literatur, Sammelnamen ohne Isomer-Zuordnung, Katalogsorten je Terpen, Vergleich, Filter.
 - **Academy:** 17 Kategorien, 18 neue Leitfäden (30 Artikel), Lernpfade, Glossar (auch in Strg+K), interaktive Diagramme (VPD, DLI, Lebenszyklus, Narbenstufen), Kontexthilfe in Growlogs, Laborberichten und Grow-Vergleich.
 
+### Nach PR-Prüfung ergänzt
+- Gedrosselte Aktualisierung abgelaufener StrainAPI-Angaben (`enrich-catalog --refresh`, `deploy/refresh-catalog.sh`, optionaler systemd-Timer, nicht automatisch aktiv).
+
 ### Korrigiert
+- Belegart Breeder/Seedbank je Feld statt je Sorte.
+- Quellenangabe Smith et al. (2022): PLoS One statt Nature Plants (falsche DOI aus Phase 5).
+- Kontexthilfe auf schmalen Bildschirmen abgeschnitten.
+- Beim erneuten Abruf entfallen Felder, die die Quelle nicht mehr liefert.
 - „Pinen“ ohne Isomerangabe wurde als α-Pinen gedeutet; jetzt Sammelname.
 - Lesefortschritt erreicht am Seitenende 100 %.
 - StrainAPI-Fotos werden nicht übernommen (Rechte und Zuordnung nicht belegt).

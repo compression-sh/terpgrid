@@ -17,7 +17,7 @@ import { readFileSync } from 'node:fs';
 import { CISP, cispUrl, parseDataset } from './catalog/cisp.js';
 import { importDataset } from './catalog/importer.js';
 import { catalogAudit } from './catalog/audit.js';
-import { MAX_BATCH, PROVIDERS, type Provider, enrichBatch, enrichFromStrainApiIndex, purgeExpiredClaims } from './catalog/enrich.js';
+import { MAX_BATCH, PROVIDERS, type Provider, enrichBatch, enrichFromStrainApiIndex, purgeExpiredClaims, refreshStrainApi } from './catalog/enrich.js';
 import pg from 'pg';
 
 const [cmd, ...args] = process.argv.slice(2);
@@ -48,6 +48,9 @@ function help(): never {
                               Kleine Charge des Katalogs aus einer weiteren Quelle anreichern (max. 50 Sorten,
                               Ratenlimit, nur Name+Breeder-Treffer). --index: StrainAPI-Liste (8 Seiten) im Speicher
                               abgleichen, nur Treffer speichern. Kein Spiegeln der Quelle (Nutzungsbedingungen).
+  enrich-catalog --provider strainapi --refresh [--within-days 7] [--force]
+                              Gedrosselte Aktualisierung (für einen täglichen Timer): ruft nur ab, wenn Angaben
+                              in N Tagen ablaufen und der letzte Abruf mindestens 20 h zurückliegt.
   schema-status               Schemastand prüfen (Exit 0 = passend, 3 = DB neuer als Programm, 4 = Migration ausstehend)`);
   process.exit(cmd ? 1 : 0);
 }
@@ -75,6 +78,19 @@ async function main() {
       if (!provider || !(provider in PROVIDERS)) throw new Error('--provider strainapi|findmyseeds angeben');
       const limit = Math.min(MAX_BATCH, Number(opt('--limit') ?? 10) || 10);
       const pool = createPool(c.migrateDatabaseUrl, 2);
+      if (args.includes('--refresh')) {
+        if (provider !== 'strainapi') throw new Error('--refresh gibt es nur für strainapi');
+        try {
+          const r = await refreshStrainApi(pool, { withinDays: Number(opt('--within-days') ?? 7) || 7, force: args.includes('--force'), log: (m) => console.log(m) });
+          const why = { run: 'abgerufen', 'nothing-due': 'nichts fällig', 'too-soon': 'letzter Abruf zu kurz her' }[r.action];
+          console.log(`Aktualisierung: ${why} · ${r.expiring} Angaben laufen bald ab · letzter Abruf ${r.lastRunAt ?? '–'} · ${r.purged} abgelaufene entfernt`);
+          if (r.run) console.log(`Lauf ${r.run.runId}: ${r.run.processed} Datensätze · ${r.run.matched} exakt · ${r.run.claims} Angaben · Fehler ${r.run.errors.length}`);
+          if (r.run && r.run.errors.length) process.exitCode = 1;
+        } finally {
+          await pool.end();
+        }
+        return;
+      }
       try {
         const purged = await purgeExpiredClaims(pool);
         if (purged) console.log(`${purged} abgelaufene Angaben entfernt (Cache-Pflege).`);
