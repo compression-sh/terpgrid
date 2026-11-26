@@ -172,9 +172,10 @@ sudo ./rollback.sh 4.0.0-rc.1      # auf eine bestimmte, lokal vorhandene Versio
 
 `rollback.sh` prüft mit dem Programm der Zielversion, ob das Schema passt. Ist die Datenbank neuer, bricht es ab und verlangt einen Restore:
 
-1. In `.env` `TERPGRID_VERSION` auf die Zielversion setzen.
-2. `backup/restore.sh <snapshot-vor-dem-upgrade>` (der `migrate`-Job der Zielversion läuft dabei mit).
-3. Änderungen, die nach dem Upgrade gemacht wurden, sind danach nicht mehr vorhanden.
+1. `backup/restore.sh --version <zielversion> <snapshot-vor-dem-upgrade>` – stellt den Snapshot wieder her und startet direkt mit der Zielversion (deren `migrate`-Job läuft dabei mit). Ab 5.7; früher: vorher `TERPGRID_VERSION` in `.env` von Hand setzen.
+2. Änderungen, die nach dem Upgrade gemacht wurden, sind danach nicht mehr vorhanden.
+
+Wichtig: Ohne `--version` (bzw. ohne vorher geänderte `.env`) startet die aktuelle Version und wendet ihre Migrationen sofort wieder an – der Rollback bleibt dann blockiert (in 5.7 per Notfalltest nachgewiesen und behoben).
 
 Getestet: Rollback 4.0.0-rc.1 → 3.0.0 auf genau diesem Weg (Schema wieder 001, alle Daten von 3.0.0 entschlüsselt). Versionen vor 4.0 kennen `schema-status` nicht; `rollback.sh` bricht dann sicher ab – Rollback nur per Restore wie oben. Ein Downgrade-Skript für Migrationen gibt es bewusst nicht.
 

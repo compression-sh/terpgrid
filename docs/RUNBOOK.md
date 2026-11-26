@@ -47,8 +47,7 @@ docker compose exec api node dist/cli.js schema-status
 Meldet es „Datenbank enthält Migrationen, die … nicht kennt“:
 
 ```bash
-sed -i "s/^TERPGRID_VERSION=.*/TERPGRID_VERSION=<alte-version>/" .env
-backup/restore.sh <snapshot-von-vor-dem-upgrade>     # upgrade.sh hat ihn direkt vor dem Upgrade erstellt
+backup/restore.sh --version <alte-version> <snapshot-von-vor-dem-upgrade>   # upgrade.sh hat ihn direkt vor dem Upgrade erstellt
 ```
 
 Änderungen nach dem Upgrade gehen dabei verloren.
