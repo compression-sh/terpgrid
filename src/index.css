@@ -191,6 +191,55 @@ input[type='range'].slider:active::-webkit-slider-thumb {
   transition: outline-color 0.6s;
 }
 
+/* Mobil (Phase 5.6): kein Zoom beim Fokus auf iOS (Schrift ≥ 16 px auf Touch-Geräten),
+   kein Gummiband-Durchscrollen hinter Bottom Sheets, ruhige Tap-Hervorhebung. */
+html {
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+@media (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select,
+  textarea {
+    font-size: max(16px, 1em) !important;
+  }
+}
+/* Installierte App (Standalone): Kopfzeile unter der Statusleiste bzw. Notch */
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+.sheet-scroll {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+@media (display-mode: standalone) {
+  body {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  input,
+  textarea,
+  [contenteditable],
+  main p,
+  main li,
+  main td,
+  main dd,
+  main pre,
+  main code,
+  article {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
+/* App-Einstellung „Bewegung reduzieren“ (zusätzlich zur Systemeinstellung) */
+html[data-reduce-motion='1'] *,
+html[data-reduce-motion='1'] *::before,
+html[data-reduce-motion='1'] *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

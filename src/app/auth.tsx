@@ -13,8 +13,9 @@ import { type ReactNode, createContext, useCallback, useContext, useEffect, useM
 import { clearPhotoUrlCache } from '../components/photos/usePhotoUrl';
 import { setCatalogProxy } from '../lib/catalog/endpoint';
 import { clearAccountLocalStorage, isSharedDevice } from '../lib/device';
+import { isOfflineEnabled, pendingSpaceOps, purgeStaleAccountData, setOfflineEnabled } from '../lib/offline';
 import { resetSpaceSessions } from '../lib/collab/spaceSync';
-import { DB_NAME, closeDatabase, deleteDatabase, getAll, setSyncTracking, selectDatabase } from '../lib/db/database';
+import { DB_NAME, closeDatabase, deleteDatabase, getAll, requestPersistentStorage, setSyncTracking, selectDatabase } from '../lib/db/database';
 import { type AuthConfig, type ServerUser, type SessionResponse, ApiError, api, setCsrfToken, setOnUnauthorized } from '../lib/server/api';
 import { loginWithPasskey } from '../lib/server/passkeys';
 import { SyncEngine, type SyncStatus } from '../lib/sync/engine';
@@ -49,6 +50,9 @@ interface AuthApi {
   enter(user: ServerUser): void;
   recover(login: string, recoveryCode: string, newPassword: string): Promise<{ remainingRecoveryCodes: number }>;
   logout(opts?: { wipeLocal?: boolean }): Promise<void>;
+  /** Offline-Nutzung für das angemeldete Konto auf diesem Gerät (Opt-in) */
+  offlineEnabled: boolean;
+  setOfflineMode(on: boolean): void;
   continueOffline(): void;
   refresh(): Promise<void>;
   reauth(password: string, code?: string): Promise<void>;
@@ -83,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const engineRef = useRef<SyncEngine | null>(null);
   const [engine, setEngine] = useState<SyncEngine | null>(null);
   const configRef = useRef<AuthConfig | null>(null);
+  const [offlineEnabled, setOfflineEnabledState] = useState(false);
 
   const stopEngine = useCallback(() => {
     engineRef.current?.stop();
@@ -98,12 +103,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       selectDatabase(accountDbName(user.accountKey));
       setSyncTracking(true);
       setCatalogProxy(window.location.origin);
+      const dbName = accountDbName(user.accountKey);
       const la = { accountKey: user.accountKey, loginName: user.loginName, displayName: user.displayName };
-      // Auf geteilten Geräten keine Kennung merken (kein Offline-Fortsetzen)
-      if (!isSharedDevice()) {
+      // Offline-Fortsetzen nur mit ausdrücklicher Offline-Freigabe (nie auf geteilten Geräten)
+      const off = isOfflineEnabled(dbName);
+      setOfflineEnabledState(off);
+      if (off) {
         writeJson(LAST_ACCOUNT_KEY, la);
         setLastAccount(la);
+        void requestPersistentStorage();
+      } else {
+        writeJson(LAST_ACCOUNT_KEY, null);
+        setLastAccount(null);
       }
+      // Kontowechsel: Arbeitskopien anderer Konten ohne Freigabe und ohne Ausstehendes entfernen
+      void purgeStaleAccountData(dbName);
       const e = new SyncEngine();
       engineRef.current = e;
       setEngine(e);
@@ -153,6 +167,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       activate(s.user, false, s.reauthUntil);
     } catch {
       toAnonymous(false);
+      // Server erreichbar, keine Sitzung: nicht freigegebene Arbeitskopien ohne Ausstehendes entfernen
+      void purgeStaleAccountData(null);
     }
   }, [activate, toAnonymous]);
 
@@ -233,11 +249,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(
     async (opts: { wipeLocal?: boolean } = {}) => {
       const current = state.kind === 'authenticated' ? state.user : null;
+      // Ohne Offline-Freigabe wird die Arbeitskopie gelöscht – aber nie mit ausstehenden Änderungen
+      const keepForOffline = current ? isOfflineEnabled(accountDbName(current.accountKey)) : true;
+      const pending = current ? (await pendingChanges()) + pendingSpaceOps(current.accountKey) : 0;
+      const wipe = !!current && (opts.wipeLocal === true || isSharedDevice() || (!keepForOffline && pending === 0 && opts.wipeLocal !== false));
       await api('POST', '/api/auth/logout').catch(() => {});
       stopEngine();
       // Zwischenspeicher gemeinsamer Bereiche (nur im Arbeitsspeicher) verwerfen
       resetSpaceSessions();
-      if ((opts.wipeLocal || isSharedDevice()) && current) {
+      if (wipe && current) {
         selectDatabase(accountDbName(current.accountKey));
         await deleteDatabase().catch(() => {});
         clearAccountLocalStorage(current.accountKey);
@@ -257,6 +277,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [state, stopEngine, toAnonymous],
   );
 
+  const setOfflineMode = useCallback(
+    (on: boolean) => {
+      if (state.kind !== 'authenticated') return;
+      const u = state.user;
+      const dbName = accountDbName(u.accountKey);
+      setOfflineEnabled(dbName, on && !isSharedDevice());
+      const enabled = isOfflineEnabled(dbName);
+      setOfflineEnabledState(enabled);
+      if (enabled) {
+        const la = { accountKey: u.accountKey, loginName: u.loginName, displayName: u.displayName };
+        writeJson(LAST_ACCOUNT_KEY, la);
+        setLastAccount(la);
+        void requestPersistentStorage();
+      } else {
+        writeJson(LAST_ACCOUNT_KEY, null);
+        setLastAccount(null);
+      }
+    },
+    [state],
+  );
+
   const continueOffline = useCallback(() => {
     if (!lastAccount) return;
     activate({ accountKey: lastAccount.accountKey, loginName: lastAccount.loginName, displayName: lastAccount.displayName, role: 'user', totpEnabled: false, loginKind: 'username' }, true, null);
@@ -272,8 +313,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<AuthApi>(
-    () => ({ state, sync, engine, lastAccount, login, completeMfa, loginPasskey, register, enter, recover, logout, continueOffline, refresh, reauth, setUser }),
-    [state, sync, engine, lastAccount, login, completeMfa, loginPasskey, register, enter, recover, logout, continueOffline, refresh, reauth, setUser],
+    () => ({ state, sync, engine, lastAccount, login, completeMfa, loginPasskey, register, enter, recover, logout, offlineEnabled, setOfflineMode, continueOffline, refresh, reauth, setUser }),
+    [state, sync, engine, lastAccount, login, completeMfa, loginPasskey, register, enter, recover, logout, offlineEnabled, setOfflineMode, continueOffline, refresh, reauth, setUser],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

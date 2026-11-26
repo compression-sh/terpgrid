@@ -48,7 +48,7 @@ export function Modal({ open, onClose, title, subtitle, children, footer, size =
           <X className="size-4" />
         </button>
       </header>
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">{children}</div>
+      <div className={`sheet-scroll min-h-0 flex-1 overflow-y-auto px-5 py-5 ${footer ? '' : 'pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-5'}`}>{children}</div>
       {footer && (
         <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-white/[0.06] px-5 py-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom))] sm:pb-3.5">
           {footer}

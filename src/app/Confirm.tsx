@@ -5,6 +5,7 @@ interface ConfirmOptions {
   title: string;
   message: ReactNode;
   confirmLabel?: string;
+  cancelLabel?: string;
   tone?: 'danger' | 'default';
 }
 
@@ -37,7 +38,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         footer={
           <>
             <button type="button" className="btn-ghost" onClick={() => close(false)}>
-              Abbrechen
+              {opts?.cancelLabel ?? 'Abbrechen'}
             </button>
             <button
               type="button"

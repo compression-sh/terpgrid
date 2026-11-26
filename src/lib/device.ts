@@ -21,6 +21,8 @@ export function setSharedDevice(on: boolean): void {
     if (on) {
       localStorage.setItem(SHARED_KEY, '1');
       localStorage.removeItem('terpgrid.lastAccount');
+      // Geteiltes Gerät erzwingt „Offline-Nutzung aus“ für alle Konten
+      localStorage.removeItem('terpgrid.device.offlineDbs');
     } else localStorage.removeItem(SHARED_KEY);
   } catch {
     /* ignorieren */

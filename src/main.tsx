@@ -4,6 +4,10 @@ import '@fontsource-variable/inter';
 import '@fontsource-variable/jetbrains-mono';
 import './index.css';
 import App from './App';
+import { initPwa } from './lib/pwa/pwa';
+import { applyReduceMotion } from './lib/pwa/prefs';
+
+applyReduceMotion();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -12,8 +16,5 @@ createRoot(document.getElementById('root')!).render(
 );
 
 // PWA: nur die öffentliche App-Hülle wird gecacht (siehe public/sw.js) – nie API-Antworten.
-if (import.meta.env.PROD && 'serviceWorker' in navigator && window.isSecureContext) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
-  });
-}
+// Updates werden erst nach Bestätigung aktiviert (src/lib/pwa/pwa.ts).
+initPwa(import.meta.env.PROD);

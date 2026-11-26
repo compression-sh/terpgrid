@@ -8,6 +8,8 @@ import { AccountFooter, SyncPill } from './SyncIndicator';
 import { CommandPalette } from './CommandPalette';
 import { NotificationBell } from '../components/collab/Notifications';
 import { href, useRoute } from './router';
+import { CaptureFab, PullToRefresh, useCaptureShortcut, useScrollRestoration } from './mobile';
+import { InstallCard, OfflineChoiceCard, UpdateBanner } from './pwaUi';
 
 function SideLink({ item, active }: { item: NavItem; active: boolean }) {
   const Icon = item.icon;
@@ -66,6 +68,10 @@ function QuickAddMenu({ align = 'right' }: { align?: 'right' | 'left' }) {
           {item('Pflanze hinzufügen', () => quick({ kind: 'plant' }))}
           {item('Foto hochladen', () => quick({ kind: 'photo' }))}
           {item('Journal-Eintrag', () => quick({ kind: 'journal' }))}
+          {item('Aufgabe / Erinnerung', () => quick({ kind: 'task' }))}
+          {item('Sammlungsnotiz', () => quick({ kind: 'collection' }))}
+          {item('Ausrüstungsnotiz', () => quick({ kind: 'equipment' }))}
+          {item('Laborbericht', () => quick({ kind: 'labReport' }))}
         </div>
       )}
     </div>
@@ -83,11 +89,11 @@ export function Shell({ children }: { children: ReactNode }) {
   const moreItems = [...primary.filter((n) => !MOBILE_NAV_IDS.includes(n.id)), ...SECONDARY_NAV];
   const moreActive = moreItems.some((i) => isActive(i, route.path));
 
-  // Seitenwechsel → nach oben scrollen und Mehr-Menü schließen.
-  useEffect(() => {
-    setMoreOpen(false);
-    window.scrollTo({ top: 0 });
-  }, [route.path.join('/')]);
+  // Seitenwechsel → Mehr-Menü schließen; Scroll-Position: neu → oben, Zurück → wiederherstellen.
+  const pathKey = route.path.join('/');
+  useEffect(() => setMoreOpen(false), [pathKey]);
+  useScrollRestoration(pathKey);
+  useCaptureShortcut(route);
 
   return (
     <div className="min-h-dvh lg:pl-60">
@@ -128,7 +134,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Mobile Kopfzeile */}
-      <header className="no-print sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-white/[0.05] bg-ink-950/85 px-4 py-3 backdrop-blur-xl lg:hidden">
+      <header className="no-print sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-white/[0.05] bg-ink-950/85 pt-[calc(0.75rem+env(safe-area-inset-top))] pr-[max(1rem,env(safe-area-inset-right))] pb-3 pl-[max(1rem,env(safe-area-inset-left))] backdrop-blur-xl lg:hidden">
         <a href={href('')} className="flex min-w-0 items-center gap-2.5">
           <LogoMark className="size-8 shrink-0" />
           <Wordmark withTagline={false} />
@@ -139,16 +145,18 @@ export function Shell({ children }: { children: ReactNode }) {
           </button>
           <NotificationBell compact />
           <SyncPill compact />
-          <div className="w-24">
-            <QuickAddMenu />
-          </div>
         </div>
       </header>
+      <PullToRefresh />
 
       <CommandPalette />
-      <main id="main" className="mx-auto w-full max-w-6xl px-4 pt-5 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-10 lg:pt-9 lg:pb-16">
+      <main id="main" className="mx-auto w-full max-w-6xl px-[max(1rem,env(safe-area-inset-left))] pt-5 pb-[calc(9rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-10 lg:pt-9 lg:pb-16">
+        <UpdateBanner />
+        <OfflineChoiceCard />
+        <InstallCard />
         {children}
       </main>
+      {route.path[0] !== 'lab' && <CaptureFab />}
 
       {/* Mobile untere Navigation */}
       <nav

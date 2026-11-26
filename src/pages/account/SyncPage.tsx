@@ -38,7 +38,7 @@ export function SyncPage() {
 
   const statusLine = () => {
     if (offline) return { icon: <CloudOff className="size-5 text-amber-300" />, text: 'Offline-Modus', sub: 'Änderungen werden auf diesem Gerät gesammelt und nach der nächsten Anmeldung übertragen.' };
-    if (sync.phase === 'syncing') return { icon: <Loader2 className="size-5 animate-spin text-leaf-300" />, text: 'Synchronisiere …', sub: 'Änderungen werden übertragen.' };
+    if (sync.phase === 'syncing') return { icon: <Loader2 className="size-5 animate-spin text-leaf-300" />, text: 'Synchronisierung läuft', sub: 'Änderungen werden übertragen.' };
     if (sync.phase === 'offline') return { icon: <CloudOff className="size-5 text-amber-300" />, text: 'Server nicht erreichbar', sub: sync.message };
     if (sync.phase === 'error') return { icon: <AlertTriangle className="size-5 text-rose-300" />, text: 'Synchronisation fehlgeschlagen', sub: sync.message };
     if (sync.pending > 0) return { icon: <RefreshCw className="size-5 text-amber-300" />, text: `${sync.pending} Änderung${sync.pending === 1 ? '' : 'en'} ausstehend`, sub: 'Noch nicht vom Server bestätigt.' };

@@ -126,7 +126,7 @@ export function CommandPalette() {
     ];
     if (server) {
       actions.push({ id: 'a-sync', group: 'Aktionen', label: 'Jetzt synchronisieren', icon: <RefreshCw className="size-4" />, run: close(() => auth.engine?.schedule(0)) });
-      actions.push({ id: 'a-logout', group: 'Aktionen', label: 'Abmelden', icon: <LogOut className="size-4" />, run: close(() => void logoutFlow(auth.logout, confirm)) });
+      actions.push({ id: 'a-logout', group: 'Aktionen', label: 'Abmelden', icon: <LogOut className="size-4" />, run: close(() => void logoutFlow(auth, confirm)) });
     }
     const query = normalize(q);
     const match = (i: Item) => !query || query.split(/\s+/).every((w) => normalize(i.label).includes(w));

@@ -1,0 +1,43 @@
+/**
+ * Einheitliche Synchronisationszustände (Phase 5.6) für private Daten und gemeinsame Bereiche.
+ * Reine Funktion – gleiche Begriffe überall in der Oberfläche.
+ */
+export type SyncState = 'synced' | 'pending' | 'offline' | 'syncing' | 'conflict' | 'failed' | 'revoked';
+
+export const SYNC_STATE_LABEL: Record<SyncState, string> = {
+  synced: 'Synchronisiert',
+  pending: 'Änderungen ausstehend',
+  offline: 'Offline',
+  syncing: 'Synchronisierung läuft',
+  conflict: 'Konflikt erkannt',
+  failed: 'Synchronisierung fehlgeschlagen',
+  revoked: 'Zugriff widerrufen',
+};
+
+export interface SyncInput {
+  phase: string;
+  pending: number;
+  conflicts: number;
+  /** App läuft ohne Serververbindung (Offline-Start) */
+  offline?: boolean;
+}
+
+/** Reihenfolge: Widerruf > Offline > Konflikt > läuft > Fehler > ausstehend > synchronisiert. */
+export function deriveSyncState(s: SyncInput): SyncState {
+  if (s.phase === 'revoked') return 'revoked';
+  if (s.offline || s.phase === 'offline') return 'offline';
+  if (s.conflicts > 0) return 'conflict';
+  if (s.phase === 'syncing' || s.phase === 'loading') return 'syncing';
+  if (s.phase === 'error') return 'failed';
+  if (s.pending > 0) return 'pending';
+  return 'synced';
+}
+
+/** Anzeigetext inkl. Anzahl, wo hilfreich. */
+export function syncStateText(s: SyncInput): string {
+  const st = deriveSyncState(s);
+  if (st === 'offline' && s.pending > 0) return `Offline · ${s.pending} ausstehend`;
+  if (st === 'pending') return `${SYNC_STATE_LABEL.pending} (${s.pending})`;
+  if (st === 'conflict' && s.conflicts > 1) return `${s.conflicts} Konflikte erkannt`;
+  return SYNC_STATE_LABEL[st];
+}

@@ -21,13 +21,14 @@ import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react
 import { accountDbName, useAuth } from '../../app/auth';
 import { useConfirm } from '../../app/Confirm';
 import { useReauth } from '../../app/reauth';
-import { href } from '../../app/router';
+import { href, useRoute } from '../../app/router';
 import { logoutFlow } from '../../app/SyncIndicator';
 import { useToast } from '../../app/Toasts';
 import { Callout } from '../../components/ui/Callout';
 import { Modal } from '../../components/ui/Modal';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { deleteDatabase, storageEstimate, selectDatabase } from '../../lib/db/database';
+import { SYNC_STORE_LABEL } from '../../lib/sync/labels';
 import { isSharedDevice, setSharedDevice } from '../../lib/device';
 import { PrivacyCenter2 } from './PrivacyCenter2';
 import { useData } from '../../app/DataProvider';
@@ -105,6 +106,10 @@ export function AccountPage() {
   const [ov, setOv] = useState<Overview | null>(null);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [loadError, setLoadError] = useState<string>();
+  const section = useRoute().query.get('abschnitt');
+  useEffect(() => {
+    if (section) window.setTimeout(() => document.getElementById(section)?.scrollIntoView({ block: 'start' }), 150);
+  }, [section]);
 
   const load = useCallback(async () => {
     try {
@@ -208,7 +213,7 @@ export function AccountPage() {
           >
             <LogOut className="size-4" /> Alle anderen Sitzungen beenden
           </button>
-          <button type="button" className="btn-ghost" onClick={() => void logoutFlow(auth.logout, confirm)}>
+          <button type="button" className="btn-ghost" onClick={() => void logoutFlow(auth, confirm)}>
             <LogOut className="size-4" /> Auf diesem Gerät abmelden
           </button>
         </div>
@@ -743,10 +748,14 @@ function DeviceSection() {
   const { data } = useData();
   const [shared, setShared] = useState(isSharedDevice);
   const [usage, setUsage] = useState<number | undefined>();
+  const [persisted, setPersisted] = useState<boolean | undefined>();
   const [busy, setBusy] = useState(false);
   const user = auth.state.kind === 'authenticated' ? auth.state.user : null;
   useEffect(() => {
-    void storageEstimate().then((e) => setUsage(e.usage));
+    void storageEstimate().then((e) => {
+      setUsage(e.usage);
+      setPersisted(e.persisted);
+    });
   }, []);
   const records = Object.values(data).reduce((n, l) => n + l.length, 0);
   return (
@@ -765,6 +774,52 @@ function DeviceSection() {
           <dd className={`mt-0.5 tabular ${auth.sync.pending ? 'text-amber-200' : 'text-ink-100'}`}>{auth.sync.pending}</dd>
         </div>
       </dl>
+      <details className="mb-4 rounded-xl border border-white/[0.06] bg-white/[0.015] px-3.5 py-2.5 text-[13px]">
+        <summary className="cursor-pointer text-ink-200">Aufschlüsselung der lokalen Daten</summary>
+        <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-3">
+          {Object.entries(data)
+            .filter(([, l]) => l.length > 0)
+            .map(([k, l]) => (
+              <div key={k} className="flex justify-between gap-2">
+                <dt className="text-ink-400">{SYNC_STORE_LABEL[k] ?? k}</dt>
+                <dd className="tabular text-ink-100">{l.length}</dd>
+              </div>
+            ))}
+        </dl>
+        <p className="hint mt-2">Gemeinsame Bereiche werden nicht dauerhaft gespeichert (nur im Arbeitsspeicher, solange die App geöffnet ist). Sortenkatalog und Academy-Artikel lädt die App bei Bedarf; Academy-Texte sind Teil der App-Hülle.</p>
+      </details>
+      <label className={`mb-3 flex items-start gap-3 rounded-xl border p-3.5 ${auth.offlineEnabled ? 'border-leaf-500/25 bg-leaf-500/[0.05]' : 'border-white/[0.06] bg-white/[0.015]'}`}>
+        <input
+          type="checkbox"
+          className="mt-0.5 size-4 accent-leaf-500"
+          checked={auth.offlineEnabled}
+          disabled={shared || !user}
+          onChange={async (e) => {
+            const on = e.target.checked;
+            if (!on) {
+              const ok = await confirm({
+                title: 'Offline-Nutzung ausschalten?',
+                message: 'Die lokale Kopie bleibt bis zum Abmelden für diese Sitzung erhalten und wird dann gelöscht (nicht übertragene Änderungen werden vorher nie verworfen). Ein Start ohne Verbindung ist danach nicht mehr möglich.',
+                confirmLabel: 'Ausschalten',
+              });
+              if (!ok) return;
+            }
+            auth.setOfflineMode(on);
+            if (on) void storageEstimate().then((x) => setPersisted(x.persisted));
+          }}
+        />
+        <span>
+          <span className="block text-[13.5px] font-medium text-ink-100">Offline-Nutzung auf diesem Gerät</span>
+          <span className="mt-0.5 block text-[12.5px] leading-relaxed text-ink-400">
+            {shared
+              ? 'Auf einem geteilten Gerät nicht verfügbar.'
+              : 'Ein: Deine privaten Daten bleiben nach dem Abmelden in diesem Browser, TERPGRID startet auch ohne Verbindung. Aus (Standard): Die Kopie dient nur der laufenden Sitzung und wird beim Abmelden und beim Kontowechsel gelöscht.'}
+          </span>
+          {auth.offlineEnabled && persisted !== undefined && (
+            <span className="mt-1 block text-[12px] text-ink-500">{persisted ? 'Der Browser hat dauerhaften Speicher zugesagt.' : 'Der Browser hat keinen dauerhaften Speicher zugesagt – er kann die Daten bei Speichermangel entfernen (sie bleiben auf dem Server).'}</span>
+          )}
+        </span>
+      </label>
       <label className="flex items-start gap-3 rounded-xl border border-white/[0.06] bg-white/[0.015] p-3.5">
         <input
           type="checkbox"
@@ -773,6 +828,7 @@ function DeviceSection() {
           onChange={(e) => {
             setSharedDevice(e.target.checked);
             setShared(e.target.checked);
+            if (e.target.checked) auth.setOfflineMode(false);
           }}
         />
         <span>
@@ -783,6 +839,9 @@ function DeviceSection() {
         </span>
       </label>
       <div className="mt-3 flex flex-wrap gap-2">
+        <button type="button" className="btn-ghost" disabled={!auth.engine || auth.state.kind !== 'authenticated' || auth.state.offline || auth.sync.phase === 'syncing'} onClick={() => void auth.engine?.syncNow()}>
+          <RefreshCw className={`size-4 ${auth.sync.phase === 'syncing' ? 'animate-spin' : ''}`} /> {auth.sync.phase === 'syncing' ? 'Synchronisierung läuft' : 'Jetzt synchronisieren'}
+        </button>
         <button
           type="button"
           className="btn-ghost"
