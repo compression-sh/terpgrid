@@ -133,4 +133,5 @@ Empfehlung vor 6.0: Abnahme auf mindestens einem iPhone (Safari und installiert)
 - `6fd048b` – Backup: Repository-Prüfung und verifizierte Wiederherstellung
 - `e92b7c3` – Rollback über Migrationen: `restore.sh --version` (F-06)
 - `d696aa1` – Test: Kontoschlüssel-Rotation unter gleichzeitigen Schreibvorgängen
-- Dokumentations-Commit, PR-URL und CI-Status: siehe Pull Request (direkt gegen `main`, kein gestapelter PR, kein automatischer Merge, kein Deployment).
+- `ff82a4b` – Dokumentation (acht Phase-5.7-Dokumente, Changelog)
+- Pull Request: https://github.com/compression-sh/terpgrid/pull/16 (direkt gegen `main`, kein gestapelter PR, kein automatischer Merge, kein Deployment). CI-Status: siehe Pull Request.
