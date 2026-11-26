@@ -236,7 +236,7 @@ export function spaceRoutes(ctx: AppContext) {
         const s = requireSession(req);
         rate(s.userId);
         const target = uuid(req.body.ref);
-        return withUser(ctx.db, s.userId, async (c) => {
+        const created = await withUser(ctx.db, s.userId, async (c) => {
           const sa = await requireSpace(c, req.params.id, s.userId, 'members.invite');
           // Nur bestätigte Freunde – keine Einladungen an Unbekannte, keine Enumeration
           const rel = await c.query('SELECT tg_are_friends($1) AS f, tg_blocked_between($1) AS b', [target]);
@@ -253,8 +253,10 @@ export function spaceRoutes(ctx: AppContext) {
           if (!r.rowCount) throw new HttpError(409, 'Für diese Person gibt es bereits eine offene Einladung.');
           await recordActivity(c, sa.spaceId, s.userId, 'member.invited', { subjectId: target, meta: { role: req.body.role } });
           await notify(c, { recipient: target, category: 'invites', type: 'space.invite', ref: id });
-          return reply.code(201).send({ id });
+          return id;
         });
+        // Antwort erst nach dem COMMIT
+        return reply.code(201).send({ id: created });
       },
     );
 
@@ -590,7 +592,7 @@ export function spaceRoutes(ctx: AppContext) {
         rate(s.userId);
         const text = req.body.text.normalize('NFKC').trim();
         if (!text || text.length > 2000) throw new HttpError(400, 'Kommentar: 1–2000 Zeichen.');
-        return withUser(ctx.db, s.userId, async (c) => {
+        const created = await withUser(ctx.db, s.userId, async (c) => {
           const sa = await requireSpace(c, req.params.id, s.userId, 'comment.create');
           const rec = await c.query('SELECT access, deleted FROM space_records WHERE space_id = $1 AND store = $2 AND id = $3', [sa.spaceId, req.body.store, req.body.target]);
           if (!rec.rows[0] || rec.rows[0].deleted || !can(sa.role, 'comment.read', { access: rec.rows[0].access })) throw new HttpError(404, 'Eintrag nicht gefunden');
@@ -623,8 +625,9 @@ export function spaceRoutes(ctx: AppContext) {
           const t = { store: req.body.store, id: req.body.target };
           if (parentAuthor && parentAuthor !== s.userId) await notify(c, { recipient: parentAuthor, category: 'comments', type: 'comment.reply', spaceId: sa.spaceId, store: t.store, id: t.id, ref: id });
           await notifyMembers(c, sa.spaceId, s.userId, { category: 'comments', type: 'comment.new', store: t.store, id: t.id, ref: id }, { readable: t });
-          return reply.code(201).send({ id });
+          return id;
         });
+        return reply.code(201).send({ id: created });
       },
     );
 

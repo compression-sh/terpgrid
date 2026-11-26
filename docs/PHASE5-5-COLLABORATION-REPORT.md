@@ -85,7 +85,7 @@ Details: `docs/PHASE5-5-ENCRYPTION.md`.
 * **Rechtematrix:** 4 Tests, darunter Dokument ↔ Code und „Zugriffsstufen schränken nur ein“.
 * **Client:** 7 Tests in `spaceSync.test.ts` (Merge, Konflikt, Entzug ohne erneutes Senden, Rollenwechsel, Warteschlange, Benachrichtigungstexte ohne Inhalte).
 * **Gesamt:** Server 205/205, Frontend 267/267.
-* **Unklarer Testausfall:** In 1 von 9 vollständigen Server-Läufen gab ein Schritt im RLS-Test einmalig 409 statt 201 zurück (Einladung an Viktor). In 6 Wiederholungen und allen Einzelläufen war er grün; die Ursache ist nicht geklärt. Der Test gibt jetzt die Server-Meldung aus.
+* **Gefundener und behobener Fehler:** Ein zeitweise fehlschlagender RLS-Test (lokal und in der CI) zeigte, dass drei Routen (Freundschaftsanfrage, Bereichseinladung, Kommentar) ihre Antwort noch innerhalb der Datenbanktransaktion, also vor dem COMMIT, sendeten. Clients konnten „angelegt“ erhalten, bevor die Daten festgeschrieben waren. Jetzt wird erst nach dem COMMIT geantwortet; danach waren 15 von 15 vollständigen Läufen grün. Der Test prüft zusätzlich, dass die Einladung für die eingeladene Person sofort sichtbar ist.
 
 **Browser-Abläufe** (echte Oberfläche und API, fünf Konten, eines mobil mit 390 px): **26/26 bestanden**. Geprüft u. a.:
 * Profil, Handle-Regel und neutrale Anfrage-Meldung; keine Enumeration.
@@ -182,7 +182,6 @@ Upgrade 5.4.0-rc.1 (`be8dfe9`) → 5.5.0-rc.1 (`0bb22bd`, Images mit Proxy-Zerti
 * **Kontingent:** Dateien eines Bereichs zählen zum Kontingent des Eigentümers. Bearbeitende können es füllen; der Eigentümer steuert, wen er einlädt.
 * **Ratenbegrenzungen sind prozesslokal:** wie bisher, bei einer API-Instanz.
 * **Web-Push:** Nur die Schnittstelle ist vorbereitet (Phase 5.6), nichts ist aktiv.
-* **Unklarer Testausfall:** Ein Schritt im RLS-Test schlug einmalig in 1 von 9 Gesamtläufen fehl (siehe Abschnitt 5); die Ursache ist offen.
 
 ## 11. Nach dem Merge (manuell)
 

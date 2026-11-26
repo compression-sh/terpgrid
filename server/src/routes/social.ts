@@ -263,7 +263,8 @@ export function socialRoutes(ctx: AppContext) {
         const social = parseSocialId(raw);
         if (!handle && !social) throw new HttpError(400, 'Bitte ein Handle (@name) oder eine Social-ID (TG-XXXX-XXXX) eingeben.');
         const label = isSocial && social ? formatSocialId(social) : `@${handle}`;
-        return withUser(ctx.db, s.userId, async (c) => {
+        // Antwort erst nach dem COMMIT senden (withUser gibt nur zurück)
+        await withUser(ctx.db, s.userId, async (c) => {
           const me = await ensureProfile(ctx, c, s.userId);
           if ((handle && me.handle === handle) || (isSocial && social === me.social_id)) throw new HttpError(400, 'Das bist du selbst.');
           const pending = await c.query("SELECT count(*)::int AS n FROM friend_requests WHERE from_user = $1 AND status = 'pending'", [s.userId]);
@@ -274,14 +275,14 @@ export function socialRoutes(ctx: AppContext) {
 
           if (target) {
             const fr = await c.query('SELECT tg_are_friends($1) AS f', [target]);
-            if (fr.rows[0].f) return reply.code(202).send({ ok: true, message: GENERIC_SENT });
+            if (fr.rows[0].f) return;
             // Gegenseitige Anfrage → direkt befreundet
             const rev = await c.query("SELECT id FROM friend_requests WHERE from_user = $1 AND to_user = $2 AND status = 'pending' AND expires_at > now() FOR UPDATE", [target, s.userId]);
             if (rev.rows[0]) {
               await c.query('INSERT INTO friendships(user_a, user_b) VALUES (least($1::uuid, $2::uuid), greatest($1::uuid, $2::uuid)) ON CONFLICT DO NOTHING', [s.userId, target]);
               await c.query("UPDATE friend_requests SET status = 'accepted', responded_at = now() WHERE id = $1", [rev.rows[0].id]);
               await notify(c, { recipient: target, category: 'friends', type: 'friend.accepted' });
-              return reply.code(202).send({ ok: true, message: GENERIC_SENT });
+              return;
             }
           }
           const id = randomUUID();
@@ -291,8 +292,8 @@ export function socialRoutes(ctx: AppContext) {
             [id, s.userId, target, label, REQUEST_DAYS],
           );
           if (ins.rowCount && target) await notify(c, { recipient: target, category: 'friends', type: 'friend.request', ref: id });
-          return reply.code(202).send({ ok: true, message: GENERIC_SENT });
         });
+        return reply.code(202).send({ ok: true, message: GENERIC_SENT });
       },
     );
 

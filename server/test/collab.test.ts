@@ -401,6 +401,12 @@ describe.skipIf(!hasDb)('Phase 5.5 – Private Zusammenarbeit', () => {
       expect(`${i.status} ${JSON.stringify(i.json)}`).toBe(`201 ${JSON.stringify(i.json)}`);
       await app.query('BEGIN');
       await app.query("SELECT set_config('app.user_id', $1, true)", [ref.viktor]);
+      const seen = await app.query('SELECT id, invitee, status, tg_uid() AS me FROM space_invites WHERE id = $1', [i.json.id]);
+      const sup = new pg.Client({ connectionString: env.superDbUrl });
+      await sup.connect();
+      const raw = await sup.query('SELECT id, invitee, status, role FROM space_invites WHERE id = $1', [i.json.id]);
+      await sup.end();
+      expect(JSON.stringify({ seen: seen.rows, raw: raw.rows, viktor: ref.viktor })).toContain('"seen":[{');
       await expect(app.query("UPDATE space_invites SET role = 'editor' WHERE id = $1", [i.json.id])).rejects.toThrow();
       await app.query('ROLLBACK');
       await c.olga.req('DELETE', `/api/spaces/${space}/invites/${i.json.id}`);
