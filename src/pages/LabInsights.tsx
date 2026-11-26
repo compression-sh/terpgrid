@@ -22,6 +22,7 @@ import type { ConcentrationUnit, LabDocument, LabReport, LabValueOrigin } from '
 import { fmt } from '../lib/format';
 import { LAB_ORIGIN_LABEL, type TotalResult, plausibilityIssues, toPercent, totalCbd, totalThc } from '../lib/lab';
 import { formatBytes, processImage } from '../lib/media/images';
+import { SharePicker } from '../components/collab/ShareDialog';
 
 const tooltipStyle = { background: '#0e1211', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, fontSize: 12 };
 const MAX_DOC = 20 * 1024 * 1024;
@@ -447,6 +448,7 @@ export function LabInsights() {
         actions={
           <>
             <ContextHelp ids={['laborberichte-lesen', 'terpene-analytik', 'thc-cbd']} />
+            <SharePicker store="labReports" items={reports.map((r) => ({ id: r.id, title: r.title, sub: [r.labName, r.testDate].filter(Boolean).join(' · ') }))} label="Berichte teilen …" />
             <button type="button" className="btn-primary" onClick={() => setForm({})}>
               <Plus className="size-4" /> Bericht erfassen
             </button>

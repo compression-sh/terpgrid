@@ -47,6 +47,7 @@ import { ACTIVITY_LABEL, PLANT_TYPE_LABEL, REMINDER_CATEGORY_LABEL, SETTING_LABE
 import { PHASE_COLOR, currentPhase, growDay, phaseSpans } from '../../lib/grow/phases';
 import { METRICS, metricSeries } from '../../lib/grow/series';
 import { fmt } from '../../lib/format';
+import { ShareButton } from '../../components/collab/ShareDialog';
 
 type Tab = 'overview' | 'plants' | 'photos' | 'log' | 'measurements' | 'calendar' | 'expenses';
 const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
@@ -287,6 +288,7 @@ export function GrowDetail({ growId }: { growId: string }) {
         <a href={href(`grows/${growId}/report`)} className="btn-ghost hidden sm:inline-flex">
           <FileText className="size-4" /> Bericht
         </a>
+        <ShareButton store="grows" ids={[growId]} />
         <a href={href(`grows/${growId}/experiments`)} className="btn-ghost hidden sm:inline-flex">
           <FlaskConical className="size-4" /> Experimente
         </a>

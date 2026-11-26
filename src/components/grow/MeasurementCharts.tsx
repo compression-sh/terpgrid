@@ -49,7 +49,22 @@ function Dot(props: { cx?: number; cy?: number; payload?: Point; fill?: string }
  * Diagramme der dokumentierten Messwerte. Nur erfasste Punkte werden gezeigt (berechnete
  * Größen sind als solche gekennzeichnet); Verbindungslinien sind gestrichelt und erklärt.
  */
-export function MeasurementCharts({ activities, splitByPlant = true, thresholds, onEditThresholds, fileName = 'messwerte' }: { activities: Activity[]; splitByPlant?: boolean; thresholds?: Thresholds; onEditThresholds?: () => void; fileName?: string }) {
+export function MeasurementCharts({
+  activities,
+  splitByPlant = true,
+  thresholds,
+  onEditThresholds,
+  fileName = 'messwerte',
+  plantName,
+}: {
+  activities: Activity[];
+  splitByPlant?: boolean;
+  thresholds?: Thresholds;
+  onEditThresholds?: () => void;
+  fileName?: string;
+  /** Pflanzennamen außerhalb der privaten Daten (z. B. gemeinsame Bereiche) */
+  plantName?: (id: string) => string | undefined;
+}) {
   const lookup = useLookup();
   const options: MetricOption[] = useMemo(() => {
     const base: MetricOption[] = METRICS.map((m) => ({ id: m.key, metric: m.key, label: m.label, unit: m.unit, get: (acts, plantId, context) => metricSeries(acts, m.key, { plantId, context }) }));
@@ -88,8 +103,8 @@ export function MeasurementCharts({ activities, splitByPlant = true, thresholds,
       const k = p.plantId ?? 'grow';
       byPlant.set(k, [...(byPlant.get(k) ?? []), p]);
     }
-    return [...byPlant.entries()].map(([k, points]) => ({ key: k, name: k === 'grow' ? 'Grow allgemein' : (lookup.plant.get(k)?.name ?? 'Pflanze'), points }));
-  }, [opt, activities, splitByPlant, lookup, days, context, ctxKey, range]);
+    return [...byPlant.entries()].map(([k, points]) => ({ key: k, name: k === 'grow' ? 'Grow allgemein' : (plantName?.(k) ?? lookup.plant.get(k)?.name ?? 'Pflanze'), points }));
+  }, [opt, activities, splitByPlant, lookup, days, context, ctxKey, range, plantName]);
 
   if (!opt) {
     return <EmptyState compact icon={<Ruler />} title="Noch keine Messwerte" text="Höhe, Klima, pH, EC oder Licht über „Eintrag hinzufügen“ erfassen." />;

@@ -53,6 +53,15 @@ const AdminPage = lazy(() => import('./pages/account/AdminPage').then((m) => ({ 
 const SyncPage = lazy(() => import('./pages/account/SyncPage').then((m) => ({ default: m.SyncPage })));
 const ImportPage = lazy(() => import('./pages/account/ImportPage').then((m) => ({ default: m.ImportPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
+const TogetherHome = lazy(() => import('./pages/together/TogetherHome').then((m) => ({ default: m.TogetherHome })));
+const FriendsPage = lazy(() => import('./pages/together/FriendsPage').then((m) => ({ default: m.FriendsPage })));
+const ProfilePage = lazy(() => import('./pages/together/ProfilePage').then((m) => ({ default: m.ProfilePage })));
+const FriendProfilePage = lazy(() => import('./pages/together/PeoplePages').then((m) => ({ default: m.FriendProfilePage })));
+const InvitePage = lazy(() => import('./pages/together/PeoplePages').then((m) => ({ default: m.InvitePage })));
+const NotificationsPage = lazy(() => import('./pages/together/PeoplePages').then((m) => ({ default: m.NotificationsPage })));
+const SpacePage = lazy(() => import('./pages/together/SpacePage').then((m) => ({ default: m.SpacePage })));
+const SharedResourcePage = lazy(() => import('./pages/together/SharedResource').then((m) => ({ default: m.SharedResourcePage })));
+const SPACE_STORES = ['grows', 'plants', 'activities', 'photos', 'strains', 'journal', 'inventory', 'labReports', 'notes', 'tasks'];
 
 function Loading() {
   return (
@@ -154,6 +163,9 @@ function Routes() {
       break;
     case 'timeline':
       page = <TimelinePage />;
+      break;
+    case 'together':
+      page = <TogetherGate>{togetherPage(b, c, d, path[4], query)}</TogetherGate>;
       break;
     case 'admin':
       page = <AdminPage />;
@@ -258,6 +270,26 @@ function AccountGate() {
   if (state.kind !== 'authenticated')
     return <EmptyState title="Lokalmodus" text="Diese Installation läuft ohne Server. Daten liegen nur in diesem Browser – es gibt kein Konto." action={<a href={href('data')} className="btn-primary">Daten & Backup</a>} />;
   return <AccountPage />;
+}
+
+function togetherPage(b?: string, c?: string, d?: string, e?: string, query?: URLSearchParams): ReactNode {
+  if (!b) return <TogetherHome />;
+  if (b === 'friends') return c ? <FriendProfilePage key={c} refId={c} /> : <FriendsPage />;
+  if (b === 'profile') return <ProfilePage />;
+  if (b === 'notifications') return <NotificationsPage tab={query?.get('tab') ?? undefined} />;
+  if (b === 'invite' && c) return <InvitePage token={c} />;
+  if (b === 'spaces' && c && d && e && SPACE_STORES.includes(d)) return <SharedResourcePage key={`${c}/${d}/${e}`} spaceId={c} store={d as never} id={e} />;
+  if (b === 'spaces' && c) return <SpacePage key={c} spaceId={c} />;
+  return <NotFound />;
+}
+
+/** Zusammenarbeit nur im Servermodus mit Verbindung (nicht im Lokal- oder Offline-Modus). */
+function TogetherGate({ children }: { children: ReactNode }) {
+  const { state } = useAuth();
+  if (state.kind !== 'authenticated')
+    return <EmptyState title="Nur mit eigenem Server" text="Gemeinsame Bereiche und Freunde gibt es nur mit einem TERPGRID-Server und Konto. Im Lokalmodus bleiben alle Daten auf diesem Gerät." />;
+  if (state.offline) return <EmptyState title="Offline" text="Für Freunde und gemeinsame Bereiche ist eine Verbindung zum Server nötig. Deine privaten Daten kannst du offline weiter nutzen." />;
+  return <>{children}</>;
 }
 
 function LabGate() {
