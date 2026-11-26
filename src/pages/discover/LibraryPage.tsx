@@ -45,6 +45,7 @@ export function LibraryPage({ status }: { status: LibStatus }) {
       seed: q.get('seed') === 'feminisiert' || q.get('seed') === 'regulär' ? (q.get('seed') as 'feminisiert' | 'regulär') : undefined,
       lineage: q.get('lineage') === '1' ? '1' : undefined,
       thc: q.get('thc') === '1' ? '1' : undefined,
+      samples: q.get('samples') === '1' ? '1' : undefined,
       terpene: q.get('terpene') || undefined,
       parent: q.get('parent') || undefined,
       sort: (SORTS.find((s) => s.id === q.get('sort') && (!('needsQuery' in s) || query))?.id ?? (query ? 'relevance' : 'listings')) as LibSearchParams['sort'],
@@ -98,7 +99,7 @@ export function LibraryPage({ status }: { status: LibStatus }) {
   const d = res.data;
   const field = 'input-base py-1.5 text-[13px]';
 
-  const activeFilters = ['type', 'auto', 'seed', 'terpene', 'lineage', 'thc'].filter((k) => q.get(k)).length;
+  const activeFilters = ['type', 'auto', 'seed', 'terpene', 'lineage', 'thc', 'samples'].filter((k) => q.get(k)).length;
   return (
     <div>
       <DiscoverNav />
@@ -142,7 +143,7 @@ export function LibraryPage({ status }: { status: LibStatus }) {
           </span>
           <ChevronDown className={`size-4 text-ink-400 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
         </button>
-        <div id="katalog-filter" className={`mt-2 grid-cols-2 gap-2 sm:grid sm:grid-cols-3 lg:grid-cols-7 ${filtersOpen ? 'grid' : 'hidden'}`}>
+        <div id="katalog-filter" className={`mt-2 grid-cols-2 gap-2 sm:grid sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 ${filtersOpen ? 'grid' : 'hidden'}`}>
           <select className={field} aria-label="Genetischer Typ" value={q.get('type') ?? ''} onChange={(e) => set({ type: e.target.value || undefined })}>
             <option value="">Typ: alle</option>
             <option value="indica">Indica-dominant</option>
@@ -172,6 +173,12 @@ export function LibraryPage({ status }: { status: LibStatus }) {
           </label>
           <label className="flex items-center gap-2 rounded-lg border border-white/[0.06] px-2.5 text-[12px] text-ink-300">
             <input type="checkbox" className="accent-leaf-500" checked={q.get('thc') === '1'} onChange={(e) => set({ thc: e.target.checked ? '1' : undefined })} /> Mit THC-Angabe
+          </label>
+          <label
+            className="flex items-center gap-2 rounded-lg border border-white/[0.06] px-2.5 text-[12px] text-ink-300"
+            title="Öffentliche Laborproben gleichnamiger US-Handelsprodukte (Smith et al. 2022) – ohne Breeder-Zuordnung"
+          >
+            <input type="checkbox" className="accent-leaf-500" checked={q.get('samples') === '1'} onChange={(e) => set({ samples: e.target.checked ? '1' : undefined })} /> Mit Laborproben
           </label>
           <select className={field} aria-label="Sortierung" value={params.sort} onChange={(e) => set({ sort: e.target.value })}>
             {SORTS.filter((s) => !('needsQuery' in s) || query).map((s) => (

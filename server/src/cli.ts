@@ -16,7 +16,9 @@ import { migrate, schemaStatus } from './migrate.js';
 import { readFileSync } from 'node:fs';
 import { CISP, cispUrl, parseDataset } from './catalog/cisp.js';
 import { importDataset } from './catalog/importer.js';
+import { SMITH2022, importSamples, parseSmith2022, sampleUrl } from './catalog/samples.js';
 import { catalogAudit } from './catalog/audit.js';
+import { catalogQuality } from './catalog/quality.js';
 import { MAX_BATCH, PROVIDERS, type Provider, enrichBatch, enrichFromStrainApiIndex, purgeExpiredClaims, refreshStrainApi } from './catalog/enrich.js';
 import pg from 'pg';
 
@@ -40,6 +42,8 @@ function help(): never {
                               Ausgemusterte Schlüssel löschen (Standard 200 Tage; nur ohne Verwendung)
   cleanup                     Abgelaufene Sessions löschen, Datei-Papierkorb leeren
   import-catalog [--file PFAD | --commit SHA] [--dry-run] [--force] [--report DATEI]
+  catalog-validate [--json DATEI]  Datenqualitätsprüfung des Katalogs (nur lesend, Schweregrade)
+  import-samples [--file PFAD] [--dry-run] [--force]  Öffentliche Laborproben (Smith et al. 2022, CC0) – je Probe, ohne Breeder
                               CI-Strains-Pro (CC BY 4.0) in den lokalen Katalog importieren.
                               Ohne --file: geprüfte Version von GitHub laden (Prüfsumme wird verglichen).
                               --dry-run: nur prüfen und Qualitätsbericht ausgeben, nichts schreiben.
@@ -110,6 +114,27 @@ async function main() {
       }
       return;
     }
+    case 'catalog-validate': {
+      const c = loadConfig();
+      const pool = createPool(c.migrateDatabaseUrl, 2);
+      try {
+        const r = await catalogQuality(pool);
+        const i = args.indexOf('--json');
+        if (i >= 0 && args[i + 1]) {
+          const { writeFileSync } = await import('node:fs');
+          writeFileSync(args[i + 1]!, JSON.stringify(r, null, 2));
+        }
+        const LABEL = { critical: 'KRITISCH', high: 'HOCH', medium: 'MITTEL', low: 'NIEDRIG', info: 'INFO' } as const;
+        for (const f of r.findings) {
+          console.log(`${LABEL[f.severity].padEnd(9)} ${String(f.count).padStart(6)}  ${f.title}`);
+          if (f.count && f.examples.length) console.log(`                 z. B. ${f.examples.slice(0, 4).map((e) => e.label).join(' · ')}`);
+        }
+        console.log(`Zusammenfassung (Regeln mit Befund): ${JSON.stringify(r.summary)}`);
+      } finally {
+        await pool.end();
+      }
+      return;
+    }
     case 'catalog-audit': {
       const c = loadConfig();
       const pool = createPool(c.migrateDatabaseUrl, 2);
@@ -121,11 +146,13 @@ async function main() {
           writeFileSync(args[i + 1]!, JSON.stringify(r, null, 2));
         }
         console.log(`Sorten: ${r.cultivars} · Breeder: ${r.breeders} · Angebote: ${r.listings}`);
-        console.log('Feld'.padEnd(42) + 'vorhanden'.padStart(16) + 'widersprüchl.'.padStart(15) + 'verworfen'.padStart(11) + '  Belegart (Breeder/Seedbank/Datenbank/Labor)');
+        console.log('Feld'.padEnd(50) + 'vorhanden'.padStart(16) + 'widersprüchl.'.padStart(15) + 'verworfen'.padStart(11) + '  Belegart (Breeder/Seedbank/Datenbank/Labor/Wissenschaft)');
         for (const f of r.fields) {
           const pct = r.cultivars ? ((f.present / r.cultivars) * 100).toFixed(1) : '0';
-          console.log(`${f.label.padEnd(42)}${`${f.present} (${pct} %)`.padStart(16)}${String(f.conflicting).padStart(15)}${String(f.questionable).padStart(11)}  ${f.evidence.breeder}/${f.evidence.seedbank}/${f.evidence.database}/${f.evidence.lab}`);
+          console.log(`${f.label.slice(0, 50).padEnd(50)}${`${f.present} (${pct} %)`.padStart(16)}${String(f.conflicting).padStart(15)}${String(f.questionable).padStart(11)}  ${f.evidence.breeder}/${f.evidence.seedbank}/${f.evidence.database}/${f.evidence.lab}/${f.evidence.science ?? 0}${f.nameOnly ? '  (nur Namensgleichheit)' : ''}`);
         }
+        if (r.samples)
+          console.log(`Laborproben ${r.samples.source} (${r.samples.version.slice(0, 12)}): ${r.samples.samples} Proben, ${r.samples.terpeneSamples} mit Terpenen, ${r.samples.names} Produktnamen · im Katalog: ${r.samples.linkedNames} Namen, ${r.samples.linkedCultivars} Sorten, ${r.samples.linkedSamples} Proben · Namen mit mehreren Breedern: ${r.samples.ambiguousNames}`);
         for (const p of r.providers) console.log(`Quelle ${p.provider}: ${p.matchedCultivars} Sorten mit Angaben, ${p.claims} Angaben · Abgleich ${JSON.stringify(p.byStatus)}`);
       } finally {
         await pool.end();
@@ -171,6 +198,42 @@ async function main() {
         const res = await importDataset(client as unknown as pg.PoolClient, data, { force: args.includes('--force'), log: (m) => console.log(`  ${m}`) });
         if (res.status === 'unchanged') console.log('Diese Version ist bereits aktiv – nichts zu tun (mit --force erneut importieren).');
         else console.log(`✓ Import ${res.importId} aktiv (${((Date.now() - t0) / 1000).toFixed(1)} s) · entfernt: ${res.removed?.cultivars ?? 0} Sorten, ${res.removed?.listings ?? 0} Angebote, ${res.removed?.breeders ?? 0} Breeder`);
+      } finally {
+        await client.end();
+      }
+      return;
+    }
+    case 'import-samples': {
+      const c = loadConfig();
+      const opt = (k: string) => (args.includes(k) ? args[args.indexOf(k) + 1] : undefined);
+      const file = opt('--file');
+      let buf: Buffer;
+      if (file) buf = readFileSync(file);
+      else {
+        console.log(`Lade ${sampleUrl(SMITH2022)} …`);
+        const res = await fetch(sampleUrl(SMITH2022), { redirect: 'error', signal: AbortSignal.timeout(180_000) });
+        if (!res.ok) throw new Error(`Download fehlgeschlagen (HTTP ${res.status})`);
+        const len = Number(res.headers.get('content-length') ?? 0);
+        if (len > 50_000_000) throw new Error('Datei unerwartet groß – Abbruch');
+        buf = Buffer.from(await res.arrayBuffer());
+      }
+      const data = parseSmith2022(buf);
+      if (!data.checksumMatches && !args.includes('--force')) throw new Error(`Prüfsumme weicht von der geprüften Version ab (${data.sha256}). Abbruch – mit --force trotzdem importieren.`);
+      console.log(`Quelle: ${SMITH2022.name} · Lizenz ${SMITH2022.license} · Commit ${SMITH2022.commit.slice(0, 12)} · SHA-256 ${data.sha256.slice(0, 16)}…${data.checksumMatches ? ' (geprüft)' : ' (NICHT geprüfte Version)'}`);
+      const withName = data.samples.filter((s) => s.nameKey).length;
+      const withTerp = data.samples.filter((s) => s.terpenes).length;
+      console.log(`Zeilen: ${data.rows} · übernommen: ${data.samples.length} (mit Produktname ${withName}, mit Terpenwerten ${withTerp}) · abgelehnt: ${data.rows - data.samples.length} ${JSON.stringify(data.rejected)}`);
+      if (args.includes('--dry-run')) {
+        console.log('Probelauf – es wurde nichts geschrieben.');
+        return;
+      }
+      const client = new pg.Client({ connectionString: c.migrateDatabaseUrl });
+      await client.connect();
+      try {
+        const t0 = Date.now();
+        const r = await importSamples(client as unknown as pg.PoolClient, data, { force: args.includes('--force'), log: (m) => console.log(`  ${m}`) });
+        if (r.status === 'unchanged') console.log('Diese Version ist bereits aktiv – nichts zu tun (mit --force erneut importieren).');
+        else console.log(`✓ Probenimport ${r.importId} aktiv (${((Date.now() - t0) / 1000).toFixed(1)} s) · ${r.samples} Proben · ${r.names} Produktnamen`);
       } finally {
         await client.end();
       }

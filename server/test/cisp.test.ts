@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { breederKey, cleanText, cultivarIdOf, groupCultivars, headerIndex, parseCsv, parseDataset, parseRow, plausibleName, slugify, type Listing } from '../src/catalog/cisp.js';
+import { breederKey, cleanText, cultivarIdOf, groupCultivars, headerIndex, parseCsv, parseDataset, parseRow, plausibleName, repairMojibake, slugify, type Listing } from '../src/catalog/cisp.js';
 
 const FIXTURE = readFileSync(join(import.meta.dirname, 'fixtures', 'cisp-sample.csv'));
 const HEADER = parseCsv(FIXTURE.toString('utf8'))[0]!;
@@ -157,5 +157,25 @@ describe('Deploy-Skript', () => {
     const sh = readFileSync(join(import.meta.dirname, '..', '..', 'deploy', 'import-catalog.sh'), 'utf8');
     expect(sh).toContain(`COMMIT="${CISP.commit}"`);
     expect(sh).toContain(`SHA256="${CISP.sha256}"`);
+  });
+});
+
+describe('Kodierungsreparatur (Parser v4)', () => {
+  it('stellt mehrfach falsch dekodierte Zeichen wieder her und lässt echte Sonderzeichen unverändert', () => {
+    const enc = (s: string, n: number) => {
+      let t = s;
+      for (let i = 0; i < n; i++) t = Buffer.from(t, 'utf8').toString('latin1');
+      return t;
+    };
+    expect(repairMojibake(enc('Grandpa’s Stash #7', 1))).toBe('Grandpa’s Stash #7');
+    expect(repairMojibake(enc('SweetCheese® elite clone', 3))).toBe('SweetCheese® elite clone');
+    expect(repairMojibake('São Paulo Haze')).toBe('São Paulo Haze');
+    expect(repairMojibake('Blue Dream')).toBe('Blue Dream');
+  });
+  it('cleanText vereinheitlicht Apostroph und kyrillisches Kreuzungszeichen', () => {
+    const enc = (s: string) => Buffer.from(s, 'utf8').toString('latin1');
+    expect(cleanText(enc('Nevil’s Wreck'))).toBe("Nevil's Wreck");
+    expect(cleanText('Totally Alpha OG х Haze IBL')).toBe('Totally Alpha OG x Haze IBL');
+    expect(cleanText('Хаос')).toBe('Хаос');
   });
 });

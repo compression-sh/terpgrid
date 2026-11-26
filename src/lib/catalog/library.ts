@@ -126,7 +126,54 @@ export interface LibCultivarDetail {
   /** Weitere Sorten desselben Breeders (meistgelistet zuerst) */
   breederMore?: LibCultivar[];
   dataset?: { version: string; importedAt: string };
+  /** Öffentliche Laborproben gleichnamiger Handelsprodukte (keine Breeder-Zuordnung) */
+  samples?: LibSampleSummary;
   attribution: LibAttribution;
+}
+
+export interface LibSampleSource {
+  id: string;
+  name?: string;
+  citation: string;
+  doi: string;
+  repository?: string;
+  license: string;
+  licenseUrl?: string;
+  version?: string;
+}
+
+/** Verteilung eines Messwerts über alle Proben, in denen er gemessen wurde (fehlend ≠ 0). */
+export interface LibSampleStat {
+  n: number;
+  detected: number;
+  p25: number;
+  median: number;
+  p75: number;
+  min: number;
+  max: number;
+}
+
+export interface LibSampleSummary {
+  source: LibSampleSource;
+  nameKey: string;
+  unit: '%';
+  samples: number;
+  terpeneSamples: number;
+  regions: Record<string, number>;
+  stats: Record<string, LibSampleStat>;
+  /** Anzahl Breeder im Katalog mit einer photoperiodischen Sorte gleichen Namens */
+  sameNameBreeders: number;
+}
+
+export interface LibMeasuredTerpene {
+  source: LibSampleSource;
+  column: string;
+  isomerSum?: string;
+  unit: '%';
+  samples: number;
+  detected: number;
+  median: number | null;
+  topNames: { nameKey: string; samples: number; median: number; catalogCultivars: number }[];
 }
 
 export interface LibLineageNode {
@@ -188,6 +235,8 @@ export interface LibTerpeneCultivars {
   page: number;
   totalPages: number;
   items: (LibCultivar & { terpeneSource: 'seedbank' | 'database' })[];
+  /** Messwerte dieser Verbindung in öffentlichen Laborproben (nur Seite 1) */
+  measured?: LibMeasuredTerpene;
 }
 
 export interface LibSearchParams {
@@ -198,6 +247,8 @@ export interface LibSearchParams {
   seed?: 'feminisiert' | 'regulär';
   lineage?: '1';
   thc?: '1';
+  /** Nur Sorten mit öffentlichen Laborproben gleichnamiger Produkte */
+  samples?: '1';
   thcMin?: number;
   cbdMin?: number;
   terpene?: string;

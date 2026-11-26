@@ -20,6 +20,10 @@ export const SRC = {
     label: 'Ahrens A, Llewellyn D, Zheng Y (2023). Is twelve hours really the optimum photoperiod for promoting flowering in indoor-grown cultivars of Cannabis sativa? Plants 12(14):2605.',
     url: doi('10.3390/plants12142605'),
   },
+  smith2022: {
+    label: 'Smith CJ, Vergara D, Keegan B, Jikomes N (2022). The phytochemical diversity of commercial Cannabis in the United States. PLoS One 17(5):e0267498.',
+    url: doi('10.1371/journal.pone.0267498'),
+  },
   peterswald2025: { label: 'Peterswald TJ et al. (2025). The effects of far-red light on medicinal Cannabis. Sci Rep 15:17435.', url: doi('10.1038/s41598-025-99771-6') },
   corredor2025: {
     label: 'Corredor-Perilla IC, Kwon TH, Park SH (2025). Elevated relative humidity significantly decreases cannabinoid concentrations while delaying flowering development in Cannabis sativa L. Front Plant Sci 16:1678142.',

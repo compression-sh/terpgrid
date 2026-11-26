@@ -1,5 +1,5 @@
 import { AlertTriangle, ArrowLeft, BadgeCheck, ExternalLink, FlaskRound, Layers, Search, Sprout } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useData } from '../../app/DataProvider';
 import { useAsync, useLibraryStatus } from '../../app/library';
 import { href } from '../../app/router';
@@ -8,7 +8,7 @@ import { EvidenceTag } from '../../components/discover/EvidenceTag';
 import { MoleculeView } from '../../components/discover/MoleculeView';
 import { Card } from '../../components/ui/Card';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { library } from '../../lib/catalog/library';
+import { type LibMeasuredTerpene, library } from '../../lib/catalog/library';
 import {
   AROMA_FAMILIES,
   type AromaFamily,
@@ -119,13 +119,24 @@ function CatalogMentions({ id, label }: { id: string; label: string }) {
   const lib = useLibraryStatus();
   const [page, setPage] = useState(1);
   const res = useAsync((signal) => (lib ? library.terpeneCultivars(id, page, signal) : Promise.resolve(null)), [id, page, !!lib]);
+  const measuredRef = useRef<LibMeasuredTerpene | undefined>(undefined);
   if (lib === null) return <p className="hint">Der lokale Sortenkatalog ist nur mit TERPGRID-Server verfügbar.</p>;
   const d = res.data;
+  // Messwerte kommen nur mit Seite 1 – beim Blättern behalten
+  if (d && d.page === 1) measuredRef.current = d.measured;
+  const measured = measuredRef.current;
   if (res.loading && !d) return <p className="hint">Wird geladen …</p>;
   if (res.error) return <p className="hint text-rose-300">{res.error}</p>;
-  if (!d || d.total === 0) return <p className="text-[13px] text-ink-300">Keine Sorte im Katalog nennt {label}.</p>;
+  if (!d || d.total === 0)
+    return (
+      <div className="space-y-4">
+        {measured && <MeasuredSamples m={measured} label={label} />}
+        <p className="text-[13px] text-ink-300">Keine Sorte im Katalog nennt {label}.</p>
+      </div>
+    );
   return (
     <div className="space-y-3">
+      {measured && <MeasuredSamples m={measured} label={label} />}
       <p className="text-[13px] text-ink-300">
         <span className="font-mono text-ink-50">{d.total.toLocaleString('de-DE')}</span> Sorten nennen {label} in Seedbank-Texten oder Datenbank-Angaben. Nennungen sind keine Mengen und gelten für die
         jeweilige Quelle, nicht für jede Charge.
@@ -160,6 +171,52 @@ function CatalogMentions({ id, label }: { id: string; label: string }) {
         </nav>
       )}
     </div>
+  );
+}
+
+/** Messwerte in öffentlichen Laborproben – je Probe gemessen, keine Sortenprofile. */
+function MeasuredSamples({ m, label }: { m: LibMeasuredTerpene; label: string }) {
+  const max = Math.max(...m.topNames.map((n) => n.median), 0.0001);
+  return (
+    <section aria-label="Messwerte in Laborproben" className="rounded-xl border border-teal-400/15 bg-teal-400/[0.03] p-3">
+      <div className="mb-2 flex flex-wrap items-center gap-1.5">
+        <EvidenceTag kind="science" source="Smith et al. 2022" />
+        {m.isomerSum && <span className="rounded-full border border-amber-400/25 px-1.5 py-px text-[10.5px] text-amber-200">{m.isomerSum}</span>}
+      </div>
+      <p className="text-[13px] text-ink-300">
+        In <span className="font-mono text-ink-50">{m.samples.toLocaleString('de-DE')}</span> US-Blütenproben gemessen, nachgewiesen in{' '}
+        <span className="font-mono text-ink-50">{Math.round((m.detected / m.samples) * 100)} %</span>
+        {m.median !== null && (
+          <>
+            ; Median über alle Proben <span className="font-mono text-ink-50">{m.median.toLocaleString('de-DE', { maximumFractionDigits: 3 })} %</span>
+          </>
+        )}
+        .
+      </p>
+      {m.topNames.length > 0 && (
+        <>
+          <h4 className="mb-1.5 mt-3 text-[12px] font-semibold text-ink-200">Produktnamen mit dem höchsten Median ({label}, mind. 20 Proben)</h4>
+          <ul className="space-y-1">
+            {m.topNames.map((n) => (
+              <li key={n.nameKey} className="grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)_auto] items-center gap-2 text-[12px]">
+                <a href={href(`discover?q=${encodeURIComponent(n.nameKey.replace(/-/g, ' '))}&samples=1`)} className="inline-flex min-h-6 min-w-0 items-center hover:underline"><span className="truncate text-ink-200">
+                  {n.nameKey.replace(/-/g, ' ')}</span>
+                </a>
+                <span className="h-1.5 rounded-full bg-ink-700" aria-hidden>
+                  <span className="block h-full rounded-full bg-teal-400/70" style={{ width: `${(n.median / max) * 100}%` }} />
+                </span>
+                <span className="whitespace-nowrap font-mono text-[11px] tabular text-ink-300">
+                  {n.median.toLocaleString('de-DE', { maximumFractionDigits: 3 })} % · n={n.samples}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      <p className="mt-2 text-[11px] leading-relaxed text-ink-500">
+        Werte gelten für die gemessenen Proben gleichnamiger Handelsware ohne Breeder-Angabe – nicht für eine bestimmte Sorte oder Pflanze. Quelle: {m.source.citation} Lizenz {m.source.license}.
+      </p>
+    </section>
   );
 }
 

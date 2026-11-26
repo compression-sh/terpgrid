@@ -13,7 +13,7 @@ import { TerpeneChips } from './TerpeneChips';
  * 1. eigene Laborberichte (privat, je Probe), 2. Breeder-/Seedbank-Nennungen, 3. Datenbank-Nennungen.
  * Nennungen sind KEINE Mengen; aus Aromen werden keine Terpene abgeleitet.
  */
-export function TerpeneCard({ detail, labReports }: { detail: LibCultivarDetail; labReports: LabReport[] }) {
+export function TerpeneCard({ detail, labReports, hasSamples }: { detail: LibCultivarDetail; labReports: LabReport[]; hasSamples?: boolean }) {
   const c = detail.cultivar;
   const shop = c.values.terpenes ?? [];
   const db = (detail.claims ?? []).filter((k) => k.field === 'terpenes');
@@ -28,6 +28,11 @@ export function TerpeneCard({ detail, labReports }: { detail: LibCultivarDetail;
             Keine der Quellen nennt Terpene für diese Breeder-Linie. TERPGRID leitet keine Terpene aus Aroma, Name oder Verwandtschaft ab. Selbst gemessene Profile gelten nur für die
             jeweilige Probe: Terpengehalte schwanken zwischen Phänotypen, Anbau, Erntezeitpunkt, Trocknung und Lagerung deutlich.
           </p>
+          {hasSamples && (
+            <p className="text-[12px] leading-relaxed text-ink-300">
+              Unten: Messwerte öffentlicher Laborproben von Produkten <em>gleichen Namens</em> – ohne Breeder-Zuordnung, daher kein Profil dieser Linie.
+            </p>
+          )}
           <a href={href('discover/learn/terpene-analytik')} className="inline-flex text-[12px] text-leaf-300 hover:underline">
             Warum Terpenprofile schwanken
           </a>
