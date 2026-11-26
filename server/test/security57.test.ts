@@ -330,3 +330,47 @@ describe.skipIf(!hasDb)('Phase 5.7 Profilbild-Metadaten', () => {
     }
   });
 });
+
+describe.skipIf(!hasDb)('Phase 5.7 Rotation unter Last', () => {
+  it('K1 Gleichzeitige Schreibvorgänge während der Kontoschlüssel-Rotation: nichts geht verloren, alles lesbar', async () => {
+    const { startUserKeyRotation, continueUserKeyRotation, finalizeUserKeyRotation } = await import('../src/rotation.js');
+    const { verifyData } = await import('../src/verify.js');
+    const env = await setup();
+    try {
+      const c = new Client(env.app);
+      await c.register('sec_rot');
+      const ids = Array.from({ length: 60 }, (_, i) => `r${i}`);
+      await c.post('/api/sync/push', { changes: ids.map((id) => ({ store: 'journal', id, baseVersion: 0, data: { id, notes: `v1-${id}` } })) });
+      const { rows } = await env.ctx.db.query("SELECT id FROM users WHERE login_name = 'sec_rot'");
+      const uid = rows[0].id as string;
+      await startUserKeyRotation(env.ctx, uid);
+      const before = (await c.get('/api/sync/changes?since=0&limit=500')).json.changes as { id: string; version: number }[];
+      const ver = new Map(before.map((x) => [x.id, x.version]));
+      // Umschlüsseln und gleichzeitig ändern/neu anlegen
+      const writers = Array.from({ length: 6 }, (_, w) =>
+        c.post('/api/sync/push', {
+          changes: [
+            ...ids.slice(w * 10, w * 10 + 5).map((id) => ({ store: 'journal', id, baseVersion: ver.get(id), data: { id, notes: `v2-${id}` } })),
+            { store: 'journal', id: `neu-${w}`, baseVersion: 0, data: { id: `neu-${w}`, notes: `neu-${w}` } },
+          ],
+        }),
+      );
+      const [prog, ...res] = await Promise.all([continueUserKeyRotation(env.ctx, uid, { batch: 5 }), ...writers]);
+      for (const r of res) expect(r.json.results.every((x: { status: string }) => x.status === 'ok' || x.status === 'applied' || x.status === 'merged')).toBe(true);
+      let p = prog;
+      while (!p.done) p = await continueUserKeyRotation(env.ctx, uid, { batch: 50 });
+      expect(await finalizeUserKeyRotation(env.ctx, uid)).toBe(true);
+      const after = (await c.get('/api/sync/changes?since=0&limit=500')).json.changes as { id: string; data: { notes: string } }[];
+      expect(after).toHaveLength(66);
+      const notes = new Map(after.map((x) => [x.id, x.data.notes]));
+      for (let w = 0; w < 6; w++) {
+        for (const id of ids.slice(w * 10, w * 10 + 5)) expect(notes.get(id)).toBe(`v2-${id}`);
+        expect(notes.get(`neu-${w}`)).toBe(`neu-${w}`);
+      }
+      const rep = await verifyData(env.ctx.db as never, env.ctx.keys, env.fileDir, uid);
+      expect(rep.errors).toEqual([]);
+    } finally {
+      await env.close();
+    }
+  });
+});
