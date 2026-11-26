@@ -1,5 +1,41 @@
 # Änderungsprotokoll
 
+## 5.6.0-rc.1 – 26.11.2026 (Release-Kandidat, nicht veröffentlicht)
+
+Phase 5.6 „Native Mobile Experience, PWA 3.0 & sichere Offline-Intelligenz“. Keine Server- oder Schemaänderung;
+Rollback auf 5.5.0-rc.1 ohne Wiederherstellung möglich. Bericht: `docs/PHASE5-6-MOBILE-REPORT.md`.
+
+### Neu
+- **Offline-Nutzung als Opt-in** je Konto und Gerät (Konto → Dieses Gerät; einmalige Frage nach dem ersten Login).
+  Ohne Freigabe wird die lokale Arbeitskopie beim Abmelden und beim Kontowechsel gelöscht – nie mit ausstehenden
+  Änderungen. „Geteiltes Gerät“ erzwingt „aus“.
+- **PWA 3.0:** Update erst nach „Aktualisieren“ (kein Neuladen mitten in einer Eingabe), Offline-Ersatzseite,
+  Manifest mit App-Verknüpfungen, Apple-Icon 180 px, einmalige Installationskarte, Anleitungen für iPhone, iPad,
+  Android und Desktop (Einstellungen → App).
+- **Schnellerfassung** über den Plus-Knopf: Messung/Beobachtung, Foto, Journal, Aufgabe, Sammlungs- und
+  Ausrüstungsnotiz, Laborbericht, Pflanze, Grow – mit Rückmeldung „lokal gespeichert“ bzw. „synchronisiert“.
+- **Foto-Studio 3.0:** Originalauflösung (Metadaten weiterhin entfernt), Abbrechen, erneut versuchen, Beschreibung je
+  Foto, klare Hinweise zu HEIC und RAW.
+- **Mobil:** Bottom Sheets mit Wischgeste, Discover-Filter als Sheet, Academy-Inhaltsverzeichnis und „An der letzten
+  Stelle weiterlesen“, Scroll-Wiederherstellung, Ziehen zum Synchronisieren (installierte App), Safe Areas,
+  16-px-Eingaben gegen iOS-Zoom, „Bewegung reduzieren“.
+
+### Geändert
+- **Einheitliche Sync-Zustände:** Synchronisiert, Änderungen ausstehend, Offline, Synchronisierung läuft, Konflikt
+  erkannt, Synchronisierung fehlgeschlagen, Zugriff widerrufen.
+- **Abmelden ohne Verbindung:** Die Serversitzung wird beim nächsten Kontakt beendet, bevor Daten geladen werden.
+- **Performance:** Diagramm-Bibliothek wird nicht mehr bei jedem Start geladen (Übersicht kalt: JS 277 → 172 kB,
+  LCP 1,69 → 1,10 s bei 4× CPU-Drosselung).
+- **Passkeys:** genauere Fehlermeldungen, keine Biometrie-Versprechen.
+
+### Behoben
+- Leere Seite nach dem Abmelden in neueren Chromium-Versionen (`window.scrollTo()` liefert dort ein Promise).
+- Dialoge ohne zugänglichen Namen (`aria-labelledby`).
+
+### Bewusst nicht umgesetzt
+- Web-Push (externe Push-Dienste, Schlüsselverwaltung und Hintergrunddienst bräuchten Freigabe) – weiterhin
+  In-App-Benachrichtigungen ohne Inhalte.
+
 ## 5.5.0-rc.1 – 26.11.2026 (Release-Kandidat, nicht veröffentlicht)
 
 Phase 5.5 „Private Zusammenarbeit“. Migration 008 ist rein additiv; private Datensätze, Dateien und ihre Verschlüsselung
