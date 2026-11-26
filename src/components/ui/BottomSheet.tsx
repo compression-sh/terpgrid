@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useRef, useState } from 'react';
+import { type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react';
 
 /**
  * Bottom Sheet (mobil von unten, Desktop zentriert) auf Basis von <dialog>:
@@ -10,6 +10,7 @@ export function BottomSheet({ title, onClose, children, footer }: { title: React
   const ref = useRef<HTMLDialogElement>(null);
   const start = useRef<number | null>(null);
   const [dy, setDy] = useState(0);
+  const titleId = useId();
   useEffect(() => {
     const d = ref.current;
     if (d && !d.open) d.showModal();
@@ -32,6 +33,7 @@ export function BottomSheet({ title, onClose, children, footer }: { title: React
   return (
     <dialog
       ref={ref}
+      aria-labelledby={titleId}
       onCancel={(e) => {
         e.preventDefault();
         onClose();
@@ -46,7 +48,7 @@ export function BottomSheet({ title, onClose, children, footer }: { title: React
         <div className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-white/20" aria-hidden="true" />
       </div>
       <header className="flex items-center justify-between gap-3 px-5 pt-3 pb-2 sm:pt-4">
-        <h2 className="text-[15px] font-semibold tracking-tight text-ink-50">{title}</h2>
+        <h2 id={titleId} className="text-[15px] font-semibold tracking-tight text-ink-50">{title}</h2>
         <button type="button" onClick={onClose} aria-label="Schließen" className="btn-ghost -mr-1 p-1.5">
           <X className="size-4" />
         </button>
