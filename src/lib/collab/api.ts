@@ -280,6 +280,7 @@ export const collab = {
   deleteComment: (id: string, cid: string) => api('DELETE', `/api/spaces/${enc(id)}/comments/${enc(cid)}`),
   activity: (id: string, before?: string) => api<{ activity: ActivityView[]; more: boolean }>('GET', `/api/spaces/${enc(id)}/activity${before ? `?before=${enc(before)}` : ''}`),
   exportSpace: (id: string) => api<ArrayBuffer>('GET', `/api/spaces/${enc(id)}/export`, undefined, { binary: true }),
+  sharePreviewAny: (items: { store: ShareableStore; id: string }[], mode: 'copy' | 'move', options: ShareOptions) => api<SharePreview>('POST', '/api/share/preview', { items, mode, options }),
   sharePreview: (id: string, items: { store: ShareableStore; id: string }[], mode: 'copy' | 'move', options: ShareOptions) =>
     api<SharePreview>('POST', `/api/spaces/${enc(id)}/share/preview`, { items, mode, options }),
   share: (id: string, items: { store: ShareableStore; id: string }[], mode: 'copy' | 'move', options: ShareOptions) =>

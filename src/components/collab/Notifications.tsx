@@ -1,7 +1,7 @@
 import { Bell, BellRing, Check, CheckCheck, Loader2, Settings2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { refreshUnread, useCollabAvailable, useUnread } from '../../app/collab';
-import { href, navigate } from '../../app/router';
+import { href, navigate, useRoute } from '../../app/router';
 import { errorText, useToast } from '../../app/Toasts';
 import { type NotificationCategory, type NotificationView, collab } from '../../lib/collab/api';
 import { CATEGORY_LABEL, notificationLink, notificationText } from '../../lib/collab/labels';
@@ -13,6 +13,11 @@ export function NotificationBell({ compact = false }: { compact?: boolean }) {
   const { count } = useUnread(available);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const route = useRoute();
+  // Beim Seitenwechsel innerhalb der App Zähler aktualisieren (günstige Abfrage)
+  useEffect(() => {
+    if (available) void refreshUnread();
+  }, [available, route.raw]);
   useEffect(() => {
     if (!open) return;
     const close = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);

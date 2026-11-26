@@ -760,6 +760,18 @@ export function spaceRoutes(ctx: AppContext) {
     };
     type ShareBody = { items: ShareItem[]; mode: 'copy' | 'move'; options?: Record<string, boolean> };
 
+    /** Vorschau ohne Zielbereich (z. B. beim Anlegen eines neuen Bereichs) – liest nur eigene Daten. */
+    app.post<{ Body: ShareBody }>('/api/share/preview', shareSchema, async (req) => {
+      const s = requireSession(req);
+      return withUser(ctx.db, s.userId, async (c) => {
+        const keys = await loadUserKeys(ctx, c, s.userId);
+        const plan = await planShare(c, s.userId, keys, req.body.items, req.body.mode, req.body.options);
+        keys.wipe();
+        plan.summary.bytes = await planBytes(c, s.userId, plan);
+        return { summary: plan.summary, mode: plan.mode, role: 'owner' as Role };
+      });
+    });
+
     app.post<{ Params: { id: string }; Body: ShareBody }>('/api/spaces/:id/share/preview', shareSchema, async (req) => {
       const s = requireSession(req);
       return withUser(ctx.db, s.userId, async (c) => {

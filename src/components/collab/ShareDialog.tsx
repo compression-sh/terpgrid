@@ -80,12 +80,11 @@ export function ShareDialog({ store, ids, onClose }: { store: ShareableStore; id
 
   const items = useMemo(() => ids.map((id) => ({ store, id })), [ids, store]);
   useEffect(() => {
-    if (!spaceId || creating) return setPreview(null);
+    if (!spaceId && !creating) return setPreview(null);
     let alive = true;
     setPreviewError(undefined);
     const t = setTimeout(() => {
-      collab
-        .sharePreview(spaceId, items, mode, opts)
+      (creating ? collab.sharePreviewAny(items, mode, opts) : collab.sharePreview(spaceId, items, mode, opts))
         .then((p) => alive && setPreview(p))
         .catch((e) => alive && (setPreview(null), setPreviewError(errorText(e))));
     }, 250);
@@ -124,7 +123,7 @@ export function ShareDialog({ store, ids, onClose }: { store: ShareableStore; id
     { key: 'costs', label: 'Kosten und Kaufdaten mitteilen', hint: 'Standard aus: Preise, Kaufdatum und Garantie bleiben privat.', show: store === 'inventory' },
     { key: 'documents', label: 'Originaldokument mitteilen', hint: 'PDF/Bild des Laborberichts.', show: store === 'labReports' },
   ];
-  const canSubmit = !busy && synced !== 'checking' && synced !== 'pending' && (creating ? newName.trim().length >= 2 : !!preview) && (mode === 'copy' || understood);
+  const canSubmit = !busy && synced !== 'checking' && synced !== 'pending' && !!preview && (!creating || newName.trim().length >= 2) && (mode === 'copy' || understood);
 
   return (
     <Modal
@@ -229,7 +228,7 @@ export function ShareDialog({ store, ids, onClose }: { store: ShareableStore; id
             ))}
         </div>
 
-        {!creating && (
+        {(
           <section aria-label="Vorschau" aria-live="polite" className="space-y-2">
             <div className="label">Vorschau – das wird geteilt</div>
             {previewError ? (

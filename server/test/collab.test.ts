@@ -316,6 +316,11 @@ describe.skipIf(!hasDb)('Phase 5.5 – Private Zusammenarbeit', () => {
     const r = await c.emil.post(`/api/spaces/${space}/share`, { items: [{ store: 'journal', id: 'j-olga' }], mode: 'copy' });
     expect(r.status).toBe(404);
     expect((await c.viktor.post(`/api/spaces/${space}/share`, { items: [{ store: 'journal', id: 'j-viktor' }], mode: 'copy' })).status).toBe(403);
+    // Vorschau ohne Zielbereich liest ebenfalls nur eigene Daten
+    expect((await c.emil.post('/api/share/preview', { items: [{ store: 'journal', id: 'j-olga' }], mode: 'copy' })).status).toBe(404);
+    const own = await c.emil.post('/api/share/preview', { items: [{ store: 'journal', id: 'j-emil' }], mode: 'copy' });
+    expect(own.json.summary.counts.journal).toBe(1);
+    expect(JSON.stringify(own.json)).not.toContain('PRIVAT-olga');
   });
 
   it('Benachrichtigungen: ohne Inhalte, isoliert je Empfänger, gelesen/alle gelesen, Einstellungen', async () => {

@@ -327,7 +327,7 @@ export function SharedResourcePage({ spaceId, store, id }: { spaceId: string; st
   const setAccess = async (access: Access) => {
     try {
       await collab.setAccess(spaceId, store, id, access);
-      session.schedule(0);
+      await session.syncNow();
       toast(`Zugriffsstufe: ${ACCESS_LABEL[access]}`);
     } catch (err) {
       toast(errorText(err), { tone: 'error' });
