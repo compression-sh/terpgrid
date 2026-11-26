@@ -1,5 +1,34 @@
 # Änderungsprotokoll
 
+## 5.7.0-rc.1 – 26.11.2026 (Release-Kandidat, nicht veröffentlicht)
+
+Phase 5.7 „Sicherheit, Datenschutz, Verschlüsselung und Infrastruktur“. Migration 009 ist rein additiv
+(Anmeldemethode je Sitzung). Rollback auf 5.6 nur per `backup/restore.sh --version 5.6.0-rc.1 <snapshot>`.
+Bericht: `docs/PHASE5-7-SECURITY-REPORT.md`.
+
+### Sicherheit (Befunde behoben)
+- **F-01** Abmelden ohne Verbindung meldet jetzt alle Tabs sofort ab; die Server-Abmeldung wird bei Rückkehr der
+  Verbindung nachgeholt (nicht erst beim nächsten Start).
+- **F-03** 2FA einschalten beendet alle anderen Sitzungen.
+- **F-02** Sitzungsübersicht mit Anmeldemethode; „Alle Sitzungen beenden (auch diese)“.
+- **F-05** Profilbilder mit eingebetteten Metadaten (EXIF/XMP, z. B. Standort) werden serverseitig abgelehnt.
+- **F-04** Sicherheitsverlauf um Passkey-, Abmelde- und Wiederherstellungsereignisse ergänzt; Aufbewahrung über
+  `AUDIT_RETENTION_DAYS` einstellbar.
+- **F-06** Rollback über Migrationen: `restore.sh --version` startet direkt mit der Zielversion.
+- **F-07** Kontolöschung räumt lokale Kopie und Offline-Freigabe sauber ab; Datenschutz-Texte aktualisiert.
+- **F-08** `restore-test.sh` prüft das Repository (`restic check`) und verifiziert wiederhergestellte Inhalte.
+
+### Neu
+- Sicherheits-Regressionstests mit mehreren Konten und direkten API-Aufrufen, Klartext-Suche über alle Tabellen und
+  Dateien, Rotation unter Last, Browser-Tests der Offline-Sicherheit, isolierte Notfalltests (Beschädigung, falsches
+  Passwort, falscher Master-Key, Rollback, Totalverlust).
+- Dokumente: Bedrohungsmodell 3.0, Verifikationsmatrix, Verschlüsselungs-Audit, E2EE-Machbarkeitsstudie,
+  Offline-Sicherheit, VPS-Härtung, Notfallwiederherstellung; SBOM (CycloneDX) unter `docs/sbom/`.
+
+### Unverändert
+- Keine E2EE (Studie ohne Umsetzung), keine automatische Schlüsselrotation, Web-Push deaktiviert,
+  Katalog-Aktualisierungstimer deaktiviert.
+
 ## 5.6.0-rc.1 – 26.11.2026 (Release-Kandidat, nicht veröffentlicht)
 
 Phase 5.6 „Native Mobile Experience, PWA 3.0 & sichere Offline-Intelligenz“. Keine Server- oder Schemaänderung;
