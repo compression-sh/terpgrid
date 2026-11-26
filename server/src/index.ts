@@ -20,7 +20,7 @@ const app = await buildApp(ctx);
 
 const timer = setInterval(() => {
   cleanupSessions(ctx).catch(() => ctx.tasks.fail('sessions'));
-  ctx.db.query("DELETE FROM audit_events WHERE created_at < now() - interval '180 days'").catch(() => ctx.tasks.fail('audit'));
+  ctx.db.query('DELETE FROM audit_events WHERE created_at < now() - make_interval(days => $1)', [ctx.config.auditRetentionDays]).catch(() => ctx.tasks.fail('audit'));
   purgeTrash(ctx.db, ctx.config.fileDir, ctx.config.fileTrashDays).catch(() => ctx.tasks.fail('trash'));
 }, 60 * 60_000);
 timer.unref();

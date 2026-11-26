@@ -48,7 +48,7 @@ interface Overview {
   sessions: number;
   passkeys: number;
   totpEnabled: boolean;
-  securityEvents: { type: string; created_at: string }[];
+  securityEvents: { type: string; created_at: string; factor?: string | null }[];
 }
 interface SessionRow {
   handle: string;
@@ -57,7 +57,16 @@ interface SessionRow {
   lastSeenAt: string;
   expiresAt: string;
   userAgent: string | null;
+  authMethod: 'password' | 'totp' | 'passkey' | 'recovery' | 'register' | null;
 }
+
+const METHOD_LABEL: Record<string, string> = {
+  password: 'mit Passwort',
+  totp: 'mit Passwort und 2FA-Code',
+  passkey: 'mit Passkey',
+  recovery: 'mit Wiederherstellungscode',
+  register: 'bei der Registrierung',
+};
 
 const EVENT_LABEL: Record<string, string> = {
   'login.success': 'Anmeldung',
@@ -68,6 +77,10 @@ const EVENT_LABEL: Record<string, string> = {
   'totp.enable': '2FA aktiviert',
   'totp.disable': '2FA deaktiviert',
   'session.revoke': 'Sitzung beendet',
+  'recovery.failure': 'Fehlgeschlagene Wiederherstellung',
+  'passkey.add': 'Passkey hinzugefügt',
+  'passkey.remove': 'Passkey entfernt',
+  logout: 'Abgemeldet',
 };
 
 const dt = (s: string | null | undefined) => (s ? new Date(s).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' }) : '–');
@@ -176,7 +189,8 @@ export function AccountPage() {
                     {s.current && <span className="rounded-full bg-leaf-500/15 px-2 py-0.5 text-[10.5px] text-leaf-200">Dieses Gerät</span>}
                   </div>
                   <div className="text-[11.5px] text-ink-500">
-                    Angemeldet {dt(s.createdAt)} · zuletzt aktiv {dt(s.lastSeenAt)}
+                    Angemeldet {dt(s.createdAt)}
+                    {s.authMethod ? ` ${METHOD_LABEL[s.authMethod]}` : ''} · zuletzt aktiv {dt(s.lastSeenAt)}
                   </div>
                 </div>
                 {!s.current && (
@@ -212,6 +226,24 @@ export function AccountPage() {
             }}
           >
             <LogOut className="size-4" /> Alle anderen Sitzungen beenden
+          </button>
+          <button
+            type="button"
+            className="btn-ghost text-rose-200"
+            disabled={offline}
+            onClick={async () => {
+              const ok = await confirm({
+                title: 'Alle Sitzungen beenden?',
+                message: 'Alle Geräte werden abgemeldet – auch dieses. Lokale Kopien auf anderen Geräten werden dabei nicht gelöscht (eine Fernlöschung ist nicht möglich); sie sind dort aber ohne erneute Anmeldung nicht mehr mit dem Server verbunden.',
+                confirmLabel: 'Alle beenden',
+                tone: 'danger',
+              });
+              if (!ok) return;
+              const r = await api<{ revoked: number }>('POST', '/api/auth/sessions/revoke-all').catch((e) => (toast(errText(e), { tone: 'error' }), null));
+              if (r) await logoutFlow(auth, confirm);
+            }}
+          >
+            <LogOut className="size-4" /> Alle Sitzungen beenden (auch diese)
           </button>
           <button type="button" className="btn-ghost" onClick={() => void logoutFlow(auth, confirm)}>
             <LogOut className="size-4" /> Auf diesem Gerät abmelden
@@ -401,7 +433,10 @@ function SecuritySection({ user, ov, reload, disabled }: { user: ServerUser; ov:
           <ul className="mt-2 space-y-1 text-[12.5px]">
             {ov.securityEvents.map((e, i) => (
               <li key={`${e.created_at}-${i}`} className={`flex justify-between gap-3 ${e.type === 'login.failure' ? 'text-amber-200' : 'text-ink-300'}`}>
-                <span>{EVENT_LABEL[e.type] ?? e.type}</span>
+                <span>
+                  {EVENT_LABEL[e.type] ?? e.type}
+                  {e.factor === 'passkey' ? ' (Passkey)' : e.factor === 'totp' ? ' (2FA-Code)' : ''}
+                </span>
                 <span className="tabular text-ink-500">{dt(e.created_at)}</span>
               </li>
             ))}
@@ -707,6 +742,7 @@ function TotpModal({ open, onClose, onDone }: { open: boolean; onClose: () => vo
 
 /** Zurückhaltende Übersicht – Status statt Alarm, ohne „100 % sicher“-Versprechen. */
 function SecurityStatus({ ov, totp }: { ov: Overview; totp: boolean }) {
+  const { offlineEnabled } = useAuth();
   const secondFactor = totp || ov.passkeys > 0;
   const codesOk = ov.recoveryCodesRemaining >= 4;
   const items: { label: string; value: string; ok: boolean; to: string }[] = [
@@ -714,6 +750,7 @@ function SecurityStatus({ ov, totp }: { ov: Overview; totp: boolean }) {
     { label: 'Passkeys', value: String(ov.passkeys), ok: true, to: 'passkeys' },
     { label: 'Recovery-Codes', value: `${ov.recoveryCodesRemaining} / 10`, ok: codesOk, to: 'sicherheit' },
     { label: 'Aktive Sitzungen', value: String(ov.sessions), ok: true, to: 'sitzungen' },
+    { label: 'Offline-Kopie', value: offlineEnabled ? 'bleibt auf diesem Gerät' : 'nur während der Sitzung', ok: true, to: 'geraet' },
   ];
   return (
     <div className="card flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
@@ -726,7 +763,7 @@ function SecurityStatus({ ov, totp }: { ov: Overview; totp: boolean }) {
           <div className="text-[11.5px] text-ink-500">{secondFactor ? (codesOk ? 'Zweiter Faktor und Recovery-Codes vorhanden' : 'Neue Recovery-Codes empfohlen') : '2FA oder Passkey empfohlen'}</div>
         </div>
       </div>
-      <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
         {items.map((i) => (
           <button key={i.label} type="button" onClick={() => document.getElementById(i.to)?.scrollIntoView({ behavior: 'smooth' })} className="rounded-lg border border-white/[0.05] bg-white/[0.015] px-3 py-2 text-left hover:border-white/[0.12]">
             <span className="block text-[11px] text-ink-500">{i.label}</span>
@@ -897,11 +934,13 @@ function PrivacyCenter() {
         </Item>
         <Item icon={<UserRound className="size-4" />} title="Unverschlüsselt auf dem Server (Metadaten)">
           Kennung, Anzeigename, Rolle, Zeitpunkte von Anmeldungen und Änderungen, Anzahl und Größe der Datensätze/Dateien, gekürzter Browser-Typ je Sitzung. IP-Adressen nur als
-          gekürzter, nicht umkehrbarer Hash im Sicherheitsprotokoll (180 Tage).
+          gekürzter, nicht umkehrbarer Hash im Sicherheitsprotokoll (Standard 180 Tage, vom Betreiber einstellbar). Das Protokoll enthält nie Inhalte, Passwörter, Codes oder Schlüssel.
         </Item>
         <Item icon={<Laptop className="size-4" />} title="In diesem Browser">
-          Eine Arbeitskopie deiner Daten (IndexedDB, je Konto getrennt, <strong className="text-ink-200">unverschlüsselt</strong>) für Offline-Nutzung, ausstehende Änderungen und die
-          Eingabefelder des THC Lab (localStorage). Das Sitzungs-Cookie ist für Skripte nicht lesbar. Auf gemeinsam genutzten Geräten beim Abmelden die lokale Kopie löschen.
+          Während der Sitzung eine Arbeitskopie deiner Daten (IndexedDB, je Konto getrennt, <strong className="text-ink-200">unverschlüsselt</strong>), ausstehende Änderungen und die
+          Eingabefelder des THC Lab (localStorage). Über das Abmelden hinaus bleibt die Kopie nur mit eingeschalteter Offline-Nutzung („Dieses Gerät“) – oder solange Änderungen noch
+          nicht übertragen sind; diese kann nur dein eigenes Konto nach der Anmeldung übertragen. Gemeinsame Bereiche liegen nur im Arbeitsspeicher. Das Sitzungs-Cookie ist für
+          Skripte nicht lesbar. Schlüssel liegen nie im Browser.
         </Item>
         <Item icon={<RefreshCw className="size-4" />} title="Externe Sortendaten">
           Discover nutzt StrainAPI und (auf Klick) CannaLib über deinen Server. Die Anbieter sehen nur die Server-Adresse und Suchbegriffe – keine persönlichen Daten, keine Cookies.
@@ -946,10 +985,10 @@ function DeleteSection({ user, disabled }: { user: ServerUser; disabled: boolean
             try {
               const r = await reauth(() => api('DELETE', '/api/account', { confirm: typed }));
               if (!r) return;
-              selectDatabase(accountDbName(user.accountKey));
-              await deleteDatabase().catch(() => {});
+              // Lokale Kopie und Offline-Freigabe dieses Geräts entfernen (das Konto existiert nicht mehr)
+              auth.setOfflineMode(false);
+              await auth.logout({ wipeLocal: true });
               toast('Dein Konto wurde gelöscht.', { tone: 'ok' });
-              await auth.logout();
             } catch (err) {
               setError(errText(err));
             } finally {
@@ -959,7 +998,7 @@ function DeleteSection({ user, disabled }: { user: ServerUser; disabled: boolean
         >
           <Callout tone="danger">
             Alle Inhalte werden sofort vom Server und von diesem Gerät entfernt. Lade vorher einen Export herunter, falls du die Daten behalten möchtest. In Server-Backups bleiben
-            verschlüsselte Kopien bis zum Ablauf der Aufbewahrung. Gemeinsame Bereiche mit weiteren Mitgliedern musst du vorher übertragen oder löschen; deine Kommentare bleiben dort als „Gelöschtes Konto“.
+            verschlüsselte Kopien bis zum Ablauf der Aufbewahrung. Lokale Kopien auf anderen Geräten werden dort erst beim nächsten Öffnen von TERPGRID entfernt (ohne Offline-Freigabe) – eine Fernlöschung ist nicht möglich. Gemeinsame Bereiche mit weiteren Mitgliedern musst du vorher übertragen oder löschen; deine Kommentare bleiben dort als „Gelöschtes Konto“.
           </Callout>
           <div className="space-y-1.5">
             <label className="label" htmlFor="del-confirm">

@@ -29,6 +29,8 @@ x-api-env: &api-env
   # Argon2id: über dem OWASP-Minimum (19 MiB, t=2); Messung: docs/SECURITY.md
   ARGON2_MEMORY_KIB: ${ARGON2_MEMORY_KIB:-65536}
   ARGON2_TIME_COST: ${ARGON2_TIME_COST:-3}
+  # Aufbewahrung des Sicherheitsprotokolls (Tage, 7–730) – ohne Inhalte, IP nur als HMAC
+  AUDIT_RETENTION_DAYS: ${AUDIT_RETENTION_DAYS:-180}
 
 services:
   db:

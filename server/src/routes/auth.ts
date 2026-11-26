@@ -10,7 +10,7 @@ import { HttpError, requireReauth, requireSession, throttle } from '../http.js';
 import { displayNameProblem, generateAccountId, normalizeLogin, usernameProblem } from '../identity.js';
 import { passwordProblems } from '../passwords.js';
 import { issueLoginSession } from '../login.js';
-import { type SessionInfo, clearSessionCookie, handleOf, type setSessionCookie } from '../sessions.js';
+import { type AuthMethod, type SessionInfo, clearSessionCookie, handleOf, type setSessionCookie } from '../sessions.js';
 import { loadUserKeys } from '../userkeys.js';
 import { createUserRow, recoveryHash, replaceRecoveryCodes } from '../users.js';
 
@@ -61,8 +61,15 @@ export function authRoutes(ctx: AppContext) {
   };
 
   return fp(async (app: FastifyInstance) => {
-    const startSession = (req: FastifyRequest, reply: Parameters<typeof setSessionCookie>[1], userId: string, oldSession?: Buffer | null) =>
-      issueLoginSession(ctx, req, reply, userId, oldSession);
+    /** Neue Sitzung; die Methode wird für die Sitzungsübersicht gespeichert (bei Rotation: die bisherige). */
+    const startSession = async (req: FastifyRequest, reply: Parameters<typeof setSessionCookie>[1], userId: string, oldSession?: Buffer | null, method?: AuthMethod | null) => {
+      let m = method ?? undefined;
+      if (method === null && oldSession) {
+        const r = await ctx.db.query('SELECT auth_method FROM sessions WHERE id = $1', [oldSession]);
+        m = r.rows[0]?.auth_method ?? undefined;
+      }
+      return issueLoginSession(ctx, req, reply, userId, oldSession, m);
+    };
 
     async function validInvite(token: string | undefined) {
       if (!token || token.length > 100) return null;
@@ -147,7 +154,7 @@ export function authRoutes(ctx: AppContext) {
           if ((e as { code?: string }).code === '23505') throw new HttpError(409, 'Dieser Benutzername ist bereits vergeben.');
           throw e;
         }
-        const session = await startSession(req, reply, userId, req.session?.id);
+        const session = await startSession(req, reply, userId, req.session?.id, 'register');
         return reply.code(201).send({ ...session, recoveryCodes: codes });
       },
     );
@@ -189,7 +196,7 @@ export function authRoutes(ctx: AppContext) {
           return { status: 'mfa', mfaToken };
         }
         await audit(ctx, 'login.success', { userId: u.id, ip: req.ip });
-        return { status: 'ok', ...(await startSession(req, reply, u.id, req.session?.id)) };
+        return { status: 'ok', ...(await startSession(req, reply, u.id, req.session?.id, 'password')) };
       },
     );
 
@@ -216,7 +223,7 @@ export function authRoutes(ctx: AppContext) {
         ctx.limits.mfa.success(p.userId);
         pending.delete(req.body.mfaToken);
         await audit(ctx, 'login.success', { userId: p.userId, ip: req.ip, meta: { mfa: true } });
-        return { status: 'ok', ...(await startSession(req, reply, p.userId, req.session?.id)) };
+        return { status: 'ok', ...(await startSession(req, reply, p.userId, req.session?.id, 'totp')) };
       },
     );
 
@@ -298,7 +305,7 @@ export function authRoutes(ctx: AppContext) {
         });
         if (remaining === null) return fail();
         ctx.limits.recoverAccount.success(login);
-        return { status: 'ok', remainingRecoveryCodes: remaining, totpDisabled: true, passkeysRemoved: true, ...(await startSession(req, reply, userId)) };
+        return { status: 'ok', remainingRecoveryCodes: remaining, totpDisabled: true, passkeysRemoved: true, ...(await startSession(req, reply, userId, undefined, 'recovery')) };
       },
     );
 
@@ -321,13 +328,13 @@ export function authRoutes(ctx: AppContext) {
         // Alle Sessions beenden, auch diese – dann neue Session (Rotation)
         await ctx.db.query('DELETE FROM sessions WHERE user_id = $1', [s.userId]);
         await audit(ctx, 'password.change', { userId: s.userId, ip: req.ip });
-        return startSession(req, reply, s.userId);
+        return startSession(req, reply, s.userId, undefined, 'password');
       },
     );
 
     app.get('/api/auth/sessions', async (req) => {
       const s = requireSession(req);
-      const { rows } = await ctx.db.query('SELECT id, created_at, last_seen_at, expires_at, user_agent FROM sessions WHERE user_id = $1 ORDER BY last_seen_at DESC', [s.userId]);
+      const { rows } = await ctx.db.query('SELECT id, created_at, last_seen_at, expires_at, user_agent, auth_method FROM sessions WHERE user_id = $1 ORDER BY last_seen_at DESC', [s.userId]);
       return {
         sessions: rows.map((r) => ({
           handle: handleOf(r.id),
@@ -336,6 +343,7 @@ export function authRoutes(ctx: AppContext) {
           lastSeenAt: r.last_seen_at,
           expiresAt: r.expires_at,
           userAgent: r.user_agent,
+          authMethod: r.auth_method ?? null,
         })),
       };
     });
@@ -354,6 +362,15 @@ export function authRoutes(ctx: AppContext) {
       const s = requireSession(req);
       const r = await ctx.db.query('DELETE FROM sessions WHERE user_id = $1 AND id <> $2', [s.userId, s.id]);
       await audit(ctx, 'session.revoke', { userId: s.userId, ip: req.ip, meta: { all: true, count: r.rowCount ?? 0 } });
+      return { revoked: r.rowCount ?? 0 };
+    });
+
+    /** Alle Sitzungen beenden – auch diese (z. B. bei Verdacht auf fremden Zugriff). */
+    app.post('/api/auth/sessions/revoke-all', async (req, reply) => {
+      const s = requireSession(req);
+      const r = await ctx.db.query('DELETE FROM sessions WHERE user_id = $1', [s.userId]);
+      await audit(ctx, 'session.revoke', { userId: s.userId, ip: req.ip, meta: { all: true, includingCurrent: true, count: r.rowCount ?? 0 } });
+      clearSessionCookie(ctx, reply);
       return { revoked: r.rowCount ?? 0 };
     });
 
@@ -395,9 +412,11 @@ export function authRoutes(ctx: AppContext) {
           throw new HttpError(400, 'Der Code ist ungültig. Bitte Uhrzeit des Geräts prüfen.');
         }
         await ctx.db.query('UPDATE users SET totp_enabled = true WHERE id = $1', [s.userId]);
-        await audit(ctx, 'totp.enable', { userId: s.userId, ip: req.ip });
+        // Sicherheitsänderung: andere Sitzungen (ohne zweiten Faktor angemeldet) beenden
+        const others = await ctx.db.query('DELETE FROM sessions WHERE user_id = $1 AND id <> $2', [s.userId, s.id]);
+        await audit(ctx, 'totp.enable', { userId: s.userId, ip: req.ip, meta: { sessionsRevoked: others.rowCount ?? 0 } });
         // Rechteänderung → Session rotieren
-        return startSession(req, reply, s.userId, s.id);
+        return startSession(req, reply, s.userId, s.id, null);
       },
     );
 
@@ -405,7 +424,7 @@ export function authRoutes(ctx: AppContext) {
       const s = requireReauth(ctx, req);
       await ctx.db.query('UPDATE users SET totp_enabled = false, totp_secret = NULL, totp_last_step = NULL WHERE id = $1', [s.userId]);
       await audit(ctx, 'totp.disable', { userId: s.userId, ip: req.ip });
-      return startSession(req, reply, s.userId, s.id);
+      return startSession(req, reply, s.userId, s.id, null);
     });
 
   });

@@ -212,7 +212,7 @@ export function passkeyRoutes(ctx: AppContext) {
         if (upd.rowCount === 0) return fail(c.user_id);
         if (c.status !== 'active') throw new HttpError(403, 'Dieses Konto ist gesperrt. Bitte wende dich an die Administration.');
         await audit(ctx, 'login.success', { userId: c.user_id, ip: req.ip, meta: { factor: 'passkey' } });
-        return { status: 'ok', ...(await issueLoginSession(ctx, req, reply, c.user_id, req.session?.id)) };
+        return { status: 'ok', ...(await issueLoginSession(ctx, req, reply, c.user_id, req.session?.id, 'passkey')) };
       },
     );
   });

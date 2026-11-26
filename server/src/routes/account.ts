@@ -45,7 +45,7 @@ export function accountRoutes(ctx: AppContext) {
       const sess = await ctx.db.query('SELECT count(*)::int AS n FROM sessions WHERE user_id = $1', [s.userId]);
       const pk = await ctx.db.query('SELECT count(*)::int AS n FROM webauthn_credentials WHERE user_id = $1', [s.userId]);
       const ev = await ctx.db.query(
-        "SELECT type, created_at FROM audit_events WHERE user_id = $1 AND type IN ('login.success','login.failure','password.change','recovery.success','recovery.regenerate','totp.enable','totp.disable','session.revoke') ORDER BY id DESC LIMIT 20",
+        "SELECT type, created_at, meta->>'factor' AS factor FROM audit_events WHERE user_id = $1 AND type IN ('login.success','login.failure','password.change','recovery.success','recovery.failure','recovery.regenerate','totp.enable','totp.disable','session.revoke','passkey.add','passkey.remove','logout') ORDER BY id DESC LIMIT 30",
         [s.userId],
       );
       const r = rows[0];
