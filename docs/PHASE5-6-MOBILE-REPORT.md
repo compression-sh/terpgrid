@@ -206,4 +206,5 @@ Rollback-Hinweis für Clients:
 - `e66d057` – M1–M4: PWA 3.0, iOS-Optimierung, Offline als Opt-in, Schnellerfassung
 - `b398ad3` – M5–M7: Foto-Studio 3.0, Discover-Filter, Academy mobil, Abmelden ohne Verbindung
 - `4df7ec4` – Dialoge mit zugänglichem Namen, Version 5.6.0-rc.1, Screenshots
-- Dokumentations-Commit und PR-Link: siehe Pull Request (direkt gegen `main`, kein gestapelter PR, kein automatischer Merge, kein Deployment).
+- `9485274` – Bericht, Offline-Architektur, Bedrohungsmodell, PWA-Anleitung, Changelog
+- Pull Request: https://github.com/compression-sh/terpgrid/pull/15 (direkt gegen `main`, kein gestapelter PR, kein automatischer Merge, kein Deployment)
