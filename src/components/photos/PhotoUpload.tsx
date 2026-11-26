@@ -1,11 +1,11 @@
-import { Camera, CheckCircle2, CircleAlert, ImagePlus, Loader2, RotateCcw, ShieldCheck, Upload } from 'lucide-react';
+import { Ban, Camera, CheckCircle2, CircleAlert, ImagePlus, Loader2, RotateCcw, ShieldCheck, Upload } from 'lucide-react';
 import { type DragEvent, useEffect, useId, useRef, useState } from 'react';
 import { useIsServerMode } from '../../app/auth';
 import { useData } from '../../app/DataProvider';
 import { errorText, useToast } from '../../app/Toasts';
 import { nowLocal } from '../../lib/dates';
-import { addPhoto, createRecord } from '../../lib/db/repo';
-import { formatBytes, processImage } from '../../lib/media/images';
+import { addPhoto, createRecord, updateRecord } from '../../lib/db/repo';
+import { type ImageQuality, MAX_EDGE, formatBytes, formatSupportNote, processImage } from '../../lib/media/images';
 import { SelectField, TextArea } from '../forms/Fields';
 import { Callout } from '../ui/Callout';
 import { Modal } from '../ui/Modal';
@@ -27,13 +27,16 @@ interface Props {
   onUploaded?: (photoIds: string[]) => void;
 }
 
-type ItemStatus = 'queued' | 'processing' | 'saved' | 'error';
+type ItemStatus = 'queued' | 'processing' | 'saved' | 'error' | 'cancelled';
 interface UploadItem {
   key: string;
   file: File;
   status: ItemStatus;
   error?: string;
   preview?: string;
+  photoId?: string;
+  note?: string;
+  hint?: string | null;
 }
 
 interface Result {
@@ -61,6 +64,9 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
   const [result, setResult] = useState<Result | null>(null);
   const [drag, setDrag] = useState(false);
   const [items, setItems] = useState<UploadItem[]>([]);
+  const [quality, setQuality] = useState<ImageQuality>('standard');
+  // Warteschlange nur im Arbeitsspeicher: unbearbeitete Originale werden nie gespeichert
+  const cancelRef = useRef(false);
   const cameraRef = useRef<HTMLInputElement>(null);
   const server = useIsServerMode();
   const plants = data.plants.filter((p) => p.growId === growId);
@@ -68,7 +74,12 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
   const itemsRef = useRef(items);
   itemsRef.current = items;
   useEffect(() => () => itemsRef.current.forEach((i) => i.preview && URL.revokeObjectURL(i.preview)), []);
-  const setStatus = (key: string, status: ItemStatus, error?: string) => setItems((list) => list.map((i) => (i.key === key ? { ...i, status, error } : i)));
+  const setStatus = (key: string, status: ItemStatus, error?: string, photoId?: string) => setItems((list) => list.map((i) => (i.key === key ? { ...i, status, error, ...(photoId ? { photoId } : {}) } : i)));
+  const saveItemNote = async (it: UploadItem, text: string) => {
+    if (!it.photoId) return;
+    setItems((list) => list.map((i) => (i.key === it.key ? { ...i, note: text } : i)));
+    await updateRecord('photos', it.photoId, { note: text.trim() || note.trim() }).catch((e) => toast(errorText(e), { tone: 'error' }));
+  };
 
   async function handle(files: File[]) {
     const images = files.filter((f) => f.type.startsWith('image/') || /\.(jpe?g|png|webp|heic|heif|avif|gif)$/i.test(f.name));
@@ -76,17 +87,30 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
       toast('Keine Bilddateien ausgewählt.', { tone: 'error' });
       return;
     }
-    const batch: UploadItem[] = images.map((file, i) => ({ key: `${Date.now()}-${i}-${file.name}`, file, status: 'queued', preview: images.length <= 24 ? URL.createObjectURL(file) : undefined }));
-    setItems((list) => [...list.filter((x) => x.status !== 'error' || !images.includes(x.file)), ...batch]);
+    const batch: UploadItem[] = images.map((file, i) => ({
+      key: `${Date.now()}-${i}-${file.name}`,
+      file,
+      status: 'queued',
+      hint: formatSupportNote(file),
+      preview: images.length <= 24 && !/\.(heic|heif)$/i.test(file.name) ? URL.createObjectURL(file) : undefined,
+    }));
+    setItems((list) => [...list.filter((x) => !['error', 'cancelled'].includes(x.status) || !images.includes(x.file)), ...batch]);
+    cancelRef.current = false;
     const res: Result = { ok: 0, errors: [], gpsRemoved: 0, savedBytes: 0, originalBytes: 0 };
     const ids: string[] = [];
     setResult(null);
     setBusy({ done: 0, total: images.length });
+    let downgraded = 0;
     for (const item of batch) {
       const file = item.file;
+      if (cancelRef.current) {
+        setStatus(item.key, 'cancelled');
+        continue;
+      }
       setStatus(item.key, 'processing');
       try {
-        const img = await processImage(file);
+        const img = await processImage(file, { quality });
+        if (img.downgraded) downgraded++;
         const photo = await addPhoto(
           {
             ...target,
@@ -107,7 +131,7 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
         if (img.hadGps) res.gpsRemoved++;
         res.savedBytes += img.full.byteLength + img.thumb.byteLength;
         res.originalBytes += img.originalSize;
-        setStatus(item.key, 'saved');
+        setStatus(item.key, 'saved', undefined, photo.id);
       } catch (e) {
         const msg = errorText(e);
         res.errors.push(msg);
@@ -131,6 +155,8 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
     }
     setBusy(null);
     setResult(res);
+    if (downgraded) toast(`${downgraded} Foto(s) waren in Originalauflösung zu groß für die Synchronisation und wurden auf ${MAX_EDGE} px verkleinert.`, { tone: 'info' });
+    if (cancelRef.current) toast('Upload abgebrochen – bereits gespeicherte Fotos bleiben erhalten.', { tone: 'info' });
     if (res.ok) {
       toast(res.ok === 1 ? 'Foto gespeichert' : `${res.ok} Fotos gespeichert`);
       onUploaded?.(ids);
@@ -152,9 +178,15 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
       subtitle={server ? 'Werden auf diesem Gerät verarbeitet und verschlüsselt mit deinem Server synchronisiert.' : 'Bleiben ausschließlich auf diesem Gerät gespeichert.'}
       size="md"
       footer={
-        <button type="button" className="btn-ghost" onClick={onClose} disabled={!!busy}>
-          {result ? 'Fertig' : 'Schließen'}
-        </button>
+        busy ? (
+          <button type="button" className="btn-ghost" onClick={() => (cancelRef.current = true)}>
+            <Ban className="size-4" /> Restliche abbrechen
+          </button>
+        ) : (
+          <button type="button" className="btn-ghost" onClick={onClose}>
+            {result ? 'Fertig' : 'Schließen'}
+          </button>
+        )
       }
     >
       <div className="space-y-4">
@@ -174,6 +206,21 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
           </div>
         )}
         <TextArea label="Notiz (für alle Fotos dieses Uploads)" value={note} onChange={setNote} rows={2} maxLength={300} />
+        <fieldset className="space-y-1.5" disabled={!!busy}>
+          <legend className="label mb-1">Bildqualität</legend>
+          <label className="flex cursor-pointer items-start gap-2 text-[13px] text-ink-200">
+            <input type="radio" name="photo-quality" className="mt-0.5 accent-leaf-500" checked={quality === 'standard'} onChange={() => setQuality('standard')} />
+            <span>
+              Optimiert (empfohlen) <span className="text-ink-500">· max. {MAX_EDGE} px, spart Speicher und Datenvolumen</span>
+            </span>
+          </label>
+          <label className="flex cursor-pointer items-start gap-2 text-[13px] text-ink-200">
+            <input type="radio" name="photo-quality" className="mt-0.5 accent-leaf-500" checked={quality === 'original'} onChange={() => setQuality('original')} />
+            <span>
+              Originalauflösung <span className="text-ink-500">· keine Verkleinerung (bis 16 Megapixel), deutlich größere Dateien; Metadaten werden trotzdem entfernt</span>
+            </span>
+          </label>
+        </fieldset>
         {(selectable ? growId : target.growId) && (
           <label className="flex cursor-pointer items-center gap-2 text-[13px] text-ink-300">
             <input type="checkbox" className="accent-leaf-500" checked={logActivity} onChange={(e) => setLogActivity(e.target.checked)} />
@@ -211,7 +258,7 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
                   Dateien auswählen
                 </label>
               </p>
-              <p className="hint mt-1">JPEG, PNG, WebP · mehrere gleichzeitig möglich</p>
+              <p className="hint mt-1">JPEG, PNG, WebP, AVIF · HEIC nur in Safari · mehrere gleichzeitig möglich</p>
               <div className="mt-4 flex flex-wrap justify-center gap-2">
                 <button type="button" className="btn-primary" onClick={() => inputRef.current?.click()}>
                   <Upload className="size-4" /> Fotos wählen
@@ -258,9 +305,27 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
                 {i.preview ? <img src={i.preview} alt="" className="size-9 shrink-0 rounded-md object-cover" /> : <span className="size-9 shrink-0 rounded-md bg-white/[0.04]" />}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[12.5px] text-ink-100">{i.file.name}</span>
-                  <span className={`block truncate text-[11px] ${i.status === 'error' ? 'text-rose-300' : 'text-ink-500'}`}>
-                    {i.status === 'queued' ? 'Wartet …' : i.status === 'processing' ? 'Wird verkleinert und bereinigt …' : i.status === 'saved' ? `Gespeichert${server ? ' · wird synchronisiert' : ''}` : i.error}
+                  <span className={`block text-[11px] ${i.status === 'error' ? 'text-rose-300' : 'truncate text-ink-500'}`}>
+                    {i.status === 'queued'
+                      ? (i.hint ?? 'Wartet …')
+                      : i.status === 'processing'
+                        ? quality === 'original' ? 'Wird bereinigt …' : 'Wird verkleinert und bereinigt …'
+                        : i.status === 'saved'
+                          ? `Auf diesem Gerät gespeichert${server ? ' · wird synchronisiert' : ''}`
+                          : i.status === 'cancelled'
+                            ? 'Abgebrochen'
+                            : i.error}
                   </span>
+                  {i.status === 'saved' && i.photoId && (
+                    <input
+                      className="input-base mt-1 py-1 text-[12px]"
+                      aria-label={`Beschreibung für ${i.file.name}`}
+                      placeholder="Beschreibung (optional)"
+                      maxLength={300}
+                      defaultValue={i.note ?? ''}
+                      onBlur={(e) => e.target.value !== (i.note ?? '') && void saveItemNote(i, e.target.value)}
+                    />
+                  )}
                 </span>
                 {i.status === 'processing' && <Loader2 className="size-4 shrink-0 animate-spin text-leaf-400" />}
                 {i.status === 'saved' && <CheckCircle2 className="size-4 shrink-0 text-leaf-400" />}
@@ -269,9 +334,9 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
             ))}
           </ul>
         )}
-        {!busy && items.some((i) => i.status === 'error') && (
-          <button type="button" className="btn-ghost" onClick={() => handle(items.filter((i) => i.status === 'error').map((i) => i.file))}>
-            <RotateCcw className="size-4" /> Fehlgeschlagene erneut versuchen
+        {!busy && items.some((i) => i.status === 'error' || i.status === 'cancelled') && (
+          <button type="button" className="btn-ghost" onClick={() => handle(items.filter((i) => i.status === 'error' || i.status === 'cancelled').map((i) => i.file))}>
+            <RotateCcw className="size-4" /> Fehlgeschlagene und abgebrochene erneut versuchen
           </button>
         )}
 
@@ -294,8 +359,8 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
         <div className="flex gap-2.5 rounded-xl border border-white/[0.05] bg-white/[0.015] p-3 text-xs leading-relaxed text-ink-400">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-leaf-400" />
           <span>
-            Fotos werden auf max. 2048 px verkleinert und neu kodiert. Dabei werden alle eingebetteten Metadaten entfernt – auch Standort, Kameramodell und
-            Seriennummern. Das Aufnahmedatum wird vorher ausgelesen und separat gespeichert.{' '}
+            Fotos werden {quality === 'original' ? 'in voller Auflösung' : `auf max. ${MAX_EDGE} px verkleinert und`} neu kodiert. Dabei werden alle eingebetteten Metadaten entfernt – auch Standort, Kameramodell und
+            Seriennummern. Die ausgewählten Dateien liegen bis zur Verarbeitung nur im Arbeitsspeicher. Das Aufnahmedatum wird vorher ausgelesen und separat gespeichert.{' '}
             {server ? 'Nur das bereinigte Bild wird verschlüsselt auf deinem Server gespeichert – das Original verlässt dein Gerät nicht.' : 'Nichts wird hochgeladen.'}
           </span>
         </div>

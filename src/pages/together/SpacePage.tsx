@@ -1,3 +1,4 @@
+import { syncStateText } from '../../lib/sync/status';
 import {
   AlertTriangle,
   ArrowRightLeft,
@@ -62,7 +63,7 @@ export function SpacePage({ spaceId }: { spaceId: string }) {
       <div className="space-y-4">
         <EmptyState
           icon={<CloudOff />}
-          title="Kein Zugriff"
+          title={st?.phase === 'revoked' ? 'Zugriff widerrufen' : 'Kein Zugriff'}
           text="Dieser Bereich existiert nicht (mehr) oder du bist kein Mitglied mehr. Zwischengespeicherte Inhalte wurden aus diesem Browser entfernt."
           action={
             <a className="btn-primary" href={href('together')}>
@@ -135,7 +136,7 @@ export function SpacePage({ spaceId }: { spaceId: string }) {
 
 function SyncPill({ session }: { session: SpaceSession }) {
   const st = session.state;
-  const label = st.phase === 'offline' ? 'Offline – Änderungen warten' : st.phase === 'syncing' || st.phase === 'loading' ? 'Synchronisiert …' : st.phase === 'error' ? 'Fehler beim Abgleich' : st.pending ? `${st.pending} ausstehend` : 'Aktuell';
+  const label = syncStateText({ phase: st.phase, pending: st.pending, conflicts: st.conflicts.length });
   const Icon = st.phase === 'offline' || st.phase === 'error' ? CloudOff : st.phase === 'syncing' || st.phase === 'loading' ? Loader2 : Cloud;
   return (
     <button type="button" onClick={() => session.schedule(0)} title="Jetzt abgleichen" className="inline-flex min-h-6 items-center gap-1.5 rounded-full border border-white/[0.08] px-2 py-0.5 text-[11.5px] text-ink-300 hover:text-ink-100">

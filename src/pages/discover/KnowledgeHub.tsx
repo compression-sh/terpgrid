@@ -71,6 +71,8 @@ function ArticleView({ a }: { a: KbArticle }) {
   const { settings, updateSettings } = useData();
   const ref = useRef<HTMLElement>(null);
   const [progress, setProgress] = useState(settings.kbProgress[a.id] ?? 0);
+  // Gespeicherter Stand beim Öffnen (für „An der letzten Stelle weiterlesen“)
+  const [resumeAt] = useState(settings.kbProgress[a.id] ?? 0);
   const saved = useRef(settings.kbProgress[a.id] ?? 0);
   const fav = settings.kbFavorites.includes(a.id);
 
@@ -138,6 +140,36 @@ function ArticleView({ a }: { a: KbArticle }) {
           </div>
 
           {a.review && <ReviewNotice r={a.review} />}
+          {resumeAt > 0.05 && resumeAt < 0.95 && (
+            <button
+              type="button"
+              className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] px-3 py-1.5 text-[12.5px] text-ink-200 hover:border-white/[0.16]"
+              onClick={() => {
+                const el = ref.current;
+                if (!el) return;
+                const top = el.getBoundingClientRect().top + window.scrollY;
+                window.scrollTo({ top: top + resumeAt * Math.max(0, el.offsetHeight - window.innerHeight * 0.6) });
+              }}
+            >
+              <ArrowRight className="size-3.5" /> An der letzten Stelle weiterlesen ({Math.round(resumeAt * 100)} %)
+            </button>
+          )}
+          <details className="mt-5 rounded-xl border border-white/[0.06] bg-white/[0.015] px-4 py-2.5 xl:hidden">
+            <summary className="cursor-pointer text-[13px] font-medium text-ink-200">Inhalt ({a.sections.length} Abschnitte)</summary>
+            <ol className="mt-2 space-y-0.5 pb-1">
+              {a.sections.map((s, i) => (
+                <li key={s.heading}>
+                  <a
+                    href={`#${anchor(s.heading)}`}
+                    onClick={(e) => (e.preventDefault(), document.getElementById(anchor(s.heading))?.scrollIntoView({ behavior: 'smooth' }))}
+                    className="flex min-h-10 items-center gap-2 text-[14px] text-ink-300 hover:text-ink-50"
+                  >
+                    <span className="w-5 font-mono text-[11px] text-ink-500">{i + 1}</span> {s.heading}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </details>
 
           {a.sections.map((s) => (
             <section key={s.heading} id={anchor(s.heading)} className="mt-9 scroll-mt-20">

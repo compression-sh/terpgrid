@@ -4,38 +4,25 @@ import { type LastAccount, pendingChanges, useAuth } from './auth';
 import { useConfirm } from './Confirm';
 import { href } from './router';
 import { isSharedDevice } from '../lib/device';
+import { pendingSpaceOps } from '../lib/offline';
+import { deriveSyncState, syncStateText } from '../lib/sync/status';
 import { legacyDismissed, legacyExists, readImportMark } from '../lib/sync/legacy';
 
 /** Kompakter Sync-Status. „Synchronisiert“ nur, wenn der Server alles bestätigt hat. */
 export function SyncPill({ compact = false }: { compact?: boolean }) {
   const { sync, state } = useAuth();
   if (state.kind !== 'authenticated') return null;
-  let icon = <CheckCircle2 className="size-3.5 text-leaf-400" />;
-  let text = 'Synchronisiert';
-  let tone = 'text-ink-300';
-  if (state.offline) {
-    icon = <CloudOff className="size-3.5 text-amber-300" />;
-    text = 'Offline';
-    tone = 'text-amber-200';
-  } else if (sync.conflicts > 0) {
-    icon = <AlertTriangle className="size-3.5 text-amber-300" />;
-    text = sync.conflicts === 1 ? 'Konflikt erkannt' : `${sync.conflicts} Konflikte erkannt`;
-    tone = 'text-amber-200';
-  } else if (sync.phase === 'syncing') {
-    icon = <Loader2 className="size-3.5 animate-spin text-leaf-300" />;
-    text = 'Synchronisiere …';
-  } else if (sync.phase === 'offline') {
-    icon = <CloudOff className="size-3.5 text-amber-300" />;
-    text = sync.pending ? `Offline · ${sync.pending} ausstehend` : 'Offline';
-    tone = 'text-amber-200';
-  } else if (sync.phase === 'error') {
-    icon = <AlertTriangle className="size-3.5 text-rose-300" />;
-    text = 'Synchronisierung fehlgeschlagen';
-    tone = 'text-rose-200';
-  } else if (sync.pending > 0) {
-    icon = <RefreshCw className="size-3.5 text-amber-300" />;
-    text = sync.pending === 1 ? '1 Änderung ausstehend' : `${sync.pending} Änderungen ausstehend`;
-  }
+  const input = { ...sync, offline: state.offline };
+  const st = deriveSyncState(input);
+  const text = syncStateText(input);
+  const icon =
+    st === 'offline' ? <CloudOff className="size-3.5 text-amber-300" />
+    : st === 'conflict' ? <AlertTriangle className="size-3.5 text-amber-300" />
+    : st === 'syncing' ? <Loader2 className="size-3.5 animate-spin text-leaf-300" />
+    : st === 'failed' ? <AlertTriangle className="size-3.5 text-rose-300" />
+    : st === 'pending' ? <RefreshCw className="size-3.5 text-amber-300" />
+    : <CheckCircle2 className="size-3.5 text-leaf-400" />;
+  const tone = st === 'offline' || st === 'conflict' ? 'text-amber-200' : st === 'failed' ? 'text-rose-200' : 'text-ink-300';
   return (
     <a href={href('account/sync')} className={`inline-flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.02] px-2 py-1 text-[11px] font-medium hover:border-white/[0.14] ${tone}`} title="Synchronisation">
       {icon}
@@ -71,7 +58,7 @@ export function AccountFooter() {
             {u.displayName && <span className="block truncate font-mono text-[10.5px] text-ink-500">{u.loginName}</span>}
           </span>
         </a>
-        <button type="button" className="btn-ghost p-1.5" aria-label="Abmelden" title="Abmelden" onClick={() => void logoutFlow(auth.logout, confirm)}>
+        <button type="button" className="btn-ghost p-1.5" aria-label="Abmelden" title="Abmelden" onClick={() => void logoutFlow(auth, confirm)}>
           <LogOut className="size-4" />
         </button>
       </div>
@@ -83,25 +70,31 @@ export function AccountFooter() {
   );
 }
 
-export async function logoutFlow(logout: (o?: { wipeLocal?: boolean }) => Promise<void>, confirm: ReturnType<typeof useConfirm>) {
-  const pending = await pendingChanges();
+export async function logoutFlow(auth: Pick<ReturnType<typeof useAuth>, 'logout' | 'offlineEnabled' | 'state'>, confirm: ReturnType<typeof useConfirm>) {
+  const key = auth.state.kind === 'authenticated' ? auth.state.user.accountKey : null;
+  const pending = (await pendingChanges()) + (key ? pendingSpaceOps(key) : 0);
+  const shared = isSharedDevice();
   if (pending > 0) {
     const ok = await confirm({
       title: 'Nicht synchronisierte Änderungen',
-      message: `${pending} Änderung${pending === 1 ? ' wurde' : 'en wurden'} noch nicht vom Server bestätigt. Sie bleiben auf diesem Gerät gespeichert und werden beim nächsten Anmelden mit diesem Konto übertragen. Trotzdem abmelden?`,
-      confirmLabel: 'Trotzdem abmelden',
+      message: shared
+        ? `${pending} Änderung${pending === 1 ? ' wurde' : 'en wurden'} noch nicht vom Server bestätigt. Auf einem geteilten Gerät wird die lokale Kopie beim Abmelden gelöscht – diese Änderungen gehen dabei verloren. Verbinde dich besser zuerst und synchronisiere. Trotzdem abmelden und löschen?`
+        : `${pending} Änderung${pending === 1 ? ' wurde' : 'en wurden'} noch nicht vom Server bestätigt. Sie bleiben auf diesem Gerät gespeichert und werden beim nächsten Anmelden mit diesem Konto übertragen. Trotzdem abmelden?`,
+      confirmLabel: shared ? 'Abmelden und löschen' : 'Trotzdem abmelden',
       tone: 'danger',
     });
     if (!ok) return;
-    return logout({ wipeLocal: isSharedDevice() });
+    return auth.logout({ wipeLocal: shared });
   }
-  if (isSharedDevice()) return logout({ wipeLocal: true });
+  // Ohne Offline-Freigabe (oder auf geteilten Geräten) wird die lokale Kopie automatisch gelöscht
+  if (shared || !auth.offlineEnabled) return auth.logout({ wipeLocal: true });
   const wipe = await confirm({
     title: 'Abmelden',
-    message: 'Soll die lokale Kopie deiner Daten auf diesem Gerät gelöscht werden? Empfohlen auf gemeinsam genutzten Geräten. Deine Daten bleiben auf dem Server erhalten.',
+    message: 'Offline-Nutzung ist für dieses Konto auf diesem Gerät eingeschaltet, deshalb bleibt die lokale Kopie erhalten. Soll sie stattdessen jetzt gelöscht werden? Deine Daten bleiben auf dem Server erhalten.',
     confirmLabel: 'Abmelden und lokale Kopie löschen',
+    cancelLabel: 'Abmelden, Kopie behalten',
   });
-  return logout({ wipeLocal: wipe });
+  return auth.logout({ wipeLocal: wipe });
 }
 
 /** Hinweis auf Daten aus der bisherigen Einzelnutzer-Version in diesem Browser. */

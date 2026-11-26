@@ -435,7 +435,7 @@ export function LabInsights() {
   const route = useRoute();
   const selectedId = route.query.get('report') ?? undefined;
   const strainParam = route.query.get('strain') ?? undefined;
-  const [form, setForm] = useState<{ report?: LabReport } | null>(strainParam ? {} : null);
+  const [form, setForm] = useState<{ report?: LabReport } | null>(strainParam || route.query.get('neu') === '1' ? {} : null);
   const reports = useMemo(() => [...data.labReports].sort((a, b) => (b.testDate ?? b.createdAt).localeCompare(a.testDate ?? a.createdAt)), [data.labReports]);
   const selected = reports.find((r) => r.id === selectedId) ?? (selectedId ? undefined : reports[0]);
   const strainName = (id?: string) => data.strains.find((s) => s.id === id)?.name;

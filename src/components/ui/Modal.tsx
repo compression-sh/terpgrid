@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { type ReactNode, useEffect, useRef } from 'react';
+import { type ReactNode, useEffect, useId, useRef } from 'react';
 
 interface ModalProps {
   open: boolean;
@@ -19,6 +19,7 @@ const widths = { sm: 'sm:max-w-md', md: 'sm:max-w-xl', lg: 'sm:max-w-3xl', xl: '
  */
 export function Modal({ open, onClose, title, subtitle, children, footer, size = 'md' }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
@@ -30,6 +31,7 @@ export function Modal({ open, onClose, title, subtitle, children, footer, size =
   return (
     <dialog
       ref={ref}
+      aria-labelledby={titleId}
       onCancel={(e) => {
         e.preventDefault();
         onClose();
@@ -41,14 +43,14 @@ export function Modal({ open, onClose, title, subtitle, children, footer, size =
     >
       <header className="flex items-start justify-between gap-3 border-b border-white/[0.06] px-5 py-4">
         <div className="min-w-0">
-          <h2 className="text-[15px] font-semibold tracking-tight text-ink-50">{title}</h2>
+          <h2 id={titleId} className="text-[15px] font-semibold tracking-tight text-ink-50">{title}</h2>
           {subtitle && <p className="mt-0.5 text-[13px] text-ink-400">{subtitle}</p>}
         </div>
         <button type="button" onClick={onClose} aria-label="Schließen" className="btn-ghost -mr-1 p-1.5">
           <X className="size-4" />
         </button>
       </header>
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">{children}</div>
+      <div className={`sheet-scroll min-h-0 flex-1 overflow-y-auto px-5 py-5 ${footer ? '' : 'pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-5'}`}>{children}</div>
       {footer && (
         <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-white/[0.06] px-5 py-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom))] sm:pb-3.5">
           {footer}

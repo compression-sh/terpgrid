@@ -1,5 +1,8 @@
-import { useIsServerMode } from '../app/auth';
-import { ArrowDown, ArrowUp, Eye, EyeOff, Globe, Info, LayoutDashboard, Lock, Settings, Trash2 } from 'lucide-react';
+import { useAuth, useIsServerMode } from '../app/auth';
+import { InstallInstructions } from '../app/pwaUi';
+import { applyUpdate, checkForUpdate, promptInstall, swVersion, usePwa } from '../lib/pwa/pwa';
+import { reduceMotionPref, setReduceMotionPref } from '../lib/pwa/prefs';
+import { ArrowDown, ArrowUp, Bell, Download, Eye, EyeOff, Globe, Info, LayoutDashboard, Lock, RefreshCw, Settings, Smartphone, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { catalog } from '../lib/catalog/service';
 import { fmtDateTime, nowLocal } from '../lib/dates';
@@ -110,6 +113,7 @@ export function SettingsPage() {
               </div>
             </div>
           </Card>
+          <AppCard />
           <OnlineCard />
           <Card title="Datenschutz" icon={<Lock className="size-4" />}>
             <ul className="space-y-1.5 text-[13px] text-ink-300">
@@ -118,7 +122,7 @@ export function SettingsPage() {
                   <li>• Self-hosted · Private Daten geschützt: Daten liegen auf deinem TERPGRID-Server, dort AES-256-GCM-verschlüsselt (keine Ende-zu-Ende-Verschlüsselung).</li>
                   <li>• Keine Analyse- oder Tracking-Dienste. Persönliche Daten werden nie an Sortendaten-Anbieter gesendet; Discover läuft über deinen Server.</li>
                   <li>• Fotos werden beim Import neu kodiert; eingebettete Metadaten wie GPS entfallen.</li>
-                  <li>• Eine Arbeitskopie liegt unverschlüsselt in diesem Browser. Details im Datenschutz-Center.</li>
+                  <li>• Während der Sitzung liegt eine Arbeitskopie unverschlüsselt in diesem Browser; über die Sitzung hinaus nur mit eingeschalteter Offline-Nutzung. Details im Datenschutz-Center.</li>
                 </>
               ) : (
                 <>
@@ -150,6 +154,96 @@ export function SettingsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function AppCard() {
+  const server = useIsServerMode();
+  const auth = useAuth();
+  const pwa = usePwa();
+  const toast = useToast();
+  const [reduce, setReduce] = useState(reduceMotionPref);
+  const [sw, setSw] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [steps, setSteps] = useState(false);
+  useEffect(() => {
+    void swVersion().then(setSw);
+  }, []);
+  return (
+    <Card title="App" subtitle="Installation, Updates und Darstellung auf diesem Gerät" icon={<Smartphone className="size-4" />}>
+      <div className="space-y-5">
+        <dl className="grid grid-cols-2 gap-3 text-[13px]">
+          <div>
+            <dt className="text-ink-500">Status</dt>
+            <dd className="mt-0.5 text-ink-100">{pwa.installed ? 'Als App installiert' : 'Im Browser geöffnet'}</dd>
+          </div>
+          <div>
+            <dt className="text-ink-500">Version</dt>
+            <dd className="mt-0.5 font-mono text-[12px] text-ink-100" title={sw ?? undefined}>
+              {__APP_VERSION__}
+              {sw ? '' : ' · ohne Offline-Hülle'}
+            </dd>
+          </div>
+        </dl>
+        {pwa.updateReady ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-sky-400/25 bg-sky-400/[0.06] p-3 text-[13px] text-sky-50">
+            Neue Version verfügbar.
+            <button type="button" className="btn-primary py-1.5 text-xs" onClick={applyUpdate}>
+              Aktualisieren
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="btn-ghost py-1.5 text-xs"
+            disabled={checking}
+            onClick={async () => {
+              setChecking(true);
+              const r = await checkForUpdate();
+              setChecking(false);
+              toast(r === 'update' ? 'Neue Version verfügbar.' : r === 'current' ? 'TERPGRID ist aktuell.' : 'Update-Prüfung hier nicht möglich (kein Service Worker aktiv).', { tone: r === 'unavailable' ? 'info' : 'ok' });
+            }}
+          >
+            <RefreshCw className={`size-3.5 ${checking ? 'animate-spin' : ''}`} /> Nach Updates suchen
+          </button>
+        )}
+        {!pwa.installed && (
+          <div className="space-y-2">
+            <div className="flex flex-wrap gap-2">
+              {pwa.canPrompt && (
+                <button type="button" className="btn-primary py-1.5 text-xs" onClick={() => void promptInstall()}>
+                  <Download className="size-3.5" /> Installieren
+                </button>
+              )}
+              <button type="button" className="btn-ghost py-1.5 text-xs" aria-expanded={steps} onClick={() => setSteps((v) => !v)}>
+                Installationsanleitung {steps ? 'ausblenden' : 'anzeigen'}
+              </button>
+            </div>
+            {steps && <InstallInstructions />}
+          </div>
+        )}
+        <Toggle
+          label="Bewegung reduzieren"
+          checked={reduce}
+          onChange={(v) => {
+            setReduceMotionPref(v);
+            setReduce(v);
+          }}
+          hint="Schaltet Animationen und Übergänge auf diesem Gerät ab – zusätzlich zur Systemeinstellung."
+        />
+        {server && (
+          <div className="flex flex-wrap gap-2 border-t border-white/[0.05] pt-4 text-xs">
+            <a href={href('account?abschnitt=geraet')} className="btn-ghost py-1.5">
+              Offline-Nutzung: {auth.offlineEnabled ? 'ein' : 'aus'}
+            </a>
+            <a href={href('together/notifications')} className="btn-ghost py-1.5">
+              <Bell className="size-3.5" /> Benachrichtigungen
+            </a>
+          </div>
+        )}
+        <p className="hint">Push-Benachrichtigungen auf das Gerät gibt es bewusst nicht: Sie würden externe Push-Dienste der Browserhersteller einbinden. Neuigkeiten erscheinen in der App (Glocke).</p>
+      </div>
+    </Card>
   );
 }
 

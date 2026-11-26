@@ -1,3 +1,4 @@
+import { BottomSheet } from '../../components/ui/BottomSheet';
 import { Bookmark, ChevronDown, Clock, Database, Loader2, RotateCcw, Search, SlidersHorizontal, Sprout, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useData } from '../../app/DataProvider';
@@ -100,50 +101,8 @@ export function LibraryPage({ status }: { status: LibStatus }) {
   const field = 'input-base py-1.5 text-[13px]';
 
   const activeFilters = ['type', 'auto', 'seed', 'terpene', 'lineage', 'thc', 'samples'].filter((k) => q.get(k)).length;
-  return (
-    <div>
-      <DiscoverNav />
-      <header className="mb-5 animate-fade-up">
-        <p className="eyebrow">Sortenkatalog</p>
-        <h1 className="mt-1 text-[28px] font-semibold tracking-tight text-ink-50 sm:text-[32px]">Entdecken</h1>
-        <p className="mt-1 max-w-2xl text-sm text-ink-400">
-          {fmt(status.counts?.cultivars ?? 0, 0)} Sorten von {fmt(status.counts?.breeders ?? 0, 0)} Breedern aus {fmt(status.counts?.listings ?? 0, 0)} Seedbank-Angeboten – auf deinem Server
-          indexiert. Suchanfragen verlassen deine Instanz nicht.
-        </p>
-      </header>
-
-      <div className="z-10 -mx-1 mb-4 rounded-2xl lg:sticky lg:top-[3.4rem] border border-white/[0.06] bg-ink-950/90 p-2 backdrop-blur-xl lg:top-[3.4rem]">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-500" />
-          <input
-            type="search"
-            className="input-base h-11 pl-9 pr-9 text-[15px] [&::-webkit-search-cancel-button]:hidden"
-            placeholder="Sorte, Alias, Breeder, Elternsorte, Terpen …"
-            aria-label="Katalog durchsuchen"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            enterKeyHint="search"
-          />
-          {text && (
-            <button type="button" className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-md text-ink-400 hover:bg-white/[0.06] hover:text-ink-100" aria-label="Suche leeren" onClick={() => setText('')}>
-              <X className="size-4" />
-            </button>
-          )}
-        </div>
-        <button
-          type="button"
-          className="mt-2 flex w-full items-center justify-between rounded-lg border border-white/[0.06] px-3 py-2 text-[13px] text-ink-200 sm:hidden"
-          aria-expanded={filtersOpen}
-          aria-controls="katalog-filter"
-          onClick={() => setFiltersOpen((o) => !o)}
-        >
-          <span className="flex items-center gap-2">
-            <SlidersHorizontal className="size-4 text-ink-400" /> Filter & Sortierung
-            {activeFilters > 0 && <span className="rounded-full bg-leaf-500/15 px-1.5 text-[11px] text-leaf-300">{activeFilters} aktiv</span>}
-          </span>
-          <ChevronDown className={`size-4 text-ink-400 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
-        </button>
-        <div id="katalog-filter" className={`mt-2 grid-cols-2 gap-2 sm:grid sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 ${filtersOpen ? 'grid' : 'hidden'}`}>
+  const filterControls = (
+    <>
           <select className={field} aria-label="Genetischer Typ" value={q.get('type') ?? ''} onChange={(e) => set({ type: e.target.value || undefined })}>
             <option value="">Typ: alle</option>
             <option value="indica">Indica-dominant</option>
@@ -187,6 +146,72 @@ export function LibraryPage({ status }: { status: LibStatus }) {
               </option>
             ))}
           </select>
+    </>
+  );
+  return (
+    <div>
+      {filtersOpen && (
+        <BottomSheet
+          title="Filter & Sortierung"
+          onClose={() => setFiltersOpen(false)}
+          footer={
+            <>
+              {activeFilters > 0 && (
+                <button type="button" className="btn-ghost mr-auto" onClick={() => set({ type: undefined, auto: undefined, seed: undefined, terpene: undefined, lineage: undefined, thc: undefined, samples: undefined })}>
+                  <RotateCcw className="size-4" /> Filter zurücksetzen
+                </button>
+              )}
+              <button type="button" className="btn-primary" onClick={() => setFiltersOpen(false)}>
+                {d ? `${fmt(d.total, 0)} ${d.total === 1 ? 'Sorte' : 'Sorten'} anzeigen` : 'Fertig'}
+              </button>
+            </>
+          }
+        >
+          <div className="grid grid-cols-1 gap-2.5 [&_label]:min-h-11 [&_select]:h-11">{filterControls}</div>
+        </BottomSheet>
+      )}
+      <DiscoverNav />
+      <header className="mb-5 animate-fade-up">
+        <p className="eyebrow">Sortenkatalog</p>
+        <h1 className="mt-1 text-[28px] font-semibold tracking-tight text-ink-50 sm:text-[32px]">Entdecken</h1>
+        <p className="mt-1 max-w-2xl text-sm text-ink-400">
+          {fmt(status.counts?.cultivars ?? 0, 0)} Sorten von {fmt(status.counts?.breeders ?? 0, 0)} Breedern aus {fmt(status.counts?.listings ?? 0, 0)} Seedbank-Angeboten – auf deinem Server
+          indexiert. Suchanfragen verlassen deine Instanz nicht.
+        </p>
+      </header>
+
+      <div className="z-10 -mx-1 mb-4 rounded-2xl lg:sticky lg:top-[3.4rem] border border-white/[0.06] bg-ink-950/90 p-2 backdrop-blur-xl lg:top-[3.4rem]">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-500" />
+          <input
+            type="search"
+            className="input-base h-11 pl-9 pr-9 text-[15px] [&::-webkit-search-cancel-button]:hidden"
+            placeholder="Sorte, Alias, Breeder, Elternsorte, Terpen …"
+            aria-label="Katalog durchsuchen"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            enterKeyHint="search"
+          />
+          {text && (
+            <button type="button" className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-md text-ink-400 hover:bg-white/[0.06] hover:text-ink-100" aria-label="Suche leeren" onClick={() => setText('')}>
+              <X className="size-4" />
+            </button>
+          )}
+        </div>
+        <button
+          type="button"
+          className="mt-2 flex w-full items-center justify-between rounded-lg border border-white/[0.06] px-3 py-2 text-[13px] text-ink-200 sm:hidden"
+          aria-haspopup="dialog"
+          onClick={() => setFiltersOpen(true)}
+        >
+          <span className="flex items-center gap-2">
+            <SlidersHorizontal className="size-4 text-ink-400" /> Filter & Sortierung
+            {activeFilters > 0 && <span className="rounded-full bg-leaf-500/15 px-1.5 text-[11px] text-leaf-300">{activeFilters} aktiv</span>}
+          </span>
+          <ChevronDown className="size-4 text-ink-400" />
+        </button>
+        <div id="katalog-filter" className="mt-2 hidden gap-2 sm:grid sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
+          {filterControls}
         </div>
       </div>
 

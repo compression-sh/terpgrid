@@ -2,7 +2,7 @@
 
 **Your personal cannabis space.** Persönliches Dashboard für Growlogs, Fotos, einen Online-Sortenkatalog (Discover), ein persönliches Journal, die eigene Sammlung, Laborberichte und den THC-Rechner (THC Lab).
 
-**Self-hosted · Private Daten geschützt · Kein Tracking.** · Version 5.5.0-rc.1 (Release-Kandidat) · Änderungen: [CHANGELOG.md](CHANGELOG.md)
+**Self-hosted · Private Daten geschützt · Kein Tracking.** · Version 5.6.0-rc.1 (Release-Kandidat) · Änderungen: [CHANGELOG.md](CHANGELOG.md)
 
 TERPGRID läuft in zwei Modi:
 
@@ -11,7 +11,7 @@ TERPGRID läuft in zwei Modi:
 | Konten | Anonyme Konten (Benutzername oder generierte Konto-ID, keine E-Mail), Einladungen, 2FA, Passkeys, Recovery-Codes | keine |
 | Speicherort | Eigener Server (PostgreSQL + Dateispeicher), Arbeitskopie je Konto im Browser | nur dieser Browser |
 | Verschlüsselung | Inhalte auf dem Server AES-256-GCM (Envelope, Schlüssel je Konto, rotierbar). **Keine Ende-zu-Ende-Verschlüsselung** – der Server-Betreiber könnte technisch entschlüsseln | keine |
-| Geräte | Synchronisation mit Drei-Wege-Merge und Konfliktauflösung, offline nutzbar, THC-Lab-Entwürfe geräteübergreifend | ein Gerät |
+| Geräte | Synchronisation mit Drei-Wege-Merge und Konfliktauflösung, offline nutzbar (Opt-in je Gerät), THC-Lab-Entwürfe geräteübergreifend | ein Gerät |
 | Sortendaten | lokaler Katalog (CI-Strains-Pro, 16.710 Sorten, auf deinem Server indexiert) + StrainAPI/CannaLib über den Proxy | direkt bei StrainAPI/CannaLib |
 
 - Keine Analyse-, Werbe- oder Tracking-Dienste. Persönliche Daten werden nie an Sortendaten-Anbieter gesendet.
@@ -51,6 +51,7 @@ TERPGRID läuft in zwei Modi:
 | **Insights** | Kennzahlen mit Datengrundlage (aktive Grows, dokumentierte Grow-Dauer, Pflanzenalter, Foto-Häufigkeit, Messungen, Sorten, Journal, Ausgaben) – ohne Empfehlungen oder Vorhersagen, mit Hinweis bei zu wenig Daten. Dazu Grow-Dauer, Ausgaben nach Kategorie und Grow, Messwert-Verläufe, Ernteergebnisse, Sorten-Bewertungen, Journal-Verlauf und Foto-Heatmap. |
 | **Werkzeuge** | Einheiten (°C/°F, g/oz, l/gal, cm/in), Stromkosten, Kostenüberschlag, Datum & Dauer, Foto-Vergleich. |
 | **Gemeinsam** (nur mit Server) | Private Profile (Handle getrennt vom Anmeldenamen, Sichtbarkeit je Feld), Freunde über exaktes Handle/Social-ID oder Einladungslink – ohne Verzeichnis. Gemeinsame Bereiche mit eigenem Bereichsschlüssel, Rollen (Eigentümer, Bearbeiten, Kommentieren, Ansehen), Zugriffsstufen je Eintrag, Teilen als Kopie oder Verschieben mit Vorschau, Kommentare, Aktivitätsverlauf, In-App-Benachrichtigungen. Serverseitig verschlüsselt, **keine** Ende-zu-Ende-Verschlüsselung. Details: `docs/PHASE5-5-COLLABORATION-REPORT.md`. |
+| **Mobil & App (PWA)** | Installierbar auf iPhone, iPad, Android und Desktop (Anleitung: `docs/PHASE5-6-PWA-GUIDE.md`), Updates erst nach Bestätigung, Plus-Knopf für die Schnellerfassung, Bottom Sheets, Safe Areas. Offline-Nutzung je Konto und Gerät als Opt-in – ohne Freigabe wird die lokale Kopie beim Abmelden gelöscht. Details: `docs/PHASE5-6-OFFLINE-ARCHITECTURE.md`. |
 | **Konto & Datenschutz** | Sicherheitsstatus, Gerätemodus („Geteiltes Gerät“: lokale Kopie beim Abmelden löschen), Verwaltung der lokalen Kopie, Profil, Passwort, 2FA (TOTP), Passkeys (mehrere, umbenennen, entfernen), Recovery-Codes, aktive Sitzungen (einzeln/alle beenden), vollständiger Export, Kontolöschung, Datenschutz-Center mit ehrlicher Darstellung, was wo wie geschützt liegt, inkl. „Zusammenarbeit & Freigaben“ mit sofortigem Widerruf. |
 | **Synchronisation** | Status („synchronisiert“ erst nach Serverbestätigung), ausstehende Änderungen; Änderungen an verschiedenen Feldern werden automatisch zusammengeführt, echte Feldkonflikte erscheinen mit Feldvergleich (Meine Version / Server-Version); erneute Versuche mit wachsendem Abstand. |
 | **Verlauf** | Persönliche Zeitachse aus Meilensteinen, Pflege, Messwerten, Fotos, Journal, Sorten, Laborberichten und Kalender – aus vorhandenen Daten abgeleitet, filterbar, nach Tagen gruppiert. Kein Feed, nichts wird geteilt. |
