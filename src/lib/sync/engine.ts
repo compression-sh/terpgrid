@@ -27,6 +27,14 @@ import { ApiError, type ChangeResult, type RemoteChange, api } from '../server/a
 import { merge3 } from './merge';
 
 export type SyncPhase = 'idle' | 'syncing' | 'offline' | 'error' | 'stopped';
+/** Im Leerlauf ausführen (spätestens nach 3 s); ohne requestIdleCallback (Safari) nach 1,5 s. */
+function whenIdle(fn: () => void): void {
+  if (typeof window === 'undefined') return fn(); // Tests/Node: sofort
+  const ric = (globalThis as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+  if (typeof ric === 'function') ric(fn, { timeout: 3000 });
+  else setTimeout(fn, 1500);
+}
+
 export interface SyncStatus {
   phase: SyncPhase;
   pending: number;
@@ -267,7 +275,9 @@ export class SyncEngine {
       cursor = page.cursor;
       if (!page.more) break;
     }
-    void this.fetchMissingFiles(needPhotos, needDocs);
+    // Binärdaten erst nach dem ersten Rendern laden (Leerlauf): sonst konkurrieren Foto-Downloads
+    // beim Start mit den Anfragen der gerade geöffneten Seite um die Bandbreite.
+    whenIdle(() => void this.fetchMissingFiles(needPhotos, needDocs));
   }
 
   private async applyRemote(changes: RemoteChange[], cursor: string, needPhotos: Set<string>, needDocs: Set<string>): Promise<void> {

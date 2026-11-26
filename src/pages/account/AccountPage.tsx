@@ -746,14 +746,14 @@ function SecurityStatus({ ov, totp }: { ov: Overview; totp: boolean }) {
   const secondFactor = totp || ov.passkeys > 0;
   const codesOk = ov.recoveryCodesRemaining >= 4;
   const items: { label: string; value: string; ok: boolean; to: string }[] = [
-    { label: 'Zweiter Faktor', value: totp ? '2FA aktiv' : ov.passkeys > 0 ? 'Passkey' : 'nicht eingerichtet', ok: secondFactor, to: 'sicherheit' },
+    { label: 'Zweiter Faktor', value: totp ? '2FA aktiv' : ov.passkeys > 0 ? 'Passkey' : 'fehlt', ok: secondFactor, to: 'sicherheit' },
     { label: 'Passkeys', value: String(ov.passkeys), ok: true, to: 'passkeys' },
     { label: 'Recovery-Codes', value: `${ov.recoveryCodesRemaining} / 10`, ok: codesOk, to: 'sicherheit' },
     { label: 'Aktive Sitzungen', value: String(ov.sessions), ok: true, to: 'sitzungen' },
-    { label: 'Offline-Kopie', value: offlineEnabled ? 'bleibt auf diesem Gerät' : 'nur während der Sitzung', ok: true, to: 'geraet' },
+    { label: 'Offline-Kopie', value: offlineEnabled ? 'dauerhaft' : 'nur Sitzung', ok: true, to: 'geraet' },
   ];
   return (
-    <div className="card flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
+    <div className="card flex flex-col gap-4 p-4 xl:flex-row xl:items-center">
       <div className="flex items-center gap-3 sm:w-56">
         <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${secondFactor && codesOk ? 'bg-leaf-500/12 text-leaf-300' : 'bg-amber-400/10 text-amber-200'}`}>
           <ShieldCheck className="size-5" />
@@ -763,7 +763,7 @@ function SecurityStatus({ ov, totp }: { ov: Overview; totp: boolean }) {
           <div className="text-[11.5px] text-ink-500">{secondFactor ? (codesOk ? 'Zweiter Faktor und Recovery-Codes vorhanden' : 'Neue Recovery-Codes empfohlen') : '2FA oder Passkey empfohlen'}</div>
         </div>
       </div>
-      <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
+      <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-5">
         {items.map((i) => (
           <button key={i.label} type="button" onClick={() => document.getElementById(i.to)?.scrollIntoView({ behavior: 'smooth' })} className="rounded-lg border border-white/[0.05] bg-white/[0.015] px-3 py-2 text-left hover:border-white/[0.12]">
             <span className="block text-[11px] text-ink-500">{i.label}</span>

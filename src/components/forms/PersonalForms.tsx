@@ -84,6 +84,7 @@ function resolveStrain(strains: Strain[], text: string): { strainId?: string; st
 /* ───────────── Journal ───────────── */
 
 interface JournalDraft {
+  tags?: string;
   date: string;
   strain: string;
   method: string;
@@ -116,15 +117,16 @@ export function JournalFormModal({ open, onClose, entry, strainId }: { open: boo
   const [moods, setMoods] = useState<string[]>(entry?.moods ?? (Array.isArray(draft?.moods) ? draft!.moods.filter((m) => typeof m === 'string') : []));
   const [duration, setDuration] = useState(entry?.durationNote ?? draft?.duration ?? '');
   const [rating, setRating] = useState<number | undefined>(entry?.rating ?? (typeof draft?.rating === 'number' ? draft.rating : undefined));
+  const [tags, setTags] = useState((entry?.tags ?? []).join(', ') || (typeof draft?.tags === 'string' ? draft.tags : ''));
   const [saving, setSaving] = useState(false);
   const [restored, setRestored] = useState(!!draft);
   const trackDraft = !entry && !strainId;
   useEffect(() => {
     if (!trackDraft) return;
-    const touched = notes.trim() || strain.trim() || amount || thc || moods.length || duration.trim() || rating !== undefined;
-    if (touched) saveDraft('journal', { date, strain, method, amount, unit, thc, notes, moods, duration, rating } satisfies JournalDraft);
+    const touched = notes.trim() || strain.trim() || amount || thc || moods.length || duration.trim() || rating !== undefined || tags.trim();
+    if (touched) saveDraft('journal', { date, strain, method, amount, unit, thc, notes, moods, duration, rating, tags } satisfies JournalDraft);
     else clearDraft('journal');
-  }, [trackDraft, date, strain, method, amount, unit, thc, notes, moods, duration, rating]);
+  }, [trackDraft, date, strain, method, amount, unit, thc, notes, moods, duration, rating, tags]);
   const discardDraft = () => {
     clearDraft('journal');
     setDate(nowLocal());
@@ -137,6 +139,7 @@ export function JournalFormModal({ open, onClose, entry, strainId }: { open: boo
     setMoods([]);
     setDuration('');
     setRating(undefined);
+    setTags('');
     setRestored(false);
   };
   const err = numberError(amount, { min: 0, max: 100000 }) || numberError(thc, { min: 0, max: 100 });
@@ -156,6 +159,7 @@ export function JournalFormModal({ open, onClose, entry, strainId }: { open: boo
       moods,
       durationNote: duration.trim(),
       rating,
+      tags: parseTags(tags),
     };
     try {
       if (entry) await updateRecord('journal', entry.id, { strainId: undefined, strainName: undefined, ...payload });
@@ -197,6 +201,7 @@ export function JournalFormModal({ open, onClose, entry, strainId }: { open: boo
           <TextField label="Dauer (Notiz)" value={duration} onChange={setDuration} maxLength={80} placeholder="z. B. ca. 3 Std., abends abgeklungen" />
           <RatingInput label="Persönliche Bewertung" value={rating} onChange={setRating} />
         </div>
+        <TextField label="Tags (optional)" value={tags} onChange={setTags} maxLength={200} placeholder="durch Komma getrennt, z. B. abends, neue-sorte" />
         {settings.showHarmReduction && method === 'edible' && (
           <Callout tone="info">Edibles wirken verzögert (30 Min. – 2 Std.) und lange. Vor einem weiteren Konsum die volle Wirkzeit abwarten.</Callout>
         )}

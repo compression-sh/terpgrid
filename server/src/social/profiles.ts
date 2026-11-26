@@ -205,7 +205,9 @@ export async function ensureProfile(ctx: AppContext, c: Tx, userId: string): Pro
     const socialId = randomBase32(8);
     await c.query('SAVEPOINT prof');
     try {
-      await c.query('INSERT INTO profiles(user_id, social_id, key_gen, key_wrapped, kek_version, visibility) VALUES ($1, $2, 1, $3, $4, $5)', [
+      // ON CONFLICT (user_id): parallele Erstaufrufe (z. B. mehrere gleichzeitige Anfragen beim ersten
+      // Öffnen von „Gemeinsam“) legen das Profil nur einmal an statt mit 500 abzubrechen.
+      await c.query('INSERT INTO profiles(user_id, social_id, key_gen, key_wrapped, kek_version, visibility) VALUES ($1, $2, 1, $3, $4, $5) ON CONFLICT (user_id) DO NOTHING', [
         userId,
         socialId,
         wrapped,

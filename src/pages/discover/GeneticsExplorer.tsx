@@ -536,6 +536,8 @@ export function lineageToGraph(l: LibLineage): LineageGraph {
 function CatalogPicker() {
   const [q, setQ] = useState('');
   const res = useAsync((signal) => (q.trim().length < 2 ? Promise.resolve(null) : library.search({ q: q.trim(), lineage: '1', perPage: 12 }, signal)), [q]);
+  // Ausgangspunkte ohne Suchbegriff: meistgelistete Sorten mit dokumentierter Abstammung (reale Katalogdaten)
+  const starts = useAsync((signal) => library.search({ lineage: '1', sort: 'listings', perPage: 12 }, signal), []);
   return (
     <div className="card mx-auto max-w-2xl p-6">
       <Dna className="size-7 text-leaf-400" />
@@ -569,6 +571,26 @@ function CatalogPicker() {
         </>
       )}
       {res.data && res.data.items.length === 0 && <p className="hint mt-3">Keine Sorte mit dokumentierter Abstammung gefunden.</p>}
+      {q.trim().length < 2 && starts.data && starts.data.items.length > 0 && (
+        <section className="mt-5" aria-label="Ausgangspunkte">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-500">Ausgangspunkte · meistgelistet mit dokumentierter Abstammung</p>
+          <ul className="mt-2 flex flex-wrap gap-1.5">
+            {starts.data.items.map((i) => (
+              <li key={i.id}>
+                <a
+                  href={href(`discover/genetics/c/${i.id}`)}
+                  className="inline-flex max-w-[16rem] items-center gap-1 truncate rounded-full border border-white/[0.07] px-2.5 py-1 text-[12px] text-ink-200 hover:border-leaf-500/40 hover:text-ink-50"
+                  title={`${i.name} · ${i.breeder.name} · ${i.parents.map((p) => p.name).join(' × ')}`}
+                >
+                  <span className="truncate">{i.name}</span>
+                  <span className="truncate text-ink-500">· {i.breeder.name}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+          <p className="hint mt-2">Reihenfolge nach Anzahl der Seedbank-Angebote im Katalog – keine Qualitäts- oder Beliebtheitswertung.</p>
+        </section>
+      )}
       <a href={href('discover/genetics/live')} className="mt-4 inline-flex text-[12px] text-ink-400 hover:text-ink-100">
         Stattdessen Live-Katalog (StrainAPI) verwenden
       </a>

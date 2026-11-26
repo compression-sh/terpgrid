@@ -1,4 +1,5 @@
-import { BookOpenText, CalendarDays, HeartHandshake, List, Paperclip, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { BookOpenText, CalendarDays, Download, HeartHandshake, List, Paperclip, Pencil, Plus, RotateCcw, Search, Trash2 } from 'lucide-react';
+import { downloadFile, toCSVTable } from '../lib/exporters';
 import { focusId, useFocusTarget } from '../app/useFocusTarget';
 import { useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -128,6 +129,15 @@ function EntryCard({ entry }: { entry: JournalEntry }) {
           </div>
         )}
       </dl>
+      {(entry.tags?.length ?? 0) > 0 && (
+        <div className="mt-2.5 flex flex-wrap gap-1" aria-label="Tags">
+          {entry.tags!.map((t) => (
+            <span key={t} className="rounded-full border border-leaf-500/20 px-2 py-0.5 text-[11px] text-leaf-200">
+              #{t}
+            </span>
+          ))}
+        </div>
+      )}
       {entry.moods.length > 0 && (
         <div className="mt-2.5 flex flex-wrap gap-1">
           {entry.moods.map((m) => (
@@ -159,6 +169,10 @@ export function JournalPage() {
   const [method, setMethod] = useState('');
   const [strain, setStrain] = useState('');
   const [mood, setMood] = useState('');
+  const [tag, setTag] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const allTags = useMemo(() => [...new Set(data.journal.flatMap((e) => e.tags ?? []))].sort((a, b) => a.localeCompare(b, 'de')), [data.journal]);
   const [month, setMonth] = useState(startOfMonth(today()));
   const [day, setDay] = useState<string>();
 
@@ -168,16 +182,45 @@ export function JournalPage() {
       .filter((e) => !method || e.method === method)
       .filter((e) => !strain || e.strainId === strain || (strain === '__free' && !e.strainId))
       .filter((e) => !mood || e.moods.includes(mood))
-      .filter((e) => !needle || [e.notes, e.durationNote, e.strainName, e.strainId && lookup.strain.get(e.strainId)?.name, ...e.moods].some((x) => x && x.toLowerCase().includes(needle)))
+      .filter((e) => !tag || (e.tags ?? []).includes(tag))
+      .filter((e) => !from || e.date.slice(0, 10) >= from)
+      .filter((e) => !to || e.date.slice(0, 10) <= to)
+      .filter((e) => !needle || [e.notes, e.durationNote, e.strainName, e.strainId && lookup.strain.get(e.strainId)?.name, ...e.moods, ...(e.tags ?? [])].some((x) => x && x.toLowerCase().includes(needle)))
       .sort((a, b) => b.date.localeCompare(a.date));
-  }, [data.journal, q, method, strain, mood, lookup]);
+  }, [data.journal, q, method, strain, mood, tag, from, to, lookup]);
+  const resetFilters = () => {
+    setQ('');
+    setMethod('');
+    setStrain('');
+    setMood('');
+    setTag('');
+    setFrom('');
+    setTo('');
+  };
+  /** Gefilterte Einträge als CSV (lokal erzeugt, nichts wird gesendet). */
+  const exportCsv = () => {
+    const rows = filtered.map((e) => [
+      e.date.replace('T', ' '),
+      (e.strainId && lookup.strain.get(e.strainId)?.name) || e.strainName || '',
+      METHOD_LABEL[e.method],
+      e.amount ? String(e.amount.value).replace('.', ',') : '',
+      e.amount?.unit ?? '',
+      e.thcPercent !== undefined ? String(e.thcPercent).replace('.', ',') : '',
+      e.rating ?? '',
+      e.moods.join(', '),
+      (e.tags ?? []).join(', '),
+      e.durationNote,
+      e.notes,
+    ]);
+    downloadFile(`terpgrid-journal-${today()}.csv`, `\uFEFF${toCSVTable(['Datum', 'Sorte', 'Konsumform', 'Menge', 'Einheit', 'THC % (Angabe)', 'Bewertung', 'Stimmung', 'Tags', 'Dauer', 'Notizen'], rows)}`, 'text/csv;charset=utf-8');
+  };
 
   const summary = journalSummary(filtered, today());
   const markers = new Map<string, DayMarker[]>();
   for (const e of filtered) markers.set(e.date.slice(0, 10), [...(markers.get(e.date.slice(0, 10)) ?? []), { color: '#5fe39a', label: METHOD_LABEL[e.method] }]);
   const dayEntries = day ? filtered.filter((e) => e.date.startsWith(day)) : [];
 
-  const activeFilters = [method, strain, mood].filter(Boolean).length;
+  const activeFilters = [method, strain, mood, tag, from, to].filter(Boolean).length;
   const wide = typeof window !== 'undefined' && window.matchMedia('(min-width: 640px)').matches;
   return (
     <div>
@@ -214,7 +257,7 @@ export function JournalPage() {
               <label className="relative block space-y-1.5">
                 <span className="label">Suche</span>
                 <Search className="pointer-events-none absolute left-3 top-[2.35rem] size-4 text-ink-500" />
-                <input className="input-base pl-9" placeholder="Notizen, Sorte …" value={q} onChange={(e) => setQ(e.target.value)} />
+                <input className="input-base pl-9" placeholder="Notizen, Sorte, Tags …" value={q} onChange={(e) => setQ(e.target.value)} />
               </label>
               {/* Mobil eingeklappt, damit Einträge ohne Scrollen sichtbar sind; ab sm immer offen */}
               <details className="group sm:[&>summary]:hidden" open={wide || activeFilters > 0 || undefined}>
@@ -226,12 +269,29 @@ export function JournalPage() {
                   <SelectField label="Konsumform" value={method} onChange={setMethod} placeholder="Alle" options={CONSUMPTION_METHODS.map((m) => ({ value: m, label: METHOD_LABEL[m] }))} />
                   <SelectField label="Sorte" value={strain} onChange={setStrain} placeholder="Alle" options={[...data.strains.map((s) => ({ value: s.id, label: s.name })), { value: '__free', label: 'Ohne Bibliotheks-Sorte' }]} />
                   <SelectField label="Stimmung" value={mood} onChange={setMood} placeholder="Alle" options={MOOD_OPTIONS.map((m) => ({ value: m, label: m }))} />
+                  <SelectField label="Tag" value={tag} onChange={setTag} placeholder={allTags.length ? 'Alle' : 'Noch keine Tags'} options={allTags.map((t) => ({ value: t, label: `#${t}` }))} disabled={allTags.length === 0} />
+                  <label className="space-y-1.5">
+                    <span className="label">Von</span>
+                    <input type="date" className="input-base" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} />
+                  </label>
+                  <label className="space-y-1.5">
+                    <span className="label">Bis</span>
+                    <input type="date" className="input-base" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} />
+                  </label>
                 </div>
               </details>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-xs text-ink-400">
+              <span className="flex flex-wrap items-center gap-2 text-xs text-ink-400">
                 {filtered.length} von {data.journal.length} Einträgen
+                {(activeFilters > 0 || q) && (
+                  <button type="button" className="btn-ghost h-7 px-2 text-[11.5px]" onClick={resetFilters}>
+                    <RotateCcw className="size-3" /> Filter zurücksetzen
+                  </button>
+                )}
+                <button type="button" className="btn-ghost h-7 px-2 text-[11.5px]" onClick={exportCsv} disabled={filtered.length === 0} title="Gefilterte Einträge als CSV herunterladen">
+                  <Download className="size-3" /> CSV
+                </button>
               </span>
               <div className="w-56">
                 <Segmented
