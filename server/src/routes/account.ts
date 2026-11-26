@@ -12,6 +12,10 @@ import { decodePayload } from '../records.js';
 import { clearSessionCookie } from '../sessions.js';
 import { SYNC_STORES } from '../stores.js';
 import { loadUserKeys } from '../userkeys.js';
+import { loadSpaceKeys } from '../collab/keys.js';
+import { decodeMeta, deleteSpace } from '../collab/spaces.js';
+import { listBlocks, listFriends, selfProfile } from './social.js';
+import { ensureProfile } from '../social/profiles.js';
 
 /** Gleiche Reihenfolge/Bereiche wie das lokale Backup-Format (src/lib/backup.ts, Format 2). */
 const BACKUP_STORES = SYNC_STORES.filter((s) => s !== 'settings');
@@ -115,6 +119,19 @@ export function accountRoutes(ctx: AppContext) {
         };
         keys.wipe();
         files['manifest.json'] = strToU8(JSON.stringify(manifest, null, 2));
+        // Zusammenarbeit (5.5): eigenes Profil, Freunde, Blockierungen, Mitgliedschaften.
+        // Inhalte gemeinsamer Bereiche exportiert man im jeweiligen Bereich (je nach Rolle).
+        const prof = selfProfile(ctx, await ensureProfile(ctx, c, s.userId));
+        const mem = await c.query('SELECT s.id, s.meta, s.meta_gen, m.role, m.created_at FROM space_members m JOIN spaces s ON s.id = m.space_id WHERE m.user_id = $1', [s.userId]);
+        const memberships = [];
+        for (const r of mem.rows) {
+          const sk = await loadSpaceKeys(ctx, c, r.id);
+          memberships.push({ space: decodeMeta(sk.get(r.meta_gen), r.id, r.meta).name, role: r.role, since: r.created_at });
+          sk.wipe();
+        }
+        const friends = (await listFriends(ctx, c, s.userId)).map((f) => ({ handle: f.handle, socialId: f.socialId, displayName: f.displayName, nickname: f.nickname, since: f.since, profileHiddenFromThem: f.profileHidden }));
+        const blocks = (await listBlocks(ctx, c, s.userId)).map((b) => ({ label: b.label, since: b.since }));
+        files['social.json'] = strToU8(JSON.stringify({ app: 'TERPGRID', kind: 'social', format: 1, profile: prof, friends, blocks, memberships }, null, 2));
         return zipSync(files, { level: 0 });
       });
       return reply
@@ -135,6 +152,22 @@ export function accountRoutes(ctx: AppContext) {
           if (rows[0].n <= 1) throw new HttpError(409, 'Das letzte Administrationskonto kann nicht gelöscht werden.');
         }
         const names = await withUser(ctx.db, s.userId, async (c) => {
+          // Gemeinsame Bereiche: Daten anderer Mitglieder werden nie still gelöscht.
+          const owned = await c.query(
+            `SELECT s.id, s.meta, s.meta_gen, (SELECT count(*)::int FROM space_members x WHERE x.space_id = s.id) AS members FROM spaces s WHERE s.owner_id = $1`,
+            [s.userId],
+          );
+          const shared = [];
+          for (const r of owned.rows) {
+            if (r.members > 1) {
+              const sk = await loadSpaceKeys(ctx, c, r.id);
+              shared.push(decodeMeta(sk.get(r.meta_gen), r.id, r.meta).name);
+              sk.wipe();
+            }
+          }
+          if (shared.length)
+            throw new HttpError(409, `Du bist Eigentümer gemeinsamer Bereiche mit weiteren Mitgliedern (${shared.join(', ')}). Übertrage das Eigentum oder lösche diese Bereiche zuerst.`, { spaces: shared });
+          for (const r of owned.rows) await deleteSpace(c, r.id, s.userId);
           const f = await c.query('DELETE FROM files WHERE user_id = $1 RETURNING storage_name', [s.userId]);
           // Blobs in den Papierkorb; mit dem Konto werden auch alle Datenschlüssel gelöscht –
           // die verbleibenden verschlüsselten Blobs sind damit sofort nicht mehr entschlüsselbar.

@@ -32,6 +32,10 @@ export function usernameProblem(input: string): string | null {
   return null;
 }
 
+/** Steuer- und bidirektionale Override-Zeichen (Spoofing/Darstellungsfehler) – für alle Freitexte anderer Konten. */
+// eslint-disable-next-line no-control-regex
+export const CONTROL_CHARS = /[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/;
+
 export function displayNameProblem(input: string): string | null {
   const s = input.normalize('NFKC').trim();
   if (s.length > 60) return 'Der Anzeigename darf höchstens 60 Zeichen lang sein.';

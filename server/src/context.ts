@@ -26,6 +26,12 @@ export interface AppContext {
     probe: WindowLimiter;
     api: WindowLimiter;
     upload: WindowLimiter;
+    /** Freundschaftsanfragen je Konto (Missbrauchsschutz) */
+    friendRequests: WindowLimiter;
+    /** Einladungscodes prüfen/einlösen je Konto (gegen Durchprobieren) */
+    inviteProbe: WindowLimiter;
+    /** Schreibende Aktionen in gemeinsamen Bereichen je Konto (Einladungen, Kommentare) */
+    social: WindowLimiter;
   };
   /** Zählt unerwartete Fehler für das Admin-Dashboard (ohne Inhalte) */
   errors: { count: number; last?: string };
@@ -59,6 +65,9 @@ export function createContext(config: Config, opts: { db?: Db; fetchImpl?: typeo
       probe: new WindowLimiter(60, 15 * 60_000),
       api: new WindowLimiter(600, 60_000),
       upload: new WindowLimiter(300, 60 * 60_000),
+      friendRequests: new WindowLimiter(20, 60 * 60_000),
+      inviteProbe: new WindowLimiter(20, 15 * 60_000),
+      social: new WindowLimiter(300, 60 * 60_000),
     },
     errors: { count: 0 },
     startedAt: new Date(),

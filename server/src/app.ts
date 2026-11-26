@@ -15,6 +15,9 @@ import { catalogAdminRoutes } from './routes/catalogAdmin.js';
 import { fileRoutes } from './routes/files.js';
 import { passkeyRoutes } from './routes/passkeys.js';
 import { syncRoutes } from './routes/sync.js';
+import { socialRoutes } from './routes/social.js';
+import { spaceRoutes } from './routes/spaces.js';
+import { notificationRoutes } from './routes/notifications.js';
 import { loadSession, sessionCookieName } from './sessions.js';
 
 /** Entfernt Query-Strings und Geheimnisse im Pfad (Einladungs-Token) aus Log-Ausgaben. */
@@ -121,6 +124,9 @@ export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
   await app.register(accountRoutes(ctx));
   await app.register(syncRoutes(ctx));
   await app.register(fileRoutes(ctx));
+  await app.register(socialRoutes(ctx));
+  await app.register(spaceRoutes(ctx));
+  await app.register(notificationRoutes(ctx));
   await app.register(catalogRoutes(ctx));
   await app.register(libraryRoutes(ctx));
   await app.register(catalogAdminRoutes(ctx));
