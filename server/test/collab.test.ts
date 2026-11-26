@@ -398,7 +398,7 @@ describe.skipIf(!hasDb)('Phase 5.5 – Private Zusammenarbeit', () => {
       await app.query('ROLLBACK');
       // Eingeladene können die Rolle ihrer Einladung nicht ändern
       const i = await c.olga.post(`/api/spaces/${space}/invites`, { ref: ref.viktor, role: 'viewer' });
-      expect(i.status).toBe(201);
+      expect(`${i.status} ${JSON.stringify(i.json)}`).toBe(`201 ${JSON.stringify(i.json)}`);
       await app.query('BEGIN');
       await app.query("SELECT set_config('app.user_id', $1, true)", [ref.viktor]);
       await expect(app.query("UPDATE space_invites SET role = 'editor' WHERE id = $1", [i.json.id])).rejects.toThrow();
