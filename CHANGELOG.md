@@ -1,5 +1,33 @@
 # Änderungsprotokoll
 
+## 5.5.0-rc.1 – 26.11.2026 (Release-Kandidat, nicht veröffentlicht)
+
+Phase 5.5 „Private Zusammenarbeit“. Migration 008 ist rein additiv; private Datensätze, Dateien und ihre Verschlüsselung
+sind unverändert. Bericht: `docs/PHASE5-5-COLLABORATION-REPORT.md`.
+
+### Neu
+- **Private Profile:** Anzeigename, frei wählbares Handle (nie der Anmeldename), neu erzeugbare Social-ID, Avatar, Bio,
+  Akzent, Lieblingssorten und -terpene, Interessen. Sichtbarkeit je Feld, standardmäßig privat. Eigener Profilschlüssel.
+- **Freunde:** Anfragen über exaktes Handle oder Social-ID, ohne Verzeichnis und ohne Enumeration. Einladungslinks
+  (ablaufend, widerrufbar, einmalig), private Spitznamen, Blockieren.
+- **Gemeinsame Bereiche:**
+  - Eigener versionierter Schlüssel je Bereich.
+  - Rollen Eigentümer, Bearbeiten, Kommentieren und Ansehen.
+  - Zugriffsstufen je Eintrag (vererbt an Pflanzen, Einträge, Fotos und Kommentare).
+  - Einladungen nur unter Freunden, Eigentumsübertragung mit Annahme, Aktivitätsverlauf, Export, Schlüsselrotation.
+- **Teilen:** Kopie (Standard) oder Verschieben (Grows, Journal, Laborberichte), mit Vorschau und Optionen. Mengen und
+  Kosten der Sammlung bleiben standardmäßig privat.
+- **Kommentare** mit Antworten; **Benachrichtigungen** nur in der App, mit Kategorien, Einstellungen und ohne Inhalte.
+- **Datenschutz-Center 2.0:** alle Freigaben, Mitgliedschaften und Einladungen mit sofortigem Widerruf und
+  Erklärungen der Folgen.
+
+### Geändert
+- **Kontoexport:** enthält zusätzlich `social.json` (eigenes Profil, Freunde, Blockierungen, Mitgliedschaften).
+- **Kontolöschung:** nicht möglich, solange man Bereiche mit weiteren Mitgliedern besitzt (erst übertragen oder löschen).
+- **Wartung:** `rotate-keys`, `rotate-user-keys`, `purge-retired-keys` und `verify-data` berücksichtigen Bereiche,
+  Profile, Spitznamen und Blockierungs-Labels.
+- **`restore-test.sh`:** gibt zusätzlich Bereiche, Mitgliedschaften, Einträge, Dateien und Freundschaften aus.
+
 ## 5.4.0-rc.1 – 25.11.2026 (Release-Kandidat, nicht veröffentlicht)
 
 Phase 5.4 „Data Intelligence“. Migration 007 (nur öffentliche Katalogtabellen); Nutzerdaten unverändert.

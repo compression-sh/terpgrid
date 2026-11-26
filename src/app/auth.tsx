@@ -13,6 +13,7 @@ import { type ReactNode, createContext, useCallback, useContext, useEffect, useM
 import { clearPhotoUrlCache } from '../components/photos/usePhotoUrl';
 import { setCatalogProxy } from '../lib/catalog/endpoint';
 import { clearAccountLocalStorage, isSharedDevice } from '../lib/device';
+import { resetSpaceSessions } from '../lib/collab/spaceSync';
 import { DB_NAME, closeDatabase, deleteDatabase, getAll, setSyncTracking, selectDatabase } from '../lib/db/database';
 import { type AuthConfig, type ServerUser, type SessionResponse, ApiError, api, setCsrfToken, setOnUnauthorized } from '../lib/server/api';
 import { loginWithPasskey } from '../lib/server/passkeys';
@@ -234,6 +235,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const current = state.kind === 'authenticated' ? state.user : null;
       await api('POST', '/api/auth/logout').catch(() => {});
       stopEngine();
+      // Zwischenspeicher gemeinsamer Bereiche (nur im Arbeitsspeicher) verwerfen
+      resetSpaceSessions();
       if ((opts.wipeLocal || isSharedDevice()) && current) {
         selectDatabase(accountDbName(current.accountKey));
         await deleteDatabase().catch(() => {});

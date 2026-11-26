@@ -21,6 +21,7 @@ import type { ClaimSource, SourcedValue, Strain } from '../lib/db/types';
 import { CLAIM_SOURCE_LABEL, METHOD_LABEL } from '../lib/grow/labels';
 import { currentPhase } from '../lib/grow/phases';
 import { fmt } from '../lib/format';
+import { ShareButton } from '../components/collab/ShareDialog';
 
 export function SourceBadge({ source }: { source: ClaimSource }) {
   if (source === 'lab')
@@ -294,6 +295,7 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
             <button type="button" className="btn-ghost" onClick={() => setModal('edit')}>
               <Pencil className="size-4" /> Bearbeiten
             </button>
+            <ShareButton store="strains" ids={[strain.id]} />
             <button type="button" className="btn-ghost text-rose-300/90" onClick={remove} aria-label="Sorte löschen">
               <Trash2 className="size-4" />
             </button>

@@ -281,7 +281,7 @@ async function main() {
       }
       case 'verify-data': {
         const r = await verifyData(db, new KeyRing(c.masterKeys, c.masterKeyCurrent), c.fileDir);
-        console.log(`Konten: ${r.users} · Datensätze entschlüsselt: ${r.records} · Dateien entschlüsselt: ${r.files} · Fehler: ${r.errors.length}`);
+        console.log(`Konten: ${r.users} · Datensätze entschlüsselt: ${r.records} · Dateien entschlüsselt: ${r.files} · Gemeinsame Bereiche: ${r.spaces} (Datensätze ${r.spaceRecords}, Dateien ${r.spaceFiles}) · Fehler: ${r.errors.length}`);
         for (const e of r.errors.slice(0, 50)) console.log(`  ✗ ${e}`);
         if (r.errors.length) process.exitCode = 2;
         return;

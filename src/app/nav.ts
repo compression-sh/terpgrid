@@ -14,6 +14,7 @@ import {
   Package,
   Settings,
   Sprout,
+  Users,
   Wrench,
 } from 'lucide-react';
 
@@ -24,6 +25,8 @@ export interface NavItem {
   icon: LucideIcon;
   /** Pfad-Präfixe, für die der Eintrag als aktiv gilt. */
   match: string[];
+  /** Nur mit Server-Konto (Zusammenarbeit) */
+  serverOnly?: boolean;
 }
 
 export const PRIMARY_NAV: NavItem[] = [
@@ -34,6 +37,7 @@ export const PRIMARY_NAV: NavItem[] = [
   { id: 'strains', label: 'Meine Sorten', to: 'strains', icon: Leaf, match: ['strains'] },
   { id: 'journal', label: 'Journal', to: 'journal', icon: BookOpenText, match: ['journal'] },
   { id: 'collection', label: 'Sammlung', to: 'collection', icon: Package, match: ['collection'] },
+  { id: 'together', label: 'Gemeinsam', to: 'together', icon: Users, match: ['together'], serverOnly: true },
 ];
 
 export const SECONDARY_NAV: NavItem[] = [

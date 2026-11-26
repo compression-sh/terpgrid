@@ -69,6 +69,31 @@ export const recordAad = (userId: string, store: string, id: string) => `rec|v1|
 export const fileAad = (userId: string, kind: string, id: string, variant: string) => `file|v1|${userId}|${kind}|${id}|${variant}`;
 export const totpAad = (userId: string) => `totp|v1|${userId}`;
 
+/* ── Phase 5.5: eigene Schlüssel für gemeinsame Bereiche und Profile ── */
+/** Verpackung eines Bereichsschlüssels (an Bereich und Generation gebunden) */
+export const spaceDekAad = (spaceId: string, gen: number) => `sdek|v1|${spaceId}|${gen}`;
+export const spaceMetaAad = (spaceId: string) => `smeta|v1|${spaceId}`;
+export const spaceRecordAad = (spaceId: string, store: string, id: string) => `srec|v1|${spaceId}|${store}|${id}`;
+export const spaceFileAad = (spaceId: string, kind: string, id: string, variant: string) => `sfile|v1|${spaceId}|${kind}|${id}|${variant}`;
+export const spaceCommentAad = (spaceId: string, commentId: string) => `scom|v1|${spaceId}|${commentId}`;
+/** Profilschlüssel (getrennt vom Kontoschlüssel – Freunde lesen nur das Profil) */
+export const profileKeyAad = (userId: string, gen: number) => `pkey|v1|${userId}|${gen}`;
+export const profileAad = (userId: string) => `prof|v1|${userId}`;
+/** Privater Spitzname eines Freundes (mit dem Kontoschlüssel des Besitzers) */
+export const nicknameAad = (ownerId: string, friendId: string) => `nick|v1|${ownerId}|${friendId}`;
+/** Wiedererkennungs-Label einer Blockierung (mit dem Kontoschlüssel des Blockierenden) */
+export const blockLabelAad = (blocker: string, blocked: string) => `blk|v1|${blocker}|${blocked}`;
+
+/** Verpackt einen zufälligen 32-Byte-Schlüssel mit dem Master-Key unter gegebenem AAD. */
+export function wrapKey(kek: Buffer, key: Buffer, aad: string): Buffer {
+  return encrypt(kek, key, aad);
+}
+export function unwrapKey(kek: Buffer, wrapped: Buffer, aad: string): Buffer {
+  const k = decrypt(kek, wrapped, aad);
+  if (k.length !== 32) throw new CryptoError('Ungültiger Schlüssel');
+  return k;
+}
+
 /** Unterschlüssel per HKDF-SHA-256 (getrennte Zwecke, ein Geheimnis). */
 export function subkey(secret: Buffer, purpose: string, length = 32): Buffer {
   return Buffer.from(hkdfSync('sha256', secret, Buffer.alloc(0), `terpgrid:${purpose}`, length));

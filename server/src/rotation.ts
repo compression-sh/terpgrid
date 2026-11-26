@@ -17,7 +17,7 @@
 import { randomBytes } from 'node:crypto';
 import { audit } from './audit.js';
 import type { AppContext } from './context.js';
-import { canonicalJson, decrypt, encrypt, fileAad, hmac, recordAad, totpAad, wrapDekGen } from './crypto.js';
+import { blockLabelAad, canonicalJson, decrypt, encrypt, fileAad, hmac, nicknameAad, recordAad, totpAad, wrapDekGen } from './crypto.js';
 import { tx, withUser } from './db.js';
 import { newStorageName, readBlob, removeBlob, trashBlob, writeBlob } from './files.js';
 import { macKey } from './records.js';
@@ -61,7 +61,38 @@ async function remaining(ctx: AppContext, userId: string, gen: number): Promise<
   return withUser(ctx.db, userId, async (c) => {
     const r = await c.query('SELECT (SELECT count(*) FROM records WHERE user_id = $1 AND dek_gen <> $2) + (SELECT count(*) FROM files WHERE user_id = $1 AND dek_gen <> $2) AS n', [userId, gen]);
     const t = await c.query('SELECT 1 FROM users WHERE id = $1 AND totp_secret IS NOT NULL AND totp_dek_gen <> $2', [userId, gen]);
-    return Number(r.rows[0].n) + (t.rowCount ?? 0);
+    // Phase 5.5: private Spitznamen und Blockierungs-Labels (mit dem Kontoschlüssel verschlüsselt)
+    const s = await c.query(
+      'SELECT (SELECT count(*) FROM friend_settings WHERE owner_id = $1 AND nickname IS NOT NULL AND nickname_gen <> $2) + (SELECT count(*) FROM blocks WHERE blocker = $1 AND label IS NOT NULL AND label_gen <> $2) AS n',
+      [userId, gen],
+    );
+    return Number(r.rows[0].n) + (t.rowCount ?? 0) + Number(s.rows[0].n);
+  });
+}
+
+/** Spitznamen und Blockierungs-Labels eines Kontos auf die aktuelle Generation umschlüsseln. */
+async function rotateSocialSecrets(ctx: AppContext, userId: string): Promise<number> {
+  return withUser(ctx.db, userId, async (c) => {
+    const keys = await loadUserKeys(ctx, c, userId);
+    let n = 0;
+    const nicks = await c.query('SELECT friend_id, nickname, nickname_gen FROM friend_settings WHERE owner_id = $1 AND nickname IS NOT NULL AND nickname_gen <> $2 FOR UPDATE', [userId, keys.current]);
+    for (const r of nicks.rows) {
+      const aad = nicknameAad(userId, r.friend_id);
+      const plain = decrypt(keys.get(r.nickname_gen), r.nickname, aad);
+      await c.query('UPDATE friend_settings SET nickname = $3, nickname_gen = $4 WHERE owner_id = $1 AND friend_id = $2', [userId, r.friend_id, encrypt(keys.currentKey(), plain, aad), keys.current]);
+      plain.fill(0);
+      n++;
+    }
+    const blocks = await c.query('SELECT blocked, label, label_gen FROM blocks WHERE blocker = $1 AND label IS NOT NULL AND label_gen <> $2 FOR UPDATE', [userId, keys.current]);
+    for (const r of blocks.rows) {
+      const aad = blockLabelAad(userId, r.blocked);
+      const plain = decrypt(keys.get(r.label_gen), r.label, aad);
+      await c.query('UPDATE blocks SET label = $3, label_gen = $4 WHERE blocker = $1 AND blocked = $2', [userId, r.blocked, encrypt(keys.currentKey(), plain, aad), keys.current]);
+      plain.fill(0);
+      n++;
+    }
+    keys.wipe();
+    return n;
   });
 }
 
@@ -151,6 +182,8 @@ export async function continueUserKeyRotation(ctx: AppContext, userId: string, o
     });
   }
 
+  if (batches < maxBatches) await rotateSocialSecrets(ctx, userId);
+
   if (!progress.gen) progress.gen = (await ctx.db.query('SELECT dek_gen FROM users WHERE id = $1', [userId])).rows[0].dek_gen;
   progress.remaining = await remaining(ctx, userId, progress.gen);
   if (progress.remaining === 0) progress.done = await finalizeUserKeyRotation(ctx, userId);
@@ -190,7 +223,11 @@ export async function purgeRetiredKeys(ctx: AppContext, minAgeDays: number): Pro
     const used = await withUser(ctx.db, k.user_id, async (c) => {
       const r = await c.query('SELECT (SELECT count(*) FROM records WHERE user_id = $1 AND dek_gen = $2) + (SELECT count(*) FROM files WHERE user_id = $1 AND dek_gen = $2) AS n', [k.user_id, k.gen]);
       const t = await c.query('SELECT 1 FROM users WHERE id = $1 AND totp_dek_gen = $2 AND totp_secret IS NOT NULL', [k.user_id, k.gen]);
-      return Number(r.rows[0].n) + (t.rowCount ?? 0);
+      const so = await c.query(
+        'SELECT (SELECT count(*) FROM friend_settings WHERE owner_id = $1 AND nickname IS NOT NULL AND nickname_gen = $2) + (SELECT count(*) FROM blocks WHERE blocker = $1 AND label IS NOT NULL AND label_gen = $2) AS n',
+        [k.user_id, k.gen],
+      );
+      return Number(r.rows[0].n) + (t.rowCount ?? 0) + Number(so.rows[0].n);
     });
     if (used > 0) continue;
     await ctx.db.query("DELETE FROM user_keys WHERE user_id = $1 AND gen = $2 AND state = 'retired'", [k.user_id, k.gen]);

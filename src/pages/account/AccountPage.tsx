@@ -1,4 +1,5 @@
 import {
+  Share2,
   Download,
   Fingerprint,
   HardDrive,
@@ -28,6 +29,7 @@ import { Modal } from '../../components/ui/Modal';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { deleteDatabase, storageEstimate, selectDatabase } from '../../lib/db/database';
 import { isSharedDevice, setSharedDevice } from '../../lib/device';
+import { PrivacyCenter2 } from './PrivacyCenter2';
 import { useData } from '../../app/DataProvider';
 import { formatBytes } from '../../lib/media/images';
 import { ApiError, type ServerUser, api } from '../../lib/server/api';
@@ -132,6 +134,7 @@ export function AccountPage() {
           ['daten', 'Daten'],
           ['geraet', 'Dieses Gerät'],
           ['datenschutz', 'Datenschutz-Center'],
+          ['zusammenarbeit', 'Zusammenarbeit & Freigaben'],
           ['loeschen', 'Konto löschen'],
           ...(user.role === 'admin' ? [['admin', 'Administration']] : []),
         ].map(([id, label]) =>
@@ -259,6 +262,7 @@ export function AccountPage() {
 
       <DeviceSection />
       <PrivacyCenter />
+      <PrivacyCenter2 disabled={offline} />
       <DeleteSection user={user} disabled={offline} />
     </div>
   );
@@ -843,6 +847,10 @@ function PrivacyCenter() {
         <Item icon={<RefreshCw className="size-4" />} title="Externe Sortendaten">
           Discover nutzt StrainAPI und (auf Klick) CannaLib über deinen Server. Die Anbieter sehen nur die Server-Adresse und Suchbegriffe – keine persönlichen Daten, keine Cookies.
         </Item>
+        <Item icon={<Share2 className="size-4" />} title="Gemeinsame Bereiche und Freunde">
+          Nur was du ausdrücklich teilst, landet in einem gemeinsamen Bereich – mit eigenem Bereichsschlüssel (getrennt von deinem Konto). Profilangaben sind standardmäßig privat und nur für freigegebene Freunde sichtbar; dein Anmeldename ist für andere nie
+          sichtbar. Keine öffentlichen Profile, kein Verzeichnis, keine Weitergabe außerhalb dieser Instanz. Details und Widerruf: „Zusammenarbeit & Freigaben“.
+        </Item>
         <Item icon={<Users className="size-4" />} title="Administration">
           Administratoren sehen Kennungen, Status, Speicherverbrauch und Systemzustand – aber keine Inhalte. Es gibt keinen Generalschlüssel und keine versteckte Zugriffsfunktion.
         </Item>
@@ -892,7 +900,7 @@ function DeleteSection({ user, disabled }: { user: ServerUser; disabled: boolean
         >
           <Callout tone="danger">
             Alle Inhalte werden sofort vom Server und von diesem Gerät entfernt. Lade vorher einen Export herunter, falls du die Daten behalten möchtest. In Server-Backups bleiben
-            verschlüsselte Kopien bis zum Ablauf der Aufbewahrung.
+            verschlüsselte Kopien bis zum Ablauf der Aufbewahrung. Gemeinsame Bereiche mit weiteren Mitgliedern musst du vorher übertragen oder löschen; deine Kommentare bleiben dort als „Gelöschtes Konto“.
           </Callout>
           <div className="space-y-1.5">
             <label className="label" htmlFor="del-confirm">

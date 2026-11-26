@@ -25,6 +25,7 @@ import { deleteInventoryItem, updateRecord } from '../lib/db/repo';
 import { INVENTORY_CATEGORIES, type InventoryItem } from '../lib/db/types';
 import { INVENTORY_CATEGORY_LABEL } from '../lib/grow/labels';
 import { fmt } from '../lib/format';
+import { SharePicker } from '../components/collab/ShareDialog';
 
 function ItemRow({ item }: { item: InventoryItem }) {
   const { data, settings } = useData();
@@ -225,9 +226,12 @@ export function CollectionPage() {
         title="Sammlung"
         subtitle="Inventar, Zubehör, Ausrüstung und Ausgaben – Mengen ändern sich nur durch dich."
         actions={
-          <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
-            <Plus className="size-4" /> Hinzufügen
-          </button>
+          <>
+            <SharePicker store="inventory" items={data.inventory.filter((i) => !i.archived).map((i) => ({ id: i.id, title: i.name, sub: i.manufacturer }))} label="Auswahl teilen …" />
+            <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
+              <Plus className="size-4" /> Hinzufügen
+            </button>
+          </>
         }
       />
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">

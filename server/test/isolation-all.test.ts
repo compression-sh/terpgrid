@@ -125,8 +125,11 @@ describe.skipIf(!hasDb)('Mandantentrennung über alle Bereiche', () => {
   it('Export und Zusammenfassung von B enthalten nichts von A', async () => {
     const e = await b.get('/api/account/export');
     const z = unzipSync(new Uint8Array(e.raw));
-    expect(Object.keys(z)).toEqual(['manifest.json']);
+    // 5.5: social.json enthält nur eigenes Profil/Freunde/Mitgliedschaften
+    expect(Object.keys(z).sort()).toEqual(['manifest.json', 'social.json']);
     expect(strFromU8(z['manifest.json']!)).not.toContain('GEHEIM-A');
+    expect(strFromU8(z['social.json']!)).not.toContain('GEHEIM-A');
+    expect(JSON.parse(strFromU8(z['social.json']!)).friends).toEqual([]);
     const s = await b.get('/api/sync/summary');
     expect(s.json.files).toEqual([]);
     expect(JSON.stringify(s.json)).not.toContain('a-');

@@ -22,6 +22,7 @@ import { deleteJournalEntry } from '../lib/db/repo';
 import { CONSUMPTION_METHODS, type JournalEntry } from '../lib/db/types';
 import { METHOD_LABEL, MOOD_OPTIONS } from '../lib/grow/labels';
 import { fmt } from '../lib/format';
+import { SharePicker } from '../components/collab/ShareDialog';
 
 /** Rein beschreibende Zusammenfassung der erfassten Einträge (keine Wertung, keine Prognose). */
 const MONTH_FMT = new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric', timeZone: 'UTC' });
@@ -184,9 +185,12 @@ export function JournalPage() {
         title="Journal"
         subtitle="Optional und privat – deine eigenen Notizen zu Erfahrungen."
         actions={
-          <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
-            <Plus className="size-4" /> Eintrag
-          </button>
+          <>
+            <SharePicker store="journal" items={data.journal.map((j) => ({ id: j.id, title: j.strainName || 'Journal-Eintrag', sub: new Date(j.date).toLocaleDateString('de-DE') }))} label="Einträge teilen …" />
+            <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
+              <Plus className="size-4" /> Eintrag
+            </button>
+          </>
         }
       />
 

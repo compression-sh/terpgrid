@@ -6,6 +6,7 @@ import { useQuickActions } from './QuickActions';
 import { useAuth } from './auth';
 import { AccountFooter, SyncPill } from './SyncIndicator';
 import { CommandPalette } from './CommandPalette';
+import { NotificationBell } from '../components/collab/Notifications';
 import { href, useRoute } from './router';
 
 function SideLink({ item, active }: { item: NavItem; active: boolean }) {
@@ -76,8 +77,10 @@ export function Shell({ children }: { children: ReactNode }) {
   const { state } = useAuth();
   const modeLine = state.kind === 'local' ? 'Lokalmodus: Daten nur auf diesem Gerät' : 'Konto & Datenschutz · Self-hosted';
   const [moreOpen, setMoreOpen] = useState(false);
-  const mobileItems = MOBILE_NAV_IDS.map((id) => PRIMARY_NAV.find((n) => n.id === id)!);
-  const moreItems = [...PRIMARY_NAV.filter((n) => !MOBILE_NAV_IDS.includes(n.id)), ...SECONDARY_NAV];
+  const server = state.kind === 'authenticated';
+  const primary = PRIMARY_NAV.filter((n) => !n.serverOnly || server);
+  const mobileItems = MOBILE_NAV_IDS.map((id) => primary.find((n) => n.id === id)!);
+  const moreItems = [...primary.filter((n) => !MOBILE_NAV_IDS.includes(n.id)), ...SECONDARY_NAV];
   const moreActive = moreItems.some((i) => isActive(i, route.path));
 
   // Seitenwechsel → nach oben scrollen und Mehr-Menü schließen.
@@ -104,10 +107,11 @@ export function Shell({ children }: { children: ReactNode }) {
             <Search className="size-3.5" /> Suchen …
             <kbd className="ml-auto rounded border border-white/10 px-1 text-[10px]">Strg K</kbd>
           </button>
+          <NotificationBell />
         </div>
         <nav aria-label="Hauptnavigation" className="flex-1 space-y-5 overflow-y-auto px-4 pt-2 pb-6 [mask-image:linear-gradient(to_bottom,black_calc(100%-28px),transparent)]">
           <div className="space-y-0.5">
-            {PRIMARY_NAV.map((n) => (
+            {primary.map((n) => (
               <SideLink key={n.id} item={n} active={isActive(n, route.path)} />
             ))}
           </div>
@@ -133,6 +137,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <button type="button" className="btn-ghost p-1.5" aria-label="Suchen" onClick={() => window.dispatchEvent(new Event('terpgrid:palette'))}>
             <Search className="size-4" />
           </button>
+          <NotificationBell compact />
           <SyncPill compact />
           <div className="w-24">
             <QuickAddMenu />

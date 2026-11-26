@@ -23,6 +23,7 @@ import { PLANT_TYPE_LABEL } from '../../lib/grow/labels';
 import { currentPhase, growDay } from '../../lib/grow/phases';
 import { METRICS, metricSeries } from '../../lib/grow/series';
 import { fmt } from '../../lib/format';
+import { ShareButton } from '../../components/collab/ShareDialog';
 
 type Tab = 'log' | 'photos' | 'measurements' | 'outcome';
 
@@ -169,6 +170,7 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
               <a href={href(`labels?grow=${encodeURIComponent(growId)}&plants=${encodeURIComponent(plant.id)}`)} className="btn-ghost">
                 <QrCode className="size-4" /> Etikett
               </a>
+              <ShareButton store="plants" ids={[plant.id]} />
               <button type="button" className="btn-ghost text-rose-300/90 hover:text-rose-200" onClick={remove} aria-label="Pflanze löschen">
                 <Trash2 className="size-4" />
               </button>
