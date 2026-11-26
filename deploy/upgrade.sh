@@ -53,5 +53,5 @@ fi
 
 fail "Version $new ist nicht gesund gestartet."
 echo "Rollback auf $prev: ./rollback.sh $prev"
-echo "Hinweis: Wurden Migrationen angewendet, verlangt rollback.sh zuerst die Wiederherstellung des Backups von eben."
+echo "Hinweis: Wurden Migrationen angewendet: backup/restore.sh --version $prev <Snapshot von eben>."
 exit 1

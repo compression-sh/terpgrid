@@ -29,14 +29,16 @@ export function handleOf(id: Buffer): string {
   return id.subarray(0, 8).toString('hex');
 }
 
-export async function createSession(ctx: AppContext, client: Tx | AppContext['db'], userId: string, req: FastifyRequest, opts: { reauth?: boolean } = {}): Promise<{ token: string; csrfToken: string }> {
+export type AuthMethod = 'password' | 'totp' | 'passkey' | 'recovery' | 'register';
+
+export async function createSession(ctx: AppContext, client: Tx | AppContext['db'], userId: string, req: FastifyRequest, opts: { reauth?: boolean; method?: AuthMethod } = {}): Promise<{ token: string; csrfToken: string }> {
   const token = randomToken(32);
   const csrfToken = randomToken(32);
   const ua = (req.headers['user-agent'] ?? '').toString().slice(0, 160) || null;
   await client.query(
-    `INSERT INTO sessions(id, user_id, csrf_token, expires_at, reauth_at, user_agent, ip_tag)
-     VALUES ($1, $2, $3, now() + make_interval(days => $4), CASE WHEN $5 THEN now() ELSE NULL END, $6, $7)`,
-    [sha256(token), userId, csrfToken, ctx.config.sessionAbsoluteDays, opts.reauth ?? true, ua, ipTag(ctx, req.ip)],
+    `INSERT INTO sessions(id, user_id, csrf_token, expires_at, reauth_at, user_agent, ip_tag, auth_method)
+     VALUES ($1, $2, $3, now() + make_interval(days => $4), CASE WHEN $5 THEN now() ELSE NULL END, $6, $7, $8)`,
+    [sha256(token), userId, csrfToken, ctx.config.sessionAbsoluteDays, opts.reauth ?? true, ua, ipTag(ctx, req.ip), opts.method ?? null],
   );
   return { token, csrfToken };
 }

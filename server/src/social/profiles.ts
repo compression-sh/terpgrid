@@ -99,6 +99,15 @@ function cleanList(v: unknown, label: string): string[] | undefined {
 }
 
 /** Avatar: Data-URL (JPEG/PNG/WebP), Inhalt per Signatur geprüft, max. 120 KB. */
+/** Erkennt EXIF/XMP-Blöcke in JPEG, PNG und WebP (Signaturen, kein vollständiger Parser). */
+export function hasEmbeddedMetadata(b: Buffer): boolean {
+  if (b.includes(Buffer.from('Exif\0\0', 'latin1'))) return true; // JPEG APP1 / WebP-EXIF-Inhalt
+  if (b.includes(Buffer.from('http://ns.adobe.com/xap/1.0/', 'latin1'))) return true; // XMP
+  if (b.includes(Buffer.from('eXIf', 'latin1')) || b.includes(Buffer.from('iTXtXML:com.adobe.xmp', 'latin1'))) return true; // PNG
+  if (b.toString('latin1', 0, 4) === 'RIFF' && (b.includes(Buffer.from('EXIF', 'latin1')) || b.includes(Buffer.from('XMP ', 'latin1')))) return true; // WebP
+  return false;
+}
+
 export function cleanAvatar(v: unknown): string | undefined {
   if (v === undefined || v === null || v === '') return undefined;
   if (typeof v !== 'string') throw new HttpError(400, 'Avatar: ungültiger Wert');
@@ -111,6 +120,9 @@ export function cleanAvatar(v: unknown): string | undefined {
   const webp = bytes.toString('latin1', 0, 4) === 'RIFF' && bytes.toString('latin1', 8, 12) === 'WEBP';
   const ok = (m[1] === 'image/jpeg' && jpeg) || (m[1] === 'image/png' && png) || (m[1] === 'image/webp' && webp);
   if (!ok) throw new HttpError(415, 'Avatar: Dateiinhalt passt nicht zum Typ.');
+  // Profilbilder sehen Freunde: eingebettete Metadaten (EXIF inkl. GPS, XMP) nie annehmen.
+  // Die App kodiert Bilder vorher über <canvas> neu; dieser Pfad greift nur bei direkten API-Aufrufen.
+  if (hasEmbeddedMetadata(bytes)) throw new HttpError(415, 'Avatar: Bild enthält Metadaten (z. B. Standort). Bitte über die App hochladen.');
   return v;
 }
 

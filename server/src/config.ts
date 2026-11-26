@@ -27,6 +27,8 @@ export interface Config {
   userQuotaBytes: number;
   /** Tage, die ersetzte/gelöschte Blobs im Papierkorb bleiben (Backup-Konsistenz) */
   fileTrashDays: number;
+  /** Aufbewahrung der Sicherheitsereignisse (Tage) */
+  auditRetentionDays: number;
   trustProxy: string | boolean;
   cookieSecure: boolean;
   catalogEnabled: boolean;
@@ -124,6 +126,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     maxUploadBytes: int(env, 'MAX_UPLOAD_MB', 20, 1, 100) * 1024 * 1024,
     userQuotaBytes: int(env, 'USER_QUOTA_MB', 2048, 10, 1_000_000) * 1024 * 1024,
     fileTrashDays: int(env, 'FILE_TRASH_DAYS', 7, 1, 365),
+    auditRetentionDays: int(env, 'AUDIT_RETENTION_DAYS', 180, 7, 730),
     trustProxy: tp === 'false' ? false : tp === 'true' ? true : tp,
     cookieSecure,
     catalogEnabled: bool(env, 'CATALOG_PROXY_ENABLED', true),

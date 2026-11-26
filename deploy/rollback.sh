@@ -24,7 +24,8 @@ rc=$?
 set -e
 if (( rc == 3 )); then
   fail "Die Datenbank enthält Migrationen, die $target nicht kennt."
-  echo "Vorgehen: 1) backup/restore.sh <snapshot-von-vor-dem-upgrade>  2) ./rollback.sh $target"
+  echo "Vorgehen: backup/restore.sh --version $target <snapshot-von-vor-dem-upgrade>"
+  echo "(Ohne --version würde die aktuelle Version ihre Migrationen beim Start sofort wieder anwenden.)"
   exit 1
 fi
 (( rc == 0 || rc == 4 )) || die "Schemaprüfung fehlgeschlagen (Exit $rc)."

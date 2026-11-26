@@ -24,6 +24,34 @@ const MODE_KEY = 'terpgrid.mode';
 const LAST_ACCOUNT_KEY = 'terpgrid.lastAccount';
 /** Abmelden ohne Serververbindung: Die Sitzung wird beim nächsten Serverkontakt beendet. */
 const PENDING_LOGOUT_KEY = 'terpgrid.pendingLogout';
+/** Abmeldesignal an andere Tabs desselben Browsers (gleiches Sitzungs-Cookie). */
+const LOGOUT_SIGNAL_KEY = 'terpgrid.logoutSignal';
+
+/**
+ * Ausstehendes Abmelden nachholen, sobald der Server erreichbar ist (nicht erst beim Neustart).
+ * Ohne Sitzung (401) ist nichts mehr zu tun. Gibt true zurück, wenn nichts mehr aussteht.
+ */
+export async function flushPendingLogout(): Promise<boolean> {
+  if (!readJson<boolean>(PENDING_LOGOUT_KEY)) return true;
+  try {
+    await api<SessionResponse>('GET', '/api/auth/session'); // setzt das CSRF-Token für den Abmelde-Aufruf
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 401) {
+      writeJson(PENDING_LOGOUT_KEY, null);
+      return true;
+    }
+    return false;
+  }
+  try {
+    await api('POST', '/api/auth/logout');
+    writeJson(PENDING_LOGOUT_KEY, null);
+    return true;
+  } catch {
+    return false;
+  } finally {
+    setCsrfToken('');
+  }
+}
 
 export type AuthState =
   | { kind: 'checking' }
@@ -224,6 +252,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [isOffline, refresh]);
 
+  // Abmelden in einem anderen Tab: hier sofort lokal abmelden (keine Daten mehr anzeigen oder senden)
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== LOGOUT_SIGNAL_KEY || !e.newValue) return;
+      setState((st) => {
+        if (st.kind !== 'authenticated') return st;
+        engineRef.current?.stop();
+        engineRef.current = null;
+        setEngine(null);
+        resetSpaceSessions();
+        clearPhotoUrlCache();
+        void closeDatabase();
+        setSyncTracking(false);
+        setCsrfToken('');
+        try {
+          for (const k of Object.keys(sessionStorage)) if (k.startsWith('terpgrid')) sessionStorage.removeItem(k);
+        } catch {
+          /* ignorieren */
+        }
+        return { kind: 'anonymous', config: configRef.current ?? { inviteOnly: true, minPasswordLength: 12, version: '' } };
+      });
+      setLastAccount(readJson<LastAccount>(LAST_ACCOUNT_KEY));
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
+  // Ausstehendes Abmelden (offline abgemeldet) nachholen, sobald wieder eine Verbindung besteht
+  useEffect(() => {
+    const run = () => void flushPendingLogout();
+    window.addEventListener('online', run);
+    const t = window.setInterval(run, 30_000);
+    const vis = () => document.visibilityState === 'visible' && run();
+    document.addEventListener('visibilitychange', vis);
+    return () => {
+      window.removeEventListener('online', run);
+      window.clearInterval(t);
+      document.removeEventListener('visibilitychange', vis);
+    };
+  }, []);
+
   const login = useCallback(
     async (login: string, password: string): Promise<LoginResult> => {
       const r = await api<{ status: 'ok' | 'mfa'; mfaToken?: string; user?: ServerUser }>('POST', '/api/auth/login', { login, password });
@@ -276,6 +345,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .catch((e) => e instanceof ApiError && e.status === 401);
       // Server nicht erreichbar: Sitzung beim nächsten Kontakt beenden (Cookie ist HttpOnly)
       writeJson(PENDING_LOGOUT_KEY, loggedOut ? null : true);
+      // Andere Tabs dieses Browsers ebenfalls abmelden (sie teilen das Cookie und die Arbeitskopie)
+      try {
+        localStorage.setItem(LOGOUT_SIGNAL_KEY, String(Date.now()));
+      } catch {
+        /* ignorieren */
+      }
       stopEngine();
       // Zwischenspeicher gemeinsamer Bereiche (nur im Arbeitsspeicher) verwerfen
       resetSpaceSessions();

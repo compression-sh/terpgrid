@@ -442,6 +442,36 @@ describe.skipIf(!hasDb)('Phase 5.5 – Private Zusammenarbeit', () => {
     expect((await verifyData(env.ctx.db, new KeyRing(new Map([[1, Buffer.from(MASTER1, 'base64')]]), 1), env.fileDir)).errors).toEqual([]);
   });
 
+  it('Phase 5.7: kein Klartext privater oder gemeinsamer Inhalte in irgendeiner Tabelle oder Datei', async () => {
+    const markers = ['PRIVAT-olga', 'PRIVAT-emil', 'Zelt Nord', 'Gemeinsamer Grow', 'Sieht sehr gut aus', 'JFIF-GEMEINSAM'];
+    const sup = new pg.Client({ connectionString: env.superDbUrl });
+    await sup.connect();
+    try {
+      const { rows: tables } = await sup.query("SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename NOT LIKE 'catalog_%'");
+      expect(tables.length).toBeGreaterThan(20);
+      for (const { tablename } of tables) {
+        // Zeile als Text (bytea erscheint als Hex) – Marker in Klartext und als Hex suchen
+        const { rows } = await sup.query(`SELECT t::text AS v FROM "${tablename}" t`);
+        const all = rows.map((r) => r.v as string).join('\n');
+        for (const m of markers) {
+          expect(all.includes(m), `${tablename}: ${m}`).toBe(false);
+          expect(all.includes(Buffer.from(m).toString('hex')), `${tablename} (hex): ${m}`).toBe(false);
+        }
+      }
+    } finally {
+      await sup.end();
+    }
+    const { readdirSync, readFileSync, statSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const walk = (d: string): string[] => readdirSync(d).flatMap((f) => (statSync(join(d, f)).isDirectory() ? walk(join(d, f)) : [join(d, f)]));
+    const files = walk(env.fileDir);
+    expect(files.length).toBeGreaterThan(0);
+    for (const f of files) {
+      const buf = readFileSync(f);
+      for (const m of markers) expect(buf.includes(Buffer.from(m)), `${f}: ${m}`).toBe(false);
+    }
+  });
+
   it('Eigentum übertragen: nur nach Annahme durch das Ziel', async () => {
     expect((await c.olga.post(`/api/spaces/${space}/transfer`, { ref: ref.emil })).status).toBe(200);
     expect((await c.clara.post(`/api/spaces/${space}/transfer/accept`)).status).toBe(404);
