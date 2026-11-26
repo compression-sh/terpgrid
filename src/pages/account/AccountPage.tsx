@@ -438,7 +438,7 @@ function PasskeySection({ disabled }: { disabled: boolean }) {
   }, [disabled]);
 
   return (
-    <Section id="passkeys" icon={<Fingerprint className="size-4" />} title="Passkeys" subtitle="Anmelden mit Fingerabdruck, Gesichtserkennung oder Geräte-PIN – ohne Passwort, ohne E-Mail.">
+    <Section id="passkeys" icon={<Fingerprint className="size-4" />} title="Passkeys" subtitle="Anmelden mit der Bildschirmsperre deines Geräts oder einem Sicherheitsschlüssel – ohne Passwort, ohne E-Mail. Welche Abfrage erscheint, entscheidet dein Gerät; TERPGRID erhält keine biometrischen Daten.">
       {!supported && <Callout tone="warn">Dieser Browser unterstützt keine Passkeys.</Callout>}
       {list && list.length > 0 && (
         <ul className="mb-3 divide-y divide-white/[0.05]">

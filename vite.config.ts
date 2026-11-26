@@ -75,7 +75,15 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: { charts: ['recharts'] },
+        // Nur die Diagramm-Bibliothek selbst (inkl. d3/victory) in einen eigenen Chunk – gemeinsame
+        // Abhängigkeiten wie React bleiben im Einstiegs-Chunk, sonst wird „charts“ bei jedem Start geladen.
+        manualChunks(id) {
+          if (/node_modules\/(recharts|d3-[^/]+|victory-vendor|internmap|decimal\.js-light|recharts-scale|es-toolkit|eventemitter3|immer|reselect|@reduxjs|redux|react-redux|use-sync-external-store\/with-selector)\//.test(id)) return 'charts';
+          // Rollup zieht nicht zugeordnete Abhängigkeiten eines manuellen Chunks in diesen hinein –
+          // React deshalb ausdrücklich eigenem Chunk zuordnen (wird ohnehin beim Start gebraucht).
+          if (/node_modules\/(react|react-dom|scheduler|react-is)\//.test(id)) return 'react';
+          return undefined;
+        },
       },
     },
   },

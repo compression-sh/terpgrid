@@ -22,6 +22,8 @@ import { SyncEngine, type SyncStatus } from '../lib/sync/engine';
 
 const MODE_KEY = 'terpgrid.mode';
 const LAST_ACCOUNT_KEY = 'terpgrid.lastAccount';
+/** Abmelden ohne Serververbindung: Die Sitzung wird beim nächsten Serverkontakt beendet. */
+const PENDING_LOGOUT_KEY = 'terpgrid.pendingLogout';
 
 export type AuthState =
   | { kind: 'checking' }
@@ -103,6 +105,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       selectDatabase(accountDbName(user.accountKey));
       setSyncTracking(true);
       setCatalogProxy(window.location.origin);
+      // Neue Online-Anmeldung: ein älteres ausstehendes Abmelden betrifft diese Sitzung nicht
+      if (!offline) writeJson(PENDING_LOGOUT_KEY, null);
       const dbName = accountDbName(user.accountKey);
       const la = { accountKey: user.accountKey, loginName: user.loginName, displayName: user.displayName };
       // Offline-Fortsetzen nur mit ausdrücklicher Offline-Freigabe (nie auf geteilten Geräten)
@@ -162,14 +166,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     configRef.current = config;
     writeJson(MODE_KEY, 'server');
+    let s: SessionResponse;
     try {
-      const s = await api<SessionResponse>('GET', '/api/auth/session');
-      activate(s.user, false, s.reauthUntil);
+      s = await api<SessionResponse>('GET', '/api/auth/session');
     } catch {
+      // Keine Sitzung (mehr) – ein ausstehendes Abmelden ist damit erledigt
+      writeJson(PENDING_LOGOUT_KEY, null);
       toAnonymous(false);
       // Server erreichbar, keine Sitzung: nicht freigegebene Arbeitskopien ohne Ausstehendes entfernen
       void purgeStaleAccountData(null);
+      return;
     }
+    if (readJson<boolean>(PENDING_LOGOUT_KEY)) {
+      // Offline abgemeldet: Sitzung jetzt serverseitig beenden, bevor Daten geladen werden
+      const done = await api('POST', '/api/auth/logout')
+        .then(() => true)
+        .catch(() => false);
+      if (done) writeJson(PENDING_LOGOUT_KEY, null);
+      toAnonymous(false);
+      void purgeStaleAccountData(null);
+      return;
+    }
+    activate(s.user, false, s.reauthUntil);
   }, [activate, toAnonymous]);
 
   useEffect(() => {
@@ -253,7 +271,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const keepForOffline = current ? isOfflineEnabled(accountDbName(current.accountKey)) : true;
       const pending = current ? (await pendingChanges()) + pendingSpaceOps(current.accountKey) : 0;
       const wipe = !!current && (opts.wipeLocal === true || isSharedDevice() || (!keepForOffline && pending === 0 && opts.wipeLocal !== false));
-      await api('POST', '/api/auth/logout').catch(() => {});
+      const loggedOut = await api('POST', '/api/auth/logout')
+        .then(() => true)
+        .catch((e) => e instanceof ApiError && e.status === 401);
+      // Server nicht erreichbar: Sitzung beim nächsten Kontakt beenden (Cookie ist HttpOnly)
+      writeJson(PENDING_LOGOUT_KEY, loggedOut ? null : true);
       stopEngine();
       // Zwischenspeicher gemeinsamer Bereiche (nur im Arbeitsspeicher) verwerfen
       resetSpaceSessions();

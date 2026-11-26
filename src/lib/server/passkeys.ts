@@ -24,11 +24,12 @@ export const passkeysSupported = (): boolean => {
 
 /** Verständliche Meldung für Browser-/Authenticator-Fehler (z. B. abgebrochen). */
 export function passkeyErrorText(e: unknown): string {
-  if (e instanceof ApiError) return e.message;
+  if (e instanceof ApiError) return e.status === 0 ? 'Keine Verbindung zum Server – für die Anmeldung mit Passkey ist eine Verbindung nötig.' : e.message;
   const name = (e as { name?: string })?.name;
   if (e instanceof WebAuthnError || name === 'NotAllowedError' || name === 'AbortError')
     return 'Der Vorgang wurde abgebrochen oder ist abgelaufen. Bitte erneut versuchen.';
   if (name === 'InvalidStateError') return 'Dieser Passkey ist auf diesem Gerät bereits registriert.';
+  if (name === 'NotSupportedError') return 'Dieser Browser oder dieses Gerät unterstützt die angeforderte Passkey-Art nicht. Passwort-Anmeldung bleibt möglich.';
   if (name === 'SecurityError') return 'Passkeys funktionieren nur über HTTPS mit der richtigen Domain.';
   return 'Passkey konnte nicht verwendet werden.';
 }

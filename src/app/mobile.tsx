@@ -61,7 +61,11 @@ export function useScrollRestoration(key: string) {
     current.current = key;
     const target = fromHistory.current ? (positions.current.get(key) ?? 0) : 0;
     fromHistory.current = false;
-    if (target === 0) return window.scrollTo({ top: 0 });
+    // Hinweis: window.scrollTo() liefert in neueren Browsern ein Promise – nie aus dem Effekt zurückgeben
+    if (target === 0) {
+      window.scrollTo({ top: 0 });
+      return;
+    }
     // Inhalte (Listen, Bilder) brauchen ggf. einige Frames bis zur vollen Höhe
     let tries = 0;
     const tick = () => {
