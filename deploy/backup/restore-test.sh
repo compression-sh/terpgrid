@@ -45,6 +45,8 @@ docker exec -i "$ID-db" pg_restore -U postgres -d terpgrid --exit-on-error < "$D
 docker exec "$ID-db" psql -U postgres -d terpgrid -tAc "select 'Konten: '||(select count(*) from users)||' · Datensätze: '||(select count(*) from records where not deleted)||' · Dateien (DB): '||(select count(*) from files)||' · Migrationen: '||(select string_agg(version, ',') from schema_migrations)"
 # Öffentlicher Sortenkatalog (regenerierbar – notfalls mit import-catalog.sh neu importieren)
 docker exec "$ID-db" psql -U postgres -d terpgrid -tAc "select case when to_regclass('catalog_imports') is null then 'Katalog: nicht vorhanden (vor 5.0)' else 'Katalog: '||(select count(*) from catalog_cultivars)||' Sorten · '||(select count(*) from catalog_breeders)||' Breeder · '||(select count(*) from catalog_listings)||' Angebote · Version '||coalesce((select left(version,12) from catalog_imports where status='active'),'–') end"
+# Öffentliche Laborproben (5.4, regenerierbar mit import-samples.sh)
+docker exec "$ID-db" psql -U postgres -d terpgrid -tAc "select case when to_regclass('catalog_samples') is null then 'Laborproben: nicht vorhanden (vor 5.4)' else 'Laborproben: '||(select count(*) from catalog_samples)||' · Produktnamen: '||(select count(*) from catalog_sample_stats) end"
 
 echo "→ Entschlüsselung prüfen (Master-Key aus ./secrets)"
 docker run --rm --network "$ID" --read-only --cap-drop ALL --security-opt no-new-privileges:true \
