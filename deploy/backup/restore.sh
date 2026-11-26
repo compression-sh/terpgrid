@@ -9,7 +9,7 @@ read -rp "Aktuelle Datenbank und Dateien werden durch Snapshot '${SNAP}' ersetzt
 [[ "$ok" == "JA" ]] || exit 1
 WORK="$(mktemp -d /var/tmp/terpgrid-restore.XXXXXX)"
 trap 'rm -rf "$WORK"' EXIT
-restic restore "$SNAP" --tag terpgrid --target "$WORK"
+restic restore "$SNAP" --tag terpgrid --target "$WORK" --verify
 DUMP="$(find "$WORK" -name terpgrid.dump | head -1)"
 FILES_SRC="$(dirname "$(find "$WORK" -path '*/_data' -type d | head -1)")/_data"
 [[ -s "$DUMP" ]] || { echo "Dump nicht gefunden" >&2; exit 1; }

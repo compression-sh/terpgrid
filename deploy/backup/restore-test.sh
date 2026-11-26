@@ -17,8 +17,10 @@ cleanup() {
 trap cleanup EXIT
 chmod 700 "$WORK"
 
-echo "→ Snapshot ${SNAP} wiederherstellen"
-restic restore "$SNAP" --tag terpgrid --target "$WORK/restore" >/dev/null
+echo "→ Repository-Struktur prüfen (erkennt fehlende oder beschädigte Indexe/Snapshots)"
+restic check >/dev/null || { echo "✗ restic check fehlgeschlagen – Repository beschädigt oder unvollständig" >&2; exit 1; }
+echo "→ Snapshot ${SNAP} wiederherstellen (Inhalte gegen ihre Prüfsummen verifiziert)"
+restic restore "$SNAP" --tag terpgrid --target "$WORK/restore" --verify >/dev/null || { echo "✗ Wiederherstellung fehlgeschlagen oder Inhalte beschädigt" >&2; exit 1; }
 DUMP="$(find "$WORK/restore" -name terpgrid.dump | head -1)"
 FILES_SRC="$(find "$WORK/restore" -path '*/_data' -type d | head -1)"
 [[ -s "$DUMP" ]] || { echo "✗ Kein Datenbank-Dump im Snapshot" >&2; exit 1; }
