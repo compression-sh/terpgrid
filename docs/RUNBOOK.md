@@ -5,6 +5,8 @@ Kurz und in der Reihenfolge, in der man es im Ernstfall braucht. Befehle im Verz
 ## 0. Erste Diagnose (2 Minuten)
 
 ```bash
+./status.sh                            # ab 5.9: Dienste, Speicher, Backup, Schema, Katalog, Schlüsselring (nur lesend)
+./status.sh --verify                   # zusätzlich alle Daten testweise entschlüsseln
 docker compose ps                      # läuft alles, „healthy“?
 docker compose logs --tail 50 api      # Fehlermeldung der API (z. B. Schema, Secrets)
 ./preflight.sh                         # Konfiguration, Speicher, DNS, Secrets
@@ -39,6 +41,15 @@ docker compose exec api node dist/cli.js schema-status
 6. DNS auf den neuen Server, Zertifikat wird automatisch ausgestellt. Nutzer müssen sich neu anmelden (Sessions sind im Backup enthalten, aber an Cookies gebunden – ggf. `TRUNCATE sessions`).
 
 ## 4. Rollback nach fehlgeschlagenem Upgrade
+
+**Upgrade unterbrochen** (SSH-Abbruch, Strg+C):
+- `./status.sh` zeigt, ob alle Dienste laufen.
+- Abbruch vor dem Umschalten: Die alte Version läuft unverändert weiter.
+- Abbruch beim Umschalten (in 5.9 getestet): `.env` nennt bereits die neue Version, API und Caddy laufen eventuell nicht.
+- In beiden Fällen `./upgrade.sh` erneut ausführen. Alternativ `./rollback.sh <vorherige-version>`.
+- Ab 5.9 startet `wait_healthy` nicht gestartete Dienste selbst nach. Bei Upgrades **aus** 5.7/5.8 läuft noch deren `lib.sh`; dort danach unbedingt `./status.sh` prüfen und gegebenenfalls `docker compose up -d` ausführen.
+
+**Upgrade fehlgeschlagen:**
 
 ```bash
 ./rollback.sh                    # prüft das Schema mit der Zielversion

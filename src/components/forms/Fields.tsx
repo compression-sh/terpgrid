@@ -99,7 +99,7 @@ export function SelectField<T extends string>({
   return (
     <Field label={label} hint={hint}>
       {(id, d) => (
-        <select id={id} aria-describedby={d} className="input-base appearance-none bg-[length:12px] pr-8" value={value} onChange={(e) => onChange(e.target.value as T | '')} {...rest}>
+        <select id={id} aria-describedby={d} className="input-base" value={value} onChange={(e) => onChange(e.target.value as T | '')} {...rest}>
           {placeholder !== undefined && <option value="">{placeholder}</option>}
           {options.map((o) => (
             <option key={o.value} value={o.value}>

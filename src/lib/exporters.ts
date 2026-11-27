@@ -13,7 +13,10 @@ export interface ExportPayload {
   notes?: string[];
 }
 
-function csvCell(value: string): string {
+function csvCell(raw: string): string {
+  // Schutz vor Formel-Injektion in Tabellenprogrammen (OWASP „CSV Injection“): Zellen, die mit =, +, -, @,
+  // Tab oder CR beginnen, werden als Text markiert – reine Zahlen (z. B. -1,5) bleiben unverändert.
+  const value = /^[=+\-@\t\r]/.test(raw) && !/^[+-]?\d+([.,]\d+)?$/.test(raw) ? `'${raw}` : raw;
   const needsQuote = /[;"\n\r]/.test(value);
   const escaped = value.replace(/"/g, '""');
   return needsQuote ? `"${escaped}"` : escaped;

@@ -158,11 +158,18 @@ export const DB_VERSION = SCHEMA_MIGRATIONS.length;
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 let dbName = DB_NAME;
+/**
+ * Gelöschte Arbeitskopien: Nachlaufende Lesezugriffe (z. B. ein Render nach dem Abmelden) dürfen
+ * eine gerade gelöschte Datenbank nicht leer neu anlegen. Erst eine erneute Auswahl (Anmeldung)
+ * gibt den Namen wieder frei.
+ */
+const deletedNames = new Set<string>();
 /** Im Servermodus aktiv: jede lokale Änderung landet zusätzlich in der Outbox. */
 let tracking = false;
 
 /** Wählt die Datenbank (Lokalmodus: `terpgrid`, Servermodus: eine Datenbank je Konto). */
 export function selectDatabase(name: string): void {
+  deletedNames.delete(name);
   if (name !== dbName) {
     dbPromise?.then((d) => d.close()).catch(() => {});
     dbPromise = null;
@@ -188,6 +195,10 @@ export function openDatabase(): Promise<IDBDatabase> {
   dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
     if (!isIndexedDbAvailable()) {
       reject(new Error('IndexedDB ist in diesem Browser nicht verfügbar (z. B. privater Modus).'));
+      return;
+    }
+    if (deletedNames.has(dbName)) {
+      reject(new Error('Die lokale Arbeitskopie wurde entfernt.'));
       return;
     }
     const req = indexedDB.open(dbName, DB_VERSION);
@@ -221,6 +232,7 @@ export async function closeDatabase(): Promise<void> {
 }
 
 export async function deleteDatabase(): Promise<void> {
+  deletedNames.add(dbName);
   await closeDatabase();
   await new Promise<void>((resolve, reject) => {
     const req = indexedDB.deleteDatabase(dbName);

@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -15,6 +15,12 @@ describe('Konfiguration', () => {
     const c = loadConfig({ ...base, MASTER_KEYS: undefined, MASTER_KEYS_FILE: join(dir, 'keys'), DATABASE_PASSWORD_FILE: join(dir, 'pw'), NODE_ENV: 'production' });
     expect(decodeURIComponent(new URL(c.databaseUrl).password)).toBe('p@ss/wort:#1');
     expect(c.masterKeys.get(1)?.length).toBe(32);
+  });
+
+  it('Version: APP_VERSION, sonst die Version aus package.json (kein veralteter fester Wert)', () => {
+    const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string };
+    expect(loadConfig({ ...base }).version).toBe(pkg.version);
+    expect(loadConfig({ ...base, APP_VERSION: '9.9.9' }).version).toBe('9.9.9');
   });
 
   it('erzwingt in Produktion HTTPS und sichere Cookies', () => {

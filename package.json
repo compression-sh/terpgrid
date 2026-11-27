@@ -1,7 +1,7 @@
 {
   "name": "terpgrid",
   "private": true,
-  "version": "5.8.0-rc.1",
+  "version": "5.9.0-rc.1",
   "type": "module",
   "scripts": {
     "dev": "vite",

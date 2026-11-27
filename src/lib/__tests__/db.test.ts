@@ -196,3 +196,20 @@ describe('Migration alter THC-Rechner-Daten', () => {
     expect(store.getItem(STORAGE_KEY)).not.toBeNull();
   });
 });
+
+describe('Gelöschte Arbeitskopie', () => {
+  it('nachlaufende Zugriffe legen eine gelöschte Konto-Datenbank nicht leer neu an', async () => {
+    const name = 'terpgrid-u-wipetest';
+    selectDatabase(name);
+    await createRecord('grows', { name: 'Privat', startDate: '2026-11-01', setting: 'indoor', medium: '', notes: '', status: 'active', phaseDates: {} } as never);
+    expect((await indexedDB.databases()).some((d) => d.name === name)).toBe(true);
+    await deleteDatabase();
+    // z. B. ein Render nach dem Abmelden
+    await expect(getAll('grows')).rejects.toThrow(/entfernt/);
+    expect((await indexedDB.databases()).some((d) => d.name === name)).toBe(false);
+    // erneute Anmeldung wählt die Datenbank wieder aus
+    selectDatabase(name);
+    expect(await getAll('grows')).toEqual([]);
+    await deleteDatabase();
+  });
+});

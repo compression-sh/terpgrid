@@ -67,8 +67,16 @@ Getestet mit 5.0.0-rc.1 (Docker, isoliert, 24.11.2026): Backup inkl. Katalog (Du
 
 
 ```bash
-sudo backup/restore-test.sh [snapshot|latest]
+sudo backup/restore-test.sh [--full-check] [snapshot|latest]
 ```
+
+**Ohne `--full-check`** werden die Repository-Struktur (`restic check`) und **die Daten des getesteten Snapshots** geprüft (`restore --verify`).
+- Ein Schaden, der nur ältere Snapshots betrifft, fällt dabei **nicht** auf. Das ist in 5.9 nachgewiesen: Ein beschädigter Datenblock eines älteren Snapshots ergab Exit 0, `--full-check` dagegen Exit 1.
+
+**Mit `--full-check`** liest `restic check --read-data` zusätzlich alle Daten des Repositorys.
+- Dauer und Datenvolumen entsprechen der Repository-Größe.
+- Empfohlen vierteljährlich und vor jedem Upgrade.
+- Das tägliche `backup.sh` prüft ohnehin eine Stichprobe von 5 %.
 
 Stellt den Snapshot in Wegwerf-Containern in einem internen Docker-Netz **ohne Internet und ohne Verbindung zur Produktion** wieder her, spielt den Dump ein, zählt Konten/Datensätze/Dateien und entschlüsselt mit `verify-data` **jeden Datensatz und jede Datei**. Die Produktion wird nicht verändert.
 

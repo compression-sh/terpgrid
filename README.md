@@ -2,7 +2,7 @@
 
 **Your personal cannabis space.** Persönliches Dashboard für Growlogs, Fotos, einen Online-Sortenkatalog (Discover), ein persönliches Journal, die eigene Sammlung, Laborberichte und den THC-Rechner (THC Lab).
 
-**Self-hosted · Private Daten geschützt · Kein Tracking.** · Version 5.8.0-rc.1 (Release-Kandidat) · Änderungen: [CHANGELOG.md](CHANGELOG.md)
+**Self-hosted · Private Daten geschützt · Kein Tracking.** · Version 5.9.0-rc.1 (Release-Kandidat) · Änderungen: [CHANGELOG.md](CHANGELOG.md)
 
 TERPGRID läuft in zwei Modi:
 
@@ -62,7 +62,7 @@ TERPGRID läuft in zwei Modi:
 
 ## Datenhaltung
 
-- **Externe Datenquellen:** StrainAPI (öffentliche Read-only-API, Attribution „Data provided by StrainAPI“, angemessenes Caching laut API-Bedingungen) und optional CannaLib (anonym ca. 20 Anfragen/Std., 60/Tag – nur auf Klick, nur im Arbeitsspeicher, Bilder werden wegen ungeprüfter Rechte nicht angezeigt). Der Datensatz *ci-strains-pro* wurde geprüft, aber nicht eingebunden (StrainAPI deckt Bilder, Genetik und Evidenzstatus bereits ab; ein zusätzlicher Massendatensatz hätte nur den Bundle vergrößert).
+- **Externe Datenquellen:** StrainAPI (öffentliche Read-only-API, Attribution „Data provided by StrainAPI“, angemessenes Caching laut API-Bedingungen) und optional CannaLib (anonym ca. 20 Anfragen/Std., 60/Tag – nur auf Klick, nur im Arbeitsspeicher, Bilder werden wegen ungeprüfter Rechte nicht angezeigt). Im Servermodus kommt der lokale Sortenkatalog aus *CI-Strains-Pro* (CC BY 4.0, 16.710 Sorten, 494 Breeder; serverseitig importiert, nicht im Bundle) und die getrennten Laborproben aus Smith et al. 2022 (CC0, Namensabgleich, keine Breeder-Messwerte) – siehe `docs/CATALOG.md`.
 - **API-Cache:** IndexedDB-Store `apiCache` – Listen/Suche 30 Min., Details 6 Std. frisch; bis 7 Tage als gekennzeichneter Offline-Fallback; max. 400 Einträge; nicht Teil des Backups.
 - **Höflicher Client:** begrenzte Parallelität, Mindestabstand je Host, Abbruch veralteter Suchen, Retry-After/Rate-Limit-Header werden respektiert, keine Cookies, kein Referrer.
 - **IndexedDB** (Lokalmodus `terpgrid`, Servermodus je Konto eine eigene Datenbank `terpgrid-u-<Konto>`) mit versionierten Schema-Migrationen (`src/lib/db/database.ts`) und einmaligen Datenmigrationen (`src/lib/db/migrate.ts`).
@@ -127,7 +127,7 @@ cd server && npm install --legacy-peer-deps
 TEST_PG_URL=postgres://postgres:<pw>@127.0.0.1:5432/postgres npm test
 ```
 
-Server-Verwaltung (im Container: `docker compose exec api node dist/cli.js <befehl>`): `invite`, `promote`/`demote`, `migrate`, `schema-status`, `verify-data`, `rotate-keys` (Server-Schlüssel), `rotate-user-keys`/`key-status`/`purge-retired-keys` (Schlüssel je Konto), `import-catalog` (Sortenkatalog, besser über `deploy/import-catalog.sh`), `cleanup`. Details: [docs/RUNBOOK.md](docs/RUNBOOK.md).
+Server-Verwaltung (im Container: `docker compose exec api node dist/cli.js <befehl>`): `invite`, `promote`/`demote`, `migrate`, `schema-status`, `verify-data`, `rotate-keys` (Server-Schlüssel), `rotate-user-keys`/`key-status`/`purge-retired-keys` (Schlüssel je Konto), `import-catalog` (Sortenkatalog, besser über `deploy/import-catalog.sh`), `cleanup`, `status [--verify]` (lesende Betriebsdiagnose, auch als `deploy/status.sh`). Details: [docs/RUNBOOK.md](docs/RUNBOOK.md). Upgrade auf 5.9: [docs/UPGRADE-5.9.md](docs/UPGRADE-5.9.md).
 
 Tests verwenden gekürzte, echte API-Antworten als Fixtures (`src/lib/__tests__/fixtures`).
 

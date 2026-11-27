@@ -3,6 +3,9 @@
 #   Preflight → Backup → Code aktualisieren → neue Images (neuer Tag, alter bleibt) →
 #   Migrationen → Start → Health-Prüfung → bei Fehler geführtes Rollback.
 # Überschreibt nie .env oder Secrets (nur TERPGRID_VERSION wird angepasst).
+# Das gesamte Skript steht in { … }: Bash liest es so vollständig ein, bevor es läuft. Das ist nötig, weil
+# „git pull“ weiter unten diese Datei selbst aktualisieren kann (sonst würde ab der alten Position im neuen Text weitergelesen).
+{
 set -euo pipefail
 cd "$(dirname "$0")"
 # shellcheck source=deploy/lib.sh
@@ -44,14 +47,20 @@ sed -i "s/^TERPGRID_VERSION=.*/TERPGRID_VERSION=${new}/" .env
 echo "$prev" > state/previous-version
 
 echo "→ Starten (Migrationen laufen im migrate-Job)"
-docker compose up -d
-if wait_healthy 240; then
+# Fehlschlag hier (z. B. Migration) nicht per set -e abbrechen, sondern unten mit Anleitung melden
+if docker compose up -d && wait_healthy 240; then
   ok "Upgrade auf $new erfolgreich."
   docker compose exec -T api node dist/cli.js schema-status | tail -1
   exit 0
 fi
 
 fail "Version $new ist nicht gesund gestartet."
+if docker compose ps -a --format '{{.Service}}={{.State}} {{.ExitCode}}' | grep -qE '^migrate=exited [1-9]'; then
+  echo "Migration fehlgeschlagen (jede Migration läuft in einer eigenen Transaktion: die fehlgeschlagene wurde vollständig zurückgerollt; rollback.sh prüft den Schemastand vor dem Umschalten):"
+  docker compose logs --no-color --tail 15 migrate
+fi
 echo "Rollback auf $prev: ./rollback.sh $prev"
 echo "Hinweis: Wurden Migrationen angewendet: backup/restore.sh --version $prev <Snapshot von eben>."
 exit 1
+exit
+}

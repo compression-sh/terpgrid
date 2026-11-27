@@ -268,19 +268,37 @@ export class SyncEngine {
     let cursor = String((await getOne('syncState', CURSOR_KEY))?.value ?? '0');
     const needPhotos = new Set<string>();
     const needDocs = new Set<string>();
-    for (let guard = 0; guard < 1000; guard++) {
-      const page = await api<{ changes: RemoteChange[]; cursor: string; more: boolean }>('GET', `/api/sync/changes?since=${encodeURIComponent(cursor)}&limit=200`);
-      if (page.changes.length) await this.applyRemote(page.changes, page.cursor, needPhotos, needDocs);
-      else await transact(['syncState'], (tx) => tx.objectStore('syncState').put({ key: CURSOR_KEY, value: page.cursor }), []);
-      cursor = page.cursor;
-      if (!page.more) break;
+    // Benachrichtigungen bündeln: Jede Benachrichtigung lässt die Oberfläche alle Datensätze neu lesen. Nach jeder
+    // Seite wäre das bei großen Beständen quadratisch (gemessen: 20.000 Messungen → 106 Seiten, 17 s Erstabgleich).
+    const touched = new Set<StoreName>();
+    let lastNotify = Date.now();
+    const flush = () => {
+      if (touched.size) notify(...touched, 'photoData');
+      touched.clear();
+      lastNotify = Date.now();
+    };
+    try {
+      for (let guard = 0; guard < 1000; guard++) {
+        const page = await api<{ changes: RemoteChange[]; cursor: string; more: boolean }>('GET', `/api/sync/changes?since=${encodeURIComponent(cursor)}&limit=500`);
+        if (page.changes.length) for (const t of await this.applyRemote(page.changes, page.cursor, needPhotos, needDocs)) touched.add(t);
+        else await transact(['syncState'], (tx) => tx.objectStore('syncState').put({ key: CURSOR_KEY, value: page.cursor }), []);
+        cursor = page.cursor;
+        if (!page.more) break;
+        if (Date.now() - lastNotify > 1500) flush(); // Fortschritt bleibt bei langen Abgleichen sichtbar
+      }
+    } finally {
+      flush();
     }
     // Binärdaten erst nach dem ersten Rendern laden (Leerlauf): sonst konkurrieren Foto-Downloads
     // beim Start mit den Anfragen der gerade geöffneten Seite um die Bandbreite.
-    whenIdle(() => void this.fetchMissingFiles(needPhotos, needDocs));
+    // Nach dem Abmelden (stop) nicht mehr starten – sonst würde eine gerade gelöschte Arbeitskopie erneut geöffnet
+    whenIdle(() => {
+      if (!this.stopped) this.fetchMissingFiles(needPhotos, needDocs).catch(() => {});
+    });
   }
 
-  private async applyRemote(changes: RemoteChange[], cursor: string, needPhotos: Set<string>, needDocs: Set<string>): Promise<void> {
+  /** Wendet eine Seite an; Rückgabe: tatsächlich geänderte Stores (Benachrichtigung übernimmt `pull`). */
+  private async applyRemote(changes: RemoteChange[], cursor: string, needPhotos: Set<string>, needDocs: Set<string>): Promise<Set<StoreName>> {
     const stores = new Set<StoreName>(['syncState', 'outbox', 'syncConflicts', 'photoData', 'labDocs']);
     for (const c of changes) if (isRecordStore(c.store)) stores.add(c.store);
     const touched = new Set<StoreName>();
@@ -321,8 +339,7 @@ export class SyncEngine {
       }
       st.put({ key: CURSOR_KEY, value: cursor });
     }, []);
-    // Benachrichtigung nach Abschluss mit den tatsächlich geänderten Stores
-    if (touched.size) notify(...touched, 'photoData');
+    return touched;
   }
 
   /** Fotos und Dokumente werden bei Bedarf nachgeladen (begrenzte Parallelität). */
@@ -336,11 +353,15 @@ export class SyncEngine {
       const presentDocs = new Set(docs.map((d) => d.id));
       for (const r of reports as LabReport[]) if (r.documentId && !presentDocs.has(r.documentId)) docIds.add(r.documentId);
     }
+    // Neueste zuerst: Galerie und Übersicht zeigen die jüngsten Fotos oben – sonst erscheinen sie bei großen
+    // Beständen auf einem neuen Gerät erst nach allen älteren (gemessen: 63 s bei 1.000 Fotos).
+    const taken = new Map((photoIds.size ? ((await getAll('photos')) as Photo[]) : []).map((p) => [p.id, p.takenAt ?? '']));
+    const orderedPhotos = [...photoIds].sort((a, b) => (taken.get(b) ?? '').localeCompare(taken.get(a) ?? ''));
     const tasks: (() => Promise<void>)[] = [];
-    for (const id of photoIds) tasks.push(() => this.downloadPhoto(id));
+    for (const id of orderedPhotos) tasks.push(() => this.downloadPhoto(id));
     for (const id of docIds) tasks.push(() => this.downloadDoc(id));
     const workers = Array.from({ length: 3 }, async () => {
-      for (let t = tasks.shift(); t; t = tasks.shift()) await t().catch(() => {});
+      for (let t = tasks.shift(); t && !this.stopped; t = tasks.shift()) await t().catch(() => {});
     });
     await Promise.all(workers);
   }

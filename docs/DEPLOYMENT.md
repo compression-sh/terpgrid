@@ -147,6 +147,7 @@ docker compose logs -f api            # Logs
 docker compose exec api node dist/cli.js help
 docker compose exec api node dist/cli.js bench-argon2   # Argon2-Laufzeit auf dieser Hardware
 docker compose exec api node dist/cli.js verify-data    # alle Inhalte testweise entschlüsseln
+./status.sh [--verify]                                   # Betriebsdiagnose (ab 5.9, nur lesend, ohne Konten- oder Schlüsseldaten)
 ```
 
 ### Upgrade

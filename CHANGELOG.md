@@ -1,5 +1,38 @@
 # Änderungsprotokoll
 
+## 5.9.0-rc.1 – 27.11.2026 (Release-Kandidat, nicht veröffentlicht)
+
+Phase 5.9 „Produktionsreife und Vorbereitung von 6.0 Stable“. Keine Migration; Rollback auf 5.7/5.8 ohne
+Wiederherstellung möglich. Berichte: `docs/PHASE5-9-PRODUCTION-REPORT.md`, `docs/PHASE5-9-RELEASE-MATRIX.md`,
+Upgrade: `docs/UPGRADE-5.9.md`.
+
+### Behoben
+- Abmelden: Die Arbeitskopie wird auch in Safari/WebKit zuverlässig gelöscht. Ein nachlaufender Foto-Download legte
+  die gelöschte Konto-Datenbank sonst leer neu an.
+- CSV-Exporte schützen vor Formel-Injektion in Tabellenprogrammen.
+- Gemeinsam: Außenstehende sehen „Kein Zugriff“ statt „Zugriff widerrufen“.
+- Grow-Seite: Aktionsleiste läuft bei 360 px nicht mehr über (Firefox, Safari).
+- Auswahlfelder: Text wird in Safari nicht mehr abgeschnitten; alle Auswahlfelder zeigen einen Pfeil.
+- Versionsanzeige ohne `APP_VERSION` folgt `package.json`.
+
+### Leistung
+- Erstabgleich großer Bestände 3–4× schneller (20.000 Messungen: 18,0 → 5,5 s; mobil gedrosselt 54 → 13 s).
+- Fotos werden auf neuen Geräten neueste zuerst geladen.
+
+### Betrieb
+- Neu: `deploy/status.sh` und `node dist/cli.js status [--verify]` – lesende Diagnose ohne Konten- oder Schlüsseldaten.
+- Neu: `backup/restore-test.sh --full-check` prüft alle Daten des Repositorys (auch ältere Snapshots).
+- `upgrade.sh`:
+  - erkennt nicht gestartete Dienste nach Unterbrechungen und startet sie nach;
+  - meldet fehlgeschlagene Migrationen mit Ursache und Rollback-Befehl;
+  - liest sich vor der Ausführung vollständig ein.
+
+### Geprüft
+- Chromium, Firefox und WebKit mit allen Abnahmesuiten.
+- Upgrades 5.7 → 5.9 und 5.8 → 5.9, jeweils mit Unterbrechung, fehlerhafter Migration und Rollback.
+- Zwei vollständige DR-Übungen; Lasttest 1–25 Nutzer; großes Konto.
+- **Ausstehend:** Abnahme auf physischen Geräten (`docs/PHASE5-9-DEVICE-TESTING.md`).
+
 ## 5.8.0-rc.1 – 26.11.2026 (Release-Kandidat, nicht veröffentlicht)
 
 Phase 5.8 „Feature-Vervollständigung, Produktfeinschliff und Performance“. Keine Migration; Rollback auf 5.7 ohne
