@@ -1,5 +1,36 @@
 # Änderungsprotokoll
 
+## 6.0.0 – Stable (vorbereitet, Freigabe ausstehend)
+
+Erste stabile Version; bündelt die Phasen 5.0–5.9. **Keine Migration** gegenüber 5.7/5.8/5.9; Rollback ohne
+Wiederherstellung möglich. Release-Notizen: `docs/RELEASE-NOTES-6.0.md`, Upgrade: `docs/UPGRADE-6.0.md`,
+Abnahme: `docs/RELEASE-6.0-ACCEPTANCE.md`.
+
+**Freigabe ausstehend:**
+- Abnahme auf physischen Geräten (`docs/DEVICE-TESTING-6.0.md`);
+- Betreiber-Gates G6–G8 und G10 (`docs/RELEASE-6.0-CHECKLIST.md`).
+
+### Behoben
+- Anmeldung: Bricht das Lesen einer Serverantwort ab, etwa beim Neuladen während der Sitzungsprüfung in Firefox,
+  gilt das jetzt als Verbindungsfehler. Bisher kam still eine leere Antwort zurück, und die App warf einen JS-Fehler.
+- `install.sh` setzt bei Neuinstallationen `TERPGRID_VERSION` aus `server/package.json`. Bisher trugen frische
+  Installationen den veralteten Wert aus `.env.example` als Image-Tag und Versionsanzeige.
+
+### Code-Qualität
+- 9 Lint-Warnungen behoben (Effekt-Abhängigkeiten in Zeitachse und Entdecken), ohne Verhaltensänderung; in drei
+  Engines geprüft.
+- Ungenutzten Code entfernt.
+
+### Dokumentation
+- Neu:
+  - `docs/UPGRADE-6.0.md`, `docs/MAINTENANCE.md`, `docs/DEVICE-TESTING-6.0.md`;
+  - `docs/RELEASE-6.0-REPORT.md`, `docs/RELEASE-6.0-ACCEPTANCE.md`, `docs/RELEASE-6.0-SECURITY.md`, `docs/RELEASE-6.0-KNOWN-LIMITATIONS.md`.
+
+### Geprüft
+- Chromium, Firefox und WebKit mit allen Abnahmesuiten.
+- Upgrades 5.7/5.8/5.9 → 6.0 mit Unterbrechung, fehlerhafter Migration und Rollback.
+- DR-Übung mit Klartextsuche.
+
 ## 5.9.0-rc.1 – 27.11.2026 (Release-Kandidat, nicht veröffentlicht)
 
 Phase 5.9 „Produktionsreife und Vorbereitung von 6.0 Stable“. Keine Migration; Rollback auf 5.7/5.8 ohne
