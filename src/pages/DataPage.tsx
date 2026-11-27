@@ -24,20 +24,20 @@ import {
 import { daysBetween, fmtDateTime, nowLocal, today } from '../lib/dates';
 import { requestPersistentStorage, storageEstimate } from '../lib/db/database';
 import { formatBytes } from '../lib/media/images';
-import { intlLocale } from '../i18n';
+import { t, intlLocale } from '../i18n';
 
 const STORE_LABEL: Record<RecordStore, string> = {
-  grows: 'Grows',
-  plants: 'Pflanzen',
-  activities: 'Einträge',
-  photos: 'Fotos',
-  reminders: 'Erinnerungen',
-  strains: 'Sorten',
-  journal: 'Journal',
-  inventory: 'Sammlung',
-  expenses: 'Ausgaben',
-  calculations: 'Berechnungen',
-  labReports: 'Laborberichte',
+  get grows() { return t('data.store.grows'); },
+  get plants() { return t('data.store.plants'); },
+  get activities() { return t('data.store.activities'); },
+  get photos() { return t('data.store.photos'); },
+  get reminders() { return t('data.store.reminders'); },
+  get strains() { return t('data.store.strains'); },
+  get journal() { return t('data.store.journal'); },
+  get inventory() { return t('data.store.inventory'); },
+  get expenses() { return t('data.store.expenses'); },
+  get calculations() { return t('data.store.calculations'); },
+  get labReports() { return t('data.store.labReports'); },
 };
 
 function download(bytes: Uint8Array | string, name: string, mime: string) {
@@ -89,14 +89,14 @@ export function DataPage() {
   const fullBackup = (includePhotos: boolean) =>
     run(includePhotos ? 'backup' : 'backup-nophotos', async () => {
       const { bytes, manifest } = await createFullBackup({ includePhotos });
-      download(bytes, `terpgrid-backup-${todayStr}${includePhotos ? '' : '-ohne-fotos'}.zip`, 'application/zip');
+      download(bytes, `terpgrid-backup-${todayStr}${includePhotos ? '' : t('data.noPhotosSuffix')}.zip`, 'application/zip');
       await updateSettings({ lastBackupAt: manifest.exportedAt });
-      toast(`Backup erstellt (${formatBytes(bytes.byteLength)})`);
+      toast(t('data.created', { size: formatBytes(bytes.byteLength) }));
     });
 
   async function onFile(file: File) {
     await run('parse', async () => {
-      if (file.size > 2 * 1024 * 1024 * 1024) throw new Error('Datei ist zu groß.');
+      if (file.size > 2 * 1024 * 1024 * 1024) throw new Error(t('data.tooBig'));
       const bytes = new Uint8Array(await file.arrayBuffer());
       setParsed({ backup: parseBackupZip(bytes), fileName: file.name });
     });
@@ -105,12 +105,12 @@ export function DataPage() {
   async function doRestore() {
     if (!parsed) return;
     const ok = await confirm({
-      title: mode === 'replace' ? 'Alle Daten ersetzen?' : 'Backup zusammenführen?',
+      title: mode === 'replace' ? t('data.replaceTitle') : t('data.mergeTitle'),
       message:
         mode === 'replace'
-          ? 'ALLE aktuellen TERPGRID-Daten auf diesem Gerät werden gelöscht und durch das Backup ersetzt. Dies kann nicht rückgängig gemacht werden. Tipp: vorher ein aktuelles Backup erstellen.'
-          : 'Datensätze aus dem Backup werden ergänzt. Datensätze mit gleicher ID werden durch die Version aus dem Backup überschrieben.',
-      confirmLabel: mode === 'replace' ? 'Ersetzen' : 'Importieren',
+          ? t('data.replaceMsg')
+          : t('data.mergeMsg'),
+      confirmLabel: mode === 'replace' ? t('data.replace') : t('data.import'),
       tone: mode === 'replace' ? 'danger' : 'default',
     });
     if (!ok) return;
@@ -118,7 +118,7 @@ export function DataPage() {
       if (mode === 'replace') data.photos.forEach((p) => forgetPhoto(p.id));
       const n = await restoreBackup(parsed.backup, mode);
       const total = Object.values(n).reduce((s, x) => s + x, 0);
-      toast(`${total} Datensätze importiert`);
+      toast(t('data.imported', { count: total }));
       setParsed(null);
     });
   }
@@ -129,7 +129,7 @@ export function DataPage() {
       await deleteAllLocalData();
       setDeleteOpen(false);
       setDeleteText('');
-      toast('Alle lokalen Daten wurden gelöscht');
+      toast(t('data.deletedAll'));
     });
   }
 
@@ -138,27 +138,27 @@ export function DataPage() {
   return (
     <div>
       <PageHeader
-        title="Daten & Backup"
-        subtitle={server ? 'Deine Daten liegen auf deinem Server und als Arbeitskopie in diesem Browser. Hier sicherst, überträgst und löschst du sie.' : 'Alles liegt lokal in diesem Browser. Hier sicherst, überträgst und löschst du deine Daten.'}
+        title={t('data.title')}
+        subtitle={server ? t('data.subServer') : t('data.subLocal')}
       />
 
       {!server && (lastBackupDays === undefined || lastBackupDays > 30) && data.grows.length + data.photos.length + data.journal.length > 0 && (
         <div className="mb-5">
-          <Callout tone="warn" title={lastBackupDays === undefined ? 'Noch kein Backup erstellt' : `Letztes Backup vor ${lastBackupDays} Tagen`}>
-            Browser-Daten können verloren gehen (Browserdaten löschen, Speicherplatzmangel, Geräteverlust). Ein Backup als ZIP-Datei schützt deine Einträge und Fotos.
+          <Callout tone="warn" title={lastBackupDays === undefined ? t('data.noBackup') : t('data.lastDays', { count: lastBackupDays })}>
+            {t('data.risk')}
           </Callout>
         </div>
       )}
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <Card title="Speicher" subtitle="Belegung durch TERPGRID in diesem Browser" icon={<HardDrive className="size-4" />}>
+        <Card title={t('data.storage')} subtitle={t('data.storageSub')} icon={<HardDrive className="size-4" />}>
           <dl className="grid grid-cols-2 gap-3">
             <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-3">
-              <dt className="text-[11px] text-ink-500">Belegt (gesamt, laut Browser)</dt>
+              <dt className="text-[11px] text-ink-500">{t('data.used')}</dt>
               <dd className="font-mono text-lg tabular text-ink-50">{formatBytes(estimate.usage)}</dd>
             </div>
             <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-3">
-              <dt className="text-[11px] text-ink-500">Fotos (Bilddaten)</dt>
+              <dt className="text-[11px] text-ink-500">{t('data.photoBytes')}</dt>
               <dd className="font-mono text-lg tabular text-ink-50">{formatBytes(photoBytes)}</dd>
             </div>
           </dl>
@@ -183,7 +183,7 @@ export function DataPage() {
           <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/[0.05] pt-4">
             {estimate.persisted ? (
               <span className="flex items-center gap-1.5 text-xs text-leaf-300">
-                <ShieldCheck className="size-4" /> Dauerhafte Speicherung aktiv
+                <ShieldCheck className="size-4" /> {t('data.persistOn')}
               </span>
             ) : (
               <>
@@ -192,37 +192,36 @@ export function DataPage() {
                   className="btn-ghost py-1.5 text-xs"
                   onClick={async () => {
                     const ok = await requestPersistentStorage();
-                    toast(ok ? 'Browser gewährt dauerhafte Speicherung' : 'Der Browser hat die Anfrage abgelehnt oder unterstützt sie nicht', { tone: ok ? 'ok' : 'info' });
+                    toast(ok ? t('data.persistGranted') : t('data.persistDenied'), { tone: ok ? 'ok' : 'info' });
                     refreshEstimate();
                   }}
                 >
-                  <ShieldCheck className="size-3.5" /> Dauerhafte Speicherung anfragen
+                  <ShieldCheck className="size-3.5" /> {t('data.persistAsk')}
                 </button>
-                <span className="hint">Verringert das Risiko, dass der Browser Daten bei Platzmangel löscht – keine Garantie.</span>
+                <span className="hint">{t('data.persistHint')}</span>
               </>
             )}
           </div>
         </Card>
 
-        <Card title="Backup exportieren" subtitle="ZIP mit versioniertem Manifest und Fotos" icon={<Archive className="size-4" />}>
+        <Card title={t('data.export')} subtitle={t('data.exportSub')} icon={<Archive className="size-4" />}>
           <p className="text-[13px] leading-relaxed text-ink-300">
-            Enthält alle Grows, Pflanzen, Einträge, Fotos, Sorten, Journal, Sammlung, Ausgaben, Erinnerungen, gespeicherte Berechnungen und Einstellungen – inklusive aller
-            Verknüpfungen.
+            {t('data.contains')}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <button type="button" className="btn-primary" disabled={!!busy} onClick={() => fullBackup(true)}>
               {busy === 'backup' ? <Loader2 className="size-4 animate-spin" /> : <Archive className="size-4" />} Vollständiges Backup
             </button>
             <button type="button" className="btn-ghost" disabled={!!busy} onClick={() => fullBackup(false)}>
-              Ohne Fotos
+              {t('data.noPhotos')}
             </button>
           </div>
-          <p className="hint mt-3">{settings.lastBackupAt ? `Letztes Backup: ${fmtDateTime(nowLocal(new Date(settings.lastBackupAt)))}` : 'Noch kein Backup erstellt.'}</p>
-          <Callout tone="info">Die Datei ist nicht verschlüsselt. Bewahre sie an einem sicheren Ort auf. TERPGRID bietet keine Synchronisation zwischen Geräten – übertrage Daten per Backup-Datei.</Callout>
+          <p className="hint mt-3">{settings.lastBackupAt ? t('data.last', { date: fmtDateTime(nowLocal(new Date(settings.lastBackupAt))) }) : t('data.noBackupDot')}</p>
+          <Callout tone="info">{t('data.unencrypted')}</Callout>
         </Card>
 
-        <Card title="Backup importieren" subtitle="Wird vor dem Schreiben vollständig geprüft" icon={<Upload className="size-4" />}>
-          <p className="text-[13px] text-ink-300">TERPGRID-Backup (.zip) auswählen. Format, Version, Datensätze und Verknüpfungen werden geprüft, bevor etwas geändert wird.</p>
+        <Card title={t('data.importTitle')} subtitle={t('data.importSub')} icon={<Upload className="size-4" />}>
+          <p className="text-[13px] text-ink-300">{t('data.importHint')}</p>
           <button type="button" className="btn-ghost mt-4" disabled={!!busy} onClick={() => fileRef.current?.click()}>
             {busy === 'parse' ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />} Backup-Datei wählen
           </button>
@@ -239,7 +238,7 @@ export function DataPage() {
           />
         </Card>
 
-        <Card title="Einzelne Exporte" subtitle="Für Auswertungen oder Archiv" icon={<FileJson className="size-4" />}>
+        <Card title={t('data.single')} subtitle={t('data.singleSub')} icon={<FileJson className="size-4" />}>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
@@ -247,7 +246,7 @@ export function DataPage() {
               disabled={!!busy}
               onClick={() => run('json', async () => download(await exportStructuredJson(), `terpgrid-daten-${todayStr}.json`, 'application/json'))}
             >
-              <FileJson className="size-4" /> Strukturierte Daten (JSON)
+              <FileJson className="size-4" /> {t('data.json')}
             </button>
             <button
               type="button"
@@ -257,26 +256,25 @@ export function DataPage() {
                 run('photos', async () => {
                   const bytes = await exportPhotosZip();
                   download(bytes, `terpgrid-fotos-${todayStr}.zip`, 'application/zip');
-                  toast(`${data.photos.length} Fotos exportiert`);
+                  toast(t('data.photosExported', { count: data.photos.length }));
                 })
               }
             >
               {busy === 'photos' ? <Loader2 className="size-4 animate-spin" /> : <Images className="size-4" />} Alle Fotos (ZIP)
             </button>
           </div>
-          <p className="hint mt-3">JSON enthält alle Datensätze ohne Bilder. Der Foto-Export benennt Dateien nach Aufnahmedatum, Grow und Pflanze.</p>
+          <p className="hint mt-3">{t('data.singleHint')}</p>
         </Card>
 
         <div className="lg:col-span-2">
-          <Card title={server ? 'Alle Daten dieses Kontos löschen' : 'Alle lokalen Daten löschen'} icon={<ShieldAlert className="size-4" />} className="border-rose-400/15">
+          <Card title={server ? t('data.deleteAccount') : t('data.deleteLocal')} icon={<ShieldAlert className="size-4" />} className="border-rose-400/15">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="max-w-2xl text-[13px] leading-relaxed text-ink-300">
-                {server && <strong className="text-rose-200">Im Servermodus werden die Löschungen synchronisiert – die Daten verschwinden auch vom Server und von deinen anderen Geräten. </strong>}
-                Entfernt sämtliche TERPGRID-Daten {server ? 'dieses Kontos' : 'aus diesem Browser'}: Grows, Pflanzen, Fotos, Sorten, Journal, Sammlung, Kalender, Berechnungen, Einstellungen sowie die alten
-                THC-Rechner-Eingaben. Dies kann nicht rückgängig gemacht werden.
+                {server && <strong className="text-rose-200">{t('data.serverSync')} </strong>}
+                {server ? t('data.removesAccount') : t('data.removesLocal')}
               </p>
               <button type="button" className="btn shrink-0 border border-rose-400/30 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20" onClick={() => setDeleteOpen(true)}>
-                <Trash2 className="size-4" /> Alles löschen …
+                <Trash2 className="size-4" /> {t('data.deleteAll')}
               </button>
             </div>
           </Card>
@@ -287,14 +285,11 @@ export function DataPage() {
         <Database className="mt-0.5 size-4 shrink-0 text-leaf-400" />
         {server ? (
           <span>
-            Datenspeicherung: Auf deinem TERPGRID-Server (verschlüsselt, AES-256-GCM – der Betreiber könnte technisch entschlüsseln) und als Arbeitskopie in IndexedDB dieses Browsers
-            (unverschlüsselt, je Konto getrennt). Eingaben des THC Lab bleiben in localStorage dieses Geräts. Discover-Anfragen laufen über deinen Server; die Anbieter erhalten keine
-            persönlichen Daten. Ein vollständiger Export ist unter Konto → Daten möglich.
+            {t('data.storageServer')}
           </span>
         ) : (
           <span>
-            Datenspeicherung: IndexedDB (Datensätze & Fotos) und localStorage (Eingaben des THC Lab). Daten sind an diesen Browser auf diesem Gerät gebunden, werden nicht
-            synchronisiert, nicht verschlüsselt gespeichert und nie an einen Server gesendet. Ausnahme sind Suchanfragen im Bereich Discover: Sie gehen an die externen Sortendaten-Anbieter; zwischengespeicherte Antworten liegen lokal und sind nicht Teil des Backups.
+            {t('data.storageLocal')}
           </span>
         )}
       </div>
@@ -303,23 +298,23 @@ export function DataPage() {
         <Modal
           open
           onClose={() => setParsed(null)}
-          title="Backup prüfen"
+          title={t('data.check')}
           subtitle={parsed.fileName}
           size="md"
           footer={
             <>
               <button type="button" className="btn-ghost" onClick={() => setParsed(null)}>
-                Abbrechen
+                {t('common.cancel')}
               </button>
               <button type="button" className={mode === 'replace' ? 'btn bg-rose-500/90 text-white hover:bg-rose-500' : 'btn-primary'} disabled={parsed.backup.errors.length > 0 || !!busy} onClick={doRestore}>
                 {busy === 'restore' && <Loader2 className="size-4 animate-spin" />}
-                {mode === 'replace' ? 'Daten ersetzen' : 'Importieren'}
+                {mode === 'replace' ? t('data.replaceData') : t('data.import')}
               </button>
             </>
           }
         >
           {parsed.backup.errors.length > 0 ? (
-            <Callout tone="danger" title="Import nicht möglich">
+            <Callout tone="danger" title={t('data.impossible')}>
               <ul className="list-disc pl-4">
                 {parsed.backup.errors.map((e) => (
                   <li key={e}>{e}</li>
@@ -329,8 +324,7 @@ export function DataPage() {
           ) : (
             <div className="space-y-4">
               <p className="text-[13px] text-ink-300">
-                Erstellt: {parsed.backup.manifest.exportedAt ? fmtDateTime(nowLocal(new Date(parsed.backup.manifest.exportedAt))) : 'unbekannt'} · Format {parsed.backup.manifest.format} · Schema{' '}
-                {parsed.backup.manifest.schemaVersion}
+                {t('data.manifest', { date: parsed.backup.manifest.exportedAt ? fmtDateTime(nowLocal(new Date(parsed.backup.manifest.exportedAt))) : t('data.unknown'), format: parsed.backup.manifest.format, schema: parsed.backup.manifest.schemaVersion })}
               </p>
               <ul className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-xl border border-white/[0.06] p-3 text-xs">
                 {(Object.keys(STORE_LABEL) as RecordStore[]).map((k) => (
@@ -340,33 +334,33 @@ export function DataPage() {
                   </li>
                 ))}
                 <li className="flex justify-between text-ink-400">
-                  <span>Bilddateien</span>
+                  <span>{t('data.images')}</span>
                   <span className="font-mono text-ink-100">{parsed.backup.photoData.size}</span>
                 </li>
               </ul>
               {parsed.backup.issues.length > 0 ? (
-                <Callout tone="warn" title={`${parsed.backup.issues.length} Hinweise`}>
+                <Callout tone="warn" title={t('data.issues', { count: parsed.backup.issues.length })}>
                   <ul className="max-h-32 list-disc overflow-y-auto pl-4">
                     {parsed.backup.issues.map((i) => (
                       <li key={i}>{i}</li>
                     ))}
                   </ul>
-                  <p className="mt-1">Verwaiste Verknüpfungen werden beim Import automatisch gelöst bzw. unvollständige Datensätze übersprungen.</p>
+                  <p className="mt-1">{t('data.orphans')}</p>
                 </Callout>
               ) : (
-                <Callout tone="ok">Struktur und Verknüpfungen sind konsistent.</Callout>
+                <Callout tone="ok">{t('data.consistent')}</Callout>
               )}
               <div className="space-y-1.5">
-                <span className="label">Importmodus</span>
+                <span className="label">{t('data.mode')}</span>
                 <Segmented
                   value={mode}
                   onChange={setMode}
                   options={[
-                    { value: 'merge', label: 'Zusammenführen' },
-                    { value: 'replace', label: 'Alles ersetzen' },
+                    { value: 'merge', label: t('data.merge') },
+                    { value: 'replace', label: t('data.replaceAll') },
                   ]}
                 />
-                <p className="hint">{mode === 'merge' ? 'Bestehende Daten bleiben erhalten; gleiche Datensätze werden aktualisiert.' : 'Alle aktuellen Daten werden gelöscht und durch das Backup ersetzt.'}</p>
+                <p className="hint">{mode === 'merge' ? t('data.mergeHint') : t('data.replaceHint')}</p>
               </div>
             </div>
           )}
@@ -377,26 +371,26 @@ export function DataPage() {
         <Modal
           open
           onClose={() => setDeleteOpen(false)}
-          title="Wirklich alle Daten löschen?"
+          title={t('data.really')}
           size="sm"
           footer={
             <>
               <button type="button" className="btn-ghost" onClick={() => setDeleteOpen(false)}>
-                Abbrechen
+                {t('common.cancel')}
               </button>
-              <button type="button" className="btn bg-rose-500/90 text-white hover:bg-rose-500" disabled={deleteText.trim().toUpperCase() !== 'LÖSCHEN' || !!busy} onClick={doDeleteAll}>
-                Endgültig löschen
+              <button type="button" className="btn bg-rose-500/90 text-white hover:bg-rose-500" disabled={deleteText.trim().toUpperCase() !== t('data.word') || !!busy} onClick={doDeleteAll}>
+                {t('data.final')}
               </button>
             </>
           }
         >
           <div className="space-y-3 text-[13px] text-ink-300">
             <p>
-              Es werden {data.grows.length} Grows, {data.plants.length} Pflanzen, {data.photos.length} Fotos und alle weiteren Daten unwiderruflich gelöscht.
+              {t('data.willDelete', { g: data.grows.length, p: data.plants.length, f: data.photos.length })}
             </p>
             <label className="block space-y-1.5">
               <span className="label">
-                Zur Bestätigung <span className="font-mono text-rose-200">LÖSCHEN</span> eingeben
+                {t('data.typeA')} <span className="font-mono text-rose-200">{t('data.word')}</span> {t('data.typeB')}
               </span>
               <input className="input-base" value={deleteText} onChange={(e) => setDeleteText(e.target.value)} autoComplete="off" />
             </label>
