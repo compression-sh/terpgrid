@@ -179,4 +179,12 @@
 
 ## 12. Commits und Pull Request
 
-Siehe Pull Request (direkt gegen `main`, kein automatischer Merge, kein Deployment).
+| Commit | Inhalt |
+| --- | --- |
+| `0896f87` | Abmelden löscht die Arbeitskopie zuverlässig (WebKit), Status-Diagnose, Layout- und Textkorrekturen, Version 5.9.0-rc.1 |
+| `898d1cb` | Erstabgleich großer Bestände, CSV-Formelschutz, Safari-Auswahlfelder, `restore-test.sh --full-check` |
+| `d029f9d` | Betriebsskripte robuster bei unterbrochenen Upgrades |
+| `d2901c5` | `upgrade.sh` meldet fehlgeschlagene Migrationen; Betriebsdoku |
+| `4f06d2a` | Berichte, Upgrade-Leitfaden, Screenshots, Browser-Suiten (ohne festes Testpasswort) |
+
+Pull Request: https://github.com/compression-sh/terpgrid/pull/18 – direkt gegen `main`, kein automatischer Merge, kein Deployment.
