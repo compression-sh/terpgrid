@@ -55,5 +55,50 @@
   "today": "Today",
   "nextMonth": "Next month",
   "daysIn": "Days in {month}"
- }
+ },
+ "noPhase": "No phase recorded",
+ "export": {
+  "title": "Export",
+  "csv": "CSV (Excel)",
+  "text": "Text file",
+  "print": "Print / PDF"
+ },
+ "num": {
+  "invalid": "Please enter a number.",
+  "positive": "Value must be greater than 0.",
+  "integer": "Please enter a whole number.",
+  "allowed": "Allowed: {min}–{max}{unit}",
+  "slider": "{label} (slider)",
+  "min": "At least {n}",
+  "max": "At most {n}"
+ },
+ "breadcrumbs": "Breadcrumbs",
+ "range": {
+  "aria": "Range {low} to {high} {unit}"
+ },
+ "save": {
+  "name": "Calculation name",
+  "button": "Save",
+  "local": "Save locally in the browser",
+  "saved": "Saved"
+ },
+ "estimate": "Estimate",
+ "field": {
+  "required": "Required",
+  "name": "Name",
+  "startDate": "Start date",
+  "description": "Description",
+  "status": "Status",
+  "notes": "Notes",
+  "date": "Date",
+  "category": "Category",
+  "amount": "Amount",
+  "time": "Time"
+ },
+ "rating": {
+  "reset": "reset",
+  "nOf5": "{n} of 5",
+  "label": "Rating {n} of 5"
+ },
+ "saving": "Saving …"
 }

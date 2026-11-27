@@ -7,6 +7,7 @@ import { updateRecord } from '../../lib/db/repo';
 import type { InventoryItem } from '../../lib/db/types';
 import { Modal } from '../ui/Modal';
 import { ReminderFormModal } from './PersonalForms';
+import { t } from '../../i18n';
 
 /** Wartungsprotokoll eines Geräts (eigene Einträge) und Absprung zu einer Wartungs-Erinnerung. */
 export function MaintenanceModal({ item, onClose }: { item: InventoryItem; onClose: () => void }) {
@@ -22,36 +23,36 @@ export function MaintenanceModal({ item, onClose }: { item: InventoryItem; onClo
     try {
       await updateRecord('inventory', item.id, { maintenanceLog: [...(item.maintenanceLog ?? []), { date, note: note.trim().slice(0, 300) }].slice(-200) });
       setNote('');
-      toast('Wartung eingetragen');
+      toast(t('grow.maint.added'));
     } catch (e) {
       toast(errorText(e), { tone: 'error' });
     }
   }
   async function remove(i: number) {
     const entry = log[i]!;
-    if (!(await confirm({ title: 'Eintrag löschen?', message: `${fmtDate(entry.date)}: ${entry.note}`, confirmLabel: 'Löschen', tone: 'danger' }))) return;
+    if (!(await confirm({ title: t('grow.maint.deleteTitle'), message: `${fmtDate(entry.date)}: ${entry.note}`, confirmLabel: t('common.delete'), tone: 'danger' }))) return;
     const idx = (item.maintenanceLog ?? []).findIndex((x) => x.date === entry.date && x.note === entry.note);
     await updateRecord('inventory', item.id, { maintenanceLog: (item.maintenanceLog ?? []).filter((_, j) => j !== idx) });
   }
 
   return (
-    <Modal open onClose={onClose} title="Wartung & Prüfungen" subtitle={item.name} size="md">
+    <Modal open onClose={onClose} title={t('grow.maint.title')} subtitle={item.name} size="md">
       <div className="space-y-4">
         <div className="grid gap-2 sm:grid-cols-[9rem_1fr_auto] sm:items-end">
           <label className="space-y-1">
-            <span className="label">Datum</span>
+            <span className="label">{t('common.field.date')}</span>
             <input type="date" className="input-base" value={date} onChange={(e) => setDate(e.target.value)} />
           </label>
           <label className="space-y-1">
-            <span className="label">Was wurde gemacht?</span>
-            <input className="input-base" value={note} maxLength={300} onChange={(e) => setNote(e.target.value)} placeholder="z. B. Filter gewechselt, Lüfter gereinigt" onKeyDown={(e) => e.key === 'Enter' && add()} />
+            <span className="label">{t('grow.maint.what')}</span>
+            <input className="input-base" value={note} maxLength={300} onChange={(e) => setNote(e.target.value)} placeholder={t('grow.maint.whatPh')} onKeyDown={(e) => e.key === 'Enter' && add()} />
           </label>
           <button type="button" className="btn-primary" onClick={add} disabled={!note.trim()}>
-            Eintragen
+            {t('grow.maint.add')}
           </button>
         </div>
         {log.length === 0 ? (
-          <p className="text-[13px] text-ink-500">Noch keine Wartung eingetragen.</p>
+          <p className="text-[13px] text-ink-500">{t('grow.maint.none')}</p>
         ) : (
           <ul className="divide-y divide-white/[0.05] rounded-xl border border-white/[0.06]">
             {log.map((e, i) => (
@@ -59,7 +60,7 @@ export function MaintenanceModal({ item, onClose }: { item: InventoryItem; onClo
                 <span>
                   <span className="font-mono text-[12px] text-ink-400">{fmtDate(e.date)}</span> <span className="text-ink-200">{e.note}</span>
                 </span>
-                <button type="button" className="p-1 text-ink-500 hover:text-rose-300" aria-label="Eintrag löschen" onClick={() => remove(i)}>
+                <button type="button" className="p-1 text-ink-500 hover:text-rose-300" aria-label={t('grow.maint.delete')} onClick={() => remove(i)}>
                   <Trash2 className="size-3.5" />
                 </button>
               </li>
@@ -67,10 +68,10 @@ export function MaintenanceModal({ item, onClose }: { item: InventoryItem; onClo
           </ul>
         )}
         <button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setReminder(true)}>
-          <BellPlus className="size-3.5" /> Wartungs-Erinnerung anlegen
+          <BellPlus className="size-3.5" /> {t('grow.maint.reminder')}
         </button>
       </div>
-      {reminder && <ReminderFormModal open onClose={() => setReminder(false)} defaults={{ title: `Wartung: ${item.name}`, category: 'maintenance' }} />}
+      {reminder && <ReminderFormModal open onClose={() => setReminder(false)} defaults={{ title: t('grow.maint.reminderTitle', { name: item.name }), category: 'maintenance' }} />}
     </Modal>
   );
 }

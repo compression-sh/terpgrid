@@ -5,6 +5,7 @@ import { CONTEXT_LABEL, EC_LIMITS, EC_UNITS, VPD_BASIS_LABEL, dli, ecToMsCm, vpd
 import { GROUP_LABEL, METRICS, type MetricGroup, type MetricKey } from '../../lib/grow/series';
 import { fmt } from '../../lib/format';
 import { OptionalNumber, SelectField, TextField, numText, numberError, toOptionalNumber } from './Fields';
+import { t } from '../../i18n';
 
 type Texts = Record<MetricKey, string>;
 
@@ -98,7 +99,7 @@ export function MeasurementFields({ state, onChange }: { state: MeasurementState
               <div key="ec" className="sm:col-span-2">
                 <div className="grid grid-cols-[1fr_9.5rem] items-start gap-2">
                   <OptionalNumber label="EC / TDS" text={state.ecText} onText={(t) => set({ ecText: t })} min={0} max={EC_LIMITS[state.ecUnit]} hint={ecPreview !== undefined && state.ecUnit !== 'mS/cm' ? `= ${fmt(ecToMsCm(ecPreview, state.ecUnit), 2)} mS/cm` : undefined} />
-                  <SelectField label="Einheit" value={state.ecUnit} onChange={(u) => set({ ecUnit: (u || 'mS/cm') as EcUnit })} options={EC_UNITS.map((u) => ({ value: u.id, label: u.label }))} />
+                  <SelectField label={t('grow.meas.unit')} value={state.ecUnit} onChange={(u) => set({ ecUnit: (u || 'mS/cm') as EcUnit })} options={EC_UNITS.map((u) => ({ value: u.id, label: u.label }))} />
                 </div>
                 {state.ecUnit.startsWith('ppm') && <p className="hint mt-1">{EC_UNITS.find((u) => u.id === state.ecUnit)?.hint}. Die Skala steht im Handbuch des Messgeräts.</p>}
               </div>
@@ -118,8 +119,8 @@ export function MeasurementFields({ state, onChange }: { state: MeasurementState
       </div>
       {g === 'water' && (state.texts.ph.trim() || state.ecText.trim()) && (
         <div className="grid gap-3 sm:grid-cols-3">
-          {state.texts.ph.trim() && <SelectField label="pH gemessen in" value={state.phContext} onChange={(c) => set({ phContext: c as MeasureContext | '' })} options={CONTEXT_OPTIONS} placeholder="ohne Angabe" />}
-          {state.ecText.trim() && <SelectField label="EC gemessen in" value={state.ecContext} onChange={(c) => set({ ecContext: c as MeasureContext | '' })} options={CONTEXT_OPTIONS} placeholder="ohne Angabe" />}
+          {state.texts.ph.trim() && <SelectField label={t('grow.meas.phIn')} value={state.phContext} onChange={(c) => set({ phContext: c as MeasureContext | '' })} options={CONTEXT_OPTIONS} placeholder={t('grow.meas.unspecified')} />}
+          {state.ecText.trim() && <SelectField label={t('grow.meas.ecIn')} value={state.ecContext} onChange={(c) => set({ ecContext: c as MeasureContext | '' })} options={CONTEXT_OPTIONS} placeholder={t('grow.meas.unspecified')} />}
         </div>
       )}
     </div>
@@ -140,30 +141,30 @@ export function MeasurementFields({ state, onChange }: { state: MeasurementState
         <div className="grid gap-2 rounded-xl border border-white/[0.06] bg-white/[0.015] p-3 text-[12px] sm:grid-cols-2" aria-live="polite">
           {v && (
             <p>
-              <span className="text-ink-400">VPD (berechnet): </span>
+              <span className="text-ink-400">{t('grow.meas.vpdCalc')} </span>
               <span className="font-mono tabular text-ink-100">{fmt(v.value, 2)} kPa</span>
               <span className="block text-[11px] text-ink-500">{VPD_BASIS_LABEL[v.basis]}</span>
             </p>
           )}
           {d !== undefined && (
             <p>
-              <span className="text-ink-400">DLI (berechnet): </span>
-              <span className="font-mono tabular text-ink-100">{fmt(d, 1)} mol/m²/Tag</span>
-              <span className="block text-[11px] text-ink-500">nimmt konstante PPFD über die Lichtphase an</span>
+              <span className="text-ink-400">{t('grow.meas.dliCalc')} </span>
+              <span className="font-mono tabular text-ink-100">{fmt(d, 1)} {t('grow.meas.dliUnit')}</span>
+              <span className="block text-[11px] text-ink-500">{t('grow.meas.dliNote')}</span>
             </p>
           )}
         </div>
       )}
 
-      <TextField label="Messgerät (optional)" value={state.device} onChange={(t) => set({ device: t })} maxLength={60} placeholder="z. B. pH-Stift, Hygrometer im Zelt" />
+      <TextField label={t('grow.meas.device')} value={state.device} onChange={(t) => set({ device: t })} maxLength={60} placeholder={t('grow.meas.devicePh')} />
 
       <div className="space-y-2">
         {state.custom.map((c, i) => (
           <div key={i} className="grid grid-cols-[1fr_6rem_5rem_auto] items-end gap-2">
-            <TextField label="Messgröße" value={c.label} onChange={(t) => set({ custom: state.custom.map((x, j) => (j === i ? { ...x, label: t } : x)) })} maxLength={30} placeholder="z. B. Lux" />
-            <TextField label="Wert" inputMode="decimal" value={c.value} onChange={(t) => set({ custom: state.custom.map((x, j) => (j === i ? { ...x, value: t } : x)) })} error={c.label.trim() ? numberError(c.value, { required: true }) : undefined} />
-            <TextField label="Einheit" value={c.unit} onChange={(t) => set({ custom: state.custom.map((x, j) => (j === i ? { ...x, unit: t } : x)) })} maxLength={12} placeholder="lx" />
-            <button type="button" className="btn-ghost mb-0.5 p-2" aria-label="Messgröße entfernen" onClick={() => set({ custom: state.custom.filter((_, j) => j !== i) })}>
+            <TextField label={t('grow.meas.custom')} value={c.label} onChange={(t) => set({ custom: state.custom.map((x, j) => (j === i ? { ...x, label: t } : x)) })} maxLength={30} placeholder={t('grow.meas.customPh')} />
+            <TextField label={t('grow.meas.value')} inputMode="decimal" value={c.value} onChange={(t) => set({ custom: state.custom.map((x, j) => (j === i ? { ...x, value: t } : x)) })} error={c.label.trim() ? numberError(c.value, { required: true }) : undefined} />
+            <TextField label={t('grow.meas.unit')} value={c.unit} onChange={(t) => set({ custom: state.custom.map((x, j) => (j === i ? { ...x, unit: t } : x)) })} maxLength={12} placeholder="lx" />
+            <button type="button" className="btn-ghost mb-0.5 p-2" aria-label={t('grow.meas.removeCustom')} onClick={() => set({ custom: state.custom.filter((_, j) => j !== i) })}>
               <Trash2 className="size-4" />
             </button>
           </div>

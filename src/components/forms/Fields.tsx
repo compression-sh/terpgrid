@@ -1,7 +1,8 @@
 import { Star } from 'lucide-react';
 import { type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes, useId } from 'react';
 import { parseLocaleNumber } from '../../lib/calc/validation';
-import { intlLocale } from '../../i18n';
+import { fmtInput } from '../../lib/format';
+import { t } from '../../i18n';
 
 interface FieldProps {
   label: string;
@@ -160,11 +161,11 @@ export function OptionalNumber({
 }
 
 export function numberError(text: string, { min, max, required }: { min?: number; max?: number; required?: boolean }): string | undefined {
-  if (text.trim() === '') return required ? 'Pflichtfeld' : undefined;
+  if (text.trim() === '') return required ? t('common.field.required') : undefined;
   const n = parseLocaleNumber(text);
-  if (Number.isNaN(n)) return 'Bitte eine Zahl eingeben.';
-  if (min !== undefined && n < min) return `Mindestens ${min.toLocaleString(intlLocale())}`;
-  if (max !== undefined && n > max) return `Höchstens ${max.toLocaleString(intlLocale())}`;
+  if (Number.isNaN(n)) return t('common.num.invalid');
+  if (min !== undefined && n < min) return t('common.num.min', { n: min });
+  if (max !== undefined && n > max) return t('common.num.max', { n: max });
   return undefined;
 }
 
@@ -175,10 +176,10 @@ export function toOptionalNumber(text: string): number | undefined {
 }
 
 export function numText(n?: number): string {
-  return n === undefined || !Number.isFinite(n) ? '' : String(n).replace('.', ',');
+  return n === undefined || !Number.isFinite(n) ? '' : fmtInput(n);
 }
 
-export function ChipSelect({ label, options, value, onChange, hint }: { label: string; options: string[]; value: string[]; onChange: (v: string[]) => void; hint?: ReactNode }) {
+export function ChipSelect({ label, options, value, onChange, hint, labelOf }: { label: string; options: string[]; value: string[]; onChange: (v: string[]) => void; hint?: ReactNode; /** Anzeige eines gespeicherten Werts (z. B. übersetztes Vokabular) */ labelOf?: (v: string) => string }) {
   const id = useId();
   return (
     <div className="space-y-1.5">
@@ -190,7 +191,7 @@ export function ChipSelect({ label, options, value, onChange, hint }: { label: s
           const on = value.includes(o);
           return (
             <button
-              key={o}
+              key={labelOf ? labelOf(o) : o}
               type="button"
               aria-pressed={on}
               onClick={() => onChange(on ? value.filter((v) => v !== o) : [...value, o])}
@@ -222,7 +223,7 @@ export function RatingInput({ label, value, onChange }: { label: string; value?:
             type="button"
             role="radio"
             aria-checked={value === n}
-            aria-label={`${n} von 5`}
+            aria-label={t('common.rating.nOf5', { n })}
             onClick={() => onChange(value === n ? undefined : n)}
             className="rounded p-1 text-ink-500 transition-colors hover:text-amber-200"
           >
@@ -231,7 +232,7 @@ export function RatingInput({ label, value, onChange }: { label: string; value?:
         ))}
         {value !== undefined && (
           <button type="button" className="ml-2 text-xs text-ink-400 hover:text-ink-200" onClick={() => onChange(undefined)}>
-            zurücksetzen
+            {t('common.rating.reset')}
           </button>
         )}
       </div>
@@ -243,7 +244,7 @@ export function Stars({ value, size = 'sm' }: { value?: number; size?: 'sm' | 'x
   if (!value) return null;
   const s = size === 'sm' ? 'size-3.5' : 'size-3';
   return (
-    <span className="inline-flex items-center gap-0.5" aria-label={`Bewertung ${value} von 5`}>
+    <span className="inline-flex items-center gap-0.5" aria-label={t('common.rating.label', { n: value })}>
       {[1, 2, 3, 4, 5].map((n) => (
         <Star key={n} className={`${s} ${n <= value ? 'fill-amber-300 text-amber-300' : 'text-ink-600'}`} />
       ))}

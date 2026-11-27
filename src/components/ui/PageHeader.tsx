@@ -1,6 +1,7 @@
 import { ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { href } from '../../app/router';
+import { t } from '../../i18n';
 
 export interface Crumb {
   label: string;
@@ -11,7 +12,7 @@ export function PageHeader({ title, subtitle, actions, crumbs, meta }: { title: 
   return (
     <div className="mb-6 animate-fade-up">
       {crumbs && crumbs.length > 0 && (
-        <nav aria-label="Brotkrumen" className="mb-2 flex min-w-0 items-center gap-1 text-xs text-ink-400">
+        <nav aria-label={t('common.breadcrumbs')} className="mb-2 flex min-w-0 items-center gap-1 text-xs text-ink-400">
           {crumbs.map((c, i) => (
             <span key={`${c.label}-${i}`} className="flex min-w-0 items-center gap-1">
               {i > 0 && <ChevronRight className="size-3 shrink-0 text-ink-600" />}

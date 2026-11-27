@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from 'react';
 import { parseLocaleNumber } from '../../lib/calc/validation';
-import { fmt } from '../../lib/format';
+import { fmt, fmtInput } from '../../lib/format';
+import { t } from '../../i18n';
 
 export interface NumberFieldProps {
   label: string;
@@ -26,7 +27,7 @@ export interface NumberFieldProps {
 function display(value: number, scale: number, integer?: boolean): string {
   const v = value * scale;
   if (!Number.isFinite(v)) return '';
-  return integer ? String(Math.round(v)) : fmt(v, 3).replace(/\./g, '');
+  return integer ? String(Math.round(v)) : fmtInput(v, 3);
 }
 
 /**
@@ -73,19 +74,19 @@ export function NumberField({
     setText(raw);
     const n = parseLocaleNumber(raw);
     if (Number.isNaN(n)) {
-      setError('Bitte eine Zahl eingeben.');
+      setError(t('common.num.invalid'));
       return;
     }
     if (n < dMin || n > dMax) {
-      setError(`Erlaubt: ${fmt(dMin)}–${fmt(dMax)}${unit ? ` ${unit}` : ''}`);
+      setError(t('common.num.allowed', { min: fmt(dMin), max: fmt(dMax), unit: unit ? ` ${unit}` : '' }));
       return;
     }
     if (positive && n <= 0) {
-      setError('Wert muss größer als 0 sein.');
+      setError(t('common.num.positive'));
       return;
     }
     if (integer && !Number.isInteger(n)) {
-      setError('Bitte eine ganze Zahl eingeben.');
+      setError(t('common.num.integer'));
       return;
     }
     setError(null);
@@ -143,7 +144,7 @@ export function NumberField({
         <input
           type="range"
           className="slider"
-          aria-label={`${label} (Schieberegler)`}
+          aria-label={t('common.num.slider', { label: String(label) })}
           min={sMin}
           max={sMax}
           step={step}

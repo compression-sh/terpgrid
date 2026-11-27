@@ -4,6 +4,7 @@ import common from './common.json';
 import dashboard from './dashboard.json';
 import grow from './grow.json';
 import labels from './labels.json';
+import mine from './mine.json';
 import shell from './shell.json';
 
-export default { collab, common, dashboard, grow, labels, shell };
+export default { collab, common, dashboard, grow, labels, mine, shell };

@@ -26,15 +26,16 @@ import { type MeasurementState, MeasurementFields, buildMeasurements, hasMeasure
 import { Callout } from '../ui/Callout';
 import { Modal } from '../ui/Modal';
 import { Field, OptionalNumber, SelectField, TextArea, TextField, numText, numberError, toOptionalNumber } from './Fields';
+import { t } from '../../i18n';
 
-function FormFooter({ onCancel, saving, label = 'Speichern', formId }: { onCancel: () => void; saving: boolean; label?: string; formId: string }) {
+function FormFooter({ onCancel, saving, label = t('common.save.button'), formId }: { onCancel: () => void; saving: boolean; label?: string; formId: string }) {
   return (
     <>
       <button type="button" className="btn-ghost" onClick={onCancel}>
-        Abbrechen
+        {t('common.cancel')}
       </button>
       <button type="submit" form={formId} className="btn-primary" disabled={saving}>
-        {saving ? 'Speichern …' : label}
+        {saving ? t('common.saving') : label}
       </button>
     </>
   );
@@ -46,8 +47,8 @@ export function PhaseDatesEditor({ value, onChange, hint }: { value: PhaseDates;
   const issues = phaseOrderIssues(value);
   return (
     <fieldset className="space-y-3">
-      <legend className="label">Meilensteine</legend>
-      <p className="hint -mt-1">{hint ?? 'Beginn der jeweiligen Phase. Nur tatsächlich erreichte Phasen eintragen – es wird nichts vorhergesagt.'}</p>
+      <legend className="label">{t('grow.form.milestones')}</legend>
+      <p className="hint -mt-1">{hint ?? t('grow.form.milestonesHint')}</p>
       <div className="grid gap-2.5 sm:grid-cols-2">
         {GROW_PHASES.map((p) => (
           <div key={p} className="flex items-center gap-2">
@@ -70,7 +71,7 @@ export function PhaseDatesEditor({ value, onChange, hint }: { value: PhaseDates;
         ))}
       </div>
       {issues.length > 0 && (
-        <Callout tone="warn" title="Reihenfolge prüfen">
+        <Callout tone="warn" title={t('grow.form.checkOrder')}>
           {issues.join(' ')}
         </Callout>
       )}
@@ -96,9 +97,9 @@ export function GrowFormModal({ open, onClose, grow, onSaved }: { open: boolean;
   const [saving, setSaving] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const nameErr = submitted && !name.trim() ? 'Bitte einen Namen eingeben.' : undefined;
-  const dateErr = submitted && !startDate ? 'Bitte ein Startdatum wählen.' : undefined;
-  const endErr = completedDate && startDate && completedDate < startDate ? 'Abschluss liegt vor dem Start.' : undefined;
+  const nameErr = submitted && !name.trim() ? t('grow.form.nameRequired') : undefined;
+  const dateErr = submitted && !startDate ? t('grow.form.startRequired') : undefined;
+  const endErr = completedDate && startDate && completedDate < startDate ? t('grow.form.endBeforeStart') : undefined;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -119,7 +120,7 @@ export function GrowFormModal({ open, onClose, grow, onSaved }: { open: boolean;
     };
     try {
       const saved = grow ? await updateRecord('grows', grow.id, payload) : await createRecord('grows', payload);
-      toast(grow ? 'Grow gespeichert' : `Grow „${saved.name}“ angelegt`);
+      toast(grow ? t('grow.form.growSaved') : t('grow.form.growCreated', { name: saved.name }));
       onSaved?.(saved);
       onClose();
     } catch (err) {
@@ -130,26 +131,26 @@ export function GrowFormModal({ open, onClose, grow, onSaved }: { open: boolean;
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={grow ? 'Grow bearbeiten' : 'Neuer Grow'} subtitle="Ein Grow-Projekt bündelt Pflanzen, Fotos, Messwerte und Ausgaben." size="lg" footer={<FormFooter onCancel={onClose} saving={saving} formId={formId} />}>
+    <Modal open={open} onClose={onClose} title={grow ? t('grow.form.editGrow') : t('grow.form.newGrow')} subtitle={t('grow.form.growHint')} size="lg" footer={<FormFooter onCancel={onClose} saving={saving} formId={formId} />}>
       <form id={formId} onSubmit={submit} className="space-y-5" noValidate>
         <div className="grid gap-4 sm:grid-cols-2">
-          <TextField label="Projektname" value={name} onChange={setName} required error={nameErr} placeholder="z. B. Zelt 80×80 · Frühjahr" maxLength={80} autoFocus />
-          <TextField label="Startdatum" type="date" value={startDate} onChange={setStartDate} required error={dateErr} />
+          <TextField label={t('grow.form.projectName')} value={name} onChange={setName} required error={nameErr} placeholder={t('grow.form.projectNamePh')} maxLength={80} autoFocus />
+          <TextField label={t('common.field.startDate')} type="date" value={startDate} onChange={setStartDate} required error={dateErr} />
         </div>
-        <TextArea label="Beschreibung" value={description} onChange={setDescription} rows={2} maxLength={500} />
+        <TextArea label={t('common.field.description')} value={description} onChange={setDescription} rows={2} maxLength={500} />
         <div className="grid gap-4 sm:grid-cols-3">
-          <SelectField label="Ort" value={setting} onChange={(v) => setSetting((v || 'indoor') as GrowSetting)} options={(Object.keys(SETTING_LABEL) as GrowSetting[]).map((v) => ({ value: v, label: SETTING_LABEL[v] }))} />
-          <TextField label="Medium (optional)" value={medium} onChange={setMedium} placeholder="Erde, Coco, Hydro …" maxLength={60} />
-          <TextField label="Umgebung (optional)" value={environment} onChange={setEnvironment} placeholder="Zelt 80×80, LED 240 W …" maxLength={80} />
+          <SelectField label={t('grow.form.location')} value={setting} onChange={(v) => setSetting((v || 'indoor') as GrowSetting)} options={(Object.keys(SETTING_LABEL) as GrowSetting[]).map((v) => ({ value: v, label: SETTING_LABEL[v] }))} />
+          <TextField label={t('grow.form.medium')} value={medium} onChange={setMedium} placeholder={t('grow.form.mediumPh')} maxLength={60} />
+          <TextField label={t('grow.form.environment')} value={environment} onChange={setEnvironment} placeholder={t('grow.form.environmentPh')} maxLength={80} />
         </div>
         {grow && (
           <div className="grid gap-4 sm:grid-cols-2">
-            <SelectField label="Status" value={status} onChange={(v) => setStatus((v || 'active') as GrowStatus)} options={(Object.keys(STATUS_LABEL) as GrowStatus[]).map((v) => ({ value: v, label: STATUS_LABEL[v] }))} />
-            {status !== 'active' && <TextField label="Abschlussdatum" type="date" value={completedDate} onChange={setCompletedDate} error={endErr} hint="Beendet den Tageszähler." />}
+            <SelectField label={t('common.field.status')} value={status} onChange={(v) => setStatus((v || 'active') as GrowStatus)} options={(Object.keys(STATUS_LABEL) as GrowStatus[]).map((v) => ({ value: v, label: STATUS_LABEL[v] }))} />
+            {status !== 'active' && <TextField label={t('grow.form.endDate')} type="date" value={completedDate} onChange={setCompletedDate} error={endErr} hint={t('grow.form.endDateHint')} />}
           </div>
         )}
         <PhaseDatesEditor value={phaseDates} onChange={setPhaseDates} />
-        <TextArea label="Notizen" value={notes} onChange={setNotes} rows={3} />
+        <TextArea label={t('common.field.notes')} value={notes} onChange={setNotes} rows={3} />
       </form>
     </Modal>
   );
@@ -195,8 +196,8 @@ export function PlantFormModal({
   const [saving, setSaving] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const nameErr = submitted && !name.trim() ? 'Bitte einen Namen eingeben.' : undefined;
-  const growErr = submitted && !gid ? 'Bitte einen Grow wählen.' : undefined;
+  const nameErr = submitted && !name.trim() ? t('grow.form.nameRequired') : undefined;
+  const growErr = submitted && !gid ? t('grow.form.growRequired') : undefined;
   const numErr = numberError(wet, { min: 0, max: 100000 }) || numberError(dry, { min: 0, max: 100000 });
 
   async function submit(e: FormEvent) {
@@ -224,7 +225,7 @@ export function PlantFormModal({
     };
     try {
       const saved = plant ? await updateRecord('plants', plant.id, payload) : await createRecord('plants', payload);
-      toast(plant ? 'Pflanze gespeichert' : `Pflanze „${saved.name}“ hinzugefügt`);
+      toast(plant ? t('grow.form.plantSaved') : t('grow.form.plantAdded', { name: saved.name }));
       onSaved?.(saved);
       onClose();
     } catch (err) {
@@ -235,20 +236,20 @@ export function PlantFormModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={plant ? 'Pflanze bearbeiten' : 'Pflanze hinzufügen'} size="lg" footer={<FormFooter onCancel={onClose} saving={saving} formId={formId} />}>
+    <Modal open={open} onClose={onClose} title={plant ? t('grow.form.editPlant') : t('grow.form.addPlant')} size="lg" footer={<FormFooter onCancel={onClose} saving={saving} formId={formId} />}>
       {grows.length === 0 ? (
-        <Callout tone="info" title="Zuerst einen Grow anlegen">
-          Pflanzen gehören immer zu einem Grow-Projekt.
+        <Callout tone="info" title={t('grow.form.growFirst')}>
+          {t('grow.form.growFirstText')}
         </Callout>
       ) : (
         <form id={formId} onSubmit={submit} className="space-y-5" noValidate>
           <div className="grid gap-4 sm:grid-cols-2">
-            <TextField label="Name" value={name} onChange={setName} required error={nameErr} placeholder="z. B. Pflanze 1, Gelato #2" maxLength={60} autoFocus />
-            <SelectField label="Grow" value={gid} onChange={setGid} options={grows.map((g) => ({ value: g.id, label: g.name }))} placeholder="Grow wählen …" disabled={!!plant && !!growId} />
+            <TextField label={t('common.field.name')} value={name} onChange={setName} required error={nameErr} placeholder={t('grow.form.plantNamePh')} maxLength={60} autoFocus />
+            <SelectField label={t('grow.form.grow')} value={gid} onChange={setGid} options={grows.map((g) => ({ value: g.id, label: g.name }))} placeholder={t('grow.form.chooseGrow')} disabled={!!plant && !!growId} />
           </div>
           {growErr && <p className="-mt-3 text-xs text-rose-300">{growErr}</p>}
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Sorte" hint={data.strains.length ? 'Aus der Bibliothek wählen oder frei eingeben.' : 'Freitext; Sorten-Bibliothek optional.'}>
+            <Field label={t('grow.form.strain')} hint={data.strains.length ? t('grow.form.strainHintLib') : t('grow.form.strainHintFree')}>
               {(id, d) => (
                 <>
                   <input id={id} aria-describedby={d} list={listId} className="input-base" value={strain} onChange={(e) => setStrain(e.target.value)} maxLength={80} />
@@ -260,34 +261,34 @@ export function PlantFormModal({
                 </>
               )}
             </Field>
-            <TextField label="Startdatum" type="date" value={startDate} onChange={setStartDate} />
-            <SelectField label="Typ (falls bekannt)" value={type} onChange={(v) => setType((v || 'unknown') as PlantType)} options={(Object.keys(PLANT_TYPE_LABEL) as PlantType[]).map((v) => ({ value: v, label: PLANT_TYPE_LABEL[v] }))} />
+            <TextField label={t('common.field.startDate')} type="date" value={startDate} onChange={setStartDate} />
+            <SelectField label={t('grow.form.typeKnown')} value={type} onChange={(v) => setType((v || 'unknown') as PlantType)} options={(Object.keys(PLANT_TYPE_LABEL) as PlantType[]).map((v) => ({ value: v, label: PLANT_TYPE_LABEL[v] }))} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <SelectField
-              label="Standort (Grow-Bereich)"
+              label={t('grow.form.spaceLabel')}
               value={spaceId}
               onChange={setSpaceId}
               options={spaces.map((s) => ({ value: s.id, label: s.name }))}
-              placeholder={spaces.length ? '—' : 'Noch keine Bereiche'}
-              hint={spaces.length ? undefined : 'Zelte, Räume und Zonen unter Sammlung → Hinzufügen → „Grow-Bereich“.'}
+              placeholder={spaces.length ? '—' : t('grow.form.noSpaces')}
+              hint={spaces.length ? undefined : t('grow.form.noSpacesHint')}
             />
-            <TextField label="Tags (optional)" value={tags} onChange={setTags} maxLength={200} placeholder="z. B. pheno-a, mutter, links" />
+            <TextField label={t('grow.form.tags')} value={tags} onChange={setTags} maxLength={200} placeholder={t('grow.form.tagsPh')} />
           </div>
-          <PhaseDatesEditor value={phaseDates} onChange={setPhaseDates} hint="Optional eigene Meilensteine dieser Pflanze. Leer = es gelten die Daten des Grows." />
-          <TextArea label="Notizen" value={notes} onChange={setNotes} />
+          <PhaseDatesEditor value={phaseDates} onChange={setPhaseDates} hint={t('grow.form.plantMilestonesHint')} />
+          <TextArea label={t('common.field.notes')} value={notes} onChange={setNotes} />
           <div className="rounded-xl border border-white/[0.06] p-4">
             <label className="flex cursor-pointer items-center gap-2 text-[13px] font-medium text-ink-200">
               <input type="checkbox" checked={showOutcome} onChange={(e) => setShowOutcome(e.target.checked)} className="accent-leaf-500" />
-              Ergebnis erfassen (Ernte)
+              {t('grow.form.recordHarvest')}
             </label>
             {showOutcome && (
               <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                <TextField label="Erntedatum" type="date" value={harvestDate} onChange={setHarvestDate} />
-                <OptionalNumber label="Nassgewicht" unit="g" text={wet} onText={setWet} min={0} max={100000} />
-                <OptionalNumber label="Trockengewicht" unit="g" text={dry} onText={setDry} min={0} max={100000} />
+                <TextField label={t('grow.form.harvestDate')} type="date" value={harvestDate} onChange={setHarvestDate} />
+                <OptionalNumber label={t('grow.form.wetWeight')} unit="g" text={wet} onText={setWet} min={0} max={100000} />
+                <OptionalNumber label={t('grow.form.dryWeight')} unit="g" text={dry} onText={setDry} min={0} max={100000} />
                 <div className="sm:col-span-3">
-                  <TextArea label="Notizen zum Ergebnis" value={outcomeNotes} onChange={setOutcomeNotes} rows={2} />
+                  <TextArea label={t('grow.form.outcomeNotes')} value={outcomeNotes} onChange={setOutcomeNotes} rows={2} />
                 </div>
               </div>
             )}
@@ -353,7 +354,7 @@ export function ActivityFormModal({
     try {
       if (activity) await updateRecord('activities', activity.id, payload);
       else await createRecord('activities', payload);
-      toast(activity ? 'Eintrag gespeichert' : 'Eintrag hinzugefügt');
+      toast(activity ? t('grow.form.entrySaved') : t('grow.form.entryAdded'));
       onClose();
     } catch (err) {
       toast(errorText(err), { tone: 'error' });
@@ -363,11 +364,11 @@ export function ActivityFormModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={activity ? 'Eintrag bearbeiten' : 'Eintrag hinzufügen'} subtitle="Aktivität, Beobachtung oder Messung mit Zeitstempel" size="lg" footer={<FormFooter onCancel={onClose} saving={saving} formId={formId} />}>
+    <Modal open={open} onClose={onClose} title={activity ? t('grow.form.editEntry') : t('grow.form.addEntry')} subtitle={t('grow.form.entryHint')} size="lg" footer={<FormFooter onCancel={onClose} saving={saving} formId={formId} />}>
       <form id={formId} onSubmit={submit} className="space-y-5" noValidate>
         <div className="space-y-1.5">
-          <div className="label">Art</div>
-          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Art des Eintrags">
+          <div className="label">{t('grow.form.kind')}</div>
+          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('grow.form.kindLabel')}>
             {ACTIVITY_TYPES.filter((t) => t !== 'photo' || type === 'photo').map((t) => (
               <button
                 key={t}
@@ -383,15 +384,15 @@ export function ActivityFormModal({
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <TextField label="Zeitpunkt" type="datetime-local" value={date} onChange={setDate} required error={!date ? 'Bitte Zeitpunkt wählen.' : undefined} />
-          <SelectField label="Pflanze" value={pid} onChange={setPid} options={plants.map((p) => ({ value: p.id, label: p.name }))} placeholder="Ganzer Grow" />
+          <TextField label={t('common.field.time')} type="datetime-local" value={date} onChange={setDate} required error={!date ? t('grow.form.timeRequired') : undefined} />
+          <SelectField label={t('grow.form.plant')} value={pid} onChange={setPid} options={plants.map((p) => ({ value: p.id, label: p.name }))} placeholder={t('grow.form.wholeGrow')} />
         </div>
-        <TextField label="Titel (optional)" value={title} onChange={setTitle} maxLength={80} placeholder={ACTIVITY_LABEL[type]} />
-        {(type === 'watering' || type === 'feeding') && <OptionalNumber label={type === 'feeding' ? 'Menge Nährlösung' : 'Wassermenge'} unit="ml" text={volume} onText={setVolume} min={0} max={1_000_000} />}
-        <TextArea label="Notizen" value={notes} onChange={setNotes} rows={3} placeholder={type === 'feeding' ? 'Dünger, Dosierung laut Packung, …' : type === 'issue' ? 'Was ist aufgefallen? Wo? Seit wann?' : ''} />
+        <TextField label={t('grow.form.titleOptional')} value={title} onChange={setTitle} maxLength={80} placeholder={ACTIVITY_LABEL[type]} />
+        {(type === 'watering' || type === 'feeding') && <OptionalNumber label={type === 'feeding' ? t('grow.form.nutrientAmount') : t('grow.form.waterAmount')} unit="ml" text={volume} onText={setVolume} min={0} max={1_000_000} />}
+        <TextArea label={t('common.field.notes')} value={notes} onChange={setNotes} rows={3} placeholder={type === 'feeding' ? t('grow.form.notesFeedPh') : type === 'issue' ? t('grow.form.notesIssuePh') : ''} />
         {showMeasurements ? (
           <fieldset className="space-y-3 rounded-xl border border-white/[0.06] p-4">
-            <legend className="px-1 text-[13px] font-medium text-ink-200">Messwerte (optional)</legend>
+            <legend className="px-1 text-[13px] font-medium text-ink-200">{t('grow.form.measurementsOptional')}</legend>
             <MeasurementFields state={ms} onChange={setMs} />
           </fieldset>
         ) : (
@@ -426,7 +427,7 @@ export function ExpenseFormModal({ open, onClose, expense, growId }: { open: boo
     try {
       if (expense) await updateRecord('expenses', expense.id, payload);
       else await createRecord('expenses', payload);
-      toast('Ausgabe gespeichert');
+      toast(t('grow.form.expenseSaved'));
       onClose();
     } catch (err) {
       toast(errorText(err), { tone: 'error' });
@@ -436,15 +437,15 @@ export function ExpenseFormModal({ open, onClose, expense, growId }: { open: boo
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={expense ? 'Ausgabe bearbeiten' : 'Ausgabe erfassen'} size="md" footer={<FormFooter onCancel={onClose} saving={saving} formId={formId} />}>
+    <Modal open={open} onClose={onClose} title={expense ? t('grow.form.editExpense') : t('grow.form.addExpense')} size="md" footer={<FormFooter onCancel={onClose} saving={saving} formId={formId} />}>
       <form id={formId} onSubmit={submit} className="space-y-4" noValidate>
         <div className="grid gap-4 sm:grid-cols-2">
-          <OptionalNumber label="Betrag" unit={settings.currency} text={amount} onText={setAmount} min={0} max={1_000_000} required />
-          <TextField label="Datum" type="date" value={date} onChange={setDate} required />
-          <SelectField label="Kategorie" value={category} onChange={(v) => setCategory((v || 'other') as ExpenseCategory)} options={EXPENSE_CATEGORIES.map((c) => ({ value: c, label: EXPENSE_CATEGORY_LABEL[c] }))} />
-          <SelectField label="Grow (optional)" value={gid} onChange={setGid} options={data.grows.map((g) => ({ value: g.id, label: g.name }))} placeholder="Keinem Grow zugeordnet" />
+          <OptionalNumber label={t('common.field.amount')} unit={settings.currency} text={amount} onText={setAmount} min={0} max={1_000_000} required />
+          <TextField label={t('common.field.date')} type="date" value={date} onChange={setDate} required />
+          <SelectField label={t('common.field.category')} value={category} onChange={(v) => setCategory((v || 'other') as ExpenseCategory)} options={EXPENSE_CATEGORIES.map((c) => ({ value: c, label: EXPENSE_CATEGORY_LABEL[c] }))} />
+          <SelectField label={t('grow.form.growOptional')} value={gid} onChange={setGid} options={data.grows.map((g) => ({ value: g.id, label: g.name }))} placeholder={t('grow.form.noGrow')} />
         </div>
-        <TextField label="Beschreibung" value={description} onChange={setDescription} maxLength={120} placeholder="z. B. LED-Leuchte, Erde 50 l" />
+        <TextField label={t('common.field.description')} value={description} onChange={setDescription} maxLength={120} placeholder={t('grow.form.expenseDescPh')} />
       </form>
     </Modal>
   );

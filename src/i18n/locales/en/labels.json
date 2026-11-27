@@ -219,5 +219,43 @@
   "90": "Last 90 days",
   "365": "Last 12 months",
   "all": "All time"
+ },
+ "unit": {
+  "Stück": "pcs",
+  "Züge": "puffs",
+  "Packung": "pack",
+  "Samen": "seeds",
+  "g": "g",
+  "mg": "mg",
+  "ml": "ml",
+  "l": "l"
+ },
+ "mood": {
+  "entspannt": "relaxed",
+  "ruhig": "calm",
+  "kreativ": "creative",
+  "gesellig": "sociable",
+  "fokussiert": "focused",
+  "euphorisch": "euphoric",
+  "müde": "tired",
+  "hungrig": "hungry",
+  "unruhig": "restless",
+  "ängstlich": "anxious",
+  "benommen": "dazed",
+  "neutral": "neutral"
+ },
+ "aroma": {
+  "erdig": "earthy",
+  "zitrus": "citrus",
+  "süß": "sweet",
+  "fruchtig": "fruity",
+  "kiefer": "pine",
+  "würzig": "spicy",
+  "pfeffrig": "peppery",
+  "blumig": "floral",
+  "diesel": "diesel",
+  "käsig": "cheesy",
+  "kräuter": "herbal",
+  "holzig": "woody"
  }
 }

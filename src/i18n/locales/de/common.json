@@ -55,5 +55,50 @@
   "today": "Heute",
   "nextMonth": "Nächster Monat",
   "daysIn": "Tage im {month}"
- }
+ },
+ "noPhase": "Keine Phase erfasst",
+ "export": {
+  "title": "Export",
+  "csv": "CSV (Excel)",
+  "text": "Textdatei",
+  "print": "Drucken / PDF"
+ },
+ "num": {
+  "invalid": "Bitte eine Zahl eingeben.",
+  "positive": "Wert muss größer als 0 sein.",
+  "integer": "Bitte eine ganze Zahl eingeben.",
+  "allowed": "Erlaubt: {min}–{max}{unit}",
+  "slider": "{label} (Schieberegler)",
+  "min": "Mindestens {n}",
+  "max": "Höchstens {n}"
+ },
+ "breadcrumbs": "Brotkrumen",
+ "range": {
+  "aria": "Bereich {low} bis {high} {unit}"
+ },
+ "save": {
+  "name": "Name der Berechnung",
+  "button": "Speichern",
+  "local": "Lokal im Browser speichern",
+  "saved": "Gespeichert"
+ },
+ "estimate": "Schätzung",
+ "field": {
+  "required": "Pflichtfeld",
+  "name": "Name",
+  "startDate": "Startdatum",
+  "description": "Beschreibung",
+  "status": "Status",
+  "notes": "Notizen",
+  "date": "Datum",
+  "category": "Kategorie",
+  "amount": "Betrag",
+  "time": "Zeitpunkt"
+ },
+ "rating": {
+  "reset": "zurücksetzen",
+  "nOf5": "{n} von 5",
+  "label": "Bewertung {n} von 5"
+ },
+ "saving": "Speichern …"
 }

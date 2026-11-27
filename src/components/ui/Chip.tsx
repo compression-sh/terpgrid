@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { GrowPhase } from '../../lib/db/types';
 import { PHASE_COLOR, PHASE_LABEL, PHASE_SHORT } from '../../lib/grow/phases';
+import { t } from '../../i18n';
 
 export function Chip({ children, tone = 'neutral', title }: { children: ReactNode; tone?: 'neutral' | 'green' | 'amber' | 'rose' | 'sky'; title?: string }) {
   const cls = {
@@ -18,7 +19,7 @@ export function Chip({ children, tone = 'neutral', title }: { children: ReactNod
 }
 
 export function PhaseChip({ phase, short }: { phase?: GrowPhase; short?: boolean }) {
-  if (!phase) return <Chip>Keine Phase erfasst</Chip>;
+  if (!phase) return <Chip>{t('common.noPhase')}</Chip>;
   return (
     <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-0.5 text-[11px] font-medium text-ink-200">
       <span className="size-1.5 rounded-full" style={{ background: PHASE_COLOR[phase] }} />

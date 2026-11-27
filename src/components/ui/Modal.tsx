@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { type ReactNode, useEffect, useId, useRef } from 'react';
+import { t } from '../../i18n';
 
 interface ModalProps {
   open: boolean;
@@ -46,7 +47,7 @@ export function Modal({ open, onClose, title, subtitle, children, footer, size =
           <h2 id={titleId} className="text-[15px] font-semibold tracking-tight text-ink-50">{title}</h2>
           {subtitle && <p className="mt-0.5 text-[13px] text-ink-400">{subtitle}</p>}
         </div>
-        <button type="button" onClick={onClose} aria-label="Schließen" className="btn-ghost -mr-1 p-1.5">
+        <button type="button" onClick={onClose} aria-label={t('common.close')} className="btn-ghost -mr-1 p-1.5">
           <X className="size-4" />
         </button>
       </header>

@@ -1,6 +1,7 @@
 import { Download, FileJson, FileSpreadsheet, FileText, Printer } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { type ExportPayload, exportPayload } from '../../lib/exporters';
+import { t } from '../../i18n';
 
 export function ExportMenu({ build }: { build: () => ExportPayload }) {
   const [open, setOpen] = useState(false);
@@ -38,14 +39,14 @@ export function ExportMenu({ build }: { build: () => ExportPayload }) {
     <div className="relative no-print" ref={ref}>
       <button type="button" className="btn-ghost py-1.5" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         <Download className="size-4" aria-hidden />
-        <span className="hidden sm:inline">Export</span>
+        <span className="hidden sm:inline">{t('common.export.title')}</span>
       </button>
       {open && (
         <div role="menu" className="absolute right-0 z-30 mt-2 w-48 rounded-xl border border-white/[0.08] bg-ink-850 p-1 shadow-2xl animate-fade-up">
-          {item(<FileSpreadsheet className="size-4 text-leaf-400" />, 'CSV (Excel)', () => exportPayload(build(), 'csv'))}
+          {item(<FileSpreadsheet className="size-4 text-leaf-400" />, t('common.export.csv'), () => exportPayload(build(), 'csv'))}
           {item(<FileJson className="size-4 text-leaf-400" />, 'JSON', () => exportPayload(build(), 'json'))}
-          {item(<FileText className="size-4 text-leaf-400" />, 'Textdatei', () => exportPayload(build(), 'txt'))}
-          {item(<Printer className="size-4 text-leaf-400" />, 'Drucken / PDF', () => window.print())}
+          {item(<FileText className="size-4 text-leaf-400" />, t('common.export.text'), () => exportPayload(build(), 'txt'))}
+          {item(<Printer className="size-4 text-leaf-400" />, t('common.export.print'), () => window.print())}
         </div>
       )}
     </div>

@@ -1,5 +1,6 @@
 import type { Range } from '../../lib/calc/potency';
 import { fmt } from '../../lib/format';
+import { t } from '../../i18n';
 
 interface RangeBarProps {
   range: Range;
@@ -24,7 +25,7 @@ export function RangeBar({ range, max, unit, markers = [], log = false }: RangeB
   const h = pos(range.high);
   const m = pos(range.mid);
   return (
-    <div className="pt-8 pb-6" aria-label={`Bereich ${fmt(range.low)} bis ${fmt(range.high)} ${unit}`}>
+    <div className="pt-8 pb-6" aria-label={t('common.range.aria', { low: fmt(range.low), high: fmt(range.high), unit })}>
       <div className="relative h-2.5 rounded-full bg-ink-700">
         {markers.map((mk) => (
           <div key={mk.label} className="absolute -top-1.5 bottom-[-6px] w-px bg-white/15" style={{ left: `${pos(mk.value)}%` }}>

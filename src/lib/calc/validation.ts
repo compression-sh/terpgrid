@@ -60,15 +60,27 @@ export function validate<T extends object>(
  * Parst Benutzereingaben robust, inklusive deutschem Dezimalkomma.
  * Gibt NaN zurück, wenn keine Zahl erkannt wird.
  */
+/**
+ * Liest Zahlen unabhängig von der Oberflächensprache gleich (6.1):
+ * - genau ein Trennzeichen (Komma oder Punkt) = Dezimaltrennzeichen: „1,5“ = „1.5“ = 1,5
+ * - beide vorhanden: das zuletzt stehende ist das Dezimaltrennzeichen, das andere Tausendertrennung:
+ *   „1.234,5“ (de) = „1,234.5“ (en) = 1234,5
+ * - mehrere gleiche Trennzeichen ohne das andere („1.234.567“) gelten als Tausendertrennung.
+ */
 export function parseLocaleNumber(input: string): number {
-  const trimmed = input.trim().replace(/\s/g, '');
+  const trimmed = input.trim().replace(/[\s\u00a0\u202f']/g, '');
   if (trimmed === '') return Number.NaN;
-  // "1.234,5" → "1234.5"; "1,5" → "1.5"; "1.5" → "1.5"
   let normalized = trimmed;
-  if (normalized.includes(',') && normalized.includes('.')) {
-    normalized = normalized.replace(/\./g, '').replace(',', '.');
+  const lastComma = normalized.lastIndexOf(',');
+  const lastDot = normalized.lastIndexOf('.');
+  if (lastComma >= 0 && lastDot >= 0) {
+    const dec = lastComma > lastDot ? ',' : '.';
+    const group = dec === ',' ? '.' : ',';
+    normalized = normalized.split(group).join('').replace(dec, '.');
   } else {
-    normalized = normalized.replace(',', '.');
+    const sep = lastComma >= 0 ? ',' : lastDot >= 0 ? '.' : '';
+    if (sep && normalized.split(sep).length > 2) normalized = normalized.split(sep).join('');
+    else if (sep === ',') normalized = normalized.replace(',', '.');
   }
   if (!/^-?\d*\.?\d+$|^-?\d+\.$/.test(normalized)) return Number.NaN;
   return Number.parseFloat(normalized);

@@ -10,6 +10,7 @@ import { ACTIVITY_LABEL, OBSERVATION_LABEL } from '../../lib/grow/labels';
 import { PhotoUploadModal } from '../photos/PhotoUpload';
 import { Modal } from '../ui/Modal';
 import { type MeasurementState, MeasurementFields, buildMeasurements, initialMeasurementState, measurementErrors } from './MeasurementFields';
+import { t } from '../../i18n';
 
 const TYPES: ActivityType[] = ['observation', 'measurement', 'watering', 'feeding', 'issue', 'custom'];
 
@@ -91,7 +92,7 @@ export function QuickLogModal({ onClose, plantId, growId }: { onClose: () => voi
         });
       }
       sessionStorage.removeItem(draftKey());
-      toast(empty ? 'Foto hinzufügen' : `${ACTIVITY_LABEL[draft.type]} gespeichert${navigator.onLine === false ? ' (offline – wird später synchronisiert)' : ''}`);
+      toast(empty ? t('grow.quick.addPhoto') : t('grow.quick.saved', { type: ACTIVITY_LABEL[draft.type] }) + (navigator.onLine === false ? t('grow.quick.offline') : ''));
       if (withPhoto) setPhotoFor({ growId: gid!, plantId: plant?.id });
       else onClose();
     } catch (e) {
@@ -107,8 +108,8 @@ export function QuickLogModal({ onClose, plantId, growId }: { onClose: () => voi
     <Modal
       open
       onClose={onClose}
-      title="Schnell-Log"
-      subtitle={restored ? 'Entwurf wiederhergestellt' : 'Beobachtung, Messung oder Pflege festhalten'}
+      title={t('grow.quick.title')}
+      subtitle={restored ? t('grow.quick.draftRestored') : t('grow.quick.subtitle')}
       size="lg"
       footer={
         <div className="flex flex-wrap justify-end gap-2">
@@ -120,10 +121,10 @@ export function QuickLogModal({ onClose, plantId, growId }: { onClose: () => voi
               onClose();
             }}
           >
-            Verwerfen
+            {t('grow.quick.discard')}
           </button>
           <button type="button" className="btn-ghost" disabled={invalid || saving} onClick={() => save(true)}>
-            <Camera className="size-4" /> {empty ? 'Nur Foto' : 'Speichern + Foto'}
+            <Camera className="size-4" /> {empty ? t('grow.quick.photoOnly') : t('grow.quick.savePhoto')}
           </button>
           <button type="button" className="btn-primary" disabled={invalid || empty || saving} onClick={() => save(false)}>
             <Check className="size-4" /> Speichern
@@ -132,11 +133,11 @@ export function QuickLogModal({ onClose, plantId, growId }: { onClose: () => voi
       }
     >
       {!initialTarget && targets.length === 0 ? (
-        <p className="text-[13px] text-ink-400">Lege zuerst einen aktiven Grow an – Einträge gehören immer zu einem Grow oder einer Pflanze.</p>
+        <p className="text-[13px] text-ink-400">{t('grow.quick.needGrow')}</p>
       ) : (
         <div className="space-y-5">
           <fieldset>
-            <legend className="label mb-1.5">Für</legend>
+            <legend className="label mb-1.5">{t('grow.quick.for')}</legend>
             <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
               {targets.slice(0, 20).map((p) => {
                 const on = draft.target === `p:${p.id}`;
@@ -161,11 +162,11 @@ export function QuickLogModal({ onClose, plantId, growId }: { onClose: () => voi
           </fieldset>
 
           <fieldset>
-            <legend className="label mb-1.5">Art</legend>
+            <legend className="label mb-1.5">{t('grow.quick.kind')}</legend>
             <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
-              {TYPES.map((t) => (
-                <button key={t} type="button" aria-pressed={draft.type === t} onClick={() => set({ type: t })} className={`min-h-11 rounded-xl border px-2 text-[12px] ${draft.type === t ? 'border-leaf-500/40 bg-leaf-500/15 text-leaf-100' : 'border-white/[0.08] text-ink-300'}`}>
-                  {ACTIVITY_LABEL[t]}
+              {TYPES.map((ty) => (
+                <button key={ty} type="button" aria-pressed={draft.type === ty} onClick={() => set({ type: ty })} className={`min-h-11 rounded-xl border px-2 text-[12px] ${draft.type === ty ? 'border-leaf-500/40 bg-leaf-500/15 text-leaf-100' : 'border-white/[0.08] text-ink-300'}`}>
+                  {ACTIVITY_LABEL[ty]}
                 </button>
               ))}
             </div>
@@ -173,7 +174,7 @@ export function QuickLogModal({ onClose, plantId, growId }: { onClose: () => voi
 
           {(draft.type === 'observation' || draft.type === 'issue') && (
             <fieldset>
-              <legend className="label mb-1.5">Was hast du beobachtet? (optional)</legend>
+              <legend className="label mb-1.5">{t('grow.quick.observedQ')}</legend>
               <div className="flex flex-wrap gap-1.5">
                 {OBSERVATION_KINDS.map((k) => {
                   const on = draft.obs.includes(k);
@@ -184,24 +185,24 @@ export function QuickLogModal({ onClose, plantId, growId }: { onClose: () => voi
                   );
                 })}
               </div>
-              <p className="hint mt-1.5">Deine Beschreibung – TERPGRID stellt keine Diagnosen.</p>
+              <p className="hint mt-1.5">{t('grow.quick.noDiagnosis')}</p>
             </fieldset>
           )}
 
           <label className="block space-y-1">
-            <span className="label">Notiz</span>
-            <textarea className="input-base min-h-[5.5rem]" value={draft.note} onChange={(e) => set({ note: e.target.value })} placeholder={draft.type === 'issue' ? 'Was, wo, seit wann?' : 'Kurz notieren …'} maxLength={4000} />
+            <span className="label">{t('grow.quick.note')}</span>
+            <textarea className="input-base min-h-[5.5rem]" value={draft.note} onChange={(e) => set({ note: e.target.value })} placeholder={draft.type === 'issue' ? t('grow.quick.issuePh') : t('grow.quick.notePh')} maxLength={4000} />
           </label>
 
           {(draft.type === 'measurement' || draft.type === 'watering' || draft.type === 'feeding') && (
             <fieldset className="rounded-xl border border-white/[0.06] p-3">
-              <legend className="px-1 text-[13px] font-medium text-ink-200">Messwerte</legend>
+              <legend className="px-1 text-[13px] font-medium text-ink-200">{t('grow.quick.measurements')}</legend>
               <MeasurementFields state={draft.ms} onChange={(ms) => set({ ms })} />
             </fieldset>
           )}
 
           <label className="block space-y-1">
-            <span className="label">Zeitpunkt</span>
+            <span className="label">{t('grow.quick.time')}</span>
             <input type="datetime-local" className="input-base" value={draft.date} onChange={(e) => set({ date: e.target.value })} />
           </label>
         </div>

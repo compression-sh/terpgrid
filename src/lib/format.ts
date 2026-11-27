@@ -35,3 +35,9 @@ export function fmtRange(r: Range, unit = ''): string {
 export function fmtPercent(fraction: number, digits = 0): string {
   return new Intl.NumberFormat(intlLocale(), { style: 'percent', minimumFractionDigits: 0, maximumFractionDigits: digits }).format(fraction);
 }
+
+/** Zahl für Eingabefelder: Dezimaltrennzeichen der Sprache, ohne Tausendertrennung (z. B. „1234,5“ bzw. „1234.5“). */
+export function fmtInput(value: number, digits = 10): string {
+  if (!Number.isFinite(value)) return '';
+  return new Intl.NumberFormat(intlLocale(), { maximumFractionDigits: digits, useGrouping: false }).format(value);
+}

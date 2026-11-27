@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Range } from '../../lib/calc/potency';
 import { fmt } from '../../lib/format';
+import { t } from '../../i18n';
 
 interface StatProps {
   label: string;
@@ -40,7 +41,7 @@ export function Stat({ label, value, range, unit, hint, emphasis, theoretical, r
         )}
         {range && (
           <span className="shrink-0 rounded-full border border-amber-400/20 bg-amber-400/[0.06] px-1.5 py-px text-[10px] uppercase tracking-wide text-amber-300/90">
-            Schätzung
+            {t('common.estimate')}
           </span>
         )}
       </div>

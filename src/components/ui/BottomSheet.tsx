@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import { t } from '../../i18n';
 
 /**
  * Bottom Sheet (mobil von unten, Desktop zentriert) auf Basis von <dialog>:
@@ -49,7 +50,7 @@ export function BottomSheet({ title, onClose, children, footer }: { title: React
       </div>
       <header className="flex items-center justify-between gap-3 px-5 pt-3 pb-2 sm:pt-4">
         <h2 id={titleId} className="text-[15px] font-semibold tracking-tight text-ink-50">{title}</h2>
-        <button type="button" onClick={onClose} aria-label="Schließen" className="btn-ghost -mr-1 p-1.5">
+        <button type="button" onClick={onClose} aria-label={t('common.close')} className="btn-ghost -mr-1 p-1.5">
           <X className="size-4" />
         </button>
       </header>

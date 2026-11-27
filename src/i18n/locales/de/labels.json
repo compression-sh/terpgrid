@@ -219,5 +219,43 @@
   "30": "Letzte 30 Tage",
   "90": "Letzte 90 Tage",
   "365": "Letzte 12 Monate"
+ },
+ "unit": {
+  "Stück": "Stück",
+  "Züge": "Züge",
+  "Packung": "Packung",
+  "Samen": "Samen",
+  "g": "g",
+  "mg": "mg",
+  "ml": "ml",
+  "l": "l"
+ },
+ "mood": {
+  "entspannt": "entspannt",
+  "ruhig": "ruhig",
+  "kreativ": "kreativ",
+  "gesellig": "gesellig",
+  "fokussiert": "fokussiert",
+  "euphorisch": "euphorisch",
+  "müde": "müde",
+  "hungrig": "hungrig",
+  "unruhig": "unruhig",
+  "ängstlich": "ängstlich",
+  "benommen": "benommen",
+  "neutral": "neutral"
+ },
+ "aroma": {
+  "erdig": "erdig",
+  "zitrus": "zitrus",
+  "süß": "süß",
+  "fruchtig": "fruchtig",
+  "kiefer": "kiefer",
+  "würzig": "würzig",
+  "pfeffrig": "pfeffrig",
+  "blumig": "blumig",
+  "diesel": "diesel",
+  "käsig": "käsig",
+  "kräuter": "kräuter",
+  "holzig": "holzig"
  }
 }

@@ -1,5 +1,6 @@
 import { Bookmark, Check } from 'lucide-react';
 import { useState } from 'react';
+import { t } from '../../i18n';
 
 export function SaveButton({ onSave, defaultName }: { onSave: (name: string) => void; defaultName: string }) {
   const [editing, setEditing] = useState(false);
@@ -20,7 +21,7 @@ export function SaveButton({ onSave, defaultName }: { onSave: (name: string) => 
       >
         <input
           autoFocus
-          aria-label="Name der Berechnung"
+          aria-label={t('common.save.name')}
           className="input-base w-36 py-1.5 sm:w-44"
           value={name}
           maxLength={60}
@@ -28,7 +29,7 @@ export function SaveButton({ onSave, defaultName }: { onSave: (name: string) => 
           onKeyDown={(e) => e.key === 'Escape' && setEditing(false)}
         />
         <button type="submit" className="btn-primary py-1.5">
-          Speichern
+          {t('common.save.button')}
         </button>
       </form>
     );
@@ -41,10 +42,10 @@ export function SaveButton({ onSave, defaultName }: { onSave: (name: string) => 
         setName(defaultName);
         setEditing(true);
       }}
-      title="Lokal im Browser speichern"
+      title={t('common.save.local')}
     >
       {saved ? <Check className="size-4 text-leaf-400" /> : <Bookmark className="size-4" aria-hidden />}
-      <span className="hidden sm:inline">{saved ? 'Gespeichert' : 'Speichern'}</span>
+      <span className="hidden sm:inline">{saved ? t('common.save.saved') : t('common.save.button')}</span>
     </button>
   );
 }
