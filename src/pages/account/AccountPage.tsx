@@ -37,7 +37,7 @@ import { ApiError, type ServerUser, api } from '../../lib/server/api';
 import { type PasskeyInfo, passkeyErrorText, passkeysSupported, registerPasskey, suggestPasskeyName } from '../../lib/server/passkeys';
 import { FormError, PasswordField, PasswordStrength, passwordHints } from '../auth/fields';
 import { RecoveryCodesPanel } from '../auth/RecoveryCodes';
-import { intlLocale } from '../../i18n';
+import { t, intlLocale } from '../../i18n';
 
 interface Overview {
   createdAt: string;
@@ -62,33 +62,33 @@ interface SessionRow {
 }
 
 const METHOD_LABEL: Record<string, string> = {
-  password: 'mit Passwort',
-  totp: 'mit Passwort und 2FA-Code',
-  passkey: 'mit Passkey',
-  recovery: 'mit Wiederherstellungscode',
-  register: 'bei der Registrierung',
+  get password() { return t('account.m.password'); },
+  get totp() { return t('account.m.totp'); },
+  get passkey() { return t('account.m.passkey'); },
+  get recovery() { return t('account.m.recovery'); },
+  get register() { return t('account.m.register'); },
 };
 
 const EVENT_LABEL: Record<string, string> = {
-  'login.success': 'Anmeldung',
-  'login.failure': 'Fehlgeschlagene Anmeldung',
-  'password.change': 'Passwort geändert',
-  'recovery.success': 'Zugang per Recovery-Code wiederhergestellt',
-  'recovery.regenerate': 'Neue Recovery-Codes erzeugt',
-  'totp.enable': '2FA aktiviert',
-  'totp.disable': '2FA deaktiviert',
-  'session.revoke': 'Sitzung beendet',
-  'recovery.failure': 'Fehlgeschlagene Wiederherstellung',
-  'passkey.add': 'Passkey hinzugefügt',
-  'passkey.remove': 'Passkey entfernt',
-  logout: 'Abgemeldet',
+  'login.success': t('account.ev.login'),
+  'login.failure': t('account.ev.loginFail'),
+  'password.change': t('account.ev.pw'),
+  'recovery.success': t('account.ev.recovery'),
+  'recovery.regenerate': t('account.ev.regen'),
+  'totp.enable': t('account.ev.totpOn'),
+  'totp.disable': t('account.ev.totpOff'),
+  'session.revoke': t('account.ev.revoke'),
+  'recovery.failure': t('account.ev.recoveryFail'),
+  'passkey.add': t('account.ev.pkAdd'),
+  'passkey.remove': t('account.ev.pkRemove'),
+  get logout() { return t('account.ev.logout'); },
 };
 
 const dt = (s: string | null | undefined) => (s ? new Date(s).toLocaleString(intlLocale(), { dateStyle: 'medium', timeStyle: 'short' }) : '–');
-const errText = (e: unknown) => (e instanceof ApiError ? e.message : 'Unerwarteter Fehler.');
+const errText = (e: unknown) => (e instanceof ApiError ? e.message : t('account.ac.unexpected'));
 
 function describeUa(ua: string | null): { label: string; mobile: boolean } {
-  if (!ua) return { label: 'Unbekanntes Gerät', mobile: false };
+  if (!ua) return { get label() { return t('account.ac.unknownDevice'); }, mobile: false };
   const mobile = /Mobile|Android|iPhone|iPad/.test(ua);
   const browser = /Edg\//.test(ua) ? 'Edge' : /Firefox\//.test(ua) ? 'Firefox' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
   const os = /Windows/.test(ua) ? 'Windows' : /Mac OS X/.test(ua) && !/iPhone|iPad/.test(ua) ? 'macOS' : /iPhone|iPad/.test(ua) ? 'iOS' : /Android/.test(ua) ? 'Android' : /Linux/.test(ua) ? 'Linux' : '';
@@ -147,19 +147,19 @@ export function AccountPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <PageHeader title="Konto & Datenschutz" subtitle="Profil, Sicherheit, Sitzungen und deine Daten." />
-      <nav aria-label="Abschnitte" className="-mt-2 flex flex-wrap gap-1.5 text-[12px]">
+      <PageHeader title={t('account.ac.title')} subtitle={t('account.ac.subtitle')} />
+      <nav aria-label={t('account.ac.sections')} className="-mt-2 flex flex-wrap gap-1.5 text-[12px]">
         {[
-          ['profil', 'Profil'],
-          ['sicherheit', 'Sicherheit'],
-          ['passkeys', 'Passkeys'],
-          ['sitzungen', 'Sitzungen'],
-          ['daten', 'Daten'],
-          ['geraet', 'Dieses Gerät'],
-          ['datenschutz', 'Datenschutz-Center'],
-          ['zusammenarbeit', 'Zusammenarbeit & Freigaben'],
-          ['loeschen', 'Konto löschen'],
-          ...(user.role === 'admin' ? [['admin', 'Administration']] : []),
+          ['profil', t('account.ac.secProfile')],
+          ['sicherheit', t('account.ac.secSecurity')],
+          ['passkeys', t('account.ac.secPasskeys')],
+          ['sitzungen', t('account.ac.secSessions')],
+          ['daten', t('account.ac.secData')],
+          ['geraet', t('account.ac.secDevice')],
+          ['datenschutz', t('account.ac.secPrivacy')],
+          ['zusammenarbeit', t('account.ac.secCollab')],
+          ['loeschen', t('account.ac.secDelete')],
+          ...(user.role === 'admin' ? [['admin', t('account.ac.secAdmin')]] : []),
         ].map(([id, label]) =>
           id === 'admin' ? (
             <a key={id} href={href('admin')} className="rounded-full border border-leaf-500/25 bg-leaf-500/[0.07] px-2.5 py-1 text-leaf-200">
@@ -173,7 +173,7 @@ export function AccountPage() {
         )}
       </nav>
 
-      {offline && <Callout tone="warn">Offline-Modus: Kontoeinstellungen sind erst wieder verfügbar, wenn der Server erreichbar ist.</Callout>}
+      {offline && <Callout tone="warn">{t('account.ac.offline')}</Callout>}
       {ov && <SecurityStatus ov={ov} totp={user.totpEnabled} />}
       {loadError && <Callout tone="danger">{loadError}</Callout>}
 
@@ -181,7 +181,7 @@ export function AccountPage() {
       <SecuritySection user={user} ov={ov} reload={load} disabled={offline} />
       <PasskeySection disabled={offline} />
 
-      <Section id="sitzungen" icon={<Laptop className="size-4" />} title="Aktive Sitzungen" subtitle="Geräte, auf denen du angemeldet bist. Unbekannte Sitzungen sofort beenden.">
+      <Section id="sitzungen" icon={<Laptop className="size-4" />} title={t('account.ac.sessions')} subtitle={t('account.ac.sessionsSub')}>
         <ul className="divide-y divide-white/[0.05]">
           {/* 6.0.1: aktuelle und zuletzt aktive Sitzungen zuerst; lange Listen eingeklappt (alle bleiben einsehbar) */}
           {[...sessions]
@@ -195,11 +195,11 @@ export function AccountPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 text-[13.5px] text-ink-100">
                     {d.label}
-                    {s.current && <span className="rounded-full bg-leaf-500/15 px-2 py-0.5 text-[10.5px] text-leaf-200">Dieses Gerät</span>}
+                    {s.current && <span className="rounded-full bg-leaf-500/15 px-2 py-0.5 text-[10.5px] text-leaf-200">{t('account.ac.secDevice')}</span>}
                   </div>
                   <div className="text-[11.5px] text-ink-500">
                     Angemeldet {dt(s.createdAt)}
-                    {s.authMethod ? ` ${METHOD_LABEL[s.authMethod]}` : ''} · zuletzt aktiv {dt(s.lastSeenAt)}
+                    {s.authMethod ? ` ${METHOD_LABEL[s.authMethod]}` : ''} · {t('account.ac.lastActive', { date: dt(s.lastSeenAt) })}
                   </div>
                 </div>
                 {!s.current && (
@@ -209,14 +209,14 @@ export function AccountPage() {
                     onClick={async () => {
                       try {
                         await api('DELETE', `/api/auth/sessions/${s.handle}`);
-                        toast('Sitzung beendet.', { tone: 'ok' });
+                        toast(t('account.ac.sessionEnded'), { tone: 'ok' });
                         void load();
                       } catch (e) {
                         toast(errText(e), { tone: 'error' });
                       }
                     }}
                   >
-                    Beenden
+                    {t('account.ac.end')}
                   </button>
                 )}
               </li>
@@ -225,7 +225,7 @@ export function AccountPage() {
         </ul>
         {sessions.length > SESSION_PREVIEW && (
           <button type="button" className="mt-1 text-[12.5px] text-ink-300 underline-offset-2 hover:text-ink-50 hover:underline" aria-expanded={allSessions} onClick={() => setAllSessions((v) => !v)}>
-            {allSessions ? 'Weniger anzeigen' : `Alle ${sessions.length} Sitzungen anzeigen`}
+            {allSessions ? t('account.ac.showLess') : t('account.ac.showAll', { n: sessions.length })}
           </button>
         )}
         <div className="mt-3 flex flex-wrap gap-2">
@@ -235,11 +235,11 @@ export function AccountPage() {
             disabled={offline || sessions.length < 2}
             onClick={async () => {
               const r = await api<{ revoked: number }>('POST', '/api/auth/sessions/revoke-others').catch((e) => (toast(errText(e), { tone: 'error' }), null));
-              if (r) toast(`${r.revoked} andere Sitzung(en) beendet.`, { tone: 'ok' });
+              if (r) toast(t('account.ac.revoked', { count: r.revoked }), { tone: 'ok' });
               void load();
             }}
           >
-            <LogOut className="size-4" /> Alle anderen Sitzungen beenden
+            <LogOut className="size-4" /> {t('account.ac.endOthers')}
           </button>
           <button
             type="button"
@@ -247,9 +247,9 @@ export function AccountPage() {
             disabled={offline}
             onClick={async () => {
               const ok = await confirm({
-                title: 'Alle Sitzungen beenden?',
-                message: 'Alle Geräte werden abgemeldet – auch dieses. Lokale Kopien auf anderen Geräten werden dabei nicht gelöscht (eine Fernlöschung ist nicht möglich); sie sind dort aber ohne erneute Anmeldung nicht mehr mit dem Server verbunden.',
-                confirmLabel: 'Alle beenden',
+                title: t('account.ac.endAllTitle'),
+                message: t('account.ac.endAllMsg'),
+                confirmLabel: t('account.ac.endAll'),
                 tone: 'danger',
               });
               if (!ok) return;
@@ -257,15 +257,15 @@ export function AccountPage() {
               if (r) await logoutFlow(auth, confirm);
             }}
           >
-            <LogOut className="size-4" /> Alle Sitzungen beenden (auch diese)
+            <LogOut className="size-4" /> {t('account.ac.endAllIncl')}
           </button>
           <button type="button" className="btn-ghost" onClick={() => void logoutFlow(auth, confirm)}>
-            <LogOut className="size-4" /> Auf diesem Gerät abmelden
+            <LogOut className="size-4" /> {t('account.ac.signOutHere')}
           </button>
         </div>
       </Section>
 
-      <Section id="daten" icon={<Download className="size-4" />} title="Deine Daten" subtitle="Export, Synchronisation und Übernahme lokaler Daten.">
+      <Section id="daten" icon={<Download className="size-4" />} title={t('account.ac.data')} subtitle={t('account.ac.dataSub')}>
         <div className="grid gap-3 sm:grid-cols-3">
           <button
             type="button"
@@ -286,20 +286,20 @@ export function AccountPage() {
               }
             }}
           >
-            <Download className="size-4" /> Vollständiger Export (ZIP)
+            <Download className="size-4" /> {t('account.ac.exportZip')}
           </button>
           <a className="btn-ghost justify-start" href={href('account/sync')}>
-            <RefreshCw className="size-4" /> Synchronisation
+            <RefreshCw className="size-4" /> {t('account.ac.sync')}
           </a>
           <a className="btn-ghost justify-start" href={href('account/import')}>
-            <HardDrive className="size-4" /> Lokale Daten übernehmen
+            <HardDrive className="size-4" /> {t('account.ac.import')}
           </a>
         </div>
-        <p className="hint mt-3">Der Export nutzt das TERPGRID-Backup-Format (Format 2) und lässt sich unter „Daten & Backup“ wieder importieren – auch im Lokalmodus.</p>
+        <p className="hint mt-3">{t('account.ac.exportHint')}</p>
         {ov && (
           <div className="mt-4">
             <div className="mb-1 flex justify-between text-[12px] text-ink-400">
-              <span>Speicher für Fotos & Dokumente</span>
+              <span>{t('account.ac.storage')}</span>
               <span className="tabular">
                 {formatBytes(ov.storageBytes)} von {formatBytes(ov.quotaBytes)}
               </span>
@@ -324,14 +324,14 @@ function ProfileSection({ user, ov, onSaved, disabled }: { user: ServerUser; ov:
   const [busy, setBusy] = useState(false);
   const toast = useToast();
   return (
-    <Section id="profil" icon={<UserRound className="size-4" />} title="Profil" subtitle="Kein Klarname, keine E-Mail, keine Telefonnummer.">
+    <Section id="profil" icon={<UserRound className="size-4" />} title={t('account.ac.secProfile')} subtitle={t('account.ac.profileSub')}>
       <dl className="mb-4 grid gap-3 text-[13px] sm:grid-cols-2">
         <div>
-          <dt className="text-ink-500">Kennung ({user.loginKind === 'generated' ? 'Konto-ID' : 'Benutzername'})</dt>
+          <dt className="text-ink-500">{t('account.ac.idLabel', { kind: user.loginKind === 'generated' ? t('account.ac.accountId') : t('account.ac.username') })}</dt>
           <dd className="mt-0.5 select-all font-mono text-ink-100">{user.loginName}</dd>
         </div>
         <div>
-          <dt className="text-ink-500">Konto erstellt</dt>
+          <dt className="text-ink-500">{t('account.ac.created')}</dt>
           <dd className="mt-0.5 text-ink-100">{dt(ov?.createdAt)}</dd>
         </div>
       </dl>
@@ -343,7 +343,7 @@ function ProfileSection({ user, ov, onSaved, disabled }: { user: ServerUser; ov:
           try {
             const r = await api<{ displayName: string | null }>('PATCH', '/api/account', { displayName: name.trim() || null });
             onSaved(r.displayName);
-            toast('Anzeigename gespeichert.', { tone: 'ok' });
+            toast(t('account.ac.nameSaved'), { tone: 'ok' });
           } catch (err) {
             toast(errText(err), { tone: 'error' });
           } finally {
@@ -353,12 +353,12 @@ function ProfileSection({ user, ov, onSaved, disabled }: { user: ServerUser; ov:
       >
         <div className="flex-1 space-y-1.5">
           <label className="label" htmlFor="display-name">
-            Anzeigename (optional)
+            {t('account.ac.displayName')}
           </label>
           <input id="display-name" className="input-base" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} disabled={disabled} />
         </div>
         <button type="submit" className="btn-primary" disabled={busy || disabled || name === (user.displayName ?? '')}>
-          Speichern
+          {t('common.save.button')}
         </button>
       </form>
     </Section>
@@ -375,18 +375,18 @@ function SecuritySection({ user, ov, reload, disabled }: { user: ServerUser; ov:
   const [codes, setCodes] = useState<string[] | null>(null);
 
   return (
-    <Section id="sicherheit" icon={<ShieldCheck className="size-4" />} title="Sicherheit" subtitle="Passwort, Zwei-Faktor-Authentifizierung und Wiederherstellung.">
+    <Section id="sicherheit" icon={<ShieldCheck className="size-4" />} title={t('account.ac.secSecurity')} subtitle={t('account.ac.securitySub')}>
       <div className="divide-y divide-white/[0.05]">
-        <Row icon={<KeyRound className="size-4" />} title="Passwort" text={`Zuletzt geändert: ${dt(ov?.passwordChangedAt)}`}>
+        <Row icon={<KeyRound className="size-4" />} title={t('account.ac.password')} text={t('account.ac.changedAt', { date: dt(ov?.passwordChangedAt) })}>
           <button type="button" className="btn-ghost" disabled={disabled} onClick={() => setPwOpen(true)}>
-            Ändern
+            {t('account.ac.change')}
           </button>
         </Row>
         <Row
           icon={<LockKeyhole className="size-4" />}
-          title="Zwei-Faktor-Authentifizierung (TOTP)"
-          text={user.totpEnabled ? 'Aktiv – beim Anmelden wird zusätzlich ein Code aus deiner Authenticator-App abgefragt.' : 'Nicht aktiv. Empfohlen: schützt dein Konto, falls dein Passwort bekannt wird.'}
-          badge={user.totpEnabled ? <span className="rounded-full bg-leaf-500/15 px-2 py-0.5 text-[10.5px] text-leaf-200">Aktiv</span> : <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[10.5px] text-amber-200">Aus</span>}
+          title={t('account.ac.totp')}
+          text={user.totpEnabled ? t('account.ac.totpOn') : t('account.ac.totpOff')}
+          badge={user.totpEnabled ? <span className="rounded-full bg-leaf-500/15 px-2 py-0.5 text-[10.5px] text-leaf-200">{t('account.ac.active')}</span> : <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[10.5px] text-amber-200">{t('account.ac.off')}</span>}
         >
           {user.totpEnabled ? (
             <button
@@ -394,13 +394,13 @@ function SecuritySection({ user, ov, reload, disabled }: { user: ServerUser; ov:
               className="btn-ghost"
               disabled={disabled}
               onClick={async () => {
-                const ok = await confirm({ title: '2FA deaktivieren?', message: 'Dein Konto ist danach nur noch durch das Passwort geschützt.', confirmLabel: 'Deaktivieren', tone: 'danger' });
+                const ok = await confirm({ title: t('account.ac.totpDisableTitle'), message: t('account.ac.totpDisableMsg'), confirmLabel: t('account.ac.disable'), tone: 'danger' });
                 if (!ok) return;
                 try {
                   const r = await reauth(() => api<{ user: ServerUser }>('POST', '/api/auth/totp/disable'));
                   if (r) {
                     auth.setUser({ totpEnabled: false });
-                    toast('2FA deaktiviert.', { tone: 'ok' });
+                    toast(t('account.ac.totpDisabled'), { tone: 'ok' });
                     reload();
                   }
                 } catch (e) {
@@ -408,25 +408,25 @@ function SecuritySection({ user, ov, reload, disabled }: { user: ServerUser; ov:
                 }
               }}
             >
-              Deaktivieren
+              {t('account.ac.disable')}
             </button>
           ) : (
             <button type="button" className="btn-primary" disabled={disabled} onClick={() => setTotpOpen(true)}>
-              Einrichten
+              {t('account.ac.setup')}
             </button>
           )}
         </Row>
         <Row
           icon={<ShieldAlert className="size-4" />}
-          title="Wiederherstellungscodes"
-          text={ov ? `${ov.recoveryCodesRemaining} von 10 noch unbenutzt. ${ov.recoveryCodesRemaining <= 3 ? 'Bitte neue Codes erzeugen.' : ''}` : '…'}
+          title={t('account.ac.codes')}
+          text={ov ? `${t('account.ac.codesLeft', { n: ov.recoveryCodesRemaining })} ${ov.recoveryCodesRemaining <= 3 ? t('account.ac.codesRenew') : ''}` : '…'}
         >
           <button
             type="button"
             className="btn-ghost"
             disabled={disabled}
             onClick={async () => {
-              const ok = await confirm({ title: 'Neue Codes erzeugen?', message: 'Alle bisherigen Wiederherstellungscodes werden sofort ungültig.', confirmLabel: 'Neue Codes erzeugen' });
+              const ok = await confirm({ title: t('account.ac.regenTitle'), message: t('account.ac.regenMsg'), confirmLabel: t('account.ac.regenConfirm') });
               if (!ok) return;
               try {
                 const r = await reauth(() => api<{ recoveryCodes: string[] }>('POST', '/api/auth/recovery-codes'));
@@ -436,20 +436,20 @@ function SecuritySection({ user, ov, reload, disabled }: { user: ServerUser; ov:
               }
             }}
           >
-            Neu erzeugen
+            {t('account.ac.regen')}
           </button>
         </Row>
       </div>
 
       {ov && ov.securityEvents.length > 0 && (
         <details className="mt-4 rounded-xl border border-white/[0.05] bg-white/[0.015] p-3">
-          <summary className="cursor-pointer text-[13px] text-ink-300">Letzte Sicherheitsereignisse</summary>
+          <summary className="cursor-pointer text-[13px] text-ink-300">{t('account.ac.events')}</summary>
           <ul className="mt-2 space-y-1 text-[12.5px]">
             {ov.securityEvents.map((e, i) => (
               <li key={`${e.created_at}-${i}`} className={`flex justify-between gap-3 ${e.type === 'login.failure' ? 'text-amber-200' : 'text-ink-300'}`}>
                 <span>
                   {EVENT_LABEL[e.type] ?? e.type}
-                  {e.factor === 'passkey' ? ' (Passkey)' : e.factor === 'totp' ? ' (2FA-Code)' : ''}
+                  {e.factor === 'passkey' ? t('account.ac.viaPasskey') : e.factor === 'totp' ? t('account.ac.viaTotp') : ''}
                 </span>
                 <span className="tabular text-ink-500">{dt(e.created_at)}</span>
               </li>
@@ -460,8 +460,8 @@ function SecuritySection({ user, ov, reload, disabled }: { user: ServerUser; ov:
 
       <PasswordModal open={pwOpen} onClose={() => setPwOpen(false)} login={user.loginName} onDone={reload} />
       <TotpModal open={totpOpen} onClose={() => setTotpOpen(false)} onDone={() => { auth.setUser({ totpEnabled: true }); reload(); }} />
-      <Modal open={!!codes} onClose={() => setCodes(null)} title="Neue Wiederherstellungscodes" subtitle="Nur jetzt sichtbar. Die alten Codes sind ungültig.">
-        {codes && <RecoveryCodesPanel codes={codes} loginName={user.loginName} doneLabel="Fertig" onDone={() => { setCodes(null); reload(); }} />}
+      <Modal open={!!codes} onClose={() => setCodes(null)} title={t('account.ac.newCodes')} subtitle={t('account.ac.newCodesSub')}>
+        {codes && <RecoveryCodesPanel codes={codes} loginName={user.loginName} doneLabel={t('account.ac.done')} onDone={() => { setCodes(null); reload(); }} />}
       </Modal>
     </Section>
   );
@@ -487,8 +487,8 @@ function PasskeySection({ disabled }: { disabled: boolean }) {
   }, [disabled]);
 
   return (
-    <Section id="passkeys" icon={<Fingerprint className="size-4" />} title="Passkeys" subtitle="Anmelden mit der Bildschirmsperre deines Geräts oder einem Sicherheitsschlüssel – ohne Passwort, ohne E-Mail. Welche Abfrage erscheint, entscheidet dein Gerät; TERPGRID erhält keine biometrischen Daten.">
-      {!supported && <Callout tone="warn">Dieser Browser unterstützt keine Passkeys.</Callout>}
+    <Section id="passkeys" icon={<Fingerprint className="size-4" />} title={t('account.ac.secPasskeys')} subtitle={t('account.ac.passkeysSub')}>
+      {!supported && <Callout tone="warn">{t('account.ac.noPasskeys')}</Callout>}
       {list && list.length > 0 && (
         <ul className="mb-3 divide-y divide-white/[0.05]">
           {list.map((p) => (
@@ -511,12 +511,12 @@ function PasskeySection({ disabled }: { disabled: boolean }) {
                       }
                     }}
                   >
-                    <input className="input-base py-1.5" aria-label="Name des Passkeys" value={editing.name} maxLength={60} autoFocus onChange={(e) => setEditing({ id: p.id, name: e.target.value })} />
+                    <input className="input-base py-1.5" aria-label={t('account.ac.pkName')} value={editing.name} maxLength={60} autoFocus onChange={(e) => setEditing({ id: p.id, name: e.target.value })} />
                     <button type="submit" className="btn-primary py-1.5" disabled={!editing.name.trim()}>
-                      Speichern
+                      {t('common.save.button')}
                     </button>
                     <button type="button" className="btn-ghost py-1.5" onClick={() => setEditing(null)}>
-                      Abbrechen
+                      {t('common.cancel')}
                     </button>
                   </form>
                 ) : (
@@ -526,7 +526,7 @@ function PasskeySection({ disabled }: { disabled: boolean }) {
                       {p.backedUp && <span className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[10.5px] text-ink-300">synchronisiert</span>}
                     </div>
                     <div className="text-[11.5px] text-ink-500">
-                      Hinzugefügt {dt(p.createdAt)} · {p.lastUsedAt ? `zuletzt verwendet ${dt(p.lastUsedAt)}` : 'noch nicht verwendet'}
+                      {t('account.ac.pkAdded', { date: dt(p.createdAt) })} · {p.lastUsedAt ? t('account.ac.pkUsed', { date: dt(p.lastUsedAt) }) : t('account.ac.pkUnused')}
                     </div>
                   </>
                 )}
@@ -534,14 +534,14 @@ function PasskeySection({ disabled }: { disabled: boolean }) {
               {editing?.id !== p.id && (
                 <div className="flex gap-1.5 pl-11 sm:pl-0">
                   <button type="button" className="btn-ghost px-2.5 py-1.5 text-xs" disabled={disabled} onClick={() => setEditing({ id: p.id, name: p.name })}>
-                    Umbenennen
+                    {t('account.ac.rename')}
                   </button>
                   <button
                     type="button"
                     className="btn-ghost px-2.5 py-1.5 text-xs text-rose-200"
                     disabled={disabled}
                     onClick={async () => {
-                      const ok = await confirm({ title: `Passkey „${p.name}“ entfernen?`, message: 'Mit diesem Passkey ist danach keine Anmeldung mehr möglich. Passwort und andere Passkeys bleiben gültig.', confirmLabel: 'Entfernen', tone: 'danger' });
+                      const ok = await confirm({ title: t('account.ac.pkRemoveTitle', { name: p.name }), message: t('account.ac.pkRemoveMsg'), confirmLabel: t('account.ac.remove'), tone: 'danger' });
                       if (!ok) return;
                       try {
                         const r = await reauth(() => api<{ passkeys: PasskeyInfo[] }>('DELETE', `/api/auth/passkeys/${p.id}`));
@@ -551,7 +551,7 @@ function PasskeySection({ disabled }: { disabled: boolean }) {
                       }
                     }}
                   >
-                    Entfernen
+                    {t('account.ac.remove')}
                   </button>
                 </div>
               )}
@@ -559,7 +559,7 @@ function PasskeySection({ disabled }: { disabled: boolean }) {
           ))}
         </ul>
       )}
-      {list && list.length === 0 && <p className="mb-3 text-[13px] text-ink-400">Noch kein Passkey registriert.</p>}
+      {list && list.length === 0 && <p className="mb-3 text-[13px] text-ink-400">{t('account.ac.noPasskey')}</p>}
       {adding ? (
         <form
           className="flex flex-col gap-2 rounded-xl border border-white/[0.06] bg-white/[0.015] p-3 sm:flex-row sm:items-end"
@@ -572,7 +572,7 @@ function PasskeySection({ disabled }: { disabled: boolean }) {
               if (r) {
                 setList(r);
                 setAdding(false);
-                toast('Passkey hinzugefügt.', { tone: 'ok' });
+                toast(t('account.ac.pkAddedToast'), { tone: 'ok' });
               }
             } catch (err) {
               setError(passkeyErrorText(err));
@@ -583,21 +583,21 @@ function PasskeySection({ disabled }: { disabled: boolean }) {
         >
           <div className="flex-1 space-y-1.5">
             <label className="label" htmlFor="pk-name">
-              Name (z. B. Gerät)
+              {t('account.ac.pkNameHint')}
             </label>
             <input id="pk-name" className="input-base" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
             <FormError message={error} />
           </div>
           <button type="submit" className="btn-primary" disabled={busy || !name.trim()}>
-            {busy ? <Loader2 className="size-4 animate-spin" /> : <Fingerprint className="size-4" />} Passkey erstellen
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <Fingerprint className="size-4" />} {t('account.ac2.pkCreate')}
           </button>
           <button type="button" className="btn-ghost" onClick={() => setAdding(false)}>
-            Abbrechen
+            {t('common.cancel')}
           </button>
         </form>
       ) : (
         <button type="button" className="btn-primary" disabled={disabled || !supported} onClick={() => setAdding(true)}>
-          <Fingerprint className="size-4" /> Passkey hinzufügen
+          <Fingerprint className="size-4" /> {t('account.ac.pkAdd')}
         </button>
       )}
       <p className="hint mt-3">
@@ -642,7 +642,7 @@ function PasswordModal({ open, onClose, login, onDone }: { open: boolean; onClos
     onClose();
   };
   return (
-    <Modal open={open} onClose={close} title="Passwort ändern" subtitle="Alle anderen Sitzungen werden danach beendet.">
+    <Modal open={open} onClose={close} title={t('account.ac2.pwChange')} subtitle={t('account.ac2.pwChangeSub')}>
       <form
         className="space-y-4"
         onSubmit={async (e) => {
@@ -652,7 +652,7 @@ function PasswordModal({ open, onClose, login, onDone }: { open: boolean; onClos
           try {
             const r = await api<{ user: ServerUser }>('POST', '/api/auth/password', { currentPassword: current, newPassword: next });
             auth.setUser(r.user);
-            toast('Passwort geändert. Andere Sitzungen wurden beendet.', { tone: 'ok' });
+            toast(t('account.ac2.pwChanged'), { tone: 'ok' });
             close();
             onDone();
           } catch (err) {
@@ -662,13 +662,13 @@ function PasswordModal({ open, onClose, login, onDone }: { open: boolean; onClos
           }
         }}
       >
-        <PasswordField label="Aktuelles Passwort" value={current} onChange={setCurrent} autoComplete="current-password" autoFocus />
-        <PasswordField label="Neues Passwort" value={next} onChange={setNext} autoComplete="new-password" />
+        <PasswordField label={t('account.ac2.pwCurrent')} value={current} onChange={setCurrent} autoComplete="current-password" autoFocus />
+        <PasswordField label={t('account.ac2.pwNew')} value={next} onChange={setNext} autoComplete="new-password" />
         {next && <PasswordStrength password={next} login={login} />}
-        <PasswordField label="Neues Passwort wiederholen" value={confirmPw} onChange={setConfirmPw} autoComplete="new-password" />
+        <PasswordField label={t('account.ac2.pwRepeat')} value={confirmPw} onChange={setConfirmPw} autoComplete="new-password" />
         <FormError message={error} />
         <button type="submit" className="btn-primary w-full" disabled={busy || !ok}>
-          {busy && <Loader2 className="size-4 animate-spin" />} Passwort ändern
+          {busy && <Loader2 className="size-4 animate-spin" />} {t('account.ac2.pwChange')}
         </button>
       </form>
     </Modal>
@@ -701,9 +701,9 @@ function TotpModal({ open, onClose, onDone }: { open: boolean; onClose: () => vo
   }, [qrUrl]);
 
   return (
-    <Modal open={open} onClose={onClose} title="2FA einrichten" subtitle="Mit einer Authenticator-App (z. B. Aegis, 2FAS, Google Authenticator, 1Password).">
+    <Modal open={open} onClose={onClose} title={t('account.ac2.totpSetup')} subtitle={t('account.ac2.totpSetupSub')}>
       {!setup ? (
-        error ? <FormError message={error} /> : <div className="flex items-center gap-2 text-sm text-ink-400"><Loader2 className="size-4 animate-spin" /> Bereite vor …</div>
+        error ? <FormError message={error} /> : <div className="flex items-center gap-2 text-sm text-ink-400"><Loader2 className="size-4 animate-spin" /> {t('account.ac2.preparing')}</div>
       ) : (
         <form
           className="space-y-4"
@@ -713,7 +713,7 @@ function TotpModal({ open, onClose, onDone }: { open: boolean; onClose: () => vo
             setError(undefined);
             try {
               await reauth(() => api('POST', '/api/auth/totp/enable', { code }));
-              toast('2FA ist aktiv.', { tone: 'ok' });
+              toast(t('account.ac2.totpActiveToast'), { tone: 'ok' });
               onDone();
               onClose();
             } catch (err) {
@@ -725,28 +725,28 @@ function TotpModal({ open, onClose, onDone }: { open: boolean; onClose: () => vo
           }}
         >
           <ol className="list-decimal space-y-1 pl-5 text-[13px] text-ink-300">
-            <li>QR-Code mit der App scannen (oder Schlüssel manuell eingeben).</li>
-            <li>Den angezeigten 6-stelligen Code unten eintragen.</li>
+            <li>{t('account.ac2.scan')}</li>
+            <li>{t('account.ac2.enterCode')}</li>
           </ol>
           <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
-            <img src={qrUrl} alt="QR-Code für die Authenticator-App" className="size-44 rounded-xl bg-white p-2" />
+            <img src={qrUrl} alt={t('account.ac2.qr')} className="size-44 rounded-xl bg-white p-2" />
             <div className="min-w-0 space-y-1">
-              <div className="text-[11px] uppercase tracking-[0.14em] text-ink-500">Schlüssel</div>
+              <div className="text-[11px] uppercase tracking-[0.14em] text-ink-500">{t('account.ac2.key')}</div>
               <code className="block break-all select-all font-mono text-[13px] text-leaf-200">{setup.secret.replace(/(.{4})/g, '$1 ').trim()}</code>
-              <p className="hint">Nur hier sichtbar. Der Schlüssel wird verschlüsselt auf dem Server gespeichert.</p>
+              <p className="hint">{t('account.ac2.keyHint')}</p>
             </div>
           </div>
           <input
             className="input-base text-center font-mono text-xl tracking-[0.4em]"
             inputMode="numeric"
             autoComplete="one-time-code"
-            aria-label="Bestätigungscode"
+            aria-label={t('account.ac2.code')}
             value={code}
             onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
           />
           <FormError message={error} />
           <button type="submit" className="btn-primary w-full" disabled={busy || code.length !== 6}>
-            {busy && <Loader2 className="size-4 animate-spin" />} Aktivieren
+            {busy && <Loader2 className="size-4 animate-spin" />} {t('account.ac2.activate')}
           </button>
         </form>
       )}
@@ -760,11 +760,11 @@ function SecurityStatus({ ov, totp }: { ov: Overview; totp: boolean }) {
   const secondFactor = totp || ov.passkeys > 0;
   const codesOk = ov.recoveryCodesRemaining >= 4;
   const items: { label: string; value: string; ok: boolean; to: string }[] = [
-    { label: 'Zweiter Faktor', value: totp ? '2FA aktiv' : ov.passkeys > 0 ? 'Passkey' : 'fehlt', ok: secondFactor, to: 'sicherheit' },
-    { label: 'Passkeys', value: String(ov.passkeys), ok: true, to: 'passkeys' },
-    { label: 'Recovery-Codes', value: `${ov.recoveryCodesRemaining} / 10`, ok: codesOk, to: 'sicherheit' },
-    { label: 'Aktive Sitzungen', value: String(ov.sessions), ok: true, to: 'sitzungen' },
-    { label: 'Offline-Kopie', value: offlineEnabled ? 'dauerhaft' : 'nur Sitzung', ok: true, to: 'geraet' },
+    { get label() { return t('account.ac2.second'); }, value: totp ? t('account.ac2.totpActive') : ov.passkeys > 0 ? 'Passkey' : t('account.ac2.missing'), ok: secondFactor, to: 'sicherheit' },
+    { label: t('account.ac.secPasskeys'), value: String(ov.passkeys), ok: true, to: 'passkeys' },
+    { label: t('account.ac2.codes'), value: `${ov.recoveryCodesRemaining} / 10`, ok: codesOk, to: 'sicherheit' },
+    { label: t('account.ac.sessions'), value: String(ov.sessions), ok: true, to: 'sitzungen' },
+    { label: t('account.ac2.offlineCopy'), value: offlineEnabled ? t('account.ac2.permanent') : t('account.ac2.sessionOnly'), ok: true, to: 'geraet' },
   ];
   return (
     <div className="card flex flex-col gap-4 p-4 xl:flex-row xl:items-center">
@@ -773,8 +773,8 @@ function SecurityStatus({ ov, totp }: { ov: Overview; totp: boolean }) {
           <ShieldCheck className="size-5" />
         </span>
         <div>
-          <div className="text-[13.5px] font-medium text-ink-50">{secondFactor && codesOk ? 'Gut abgesichert' : 'Absicherung verbessern'}</div>
-          <div className="text-[11.5px] text-ink-500">{secondFactor ? (codesOk ? 'Zweiter Faktor und Recovery-Codes vorhanden' : 'Neue Recovery-Codes empfohlen') : '2FA oder Passkey empfohlen'}</div>
+          <div className="text-[13.5px] font-medium text-ink-50">{secondFactor && codesOk ? t('account.ac2.good') : t('account.ac2.improve')}</div>
+          <div className="text-[11.5px] text-ink-500">{secondFactor ? (codesOk ? t('account.ac2.allGood') : t('account.ac2.newCodesRec')) : t('account.ac2.factorRec')}</div>
         </div>
       </div>
       <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-5">
@@ -784,7 +784,7 @@ function SecurityStatus({ ov, totp }: { ov: Overview; totp: boolean }) {
             <span className={`mt-0.5 flex items-center gap-1.5 text-[13px] ${i.ok ? 'text-ink-100' : 'text-amber-200'}`}>
               <span className={`size-1.5 rounded-full ${i.ok ? 'bg-leaf-400' : 'bg-amber-300'}`} aria-hidden />
               {i.value}
-              {!i.ok && <span className="sr-only">(empfohlen zu verbessern)</span>}
+              {!i.ok && <span className="sr-only">{t('account.ac2.toImprove')}</span>}
             </span>
           </button>
         ))}
@@ -810,23 +810,23 @@ function DeviceSection() {
   }, []);
   const records = Object.values(data).reduce((n, l) => n + l.length, 0);
   return (
-    <Section id="geraet" icon={<Smartphone className="size-4" />} title="Dieses Gerät" subtitle="Lokale Arbeitskopie in diesem Browser – für Offline-Nutzung und Synchronisation.">
+    <Section id="geraet" icon={<Smartphone className="size-4" />} title={t('account.ac.secDevice')} subtitle={t('account.ac2.deviceSub')}>
       <dl className="mb-4 grid grid-cols-2 gap-3 text-[13px] sm:grid-cols-3">
         <div>
-          <dt className="text-ink-500">Lokale Datensätze</dt>
+          <dt className="text-ink-500">{t('account.ac2.records')}</dt>
           <dd className="mt-0.5 tabular text-ink-100">{records}</dd>
         </div>
         <div>
-          <dt className="text-ink-500">Belegter Browser-Speicher</dt>
+          <dt className="text-ink-500">{t('account.ac2.usage')}</dt>
           <dd className="mt-0.5 tabular text-ink-100">{usage !== undefined ? formatBytes(usage) : 'unbekannt'}</dd>
         </div>
         <div>
-          <dt className="text-ink-500">Noch nicht übertragen</dt>
+          <dt className="text-ink-500">{t('account.ac2.pending')}</dt>
           <dd className={`mt-0.5 tabular ${auth.sync.pending ? 'text-amber-200' : 'text-ink-100'}`}>{auth.sync.pending}</dd>
         </div>
       </dl>
       <details className="mb-4 rounded-xl border border-white/[0.06] bg-white/[0.015] px-3.5 py-2.5 text-[13px]">
-        <summary className="cursor-pointer text-ink-200">Aufschlüsselung der lokalen Daten</summary>
+        <summary className="cursor-pointer text-ink-200">{t('account.ac2.breakdown')}</summary>
         <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-3">
           {Object.entries(data)
             .filter(([, l]) => l.length > 0)
@@ -837,7 +837,7 @@ function DeviceSection() {
               </div>
             ))}
         </dl>
-        <p className="hint mt-2">Gemeinsame Bereiche werden nicht dauerhaft gespeichert (nur im Arbeitsspeicher, solange die App geöffnet ist). Sortenkatalog und Academy-Artikel lädt die App bei Bedarf; Academy-Texte sind Teil der App-Hülle.</p>
+        <p className="hint mt-2">{t('account.ac2.sharedMem')}</p>
       </details>
       <label className={`mb-3 flex items-start gap-3 rounded-xl border p-3.5 ${auth.offlineEnabled ? 'border-leaf-500/25 bg-leaf-500/[0.05]' : 'border-white/[0.06] bg-white/[0.015]'}`}>
         <input
@@ -849,9 +849,9 @@ function DeviceSection() {
             const on = e.target.checked;
             if (!on) {
               const ok = await confirm({
-                title: 'Offline-Nutzung ausschalten?',
-                message: 'Die lokale Kopie bleibt bis zum Abmelden für diese Sitzung erhalten und wird dann gelöscht (nicht übertragene Änderungen werden vorher nie verworfen). Ein Start ohne Verbindung ist danach nicht mehr möglich.',
-                confirmLabel: 'Ausschalten',
+                title: t('account.ac2.offOffTitle'),
+                message: t('account.ac2.offOffMsg'),
+                confirmLabel: t('account.ac2.turnOff'),
               });
               if (!ok) return;
             }
@@ -860,14 +860,14 @@ function DeviceSection() {
           }}
         />
         <span>
-          <span className="block text-[13.5px] font-medium text-ink-100">Offline-Nutzung auf diesem Gerät</span>
+          <span className="block text-[13.5px] font-medium text-ink-100">{t('account.ac2.offline')}</span>
           <span className="mt-0.5 block text-[12.5px] leading-relaxed text-ink-400">
             {shared
-              ? 'Auf einem geteilten Gerät nicht verfügbar.'
-              : 'Ein: Deine privaten Daten bleiben nach dem Abmelden in diesem Browser, TERPGRID startet auch ohne Verbindung. Aus (Standard): Die Kopie dient nur der laufenden Sitzung und wird beim Abmelden und beim Kontowechsel gelöscht.'}
+              ? t('account.ac2.notOnShared')
+              : t('account.ac2.offlineText')}
           </span>
           {auth.offlineEnabled && persisted !== undefined && (
-            <span className="mt-1 block text-[12px] text-ink-500">{persisted ? 'Der Browser hat dauerhaften Speicher zugesagt.' : 'Der Browser hat keinen dauerhaften Speicher zugesagt – er kann die Daten bei Speichermangel entfernen (sie bleiben auf dem Server).'}</span>
+            <span className="mt-1 block text-[12px] text-ink-500">{persisted ? t('account.ac2.persisted') : t('account.ac2.notPersisted')}</span>
           )}
         </span>
       </label>
@@ -883,15 +883,15 @@ function DeviceSection() {
           }}
         />
         <span>
-          <span className="block text-[13.5px] font-medium text-ink-100">Geteiltes Gerät</span>
+          <span className="block text-[13.5px] font-medium text-ink-100">{t('account.ac2.sharedDevice')}</span>
           <span className="mt-0.5 block text-[12.5px] leading-relaxed text-ink-400">
-            Beim Abmelden wird die lokale Kopie immer gelöscht, deine Kennung wird nicht gemerkt und Offline-Weiterarbeiten ist aus. Empfohlen für Geräte, die auch andere nutzen.
+            {t('account.ac2.sharedText')}
           </span>
         </span>
       </label>
       <div className="mt-3 flex flex-wrap gap-2">
         <button type="button" className="btn-ghost" disabled={!auth.engine || auth.state.kind !== 'authenticated' || auth.state.offline || auth.sync.phase === 'syncing'} onClick={() => void auth.engine?.syncNow()}>
-          <RefreshCw className={`size-4 ${auth.sync.phase === 'syncing' ? 'animate-spin' : ''}`} /> {auth.sync.phase === 'syncing' ? 'Synchronisierung läuft' : 'Jetzt synchronisieren'}
+          <RefreshCw className={`size-4 ${auth.sync.phase === 'syncing' ? 'animate-spin' : ''}`} /> {auth.sync.phase === 'syncing' ? t('account.ac2.syncing') : t('account.ac2.syncNow')}
         </button>
         <button
           type="button"
@@ -901,12 +901,12 @@ function DeviceSection() {
             if (!user) return;
             const pending = auth.sync.pending;
             const ok = await confirm({
-              title: 'Lokale Kopie löschen?',
+              title: t('account.ac2.wipeTitle'),
               message:
                 pending > 0
-                  ? `${pending} Änderung(en) wurden noch nicht vom Server bestätigt und gehen dabei verloren. Besser zuerst synchronisieren.`
-                  : 'Die Daten werden aus diesem Browser entfernt und anschließend frisch vom Server geladen. Auf dem Server ändert sich nichts.',
-              confirmLabel: pending > 0 ? 'Trotzdem löschen' : 'Löschen und neu laden',
+                  ? t('account.ac2.pendingLoss', { count: pending })
+                  : t('account.ac2.wipeMsg'),
+              confirmLabel: pending > 0 ? t('account.ac2.wipeAnyway') : t('account.ac2.wipeReload'),
               tone: pending > 0 ? 'danger' : 'default',
             });
             if (!ok) return;
@@ -917,12 +917,11 @@ function DeviceSection() {
             window.location.reload();
           }}
         >
-          <HardDrive className="size-4" /> Lokale Kopie löschen und neu laden
+          <HardDrive className="size-4" /> {t('account.ac2.wipeButton')}
         </button>
       </div>
       <p className="hint mt-3">
-        Die lokale Kopie ist nicht verschlüsselt. Eine Verschlüsselung im Browser würde einen Schlüssel auf demselben Gerät erfordern und gegen Personen mit Zugriff auf das entsperrte
-        Gerät keinen echten Schutz bieten. Schütze das Gerät selbst (Bildschirmsperre, Geräteverschlüsselung).
+        {t('account.ac2.unencrypted')}
       </p>
     </Section>
   );
@@ -939,38 +938,30 @@ function PrivacyCenter() {
     </div>
   );
   return (
-    <Section id="datenschutz" icon={<ShieldCheck className="size-4" />} title="Datenschutz-Center" subtitle="Was TERPGRID speichert, wo und wie geschützt – ohne Übertreibung.">
+    <Section id="datenschutz" icon={<ShieldCheck className="size-4" />} title={t('account.ac.secPrivacy')} subtitle={t('account.ac2.pcSub')}>
       <div className="space-y-4">
-        <Item icon={<Server className="size-4" />} title="Auf deinem TERPGRID-Server">
-          Growlogs, Pflanzen, Fotos, Journal, Sammlung, Laborberichte, Einstellungen. Inhalte sind mit AES-256-GCM und einem eigenen Schlüssel je Konto verschlüsselt; dieser ist mit
-          einem Master-Key geschützt, der nicht in der Datenbank liegt. <strong className="text-ink-200">Keine Ende-zu-Ende-Verschlüsselung:</strong> Wer den laufenden Server
-          vollständig kontrolliert (z. B. der Betreiber mit Shell-Zugriff), könnte technisch entschlüsseln. Die Administration hat dafür bewusst keine Funktion.
+        <Item icon={<Server className="size-4" />} title={t('account.ac2.pcServer')}>
+          {t('account.pc.serverA')} <strong className="text-ink-200">{t('account.pc.noE2ee')}</strong> {t('account.pc.serverB')}
         </Item>
-        <Item icon={<UserRound className="size-4" />} title="Unverschlüsselt auf dem Server (Metadaten)">
-          Kennung, Anzeigename, Rolle, Zeitpunkte von Anmeldungen und Änderungen, Anzahl und Größe der Datensätze/Dateien, gekürzter Browser-Typ je Sitzung. IP-Adressen nur als
-          gekürzter, nicht umkehrbarer Hash im Sicherheitsprotokoll (Standard 180 Tage, vom Betreiber einstellbar). Das Protokoll enthält nie Inhalte, Passwörter, Codes oder Schlüssel.
+        <Item icon={<UserRound className="size-4" />} title={t('account.ac2.pcMeta')}>
+          {t('account.pc.meta')}
         </Item>
-        <Item icon={<Laptop className="size-4" />} title="In diesem Browser">
-          Während der Sitzung eine Arbeitskopie deiner Daten (IndexedDB, je Konto getrennt, <strong className="text-ink-200">unverschlüsselt</strong>), ausstehende Änderungen und die
-          Eingabefelder des THC Lab (localStorage). Über das Abmelden hinaus bleibt die Kopie nur mit eingeschalteter Offline-Nutzung („Dieses Gerät“) – oder solange Änderungen noch
-          nicht übertragen sind; diese kann nur dein eigenes Konto nach der Anmeldung übertragen. Gemeinsame Bereiche liegen nur im Arbeitsspeicher. Das Sitzungs-Cookie ist für
-          Skripte nicht lesbar. Schlüssel liegen nie im Browser.
+        <Item icon={<Laptop className="size-4" />} title={t('account.ac2.pcBrowser')}>
+          {t('account.pc.browserA')} <strong className="text-ink-200">{t('account.pc.unencrypted')}</strong>{t('account.pc.browserB')}
         </Item>
-        <Item icon={<RefreshCw className="size-4" />} title="Externe Sortendaten">
-          Discover nutzt StrainAPI und (auf Klick) CannaLib über deinen Server. Die Anbieter sehen nur die Server-Adresse und Suchbegriffe – keine persönlichen Daten, keine Cookies.
+        <Item icon={<RefreshCw className="size-4" />} title={t('account.ac2.pcExternal')}>
+          {t('account.pc.external')}
         </Item>
-        <Item icon={<Share2 className="size-4" />} title="Gemeinsame Bereiche und Freunde">
-          Nur was du ausdrücklich teilst, landet in einem gemeinsamen Bereich – mit eigenem Bereichsschlüssel (getrennt von deinem Konto). Profilangaben sind standardmäßig privat und nur für freigegebene Freunde sichtbar; dein Anmeldename ist für andere nie
-          sichtbar. Keine öffentlichen Profile, kein Verzeichnis, keine Weitergabe außerhalb dieser Instanz. Details und Widerruf: „Zusammenarbeit & Freigaben“.
+        <Item icon={<Share2 className="size-4" />} title={t('account.ac2.pcShared')}>
+          {t('account.pc.shared')}
         </Item>
-        <Item icon={<Users className="size-4" />} title="Administration">
-          Administratoren sehen Kennungen, Status, Speicherverbrauch und Systemzustand – aber keine Inhalte. Es gibt keinen Generalschlüssel und keine versteckte Zugriffsfunktion.
+        <Item icon={<Users className="size-4" />} title={t('account.ac.secAdmin')}>
+          {t('account.pc.admin')}
         </Item>
-        <Item icon={<HardDrive className="size-4" />} title="Backups und Löschung">
-          Server-Backups sind zusätzlich verschlüsselt. Nach einer Kontolöschung bleiben (verschlüsselte) Daten bis zum Ablauf der Backup-Aufbewahrung erhalten (Standard bis zu ca. 6
-          Monate).
+        <Item icon={<HardDrive className="size-4" />} title={t('account.ac2.pcBackups')}>
+          {t('account.pc.backups')}
         </Item>
-        <Item icon={<ShieldCheck className="size-4" />} title="Kein Tracking">Keine Analyse-, Werbe- oder Tracking-Dienste. Keine E-Mail, keine Telefonnummer, kein Klarname.</Item>
+        <Item icon={<ShieldCheck className="size-4" />} title={t('account.ac2.pcTracking')}>{t('account.ac2.pcTrackingText')}</Item>
       </div>
     </Section>
   );
@@ -985,11 +976,11 @@ function DeleteSection({ user, disabled }: { user: ServerUser; disabled: boolean
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   return (
-    <Section id="loeschen" icon={<Trash2 className="size-4" />} title="Konto löschen" subtitle="Endgültig – Datensätze, Fotos, Dokumente, Sitzungen und Recovery-Codes.">
+    <Section id="loeschen" icon={<Trash2 className="size-4" />} title={t('account.ac.secDelete')} subtitle={t('account.ac2.delSub')}>
       <button type="button" className="btn border border-rose-400/30 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20" disabled={disabled} onClick={() => setOpen(true)}>
-        <Trash2 className="size-4" /> Konto endgültig löschen …
+        <Trash2 className="size-4" /> {t('account.ac2.delButton')}
       </button>
-      <Modal open={open} onClose={() => setOpen(false)} title="Konto endgültig löschen?" size="sm">
+      <Modal open={open} onClose={() => setOpen(false)} title={t('account.ac2.delTitle')} size="sm">
         <form
           className="space-y-4"
           onSubmit={async (e) => {
@@ -1002,7 +993,7 @@ function DeleteSection({ user, disabled }: { user: ServerUser; disabled: boolean
               // Lokale Kopie und Offline-Freigabe dieses Geräts entfernen (das Konto existiert nicht mehr)
               auth.setOfflineMode(false);
               await auth.logout({ wipeLocal: true });
-              toast('Dein Konto wurde gelöscht.', { tone: 'ok' });
+              toast(t('account.ac2.deleted'), { tone: 'ok' });
             } catch (err) {
               setError(errText(err));
             } finally {
@@ -1011,18 +1002,17 @@ function DeleteSection({ user, disabled }: { user: ServerUser; disabled: boolean
           }}
         >
           <Callout tone="danger">
-            Alle Inhalte werden sofort vom Server und von diesem Gerät entfernt. Lade vorher einen Export herunter, falls du die Daten behalten möchtest. In Server-Backups bleiben
-            verschlüsselte Kopien bis zum Ablauf der Aufbewahrung. Lokale Kopien auf anderen Geräten werden dort erst beim nächsten Öffnen von TERPGRID entfernt (ohne Offline-Freigabe) – eine Fernlöschung ist nicht möglich. Gemeinsame Bereiche mit weiteren Mitgliedern musst du vorher übertragen oder löschen; deine Kommentare bleiben dort als „Gelöschtes Konto“.
+            {t('account.ac2.deleteWarn')}
           </Callout>
           <div className="space-y-1.5">
             <label className="label" htmlFor="del-confirm">
-              Zur Bestätigung deine Kennung eingeben: <span className="font-mono text-ink-100">{user.loginName}</span>
+              {t('account.ac2.typeId')} <span className="font-mono text-ink-100">{user.loginName}</span>
             </label>
             <input id="del-confirm" className="input-base font-mono" value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" spellCheck={false} />
           </div>
           <FormError message={error} />
           <button type="submit" className="btn w-full border border-rose-400/40 bg-rose-500/20 text-rose-100 hover:bg-rose-500/30" disabled={busy || typed.trim().toLowerCase() !== user.loginName}>
-            {busy && <Loader2 className="size-4 animate-spin" />} Endgültig löschen
+            {busy && <Loader2 className="size-4 animate-spin" />} {t('account.ac2.deleteFinal')}
           </button>
         </form>
       </Modal>
