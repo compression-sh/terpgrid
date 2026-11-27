@@ -49,6 +49,7 @@ Gegenüber 5.9.0-rc.1 gibt es **keine Datenbankmigration** und keine neuen Funkt
 
 - Version 6.0.0 in Oberfläche, API, Service Worker und Image-Tags.
 - `install.sh` setzt bei Neuinstallationen die Version aus `server/package.json`. Bisher bekamen frische Installationen den veralteten Wert aus `.env.example`.
+- Anmeldung robuster: Eine abgebrochene Serverantwort, etwa beim Neuladen der Seite, führt nicht mehr zu einem Fehler in der App.
 - Code-Qualität:
   - 9 Lint-Warnungen behoben (Effekt-Abhängigkeiten in Zeitachse und Entdecken), ohne Verhaltensänderung;
   - ungenutzten Code entfernt.

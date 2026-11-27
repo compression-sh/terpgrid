@@ -1,6 +1,6 @@
 # TERPGRID 6.0 Stable – Release-Checkliste
 
-Stand: nach 5.9.0-rc.1.
+Stand: nach 5.9.0-rc.1; **Status für 6.0.0: `RELEASE-6.0-ACCEPTANCE.md` §1** (offen: G3, G6, G7, G8, G10).
 
 **Regel:** 6.0 wird erst erstellt, wenn alle Pflicht-Gates erfüllt sind und die Freigabe ausdrücklich erteilt wurde. Eine grüne CI allein genügt nicht.
 Nachweise und aktueller Status je Anforderung: `PHASE5-9-RELEASE-MATRIX.md`.

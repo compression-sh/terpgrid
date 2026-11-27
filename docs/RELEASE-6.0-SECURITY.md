@@ -22,7 +22,8 @@ Stand: 6.0.0.
 - Code-Änderungen in 6.0:
   - Lint-Bereinigung ohne Verhaltensänderung;
   - toter Code entfernt;
-  - `install.sh` setzt den Image-Tag.
+  - `install.sh` setzt den Image-Tag;
+  - Robustheitsfix im API-Client: Ein abgebrochenes Lesen einer Antwort gilt als Verbindungsfehler, statt still `null` zu liefern. Kein Sicherheitsbefund; der Abbruch führte nur zu einem JS-Fehler.
 
 ## 2. Prüfmatrix
 
@@ -37,7 +38,7 @@ Stand: 6.0.0.
 | Wiederherstellung | Code einmalig, beendet Sitzungen, entfernt Passkeys und 2FA | `auth.test`, `security57` A3, `passkeys.test` |
 | Kontoverschlüsselung | AES-256-GCM mit Schlüssel je Konto (Generationen), AAD-Bindung, Rotation unter Last verlustfrei | `crypto.test`, `rotation.test`, `security57` K1 |
 | Bereichsverschlüsselung | eigener Schlüssel je Bereich | `collab.test`; DR: `verify-data` entschlüsselt Bereichsdatensätze und -dateien |
-| Klartext ruhender Daten | Marker in privatem Eintrag und Kommentar: 0 Treffer in DB-Dateien, Dump, Dateispeicher, Logs, `/tmp`, Backup | DR-Übung 5.9 (Methode unverändert); 6.0: `RELEASE-6.0-ACCEPTANCE.md` §5 |
+| Klartext ruhender Daten | Marker in privatem Eintrag und Kommentar: 0 Treffer in DB-Dateien, Dump, Dateispeicher, Logs, `/tmp`, Backup | DR-Übung 6.0: `RELEASE-6.0-ACCEPTANCE.md` §6 |
 | PostgreSQL-RLS | Laufzeitrolle ohne `BYPASSRLS` und ohne Schemarechte; ohne Kontext keine, mit fremdem Kontext keine fremden Daten | `security57` R1/R2, `isolation*.test` |
 | Kontoisolation | 5 Konten, alle Datenarten | `isolation-all.test`; Browser: Kontowechsel in 3 Engines |
 | Zusammenarbeit | 4 Rollen, Zugriffsstufen, serverseitige 403, Entzug wirkt sofort, keine Anmeldenamen in fremden Ansichten | `collab.test` (31), `permissions.test`; `e2e-55` 26/26 in 3 Engines |

@@ -18,7 +18,7 @@ TERPGRID läuft in zwei Modi:
 - Fotos werden beim Import verkleinert und neu kodiert. Dabei fallen alle eingebetteten Metadaten weg (inkl. GPS).
 - Ein Informationswerkzeug zur Dokumentation und Schadensminimierung, keine medizinische oder rechtliche Beratung.
 
-**Self-Hosting:** [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) · Checkliste: [docs/PRODUCTION-CHECKLIST.md](docs/PRODUCTION-CHECKLIST.md) · Störungen: [docs/RUNBOOK.md](docs/RUNBOOK.md) · Backups: [docs/BACKUP.md](docs/BACKUP.md) · Sicherheit: [docs/SECURITY.md](docs/SECURITY.md) · Architektur: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Bedrohungsmodell: [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md) · Verschlüsselung: [docs/E2EE-DECISION.md](docs/E2EE-DECISION.md)
+**Self-Hosting:** [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) · Checkliste: [docs/PRODUCTION-CHECKLIST.md](docs/PRODUCTION-CHECKLIST.md) · Störungen: [docs/RUNBOOK.md](docs/RUNBOOK.md) · Upgrade: [docs/UPGRADE-6.0.md](docs/UPGRADE-6.0.md) · Wartung: [docs/MAINTENANCE.md](docs/MAINTENANCE.md) · Backups: [docs/BACKUP.md](docs/BACKUP.md) · Sicherheit: [docs/SECURITY.md](docs/SECURITY.md) · Architektur: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Bedrohungsmodell: [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md) · Verschlüsselung: [docs/E2EE-DECISION.md](docs/E2EE-DECISION.md)
 
 ## Bereiche
 
@@ -127,7 +127,7 @@ cd server && npm install --legacy-peer-deps
 TEST_PG_URL=postgres://postgres:<pw>@127.0.0.1:5432/postgres npm test
 ```
 
-Server-Verwaltung (im Container: `docker compose exec api node dist/cli.js <befehl>`): `invite`, `promote`/`demote`, `migrate`, `schema-status`, `verify-data`, `rotate-keys` (Server-Schlüssel), `rotate-user-keys`/`key-status`/`purge-retired-keys` (Schlüssel je Konto), `import-catalog` (Sortenkatalog, besser über `deploy/import-catalog.sh`), `cleanup`, `status [--verify]` (lesende Betriebsdiagnose, auch als `deploy/status.sh`). Details: [docs/RUNBOOK.md](docs/RUNBOOK.md). Upgrade auf 5.9: [docs/UPGRADE-5.9.md](docs/UPGRADE-5.9.md).
+Server-Verwaltung (im Container: `docker compose exec api node dist/cli.js <befehl>`): `invite`, `promote`/`demote`, `migrate`, `schema-status`, `verify-data`, `rotate-keys` (Server-Schlüssel), `rotate-user-keys`/`key-status`/`purge-retired-keys` (Schlüssel je Konto), `import-catalog` (Sortenkatalog, besser über `deploy/import-catalog.sh`), `cleanup`, `status [--verify]` (lesende Betriebsdiagnose, auch als `deploy/status.sh`). Details: [docs/RUNBOOK.md](docs/RUNBOOK.md). Upgrade auf 6.0: [docs/UPGRADE-6.0.md](docs/UPGRADE-6.0.md) · Wartung: [docs/MAINTENANCE.md](docs/MAINTENANCE.md).
 
 Tests verwenden gekürzte, echte API-Antworten als Fixtures (`src/lib/__tests__/fixtures`).
 

@@ -11,6 +11,8 @@ Abnahme: `docs/RELEASE-6.0-ACCEPTANCE.md`.
 - Betreiber-Gates G6–G8 und G10 (`docs/RELEASE-6.0-CHECKLIST.md`).
 
 ### Behoben
+- Anmeldung: Bricht das Lesen einer Serverantwort ab, etwa beim Neuladen während der Sitzungsprüfung in Firefox,
+  gilt das jetzt als Verbindungsfehler. Bisher kam still eine leere Antwort zurück, und die App warf einen JS-Fehler.
 - `install.sh` setzt bei Neuinstallationen `TERPGRID_VERSION` aus `server/package.json`. Bisher trugen frische
   Installationen den veralteten Wert aus `.env.example` als Image-Tag und Versionsanzeige.
 
