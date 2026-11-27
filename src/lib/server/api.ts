@@ -50,11 +50,20 @@ export async function api<T = unknown>(method: string, path: string, body?: unkn
     throw new ApiError(0, 'Server nicht erreichbar – Änderungen bleiben auf diesem Gerät gespeichert.');
   }
   if (opts.binary && res.ok) return (await res.arrayBuffer()) as T;
+  // Abgebrochenes Lesen (Verbindung weg, Seite wird neu geladen) ist ein Verbindungsfehler – nicht „leere Antwort“:
+  // sonst erhielten Aufrufer bei 200 still `null` (z. B. Sitzung ohne `user`).
+  let text: string;
+  try {
+    text = await res.text();
+  } catch (e) {
+    if ((e as Error).name === 'AbortError') throw e;
+    throw new ApiError(0, 'Server nicht erreichbar – Änderungen bleiben auf diesem Gerät gespeichert.');
+  }
   let json: Record<string, unknown> | null = null;
   try {
-    json = await res.json();
+    json = text ? JSON.parse(text) : null;
   } catch {
-    json = null;
+    json = null; // kein JSON (z. B. HTML einer fremden Seite) – die Aufrufer prüfen die Form
   }
   if (!res.ok) {
     if (res.status === 401 && !path.startsWith('/api/auth/')) onUnauthorized?.();
