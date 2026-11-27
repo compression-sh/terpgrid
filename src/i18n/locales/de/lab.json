@@ -508,5 +508,38 @@
   "syncNote": "Eingaben werden als Entwurf und gespeicherte Berechnungen als Datensätze verschlüsselt mit deinem Konto synchronisiert.",
   "localNote": "Eingaben und gespeicherte Berechnungen bleiben im lokalen Speicher dieses Browsers.",
   "noMedicalText": "Diese App ist ein Informations- und Rechenwerkzeug zur Schadensminimierung. Sie ersetzt keine ärztliche oder pharmazeutische Beratung und gibt keine Dosierungsempfehlung. Gesetzliche Regelungen zu Besitz, Anbau und Konsum unterscheiden sich je nach Land."
+ },
+ "tab": {
+  "edibles": "Edibles",
+  "ediblesT": "Edibles & Cannabutter",
+  "ediblesS": "THC-Gehalt von Butter, Rezept und Portion abschätzen – mit Schwankungsbreite.",
+  "joint": "Joint",
+  "jointT": "Joint & Rauchen",
+  "jointS": "Theoretischer Gehalt, theoretisch konsumierter Anteil und grobe Spanne der Aufnahme – klar getrennt.",
+  "dosage": "Dosierung",
+  "dosageT": "Dosis & Potenz",
+  "dosageS": "Potenz einordnen, Edible-Dosen mit vorsichtigen Referenzbereichen vergleichen.",
+  "timeline": "Zeitachse",
+  "timelineT": "Wirkungsdauer",
+  "timelineS": "Typische Zeitbereiche für Wirkeintritt, Hauptwirkung, Abklingen und Nachwirkungen.",
+  "tools": "Werkzeuge",
+  "toolsS": "Umrechnungen, Konzentrationen, Verhältnisse und Umkehrrechner.",
+  "compare": "Vergleich",
+  "compareT": "Rezeptvergleich",
+  "compareS": "Mehrere hypothetische Rezepte nebeneinander vergleichen.",
+  "saved": "Gespeichert",
+  "savedT": "Gespeicherte Berechnungen",
+  "savedS": "Eigene Berechnungen – lokal gespeichert und Teil des TERPGRID-Backups.",
+  "sources": "Quellen",
+  "sourcesT": "Formeln & Quellen",
+  "sourcesS": "Wie gerechnet wird und worauf die Annahmen beruhen."
+ },
+ "page": {
+  "unnamed": "Unbenannte Berechnung",
+  "cannotOpen": "Diese Berechnung kann nicht geöffnet werden.",
+  "important": "Wichtig:",
+  "adults": "Nur für Erwachsene. Gesetzliche Regelungen beachten.",
+  "closeHint": "Hinweis schließen",
+  "disclaimer": "Alle Werte sind rechnerische Schätzungen mit großer Unsicherheit, keine Dosierungsempfehlung und keine Wirkungsprognose. Selbstgemachte Edibles können deutlich stärker oder schwächer sein als berechnet. Edibles wirken verzögert (bis zu 2 Std.) – nicht nachdosieren."
  }
 }

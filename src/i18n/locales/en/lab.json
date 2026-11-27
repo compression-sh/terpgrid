@@ -508,5 +508,38 @@
   "syncNote": "Inputs are synced as a draft and saved calculations as records, encrypted with your account.",
   "localNote": "Inputs and saved calculations stay in this browser’s local storage.",
   "noMedicalText": "This app is an information and calculation tool for harm reduction. It does not replace medical or pharmaceutical advice and does not give dosing recommendations. Laws on possession, cultivation and use differ from country to country."
+ },
+ "tab": {
+  "edibles": "Edibles",
+  "ediblesT": "Edibles & cannabutter",
+  "ediblesS": "Estimate the THC content of butter, recipe and portion – with a range.",
+  "joint": "Joint",
+  "jointT": "Joint & smoking",
+  "jointS": "Theoretical content, theoretically consumed share and a rough range of uptake – clearly separated.",
+  "dosage": "Dosage",
+  "dosageT": "Dose & potency",
+  "dosageS": "Classify potency, compare edible doses with cautious reference ranges.",
+  "timeline": "Timeline",
+  "timelineT": "Duration of effects",
+  "timelineS": "Typical time ranges for onset, peak, wearing off and after-effects.",
+  "tools": "Tools",
+  "toolsS": "Conversions, concentrations, ratios and reverse calculators.",
+  "compare": "Compare",
+  "compareT": "Recipe comparison",
+  "compareS": "Compare several hypothetical recipes side by side.",
+  "saved": "Saved",
+  "savedT": "Saved calculations",
+  "savedS": "Your own calculations – stored locally and part of the TERPGRID backup.",
+  "sources": "Sources",
+  "sourcesT": "Formulas & sources",
+  "sourcesS": "How calculations work and what the assumptions are based on."
+ },
+ "page": {
+  "unnamed": "Untitled calculation",
+  "cannotOpen": "This calculation cannot be opened.",
+  "important": "Important:",
+  "adults": "Adults only. Observe the law.",
+  "closeHint": "Close notice",
+  "disclaimer": "All values are calculated estimates with large uncertainty, not dosing advice and not a prediction of effects. Homemade edibles can be considerably stronger or weaker than calculated. Edibles act with a delay (up to 2 h) – do not redose."
  }
 }

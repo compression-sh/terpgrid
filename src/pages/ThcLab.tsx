@@ -21,18 +21,19 @@ import { createRecord, deleteSimple } from '../lib/db/repo';
 import type { CalculationRecord } from '../lib/db/types';
 import { isEdibleInput, isRecipeList, isSmokingInput } from '../lib/guards';
 import type { CalculationKind, SavedCalculation } from '../lib/storage';
+import { t } from '../i18n';
 
 export type LabTab = 'edibles' | 'smoking' | 'dosage' | 'timeline' | 'tools' | 'compare' | 'saved' | 'sources';
 
 const TABS: { id: LabTab; label: string; icon: ReactNode; title: string; subtitle: string }[] = [
-  { id: 'edibles', label: 'Edibles', icon: <Cookie className="size-4" />, title: 'Edibles & Cannabutter', subtitle: 'THC-Gehalt von Butter, Rezept und Portion abschätzen – mit Schwankungsbreite.' },
-  { id: 'smoking', label: 'Joint', icon: <Cigarette className="size-4" />, title: 'Joint & Rauchen', subtitle: 'Theoretischer Gehalt, theoretisch konsumierter Anteil und grobe Spanne der Aufnahme – klar getrennt.' },
-  { id: 'dosage', label: 'Dosierung', icon: <Gauge className="size-4" />, title: 'Dosis & Potenz', subtitle: 'Potenz einordnen, Edible-Dosen mit vorsichtigen Referenzbereichen vergleichen.' },
-  { id: 'timeline', label: 'Zeitachse', icon: <Clock className="size-4" />, title: 'Wirkungsdauer', subtitle: 'Typische Zeitbereiche für Wirkeintritt, Hauptwirkung, Abklingen und Nachwirkungen.' },
-  { id: 'tools', label: 'Werkzeuge', icon: <Calculator className="size-4" />, title: 'Werkzeuge', subtitle: 'Umrechnungen, Konzentrationen, Verhältnisse und Umkehrrechner.' },
-  { id: 'compare', label: 'Vergleich', icon: <GitCompare className="size-4" />, title: 'Rezeptvergleich', subtitle: 'Mehrere hypothetische Rezepte nebeneinander vergleichen.' },
-  { id: 'saved', label: 'Gespeichert', icon: <Bookmark className="size-4" />, title: 'Gespeicherte Berechnungen', subtitle: 'Eigene Berechnungen – lokal gespeichert und Teil des TERPGRID-Backups.' },
-  { id: 'sources', label: 'Quellen', icon: <BookOpen className="size-4" />, title: 'Formeln & Quellen', subtitle: 'Wie gerechnet wird und worauf die Annahmen beruhen.' },
+  { id: 'edibles', get label() { return t('lab.tab.edibles'); }, icon: <Cookie className="size-4" />, get title() { return t('lab.tab.ediblesT'); }, get subtitle() { return t('lab.tab.ediblesS'); } },
+  { id: 'smoking', get label() { return t('lab.tab.joint'); }, icon: <Cigarette className="size-4" />, get title() { return t('lab.tab.jointT'); }, get subtitle() { return t('lab.tab.jointS'); } },
+  { id: 'dosage', get label() { return t('lab.tab.dosage'); }, icon: <Gauge className="size-4" />, get title() { return t('lab.tab.dosageT'); }, get subtitle() { return t('lab.tab.dosageS'); } },
+  { id: 'timeline', get label() { return t('lab.tab.timeline'); }, icon: <Clock className="size-4" />, get title() { return t('lab.tab.timelineT'); }, get subtitle() { return t('lab.tab.timelineS'); } },
+  { id: 'tools', get label() { return t('lab.tab.tools'); }, icon: <Calculator className="size-4" />, get title() { return t('lab.tab.tools'); }, get subtitle() { return t('lab.tab.toolsS'); } },
+  { id: 'compare', get label() { return t('lab.tab.compare'); }, icon: <GitCompare className="size-4" />, get title() { return t('lab.tab.compareT'); }, get subtitle() { return t('lab.tab.compareS'); } },
+  { id: 'saved', get label() { return t('lab.tab.saved'); }, icon: <Bookmark className="size-4" />, get title() { return t('lab.tab.savedT'); }, get subtitle() { return t('lab.tab.savedS'); } },
+  { id: 'sources', get label() { return t('lab.tab.sources'); }, icon: <BookOpen className="size-4" />, get title() { return t('lab.tab.sourcesT'); }, get subtitle() { return t('lab.tab.sourcesS'); } },
 ];
 
 const isTab = (v: unknown): v is LabTab => typeof v === 'string' && TABS.some((t) => t.id === v);
@@ -73,7 +74,7 @@ export function ThcLab() {
   const save = useCallback(
     async <T,>(kind: CalculationKind, name: string, input: T, summary: Record<string, string>) => {
       try {
-        await createRecord('calculations', { kind, name: name.trim() || 'Unbenannte Berechnung', input, summary });
+        await createRecord('calculations', { kind, name: name.trim() || t('lab.page.unnamed'), input, summary });
       } catch (e) {
         toast(errorText(e), { tone: 'error' });
       }
@@ -91,7 +92,7 @@ export function ThcLab() {
     } else if (item.kind === 'compare' && isRecipeList(item.input)) {
       setRecipes(item.input);
       navigate('lab/compare');
-    } else toast('Diese Berechnung kann nicht geöffnet werden.', { tone: 'error' });
+    } else toast(t('lab.page.cannotOpen'), { tone: 'error' });
   };
 
   const importSaved = (items: SavedCalculation[]): number => {
@@ -144,12 +145,11 @@ export function ThcLab() {
       {!disclaimerSeen && (
         <div className="card mb-6 flex gap-3 border-amber-400/15 p-4 animate-fade-up">
           <div className="min-w-0 flex-1 text-[13px] leading-relaxed text-ink-300">
-            <span className="font-semibold text-amber-200">Wichtig: </span>
-            Alle Werte sind rechnerische Schätzungen mit großer Unsicherheit, keine Dosierungsempfehlung und keine Wirkungsprognose. Selbstgemachte Edibles können
-            deutlich stärker oder schwächer sein als berechnet. Edibles wirken verzögert (bis zu 2 Std.) – nicht nachdosieren.{' '}
-            <span className="text-ink-400">Nur für Erwachsene. Gesetzliche Regelungen beachten.</span>
+            <span className="font-semibold text-amber-200">{t('lab.page.important')} </span>
+            {t('lab.page.disclaimer')}{' '}
+            <span className="text-ink-400">{t('lab.page.adults')}</span>
           </div>
-          <button type="button" className="btn-ghost h-fit p-1.5" aria-label="Hinweis schließen" onClick={() => setDisclaimerSeen(true)}>
+          <button type="button" className="btn-ghost h-fit p-1.5" aria-label={t('lab.page.closeHint')} onClick={() => setDisclaimerSeen(true)}>
             <X className="size-4" />
           </button>
         </div>

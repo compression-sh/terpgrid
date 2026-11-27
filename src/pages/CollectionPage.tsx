@@ -26,6 +26,7 @@ import { INVENTORY_CATEGORIES, type InventoryItem } from '../lib/db/types';
 import { INVENTORY_CATEGORY_LABEL } from '../lib/grow/labels';
 import { fmt } from '../lib/format';
 import { SharePicker } from '../components/collab/ShareDialog';
+import { t } from '../i18n';
 
 function ItemRow({ item }: { item: InventoryItem }) {
   const { data, settings } = useData();
@@ -45,28 +46,28 @@ function ItemRow({ item }: { item: InventoryItem }) {
     const current = item.quantity ?? 0;
     const next = Math.max(0, Math.round((current + delta) * 1000) / 1000);
     const ok = await confirm({
-      title: 'Menge ändern?',
+      title: t('mine.cp.qtyTitle'),
       message: (
         <>
           „{item.name}“: <span className="font-mono">{fmt(current)} {item.unit}</span> → <span className="font-mono text-ink-50">{fmt(next)} {item.unit}</span>
         </>
       ),
-      confirmLabel: 'Menge speichern',
+      confirmLabel: t('mine.cp.qtySave'),
     });
     if (!ok) return;
     try {
       await updateRecord('inventory', item.id, { quantity: next, quantityLog: withQuantityChange(item.quantityLog, current, next, new Date().toISOString()) });
-      toast('Menge aktualisiert');
+      toast(t('mine.cp.qtyUpdated'));
     } catch (e) {
       toast(errorText(e), { tone: 'error' });
     }
   }
 
   async function remove() {
-    if (!(await confirm({ title: `„${item.name}“ entfernen?`, message: 'Der Eintrag und seine eigenen Fotos werden gelöscht.', confirmLabel: 'Entfernen', tone: 'danger' }))) return;
+    if (!(await confirm({ title: t('mine.cp.removeTitle', { name: item.name }), message: t('mine.cp.removeMsg'), confirmLabel: t('mine.cp.remove'), tone: 'danger' }))) return;
     try {
       await deleteInventoryItem(item.id);
-      toast('Eintrag entfernt');
+      toast(t('mine.cp.removed'));
     } catch (e) {
       toast(errorText(e), { tone: 'error' });
     }
@@ -74,7 +75,7 @@ function ItemRow({ item }: { item: InventoryItem }) {
 
   return (
     <li id={focusId('item', item.id)} className="flex scroll-mt-24 flex-wrap items-start gap-3 rounded-xl sm:flex-nowrap sm:items-center border border-white/[0.06] bg-ink-900/60 p-2.5">
-      <button type="button" onClick={() => setModal('photo')} className="relative size-14 shrink-0 overflow-hidden rounded-lg" aria-label={cover ? 'Weiteres Foto hinzufügen' : 'Foto hinzufügen'}>
+      <button type="button" onClick={() => setModal('photo')} className="relative size-14 shrink-0 overflow-hidden rounded-lg" aria-label={cover ? t('mine.cp.addMorePhoto') : t('mine.cp.addPhoto')}>
         <PhotoImg photoId={cover} alt="" className="h-full w-full" />
         {!cover && <Camera className="absolute bottom-1 right-1 size-3 text-ink-400" />}
       </button>
@@ -84,9 +85,9 @@ function ItemRow({ item }: { item: InventoryItem }) {
           <span className="min-w-0 max-w-full truncate text-[14px] font-medium text-ink-50">{item.name}</span>
           <Chip>{item.category === 'space' && item.spaceKind ? SPACE_KIND_LABEL[item.spaceKind] : INVENTORY_CATEGORY_LABEL[item.category]}</Chip>
           {item.archived && <Chip tone="amber">archiviert</Chip>}
-          {(item.tags ?? []).map((t) => (
-            <span key={t} className="rounded border border-white/[0.07] px-1.5 text-[10px] text-ink-400">
-              #{t}
+          {(item.tags ?? []).map((tg) => (
+            <span key={tg} className="rounded border border-white/[0.07] px-1.5 text-[10px] text-ink-400">
+              #{tg}
             </span>
           ))}
         </div>
@@ -95,20 +96,20 @@ function ItemRow({ item }: { item: InventoryItem }) {
             {(item.manufacturer || item.model) && <span>{[item.manufacturer, item.model].filter(Boolean).join(' ')}</span>}
             {item.powerW !== undefined && (
               <span className="font-mono tabular">
-                {fmt(item.powerW, 0)} W{item.hoursPerDay !== undefined ? ` · ${fmt(item.hoursPerDay)} h/Tag` : ''}
+                {fmt(item.powerW, 0)} W{item.hoursPerDay !== undefined ? t('mine.cp.hPerDay', { h: fmt(item.hoursPerDay) }) : ''}
               </span>
             )}
-            {warranty && <span className={warranty === 'expired' ? 'text-ink-500' : warranty === 'soon' ? 'text-amber-300' : ''}>Garantie {warranty === 'expired' ? 'abgelaufen' : 'bis'} {fmtDate(item.warrantyUntil!)}</span>}
-            {space && <span>Standort: {space.name}</span>}
+            {warranty && <span className={warranty === 'expired' ? 'text-ink-500' : warranty === 'soon' ? 'text-amber-300' : ''}>{warranty === 'expired' ? t('mine.cp.warrantyExpired', { date: fmtDate(item.warrantyUntil!) }) : t('mine.cp.warrantyUntil', { date: fmtDate(item.warrantyUntil!) })}</span>}
+            {space && <span>{t('mine.cp.location', { name: space.name })}</span>}
           </div>
         )}
         {item.category === 'space' && (
           <div className="mt-0.5 flex flex-wrap gap-x-3 text-[11px] text-ink-400">
             {item.dimensions && <span>{item.dimensions}</span>}
-            <span>{plantsHere.length} {plantsHere.length === 1 ? 'Pflanze' : 'Pflanzen'}</span>
+            <span>{t('mine.cp.plants', { count: plantsHere.length })}</span>
             {energy && energy.devices > 0 && (
-              <span className="inline-flex items-center gap-1" title="Summe aus Leistung × Betriebsstunden deiner Geräte in diesem Bereich – Schätzung, keine Messung">
-                <Zap className="size-3" /> ≈ {fmt(energy.kWhPerDay)} kWh/Tag geschätzt ({energy.devices} Geräte{energy.missing ? `, ${energy.missing} ohne Leistung/Stunden` : ''})
+              <span className="inline-flex items-center gap-1" title={t('mine.cp.energyHint')}>
+                <Zap className="size-3" /> {t('mine.cp.energy', { kwh: fmt(energy.kWhPerDay), n: energy.devices, missing: energy.missing ? t('mine.cp.energyMissing', { n: energy.missing }) : '' })}
               </span>
             )}
           </div>
@@ -130,7 +131,7 @@ function ItemRow({ item }: { item: InventoryItem }) {
         {item.notes && <p className="mt-1 line-clamp-1 text-xs text-ink-400">{item.notes}</p>}
         {(item.quantityLog?.length ?? 0) > 0 && (
           <details className="mt-1 text-[11px] text-ink-500">
-            <summary className="cursor-pointer hover:text-ink-300">Mengenverlauf ({item.quantityLog!.length})</summary>
+            <summary className="cursor-pointer hover:text-ink-300">{t('mine.cp.qtyLog', { n: item.quantityLog!.length })}</summary>
             <ol className="mt-1 space-y-0.5 font-mono">
               {[...item.quantityLog!].reverse().slice(0, 8).map((c) => (
                 <li key={c.at}>
@@ -144,26 +145,26 @@ function ItemRow({ item }: { item: InventoryItem }) {
       <div className="-mt-1 flex w-full shrink-0 items-center justify-end gap-1 border-t border-white/[0.04] pt-1.5 sm:mt-0 sm:w-auto sm:border-0 sm:pt-0">
         {item.quantity !== undefined && (
           <>
-            <button type="button" className="btn-ghost p-1.5" aria-label="Menge verringern" onClick={() => adjust(-1)} disabled={(item.quantity ?? 0) <= 0}>
+            <button type="button" className="btn-ghost p-1.5" aria-label={t('mine.cp.decrease')} onClick={() => adjust(-1)} disabled={(item.quantity ?? 0) <= 0}>
               <Minus className="size-3.5" />
             </button>
             <span className="min-w-[3.5rem] text-center font-mono text-[13px] tabular text-ink-100">
               {fmt(item.quantity)} <span className="text-[11px] text-ink-500">{item.unit}</span>
             </span>
-            <button type="button" className="btn-ghost p-1.5" aria-label="Menge erhöhen" onClick={() => adjust(1)}>
+            <button type="button" className="btn-ghost p-1.5" aria-label={t('mine.cp.increase')} onClick={() => adjust(1)}>
               <Plus className="size-3.5" />
             </button>
           </>
         )}
         {item.category === 'equipment' && (
-          <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5" aria-label="Wartung" title={`Wartung (${item.maintenanceLog?.length ?? 0} Einträge)`} onClick={() => setModal('maintenance')}>
+          <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5" aria-label={t('mine.cp.maintenance')} title={t('mine.cp.maintCount', { count: item.maintenanceLog?.length ?? 0 })} onClick={() => setModal('maintenance')}>
             <Wrench className="size-3.5" />
           </button>
         )}
-        <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5" aria-label="Bearbeiten" onClick={() => setModal('edit')}>
+        <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5" aria-label={t('common.edit')} onClick={() => setModal('edit')}>
           <Pencil className="size-3.5" />
         </button>
-        <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5 hover:text-rose-300" aria-label="Entfernen" onClick={remove}>
+        <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5 hover:text-rose-300" aria-label={t('mine.cp.remove')} onClick={remove}>
           <Trash2 className="size-3.5" />
         </button>
       </div>
@@ -223,23 +224,23 @@ export function CollectionPage() {
   return (
     <div>
       <PageHeader
-        title="Sammlung"
-        subtitle="Inventar, Zubehör, Ausrüstung und Ausgaben – Mengen ändern sich nur durch dich."
+        title={t('mine.cp.title')}
+        subtitle={t('mine.cp.subtitle')}
         actions={
           <>
-            <SharePicker store="inventory" items={data.inventory.filter((i) => !i.archived).map((i) => ({ id: i.id, title: i.name, sub: i.manufacturer }))} label="Auswahl teilen …" />
+            <SharePicker store="inventory" items={data.inventory.filter((i) => !i.archived).map((i) => ({ id: i.id, title: i.name, sub: i.manufacturer }))} label={t('mine.cp.shareSel')} />
             <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
-              <Plus className="size-4" /> Hinzufügen
+              <Plus className="size-4" /> {t('mine.cp.add')}
             </button>
           </>
         }
       />
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          ['Einträge', String(data.inventory.length)],
-          ['Kaufpreise (Inventar)', money(purchaseTotal, settings.currency)],
-          ['Erfasste Ausgaben', money(expenseTotal, settings.currency)],
-          ['Favorisierte Sorten', String(favorites.length)],
+          [t('mine.cp.entries'), String(data.inventory.length)],
+          [t('mine.cp.purchase'), money(purchaseTotal, settings.currency)],
+          [t('mine.cp.expenses'), money(expenseTotal, settings.currency)],
+          [t('mine.cp.favs'), String(favorites.length)],
         ].map(([k, v]) => (
           <div key={k} className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-4">
             <div className="text-xs text-ink-400">{k}</div>
@@ -252,23 +253,23 @@ export function CollectionPage() {
           value={tab}
           onChange={setTab}
           options={[
-            { value: 'inventory', label: 'Inventar' },
-            { value: 'expenses', label: 'Ausgaben' },
-            { value: 'strains', label: 'Sorten' },
+            { value: 'inventory', label: t('mine.cp.inventory') },
+            { value: 'expenses', label: t('mine.cp.expensesTab') },
+            { value: 'strains', label: t('mine.cp.strains') },
           ]}
         />
       </div>
 
       {tab === 'inventory' && (
-        <Card title="Inventar" icon={<Package className="size-4" />}>
+        <Card title={t('mine.cp.inventory')} icon={<Package className="size-4" />}>
           {data.inventory.length === 0 ? (
             <EmptyState
               icon={<Package />}
-              title="Noch nichts erfasst"
-              text="Cannabis, Samen, Zubehör und Grow-Ausrüstung mit Menge, Kaufdatum und Preis."
+              title={t('mine.cp.emptyTitle')}
+              text={t('mine.cp.emptyText')}
               action={
                 <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
-                  <Plus className="size-4" /> Ersten Eintrag anlegen
+                  <Plus className="size-4" /> {t('mine.cp.first')}
                 </button>
               }
             />
@@ -276,23 +277,23 @@ export function CollectionPage() {
             <>
               <div className="mb-4 grid gap-3 sm:grid-cols-2">
                 <label className="relative block">
-                  <span className="sr-only">Suche</span>
+                  <span className="sr-only">{t('mine.cp.search')}</span>
                   <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-500" />
-                  <input className="input-base pl-9" placeholder="Suchen …" value={q} onChange={(e) => setQ(e.target.value)} />
+                  <input className="input-base pl-9" placeholder={t('mine.cp.searchPh')} value={q} onChange={(e) => setQ(e.target.value)} />
                 </label>
-                <SelectField label="" aria-label="Kategorie" value={category} onChange={setCategory} placeholder="Alle Kategorien" options={INVENTORY_CATEGORIES.map((c) => ({ value: c, label: INVENTORY_CATEGORY_LABEL[c] }))} />
+                <SelectField label="" aria-label={t('mine.cp.category')} value={category} onChange={setCategory} placeholder={t('mine.cp.allCats')} options={INVENTORY_CATEGORIES.map((c) => ({ value: c, label: INVENTORY_CATEGORY_LABEL[c] }))} />
               </div>
               {allTags.length > 0 && (
-                <div className="mb-3 flex flex-wrap gap-1.5" role="group" aria-label="Nach Tag filtern">
-                  {allTags.map((t) => (
-                    <button key={t} type="button" aria-pressed={tag === t} onClick={() => setTag(tag === t ? '' : t)} className={`rounded-full border px-2.5 py-0.5 text-[12px] ${tag === t ? 'border-leaf-500/40 bg-leaf-500/15 text-leaf-100' : 'border-white/[0.08] text-ink-400 hover:text-ink-200'}`}>
-                      #{t}
+                <div className="mb-3 flex flex-wrap gap-1.5" role="group" aria-label={t('mine.cp.byTag')}>
+                  {allTags.map((tg) => (
+                    <button key={tg} type="button" aria-pressed={tag === tg} onClick={() => setTag(tag === tg ? '' : tg)} className={`rounded-full border px-2.5 py-0.5 text-[12px] ${tag === tg ? 'border-leaf-500/40 bg-leaf-500/15 text-leaf-100' : 'border-white/[0.08] text-ink-400 hover:text-ink-200'}`}>
+                      #{tg}
                     </button>
                   ))}
                 </div>
               )}
               {items.length === 0 ? (
-                <EmptyState compact title="Keine Treffer" />
+                <EmptyState compact title={t('mine.cp.noHits')} />
               ) : (
                 <ul className="space-y-2">
                   {items.map((i) => (
@@ -302,23 +303,23 @@ export function CollectionPage() {
               )}
               {archivedCount > 0 && (
                 <label className="mt-3 flex items-center gap-2 text-[12px] text-ink-400">
-                  <input type="checkbox" className="accent-leaf-500" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} /> Archivierte anzeigen ({archivedCount})
+                  <input type="checkbox" className="accent-leaf-500" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} /> {t('mine.cp.showArchived', { n: archivedCount })}
                 </label>
               )}
-              <p className="hint mt-4">Mengen werden nie automatisch angepasst. Änderungen über ± werden vorher bestätigt.</p>
+              <p className="hint mt-4">{t('mine.cp.qtyNever')}</p>
             </>
           )}
         </Card>
       )}
       {tab === 'expenses' && (
-        <Card title="Ausgaben" subtitle="Alle erfassten Kosten, optional einem Grow zugeordnet" icon={<Receipt className="size-4" />}>
+        <Card title={t('mine.cp.expensesTab')} subtitle={t('mine.cp.expensesSub')} icon={<Receipt className="size-4" />}>
           <ExpenseList expenses={data.expenses} showGrow />
         </Card>
       )}
       {tab === 'strains' && (
-        <Card title="Gespeicherte Sorten" subtitle="Favoriten aus deiner Bibliothek">
+        <Card title={t('mine.cp.saved')} subtitle={t('mine.cp.savedSub')}>
           {favorites.length === 0 ? (
-            <EmptyState compact title="Keine Favoriten" text="In der Sorten-Bibliothek das Herz antippen." action={<a href={href('strains')} className="btn-ghost">Zur Bibliothek</a>} />
+            <EmptyState compact title={t('mine.cp.noFavs')} text={t('mine.cp.noFavsText')} action={<a href={href('strains')} className="btn-ghost">{t('mine.cp.toLib')}</a>} />
           ) : (
             <ul className="grid gap-2 sm:grid-cols-2">
               {favorites.map((s) => (

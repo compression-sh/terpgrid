@@ -11,6 +11,7 @@ import labels from './labels.json';
 import mine from './mine.json';
 import photos from './photos.json';
 import shell from './shell.json';
+import tools from './tools.json';
 
-const en: DeepMessages<Messages> = { account, collab, common, dashboard, discover, grow, lab, labels, mine, photos, shell };
+const en: DeepMessages<Messages> = { account, collab, common, dashboard, discover, grow, lab, labels, mine, photos, shell, tools };
 export default en;

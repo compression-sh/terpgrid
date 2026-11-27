@@ -24,7 +24,7 @@ import { CONSUMPTION_METHODS, type JournalEntry } from '../lib/db/types';
 import { METHOD_LABEL, MOOD_OPTIONS } from '../lib/grow/labels';
 import { fmt } from '../lib/format';
 import { SharePicker } from '../components/collab/ShareDialog';
-import { intlLocale } from '../i18n';
+import { t, intlLocale } from '../i18n';
 
 /** Rein beschreibende Zusammenfassung der erfassten Einträge (keine Wertung, keine Prognose). */
 const monthFmt = () => new Intl.DateTimeFormat(intlLocale(), { month: 'long', year: 'numeric', timeZone: 'UTC' });
@@ -35,7 +35,7 @@ export function byMonth<T extends { date: string }>(entries: T[]): [string, stri
     const k = e.date.slice(0, 7);
     out.set(k, [...(out.get(k) ?? []), e]);
   }
-  return [...out.entries()].map(([k, v]) => [k, /^\d{4}-\d{2}$/.test(k) ? monthFmt().format(new Date(`${k}-01T00:00:00Z`)) : 'Ohne Datum', v]);
+  return [...out.entries()].map(([k, v]) => [k, /^\d{4}-\d{2}$/.test(k) ? monthFmt().format(new Date(`${k}-01T00:00:00Z`)) : t('mine.jp.noDate'), v]);
 }
 
 export function journalSummary(entries: JournalEntry[], ref: string) {
@@ -68,10 +68,10 @@ function EntryCard({ entry }: { entry: JournalEntry }) {
   const strain = entry.strainId ? lookup.strain.get(entry.strainId) : undefined;
 
   async function remove() {
-    if (!(await confirm({ title: 'Eintrag löschen?', message: `Journal-Eintrag vom ${fmtDateTime(entry.date)} inkl. ${photos.length} angehängter Fotos löschen?`, confirmLabel: 'Löschen', tone: 'danger' }))) return;
+    if (!(await confirm({ title: t('mine.jp.deleteTitle'), message: t('mine.jp.deleteMsg', { date: fmtDateTime(entry.date), count: photos.length }), confirmLabel: t('common.delete'), tone: 'danger' }))) return;
     try {
       await deleteJournalEntry(entry.id);
-      toast('Eintrag gelöscht');
+      toast(t('mine.jp.deleted'));
     } catch (e) {
       toast(errorText(e), { tone: 'error' });
     }
@@ -88,7 +88,7 @@ function EntryCard({ entry }: { entry: JournalEntry }) {
                   {strain.name}
                 </a>
               ) : (
-                entry.strainName || 'Ohne Sorte'
+                entry.strainName || t('mine.jp.noStrain')
               )}
             </h3>
             <Chip>{METHOD_LABEL[entry.method]}</Chip>
@@ -97,13 +97,13 @@ function EntryCard({ entry }: { entry: JournalEntry }) {
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <Stars value={entry.rating} size="xs" />
-          <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5" aria-label="Foto anhängen" onClick={() => setModal('photo')}>
+          <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5" aria-label={t('mine.jp.attach')} onClick={() => setModal('photo')}>
             <Paperclip className="size-3.5" />
           </button>
-          <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5" aria-label="Bearbeiten" onClick={() => setModal('edit')}>
+          <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5" aria-label={t('common.edit')} onClick={() => setModal('edit')}>
             <Pencil className="size-3.5" />
           </button>
-          <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5 hover:text-rose-300" aria-label="Löschen" onClick={remove}>
+          <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5 hover:text-rose-300" aria-label={t('common.delete')} onClick={remove}>
             <Trash2 className="size-3.5" />
           </button>
         </div>
@@ -111,7 +111,7 @@ function EntryCard({ entry }: { entry: JournalEntry }) {
       <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs">
         {entry.amount && (
           <div>
-            <dt className="inline text-ink-500">Menge (Angabe): </dt>
+            <dt className="inline text-ink-500">{t('mine.jp.amount')} </dt>
             <dd className="inline font-mono text-ink-200">
               {fmt(entry.amount.value)} {entry.amount.unit}
             </dd>
@@ -119,22 +119,22 @@ function EntryCard({ entry }: { entry: JournalEntry }) {
         )}
         {entry.thcPercent !== undefined && (
           <div>
-            <dt className="inline text-ink-500">THC (Angabe): </dt>
+            <dt className="inline text-ink-500">{t('mine.jp.thc')} </dt>
             <dd className="inline font-mono text-ink-200">{fmt(entry.thcPercent)} %</dd>
           </div>
         )}
         {entry.durationNote && (
           <div>
-            <dt className="inline text-ink-500">Dauer: </dt>
+            <dt className="inline text-ink-500">{t('mine.jp.duration')} </dt>
             <dd className="inline text-ink-200">{entry.durationNote}</dd>
           </div>
         )}
       </dl>
       {(entry.tags?.length ?? 0) > 0 && (
-        <div className="mt-2.5 flex flex-wrap gap-1" aria-label="Tags">
-          {entry.tags!.map((t) => (
-            <span key={t} className="rounded-full border border-leaf-500/20 px-2 py-0.5 text-[11px] text-leaf-200">
-              #{t}
+        <div className="mt-2.5 flex flex-wrap gap-1" aria-label={t('mine.jp.tags')}>
+          {entry.tags!.map((tg) => (
+            <span key={tg} className="rounded-full border border-leaf-500/20 px-2 py-0.5 text-[11px] text-leaf-200">
+              #{tg}
             </span>
           ))}
         </div>
@@ -213,7 +213,7 @@ export function JournalPage() {
       e.durationNote,
       e.notes,
     ]);
-    downloadFile(`terpgrid-journal-${today()}.csv`, `\uFEFF${toCSVTable(['Datum', 'Sorte', 'Konsumform', 'Menge', 'Einheit', 'THC % (Angabe)', 'Bewertung', 'Stimmung', 'Tags', 'Dauer', 'Notizen'], rows)}`, 'text/csv;charset=utf-8');
+    downloadFile(`terpgrid-journal-${today()}.csv`, `\uFEFF${toCSVTable(t('mine.jp.csvHead').split('|'), rows)}`, 'text/csv;charset=utf-8');
   };
 
   const summary = journalSummary(filtered, today());
@@ -226,13 +226,13 @@ export function JournalPage() {
   return (
     <div>
       <PageHeader
-        title="Journal"
-        subtitle="Optional und privat – deine eigenen Notizen zu Erfahrungen."
+        title={t('mine.jp.title')}
+        subtitle={t('mine.jp.subtitle')}
         actions={
           <>
-            <SharePicker store="journal" items={data.journal.map((j) => ({ id: j.id, title: j.strainName || 'Journal-Eintrag', sub: new Date(j.date).toLocaleDateString(intlLocale()) }))} label="Einträge teilen …" />
+            <SharePicker store="journal" items={data.journal.map((j) => ({ id: j.id, title: j.strainName || t('mine.jp.entryFallback'), sub: new Date(j.date).toLocaleDateString(intlLocale()) }))} label={t('mine.jp.shareEntries')} />
             <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
-              <Plus className="size-4" /> Eintrag
+              <Plus className="size-4" /> {t('mine.jp.entry')}
             </button>
           </>
         }
@@ -242,11 +242,11 @@ export function JournalPage() {
         <div className="card">
           <EmptyState
             icon={<BookOpenText />}
-            title="Noch keine Einträge"
-            text="Halte Sorte, Konsumform, eigene Mengenangabe, Stimmung und Notizen fest. Es gibt keine Punkte, Ziele oder Vorhersagen – nur deine Aufzeichnungen."
+            title={t('mine.jp.emptyTitle')}
+            text={t('mine.jp.emptyText')}
             action={
               <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
-                <Plus className="size-4" /> Ersten Eintrag erstellen
+                <Plus className="size-4" /> {t('mine.jp.first')}
               </button>
             }
           />
@@ -256,27 +256,27 @@ export function JournalPage() {
           <div className="min-w-0 space-y-5">
             <div className="card space-y-3 p-4">
               <label className="relative block space-y-1.5">
-                <span className="label">Suche</span>
+                <span className="label">{t('mine.jp.search')}</span>
                 <Search className="pointer-events-none absolute left-3 top-[2.35rem] size-4 text-ink-500" />
-                <input className="input-base pl-9" placeholder="Notizen, Sorte, Tags …" value={q} onChange={(e) => setQ(e.target.value)} />
+                <input className="input-base pl-9" placeholder={t('mine.jp.searchPh')} value={q} onChange={(e) => setQ(e.target.value)} />
               </label>
               {/* Mobil eingeklappt, damit Einträge ohne Scrollen sichtbar sind; ab sm immer offen */}
               <details className="group sm:[&>summary]:hidden" open={wide || activeFilters > 0 || undefined}>
                 <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg border border-white/[0.06] px-3 py-2 text-[13px] text-ink-300 [&::-webkit-details-marker]:hidden">
-                  <span>Filter{activeFilters > 0 ? ` (${activeFilters} aktiv)` : ''}</span>
+                  <span>{t('mine.jp.filter')}{activeFilters > 0 ? t('mine.jp.active', { n: activeFilters }) : ''}</span>
                   <span className="text-ink-500 group-open:rotate-180">▾</span>
                 </summary>
                 <div className="mt-3 grid gap-3 sm:mt-0 sm:grid-cols-3">
-                  <SelectField label="Konsumform" value={method} onChange={setMethod} placeholder="Alle" options={CONSUMPTION_METHODS.map((m) => ({ value: m, label: METHOD_LABEL[m] }))} />
-                  <SelectField label="Sorte" value={strain} onChange={setStrain} placeholder="Alle" options={[...data.strains.map((s) => ({ value: s.id, label: s.name })), { value: '__free', label: 'Ohne Bibliotheks-Sorte' }]} />
-                  <SelectField label="Stimmung" value={mood} onChange={setMood} placeholder="Alle" options={MOOD_OPTIONS.map((m) => ({ value: m, label: m }))} />
-                  <SelectField label="Tag" value={tag} onChange={setTag} placeholder={allTags.length ? 'Alle' : 'Noch keine Tags'} options={allTags.map((t) => ({ value: t, label: `#${t}` }))} disabled={allTags.length === 0} />
+                  <SelectField label={t('mine.jp.method')} value={method} onChange={setMethod} placeholder={t('mine.jp.all')} options={CONSUMPTION_METHODS.map((m) => ({ value: m, label: METHOD_LABEL[m] }))} />
+                  <SelectField label={t('mine.jp.strain')} value={strain} onChange={setStrain} placeholder={t('mine.jp.all')} options={[...data.strains.map((s) => ({ value: s.id, label: s.name })), { value: '__free', label: t('mine.jp.noLibStrain') }]} />
+                  <SelectField label={t('mine.jp.mood')} value={mood} onChange={setMood} placeholder={t('mine.jp.all')} options={MOOD_OPTIONS.map((m) => ({ value: m, label: m }))} />
+                  <SelectField label={t('mine.jp.tag')} value={tag} onChange={setTag} placeholder={allTags.length ? t('mine.jp.all') : t('mine.jp.noTags')} options={allTags.map((tg) => ({ value: tg, label: `#${tg}` }))} disabled={allTags.length === 0} />
                   <label className="space-y-1.5">
-                    <span className="label">Von</span>
+                    <span className="label">{t('mine.jp.from')}</span>
                     <input type="date" className="input-base" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} />
                   </label>
                   <label className="space-y-1.5">
-                    <span className="label">Bis</span>
+                    <span className="label">{t('mine.jp.to')}</span>
                     <input type="date" className="input-base" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} />
                   </label>
                 </div>
@@ -287,10 +287,10 @@ export function JournalPage() {
                 {filtered.length} von {data.journal.length} Einträgen
                 {(activeFilters > 0 || q) && (
                   <button type="button" className="btn-ghost h-7 px-2 text-[11.5px]" onClick={resetFilters}>
-                    <RotateCcw className="size-3" /> Filter zurücksetzen
+                    <RotateCcw className="size-3" /> {t('mine.jp.reset')}
                   </button>
                 )}
-                <button type="button" className="btn-ghost h-7 px-2 text-[11.5px]" onClick={exportCsv} disabled={filtered.length === 0} title="Gefilterte Einträge als CSV herunterladen">
+                <button type="button" className="btn-ghost h-7 px-2 text-[11.5px]" onClick={exportCsv} disabled={filtered.length === 0} title={t('mine.jp.csvTitle')}>
                   <Download className="size-3" /> CSV
                 </button>
               </span>
@@ -300,8 +300,8 @@ export function JournalPage() {
                   value={view}
                   onChange={setView}
                   options={[
-                    { value: 'list', label: 'Liste' },
-                    { value: 'calendar', label: 'Kalender' },
+                    { value: 'list', label: t('mine.jp.list') },
+                    { value: 'calendar', label: t('mine.jp.calendar') },
                   ]}
                 />
               </div>
@@ -309,7 +309,7 @@ export function JournalPage() {
             {view === 'list' ? (
               filtered.length === 0 ? (
                 <div className="card">
-                  <EmptyState compact title="Keine Treffer" />
+                  <EmptyState compact title={t('mine.jp.noHits')} />
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -318,7 +318,7 @@ export function JournalPage() {
                       <h2 className="mb-2 flex items-baseline justify-between px-1 text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-400">
                         {label}
                         <span className="font-normal normal-case tracking-normal text-ink-500">
-                          {entries.length} {entries.length === 1 ? 'Eintrag' : 'Einträge'}
+                          {t('mine.jp.count', { count: entries.length })}
                         </span>
                       </h2>
                       <div className="space-y-3">
@@ -332,17 +332,17 @@ export function JournalPage() {
               )
             ) : (
               <div className="grid gap-5 xl:grid-cols-2">
-                <Card icon={<CalendarDays className="size-4" />} title="Kalender">
+                <Card icon={<CalendarDays className="size-4" />} title={t('mine.jp.calendar')}>
                   <MonthCalendar month={month} onMonth={setMonth} markers={markers} selected={day} onSelect={setDay} />
                 </Card>
                 <div className="space-y-3">
                   {!day ? (
                     <div className="card p-5">
-                      <p className="hint">Tag auswählen, um Einträge zu sehen.</p>
+                      <p className="hint">{t('mine.jp.pickDay')}</p>
                     </div>
                   ) : dayEntries.length === 0 ? (
                     <div className="card">
-                      <EmptyState compact title={`Keine Einträge am ${fmtDateLong(day)}`} />
+                      <EmptyState compact title={t('mine.jp.noneOn', { date: fmtDateLong(day) })} />
                     </div>
                   ) : (
                     dayEntries.map((e) => <EntryCard key={e.id} entry={e} />)
@@ -353,25 +353,25 @@ export function JournalPage() {
           </div>
 
           <aside className="min-w-0 space-y-5">
-            <Card title="Zusammenfassung" subtitle="Rein beschreibend, aus den gefilterten Einträgen" icon={<List className="size-4" />}>
+            <Card title={t('mine.jp.summary')} subtitle={t('mine.jp.summarySub')} icon={<List className="size-4" />}>
               <dl className="grid grid-cols-2 gap-3">
                 <div>
-                  <dt className="text-[11px] text-ink-500">Einträge</dt>
+                  <dt className="text-[11px] text-ink-500">{t('mine.jp.entries')}</dt>
                   <dd className="font-mono text-xl tabular text-ink-50">{summary.total}</dd>
                 </div>
                 <div>
-                  <dt className="text-[11px] text-ink-500">Ø Bewertung</dt>
+                  <dt className="text-[11px] text-ink-500">{t('mine.jp.avgRating')}</dt>
                   <dd className="font-mono text-xl tabular text-ink-50">{summary.avgRating !== undefined ? fmt(summary.avgRating) : '–'}</dd>
                   <dd className="text-[10px] text-ink-500">{summary.ratedCount} bewertet</dd>
                 </div>
               </dl>
-              <div className="mt-4 h-36" role="img" aria-label="Einträge pro Monat (letzte 12 Monate)">
+              <div className="mt-4 h-36" role="img" aria-label={t('mine.jp.perMonth')}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={summary.months} margin={{ top: 4, right: 0, bottom: 0, left: -28 }}>
                     <CartesianGrid vertical={false} />
                     <XAxis dataKey="label" tickLine={false} axisLine={false} interval={2} />
                     <YAxis allowDecimals={false} tickLine={false} axisLine={false} />
-                    <Tooltip cursor={{ fill: 'rgba(255,255,255,0.03)' }} contentStyle={{ background: '#0e1211', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, fontSize: 12 }} formatter={(v: number) => [v, 'Einträge']} />
+                    <Tooltip cursor={{ fill: 'rgba(255,255,255,0.03)' }} contentStyle={{ background: '#0e1211', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, fontSize: 12 }} formatter={(v: number) => [v, t('mine.jp.entries')]} />
                     <Bar dataKey="count" fill="#34c77b" fillOpacity={0.7} radius={[3, 3, 0, 0]} isAnimationActive={false} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -388,7 +388,7 @@ export function JournalPage() {
               )}
               {summary.topMoods.length > 0 && (
                 <div className="mt-4">
-                  <div className="text-[11px] text-ink-500">Häufigste Stimmungs-Notizen</div>
+                  <div className="text-[11px] text-ink-500">{t('mine.jp.topMoods')}</div>
                   <div className="mt-1.5 flex flex-wrap gap-1">
                     {summary.topMoods.map(([m, c]) => (
                       <span key={m} className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[11px] text-ink-300">
@@ -400,19 +400,19 @@ export function JournalPage() {
               )}
             </Card>
             {settings.showHarmReduction && (
-              <Card title="Hinweise zur Risikominderung" icon={<HeartHandshake className="size-4" />}>
+              <Card title={t('mine.jp.harm')} icon={<HeartHandshake className="size-4" />}>
                 <ul className="space-y-2 text-[13px] leading-relaxed text-ink-300">
-                  <li>• Weniger und seltener ist risikoärmer. Pausen senken die Toleranz.</li>
-                  <li>• Edibles wirken verzögert – vor erneutem Konsum die volle Wirkzeit abwarten.</li>
-                  <li>• Nicht mit Alkohol oder anderen Substanzen mischen.</li>
-                  <li>• Nach Konsum nicht fahren. Beeinträchtigungen können Stunden anhalten.</li>
+                  <li>{t('mine.jp.harm1')}</li>
+                  <li>{t('mine.jp.harm2')}</li>
+                  <li>{t('mine.jp.harm3')}</li>
+                  <li>{t('mine.jp.harm4')}</li>
                 </ul>
                 <p className="hint mt-3">
-                  Quelle: Lower-Risk Cannabis Use Guidelines (Fischer et al. 2022). Ausblendbar in den <a className="underline" href={href('settings')}>Einstellungen</a>.
+                  {t('mine.jp.harmSource')} <a className="underline" href={href('settings')}>{t('mine.jp.settings')}</a>.
                 </p>
               </Card>
             )}
-            <Callout tone="info">Das Journal zeigt nur, was du eingetragen hast. Es erstellt keine Wirkungsvorhersagen und vergibt keine Punkte oder Ziele.</Callout>
+            <Callout tone="info">{t('mine.jp.only')}</Callout>
           </aside>
         </div>
       )}

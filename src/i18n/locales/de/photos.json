@@ -98,5 +98,42 @@
  "upload": {
   "choose": "Fotos wählen",
   "retry": "Fehlgeschlagene und abgebrochene erneut versuchen"
+ },
+ "page": {
+  "title": "Fotos",
+  "subtitle": "Dein lokales Foto-Journal – chronologisch, filterbar, mit Vergleich und Zeitraffer.",
+  "upload": "Hochladen",
+  "emptyTitle": "Noch keine Fotos",
+  "emptyText": "Fotos lassen sich Grows und Pflanzen zuordnen. Sie werden lokal verkleinert gespeichert; Standortdaten werden entfernt.",
+  "first": "Erste Fotos hochladen",
+  "grow": "Grow",
+  "allGrows": "Alle Grows",
+  "plant": "Pflanze",
+  "allPlants": "Alle Pflanzen",
+  "phase": "Phase",
+  "allPhases": "Alle Phasen",
+  "from": "Von",
+  "to": "Bis",
+  "reset": "Filter zurücksetzen",
+  "grid": "Raster",
+  "compare": "Vergleich",
+  "timelapse": "Zeitraffer",
+  "noneForFilter": "Keine Fotos für diese Filter",
+  "chrono": "Chronologie",
+  "beforeAfter": "Vorher / Nachher",
+  "slider": "Schieber",
+  "sideBySide": "Nebeneinander",
+  "needTwo": "Mindestens zwei Fotos nötig",
+  "before": "Vorher",
+  "after": "Nachher",
+  "slideshow": "Interaktive Diashow statt Videodatei. Tipp: für einen gleichmäßigen Zeitraffer Fotos aus ähnlicher Perspektive und nach Pflanze filtern.",
+  "server": "Bilder werden verschlüsselt auf deinem Server gespeichert und auf anderen Geräten bei Bedarf geladen.",
+  "local": "Alle Bilder liegen ausschließlich im Speicher dieses Browsers.",
+  "photoOf": "Foto vom {date}",
+  "tlSub": {
+   "one": "{count} eigenes Foto in Aufnahmereihenfolge",
+   "other": "{count} eigene Fotos in Aufnahmereihenfolge"
+  },
+  "metaNote": "Beim Import werden eingebettete Metadaten (inkl. GPS) durch Neu-Kodierung entfernt. Bilder, die der Browser nicht lesen kann (z. B. HEIC in manchen Browsern), werden abgelehnt."
  }
 }

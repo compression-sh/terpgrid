@@ -17,6 +17,7 @@ import { Segmented } from '../components/ui/Segmented';
 import { fmtDateTime } from '../lib/dates';
 import { GROW_PHASES, type GrowPhase, type Photo } from '../lib/db/types';
 import { PHASE_LABEL } from '../lib/grow/phases';
+import { t } from '../i18n';
 
 type View = 'grid' | 'compare' | 'timelapse';
 
@@ -31,7 +32,7 @@ function PhotoPicker({ photos, value, onChange, label }: { photos: Photo[]; valu
             type="button"
             role="radio"
             aria-checked={value === p.id}
-            aria-label={`Foto vom ${fmtDateTime(p.takenAt)}`}
+            aria-label={t('photos.page.photoOf', { date: fmtDateTime(p.takenAt) })}
             onClick={() => onChange(p.id)}
             className={`relative size-16 shrink-0 overflow-hidden rounded-lg border-2 ${value === p.id ? 'border-leaf-400' : 'border-transparent opacity-70 hover:opacity-100'}`}
           >
@@ -82,11 +83,11 @@ export function PhotosPage() {
   return (
     <div>
       <PageHeader
-        title="Fotos"
-        subtitle="Dein lokales Foto-Journal – chronologisch, filterbar, mit Vergleich und Zeitraffer."
+        title={t('photos.page.title')}
+        subtitle={t('photos.page.subtitle')}
         actions={
           <button type="button" className="btn-primary" onClick={() => quick({ kind: 'photo', target: { growId: growId || undefined, plantId: plantId || undefined } })}>
-            <Camera className="size-4" /> Hochladen
+            <Camera className="size-4" /> {t('photos.page.upload')}
           </button>
         }
       />
@@ -95,11 +96,11 @@ export function PhotosPage() {
         <div className="card">
           <EmptyState
             icon={<Images />}
-            title="Noch keine Fotos"
-            text="Fotos lassen sich Grows und Pflanzen zuordnen. Sie werden lokal verkleinert gespeichert; Standortdaten werden entfernt."
+            title={t('photos.page.emptyTitle')}
+            text={t('photos.page.emptyText')}
             action={
               <button type="button" className="btn-primary" onClick={() => quick({ kind: 'photo' })}>
-                <Camera className="size-4" /> Erste Fotos hochladen
+                <Camera className="size-4" /> {t('photos.page.first')}
               </button>
             }
           />
@@ -108,15 +109,15 @@ export function PhotosPage() {
         <div className="space-y-5">
           <Card bodyClassName="p-4">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              <SelectField label="Grow" value={growId} onChange={(v) => set({ grow: v, plant: undefined })} options={data.grows.map((g) => ({ value: g.id, label: g.name }))} placeholder="Alle Grows" />
-              <SelectField label="Pflanze" value={plantId} onChange={(v) => set({ plant: v })} options={plants.map((p) => ({ value: p.id, label: p.name }))} placeholder="Alle Pflanzen" />
-              <SelectField label="Phase" value={phase} onChange={(v) => set({ phase: v })} options={GROW_PHASES.map((p) => ({ value: p, label: PHASE_LABEL[p] }))} placeholder="Alle Phasen" />
+              <SelectField label={t('photos.page.grow')} value={growId} onChange={(v) => set({ grow: v, plant: undefined })} options={data.grows.map((g) => ({ value: g.id, label: g.name }))} placeholder={t('photos.page.allGrows')} />
+              <SelectField label={t('photos.page.plant')} value={plantId} onChange={(v) => set({ plant: v })} options={plants.map((p) => ({ value: p.id, label: p.name }))} placeholder={t('photos.page.allPlants')} />
+              <SelectField label={t('photos.page.phase')} value={phase} onChange={(v) => set({ phase: v })} options={GROW_PHASES.map((p) => ({ value: p, label: PHASE_LABEL[p] }))} placeholder={t('photos.page.allPhases')} />
               <label className="space-y-1.5">
-                <span className="label">Von</span>
+                <span className="label">{t('photos.page.from')}</span>
                 <input type="date" className="input-base" value={from} onChange={(e) => set({ from: e.target.value })} />
               </label>
               <label className="space-y-1.5">
-                <span className="label">Bis</span>
+                <span className="label">{t('photos.page.to')}</span>
                 <input type="date" className="input-base" value={to} onChange={(e) => set({ to: e.target.value })} />
               </label>
             </div>
@@ -125,7 +126,7 @@ export function PhotosPage() {
                 {filtered.length} von {data.photos.length} Fotos
                 {filtersActive && (
                   <button type="button" className="ml-2 text-leaf-300 hover:underline" onClick={() => set({ grow: undefined, plant: undefined, phase: undefined, from: undefined, to: undefined })}>
-                    Filter zurücksetzen
+                    {t('photos.page.reset')}
                   </button>
                 )}
               </span>
@@ -135,9 +136,9 @@ export function PhotosPage() {
                   value={view}
                   onChange={(v) => set({ view: v === 'grid' ? undefined : v })}
                   options={[
-                    { value: 'grid', label: 'Raster' },
-                    { value: 'compare', label: 'Vergleich' },
-                    { value: 'timelapse', label: 'Zeitraffer' },
+                    { value: 'grid', label: t('photos.page.grid') },
+                    { value: 'compare', label: t('photos.page.compare') },
+                    { value: 'timelapse', label: t('photos.page.timelapse') },
                   ]}
                 />
               </div>
@@ -146,45 +147,44 @@ export function PhotosPage() {
 
           {filtered.length === 0 ? (
             <div className="card">
-              <EmptyState compact title="Keine Fotos für diese Filter" />
+              <EmptyState compact title={t('photos.page.noneForFilter')} />
             </div>
           ) : view === 'grid' ? (
-            <Card title="Chronologie" icon={<Grid3x3 className="size-4" />}>
+            <Card title={t('photos.page.chrono')} icon={<Grid3x3 className="size-4" />}>
               <PhotoGrid photos={filtered} />
             </Card>
           ) : view === 'compare' ? (
             <Card
-              title="Vorher / Nachher"
+              title={t('photos.page.beforeAfter')}
               icon={<Columns2 className="size-4" />}
               actions={
                 <div className="w-56">
-                  <Segmented size="sm" value={compareMode} onChange={setCompareMode} options={[{ value: 'slider', label: 'Schieber' }, { value: 'side', label: 'Nebeneinander' }]} />
+                  <Segmented size="sm" value={compareMode} onChange={setCompareMode} options={[{ value: 'slider', label: t('photos.page.slider') }, { value: 'side', label: t('photos.page.sideBySide') }]} />
                 </div>
               }
             >
               {chrono.length < 2 ? (
-                <EmptyState compact title="Mindestens zwei Fotos nötig" />
+                <EmptyState compact title={t('photos.page.needTwo')} />
               ) : (
                 <div className="space-y-5">
                   <div className="grid gap-4 lg:grid-cols-2">
-                    <PhotoPicker label="Vorher" photos={chrono} value={before?.id} onChange={setBeforeId} />
-                    <PhotoPicker label="Nachher" photos={chrono} value={after?.id} onChange={setAfterId} />
+                    <PhotoPicker label={t('photos.page.before')} photos={chrono} value={before?.id} onChange={setBeforeId} />
+                    <PhotoPicker label={t('photos.page.after')} photos={chrono} value={after?.id} onChange={setAfterId} />
                   </div>
                   {before && after && (compareMode === 'slider' ? <CompareSlider before={before} after={after} /> : <SideBySide before={before} after={after} />)}
                 </div>
               )}
             </Card>
           ) : (
-            <Card title="Zeitraffer" subtitle={`${chrono.length} eigene Fotos in Aufnahmereihenfolge`} icon={<Clapperboard className="size-4" />}>
-              {chrono.length < 2 ? <EmptyState compact title="Mindestens zwei Fotos nötig" /> : <Timelapse photos={chrono} startDate={grow?.startDate} />}
-              <p className="hint mt-4">Interaktive Diashow statt Videodatei. Tipp: für einen gleichmäßigen Zeitraffer Fotos aus ähnlicher Perspektive und nach Pflanze filtern.</p>
+            <Card title={t('photos.page.timelapse')} subtitle={t('photos.page.tlSub', { count: chrono.length })} icon={<Clapperboard className="size-4" />}>
+              {chrono.length < 2 ? <EmptyState compact title={t('photos.page.needTwo')} /> : <Timelapse photos={chrono} startDate={grow?.startDate} />}
+              <p className="hint mt-4">{t('photos.page.slideshow')}</p>
             </Card>
           )}
 
           <div className="flex gap-2.5 rounded-xl border border-white/[0.05] bg-white/[0.015] p-3 text-xs leading-relaxed text-ink-400">
             <ShieldCheck className="mt-0.5 size-4 shrink-0 text-leaf-400" />
-            {server ? 'Bilder werden verschlüsselt auf deinem Server gespeichert und auf anderen Geräten bei Bedarf geladen.' : 'Alle Bilder liegen ausschließlich im Speicher dieses Browsers.'} Beim Import werden eingebettete Metadaten (inkl. GPS) durch Neu-Kodierung entfernt. Bilder, die der
-            Browser nicht lesen kann (z. B. HEIC in manchen Browsern), werden abgelehnt.
+            {server ? t('photos.page.server') : t('photos.page.local')} {t('photos.page.metaNote')}
           </div>
         </div>
       )}
