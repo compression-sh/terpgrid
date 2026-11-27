@@ -24,10 +24,11 @@ import { currentPhase, growDay } from '../../lib/grow/phases';
 import { METRICS, metricSeries } from '../../lib/grow/series';
 import { fmt } from '../../lib/format';
 import { ShareButton } from '../../components/collab/ShareDialog';
+import { labels, t } from '../../i18n';
 
 type Tab = 'log' | 'photos' | 'measurements' | 'outcome';
 
-const PHENO_LABEL = { appearance: 'Erscheinungsbild', growth: 'Wuchs', leaves: 'Blätter', aroma: 'Aroma', variation: 'Abweichungen', notes: 'Notizen' } as const;
+const PHENO_LABEL = labels('grow.pd.pheno', ['appearance', 'growth', 'leaves', 'aroma', 'variation', 'notes'] as const);
 
 export function PlantDetail({ growId, plantId }: { growId: string; plantId: string }) {
   const { data } = useData();
@@ -44,7 +45,7 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
   const photos = useMemo(() => data.photos.filter((p) => p.plantId === plantId), [data.photos, plantId]);
 
   if (!plant || !grow || plant.growId !== growId) {
-    return <EmptyState title="Pflanze nicht gefunden" text="Sie wurde gelöscht oder gehört zu einem anderen Grow." action={<a href={href(`grows/${growId}`)} className="btn-primary">Zum Grow</a>} />;
+    return <EmptyState title={t('grow.pd.notFound')} text={t('grow.pd.notFoundText')} action={<a href={href(`grows/${growId}`)} className="btn-primary">{t('grow.pd.toGrow')}</a>} />;
   }
 
   const todayStr = today();
@@ -61,15 +62,15 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
 
   async function remove() {
     const ok = await confirm({
-      title: `„${plant!.name}“ löschen?`,
-      message: `Die Pflanze wird mit ${activities.length} Einträgen und ${photos.length} Fotos dauerhaft gelöscht.`,
-      confirmLabel: 'Löschen',
+      title: t('grow.pd.deleteTitle', { name: plant!.name }),
+      message: t('grow.pd.deleteMsg', { a: activities.length, p: photos.length }),
+      confirmLabel: t('common.delete'),
       tone: 'danger',
     });
     if (!ok) return;
     try {
       await deletePlant(plant!.id);
-      toast('Pflanze gelöscht');
+      toast(t('grow.pd.deleted'));
       navigate(`grows/${growId}?tab=plants`, { replace: true });
     } catch (e) {
       toast(errorText(e), { tone: 'error' });
@@ -80,17 +81,17 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
     .map((k) => [k, plant.phenotype?.[k]] as const)
     .filter((e): e is readonly [keyof typeof PHENO_LABEL, string] => typeof e[1] === 'string' && e[1].trim() !== '');
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: 'log', label: 'Verlauf', icon: <History className="size-4" /> },
-    { id: 'photos', label: `Fotos (${photos.length})`, icon: <Images className="size-4" /> },
-    { id: 'measurements', label: 'Messwerte', icon: <Ruler className="size-4" /> },
-    { id: 'outcome', label: 'Ergebnis', icon: <Scale className="size-4" /> },
+    { id: 'log', label: t('grow.pd.log'), icon: <History className="size-4" /> },
+    { id: 'photos', label: t('grow.pd.photosN', { n: photos.length }), icon: <Images className="size-4" /> },
+    { id: 'measurements', label: t('grow.pd.meas'), icon: <Ruler className="size-4" /> },
+    { id: 'outcome', label: t('grow.pd.outcome'), icon: <Scale className="size-4" /> },
   ];
 
   return (
     <div>
-      <nav aria-label="Brotkrumen" className="mb-3 flex min-w-0 items-center gap-1.5 text-xs text-ink-400">
+      <nav aria-label={t('grow.pd.crumbs')} className="mb-3 flex min-w-0 items-center gap-1.5 text-xs text-ink-400">
         <a href={href('grows')} className="hover:text-ink-100">
-          Grows
+          {t('grow.pd.grows')}
         </a>
         <span className="text-ink-600">/</span>
         <a href={href(`grows/${growId}`)} className="truncate hover:text-ink-100">
@@ -115,26 +116,26 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
                       </a>
                       {strain.external && externalLink(strain.external.provider, strain.external.id) && (
                         <a href={href(externalLink(strain.external.provider, strain.external.id)!)} className="ml-1.5 rounded border border-white/[0.08] px-1.5 py-px text-[10px] text-ink-300 hover:text-ink-50">
-                          Katalogprofil
+                          {t('grow.pd.catalog')}
                         </a>
                       )}
                     </>
                   ) : (
-                    plant.strainName || 'Sorte nicht angegeben'
+                    plant.strainName || t('grow.pd.noStrain')
                   )}
                   {' · '}seit {fmtDate(plant.startDate)}
                 </div>
               </div>
               <div className="shrink-0 rounded-xl border border-white/[0.08] bg-white/[0.02] px-3.5 py-1.5 text-center">
-                <div className="text-[10px] uppercase tracking-[0.14em] text-ink-500">Tag</div>
+                <div className="text-[10px] uppercase tracking-[0.14em] text-ink-500">{t('grow.pd.day')}</div>
                 <div className="font-mono text-2xl font-semibold text-ink-50">{day ?? '–'}</div>
               </div>
             </div>
             <div className="flex flex-wrap gap-1.5">
               <PhaseChip phase={phase} />
               <Chip>{PLANT_TYPE_LABEL[plant.type]}</Chip>
-              {!ownPhases && <Chip title="Diese Pflanze hat keine eigenen Meilensteine">Phasen vom Grow</Chip>}
-              {space && <Chip tone="sky">Standort: {space.name}</Chip>}
+              {!ownPhases && <Chip title={t('grow.pd.noOwnPhases')}>{t('grow.pd.growPhases')}</Chip>}
+              {space && <Chip tone="sky">{t('grow.pd.location', { name: space.name })}</Chip>}
               {(plant.tags ?? []).map((todayStr) => (
                 <Chip key={todayStr}>#{todayStr}</Chip>
               ))}
@@ -153,25 +154,25 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
             )}
             <div className="mt-auto flex flex-wrap gap-2">
               <button type="button" className="btn-primary" onClick={() => quick({ kind: 'log', plantId })}>
-                <NotebookPen className="size-4" /> Schnell-Log
+                <NotebookPen className="size-4" /> {t('grow.pd.quick')}
               </button>
               <button type="button" className="btn-ghost" onClick={() => setModal('activity')}>
-                <Plus className="size-4" /> Eintrag
+                <Plus className="size-4" /> {t('grow.pd.entry')}
               </button>
               <button type="button" className="btn-ghost" onClick={() => setModal('measure')}>
-                <Ruler className="size-4" /> Messung
+                <Ruler className="size-4" /> {t('grow.pd.measure')}
               </button>
               <button type="button" className="btn-ghost" onClick={() => setModal('photo')}>
-                <Camera className="size-4" /> Fotos
+                <Camera className="size-4" /> {t('grow.pd.photos')}
               </button>
               <button type="button" className="btn-ghost" onClick={() => setModal('edit')}>
-                <Pencil className="size-4" /> Bearbeiten
+                <Pencil className="size-4" /> {t('common.edit')}
               </button>
               <a href={href(`labels?grow=${encodeURIComponent(growId)}&plants=${encodeURIComponent(plant.id)}`)} className="btn-ghost">
-                <QrCode className="size-4" /> Etikett
+                <QrCode className="size-4" /> {t('grow.pd.label')}
               </a>
               <ShareButton store="plants" ids={[plant.id]} />
-              <button type="button" className="btn-ghost text-rose-300/90 hover:text-rose-200" onClick={remove} aria-label="Pflanze löschen">
+              <button type="button" className="btn-ghost text-rose-300/90 hover:text-rose-200" onClick={remove} aria-label={t('grow.pd.delete')}>
                 <Trash2 className="size-4" />
               </button>
             </div>
@@ -182,17 +183,17 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
       {(plant.notes || phenoEntries.length > 0) && (
         <div className={`mb-5 grid gap-5 ${plant.notes && phenoEntries.length ? 'lg:grid-cols-2' : ''}`}>
           {plant.notes && (
-            <Card title="Notizen">
+            <Card title={t('grow.pd.notes')}>
               <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-ink-300">{plant.notes}</p>
             </Card>
           )}
           {phenoEntries.length > 0 && (
             <Card
-              title="Phänotyp"
-              subtitle="Eigene Beobachtungen – subjektiv, keine Messung"
+              title={t('grow.pd.phenoTitle')}
+              subtitle={t('grow.pd.phenoSub')}
               actions={
                 <a href={href(`grows/${growId}/experiments`)} className="btn-ghost py-1.5 text-xs">
-                  Bearbeiten
+                  {t('common.edit')}
                 </a>
               }
             >
@@ -209,7 +210,7 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
         </div>
       )}
 
-      <Card title="Phasen" subtitle={ownPhases ? 'Eigene Meilensteine dieser Pflanze' : `Meilensteine von „${grow.name}“`} className="mb-5">
+      <Card title={t('grow.pd.phases')} subtitle={ownPhases ? t('grow.pd.ownMilestones') : t('grow.pd.growMilestones', { name: grow.name })} className="mb-5">
         <PhaseTimeline dates={dates} endDate={plant.outcome?.harvestDate && ownPhases ? undefined : grow.completedDate} />
       </Card>
 
@@ -229,44 +230,44 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
       </div>
 
       {tab === 'log' && (
-        <Card title="Verlauf" subtitle="Alle Einträge dieser Pflanze">
+        <Card title={t('grow.pd.log')} subtitle={t('grow.pd.allEntries')}>
           <ActivityTimeline activities={activities} growId={growId} showPlant={false} />
         </Card>
       )}
       {tab === 'photos' && (
         <Card
-          title="Fortschrittsfotos"
+          title={t('grow.pd.progress')}
           actions={
             <>
               <a href={href(`photos?grow=${growId}&plant=${plantId}&view=timelapse`)} className="btn-ghost py-1.5 text-xs">
-                <Clapperboard className="size-3.5" /> Zeitraffer
+                <Clapperboard className="size-3.5" /> {t('grow.pd.timelapse')}
               </a>
               <a href={href(`photos?grow=${growId}&plant=${plantId}&view=compare`)} className="btn-ghost py-1.5 text-xs">
-                <Columns2 className="size-3.5" /> Vergleich
+                <Columns2 className="size-3.5" /> {t('grow.pd.compare')}
               </a>
             </>
           }
         >
-          {photos.length === 0 ? <EmptyState icon={<Camera />} title="Noch keine Fotos" action={<button type="button" className="btn-primary" onClick={() => setModal('photo')}><Camera className="size-4" /> Fotos hochladen</button>} /> : <PhotoGrid photos={photos} />}
+          {photos.length === 0 ? <EmptyState icon={<Camera />} title={t('grow.pd.noPhotos')} action={<button type="button" className="btn-primary" onClick={() => setModal('photo')}><Camera className="size-4" /> {t('grow.pd.upload')}</button>} /> : <PhotoGrid photos={photos} />}
         </Card>
       )}
       {tab === 'measurements' && (
-        <Card title="Messwerte" actions={<button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setModal('measure')}><Plus className="size-3.5" /> Messung</button>}>
+        <Card title={t('grow.pd.meas')} actions={<button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setModal('measure')}><Plus className="size-3.5" /> {t('grow.pd.measure')}</button>}>
           <MeasurementCharts activities={activities} splitByPlant={false} thresholds={grow?.thresholds} onEditThresholds={grow ? () => setModal('thresholds') : undefined} fileName={`pflanze-${plant.name}`} />
         </Card>
       )}
       {tab === 'outcome' && (
-        <Card title="Ergebnis" subtitle="Optional – nur eigene Angaben" actions={<button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setModal('edit')}><Pencil className="size-3.5" /> Erfassen</button>}>
+        <Card title={t('grow.pd.outcome')} subtitle={t('grow.pd.optional')} actions={<button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setModal('edit')}><Pencil className="size-3.5" /> {t('grow.pd.record')}</button>}>
           {!o ? (
-            <EmptyState compact icon={<Scale />} title="Noch kein Ergebnis erfasst" text="Erntedatum, Nass- und Trockengewicht und Notizen lassen sich in „Bearbeiten“ eintragen." />
+            <EmptyState compact icon={<Scale />} title={t('grow.pd.noOutcome')} text={t('grow.pd.noOutcomeText')} />
           ) : (
             <div className="space-y-4">
               <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {[
-                  ['Erntedatum', o.harvestDate ? fmtDate(o.harvestDate) : '–'],
-                  ['Nassgewicht', o.wetWeightG !== undefined ? `${fmt(o.wetWeightG)} g` : '–'],
-                  ['Trockengewicht', o.dryWeightG !== undefined ? `${fmt(o.dryWeightG)} g` : '–'],
-                  ['Trocknungsverlust', o.wetWeightG && o.dryWeightG !== undefined ? `${fmt((1 - o.dryWeightG / o.wetWeightG) * 100)} %` : '–'],
+                  [t('grow.pd.harvestDate'), o.harvestDate ? fmtDate(o.harvestDate) : '–'],
+                  [t('grow.pd.wet'), o.wetWeightG !== undefined ? `${fmt(o.wetWeightG)} g` : '–'],
+                  [t('grow.pd.dry'), o.dryWeightG !== undefined ? `${fmt(o.dryWeightG)} g` : '–'],
+                  [t('grow.pd.loss'), o.wetWeightG && o.dryWeightG !== undefined ? `${fmt((1 - o.dryWeightG / o.wetWeightG) * 100)} %` : '–'],
                 ].map(([k, v]) => (
                   <div key={k} className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-3">
                     <dt className="text-[11px] text-ink-500">{k}</dt>
@@ -275,7 +276,7 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
                 ))}
               </dl>
               {o.notes && <p className="whitespace-pre-wrap text-[13px] text-ink-300">{o.notes}</p>}
-              <p className="hint">Trocknungsverlust = 1 − Trocken ÷ Nass (aus deinen Angaben berechnet).</p>
+              <p className="hint">{t('grow.pd.lossNote')}</p>
             </div>
           )}
         </Card>

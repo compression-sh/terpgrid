@@ -5,6 +5,7 @@ import { useData } from '../../app/DataProvider';
 import { href, setQuery, useRoute } from '../../app/router';
 import { EmptyState } from '../../components/ui/EmptyState';
 import type { Plant } from '../../lib/db/types';
+import { t } from '../../i18n';
 
 /** Kurzkennung für das Etikett: aus der (zufälligen) Datensatz-ID abgeleitet, keine zweite Identität. */
 export const shortId = (id: string) => id.replace(/[^A-Za-z0-9]/g, '').slice(-6).toUpperCase();
@@ -29,12 +30,12 @@ function QrSvg({ text }: { text: string }) {
     };
   }, [text]);
   // SVG stammt aus der QR-Bibliothek (nur Pfade, kein Nutzer-HTML)
-  return svg ? <div className="aspect-square h-full [&>svg]:h-full [&>svg]:w-full" role="img" aria-label="QR-Code zur Pflanzenseite" dangerouslySetInnerHTML={{ __html: svg }} /> : <div className="aspect-square h-full bg-ink-800" />;
+  return svg ? <div className="aspect-square h-full [&>svg]:h-full [&>svg]:w-full" role="img" aria-label={t('grow.lp.qr')} dangerouslySetInnerHTML={{ __html: svg }} /> : <div className="aspect-square h-full bg-ink-800" />;
 }
 
 const SIZES = {
-  s: { label: 'Klein (50 × 30 mm)', w: '50mm', h: '30mm' },
-  m: { label: 'Mittel (70 × 40 mm)', w: '70mm', h: '40mm' },
+  s: { get label() { return t('grow.lp.small'); }, w: '50mm', h: '30mm' },
+  m: { get label() { return t('grow.lp.medium'); }, w: '70mm', h: '40mm' },
 } as const;
 
 export function LabelsPage() {
@@ -49,7 +50,7 @@ export function LabelsPage() {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const path = typeof window !== 'undefined' ? window.location.pathname : '/';
 
-  if (!grow) return <EmptyState icon={<QrCode />} title="Grow nicht gefunden" action={<a href={href('grows')} className="btn-primary">Zu den Grows</a>} />;
+  if (!grow) return <EmptyState icon={<QrCode />} title={t('grow.lp.notFound')} action={<a href={href('grows')} className="btn-primary">{t('grow.lp.toGrows')}</a>} />;
   const S = SIZES[size];
   const strainName = (p: Plant) => (p.strainId ? data.strains.find((s) => s.id === p.strainId)?.name : p.strainName);
 
@@ -61,17 +62,17 @@ export function LabelsPage() {
         </a>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="page-title">Pflanzen-Etiketten</h1>
+            <h1 className="page-title">{t('grow.lp.title')}</h1>
             <p className="mt-1 max-w-2xl text-sm text-ink-400">
-              {plants.length} {plants.length === 1 ? 'Etikett' : 'Etiketten'} zum Ausdrucken. Der QR-Code enthält nur den Link zur Pflanzenseite in TERPGRID – kein Passwort, keine Daten. Ohne Anmeldung mit deinem Konto öffnet er nichts.
+              {t('grow.lp.intro', { count: plants.length })}
             </p>
           </div>
           <button type="button" className="btn-primary" onClick={() => window.print()} disabled={!plants.length}>
-            <Printer className="size-4" /> Drucken
+            <Printer className="size-4" /> {t('grow.lp.print')}
           </button>
         </div>
         <div className="flex flex-wrap gap-3 text-[13px]">
-          <select className="input-base h-9 w-auto" aria-label="Etikettengröße" value={size} onChange={(e) => setQuery(route, { size: e.target.value === 's' ? undefined : e.target.value })}>
+          <select className="input-base h-9 w-auto" aria-label={t('grow.lp.size')} value={size} onChange={(e) => setQuery(route, { size: e.target.value === 's' ? undefined : e.target.value })}>
             {Object.entries(SIZES).map(([k, v]) => (
               <option key={k} value={k}>
                 {v.label}
@@ -79,18 +80,18 @@ export function LabelsPage() {
             ))}
           </select>
           <label className="flex items-center gap-2 text-ink-300">
-            <input type="checkbox" className="accent-leaf-500" checked={showStrain} onChange={(e) => setQuery(route, { strain: e.target.checked ? undefined : '0' })} /> Sorte aufdrucken
+            <input type="checkbox" className="accent-leaf-500" checked={showStrain} onChange={(e) => setQuery(route, { strain: e.target.checked ? undefined : '0' })} /> {t('grow.lp.withStrain')}
           </label>
           {only && (
             <button type="button" className="btn-ghost h-9" onClick={() => setQuery(route, { plants: undefined })}>
-              Alle Pflanzen des Grows
+              {t('grow.lp.allPlants')}
             </button>
           )}
         </div>
       </div>
 
       {plants.length === 0 ? (
-        <EmptyState icon={<QrCode />} title="Keine Pflanzen" text="Dieser Grow hat noch keine Pflanzen." />
+        <EmptyState icon={<QrCode />} title={t('grow.lp.none')} text={t('grow.lp.noneText')} />
       ) : (
         <div className="label-sheet flex flex-wrap gap-3 print:gap-[2mm]">
           {plants.map((p) => (

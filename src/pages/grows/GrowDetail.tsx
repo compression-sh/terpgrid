@@ -48,16 +48,17 @@ import { PHASE_COLOR, currentPhase, growDay, phaseSpans } from '../../lib/grow/p
 import { METRICS, metricSeries } from '../../lib/grow/series';
 import { fmt } from '../../lib/format';
 import { ShareButton } from '../../components/collab/ShareDialog';
+import { t } from '../../i18n';
 
 type Tab = 'overview' | 'plants' | 'photos' | 'log' | 'measurements' | 'calendar' | 'expenses';
 const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
-  { id: 'overview', label: 'Übersicht', icon: <LayoutGrid className="size-4" /> },
-  { id: 'plants', label: 'Pflanzen', icon: <Sprout className="size-4" /> },
-  { id: 'photos', label: 'Fotos', icon: <Images className="size-4" /> },
-  { id: 'log', label: 'Verlauf', icon: <History className="size-4" /> },
-  { id: 'measurements', label: 'Messwerte', icon: <Ruler className="size-4" /> },
-  { id: 'calendar', label: 'Kalender', icon: <CalendarDays className="size-4" /> },
-  { id: 'expenses', label: 'Ausgaben', icon: <Receipt className="size-4" /> },
+  { id: 'overview', get label() { return t('grow.gd.tab.overview'); }, icon: <LayoutGrid className="size-4" /> },
+  { id: 'plants', get label() { return t('grow.gd.tab.plants'); }, icon: <Sprout className="size-4" /> },
+  { id: 'photos', get label() { return t('grow.gd.tab.photos'); }, icon: <Images className="size-4" /> },
+  { id: 'log', get label() { return t('grow.gd.tab.log'); }, icon: <History className="size-4" /> },
+  { id: 'measurements', get label() { return t('grow.gd.tab.measurements'); }, icon: <Ruler className="size-4" /> },
+  { id: 'calendar', get label() { return t('grow.gd.tab.calendar'); }, icon: <CalendarDays className="size-4" /> },
+  { id: 'expenses', get label() { return t('grow.gd.tab.expenses'); }, icon: <Receipt className="size-4" /> },
 ];
 
 export function PlantCard({ plant, growId }: { plant: Plant; growId: string }) {
@@ -79,9 +80,9 @@ export function PlantCard({ plant, growId }: { plant: Plant; growId: string }) {
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="truncate text-[14px] font-semibold text-ink-50">{plant.name}</div>
-            <div className="truncate text-[11px] text-ink-400">{strain || 'Sorte nicht angegeben'}</div>
+            <div className="truncate text-[11px] text-ink-400">{strain || t('grow.gd.noStrain')}</div>
           </div>
-          {day !== undefined && <span className="shrink-0 font-mono text-[11px] text-ink-400">Tag {day}</span>}
+          {day !== undefined && <span className="shrink-0 font-mono text-[11px] text-ink-400">{t('grow.gd.dayN', { n: day })}</span>}
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           <PhaseChip phase={phase} short />
@@ -118,22 +119,22 @@ function StatusMenu({ grow, extra = [] }: { grow: GrowProject; extra?: { icon: R
         status,
         completedDate: status === 'active' ? undefined : (grow.completedDate ?? today()),
       });
-      toast(`Status: ${STATUS_LABEL[status]}`);
+      toast(t('grow.gd.status', { s: STATUS_LABEL[status] }));
     } catch (e) {
       toast(errorText(e), { tone: 'error' });
     }
   };
   const remove = async () => {
     const ok = await confirm({
-      title: `„${grow.name}“ löschen?`,
-      message: 'Der Grow wird mit allen Pflanzen, Einträgen, Fotos, Ausgaben und verknüpften Erinnerungen dauerhaft von diesem Gerät gelöscht. Verknüpfte Sammlungs-Einträge bleiben erhalten. Tipp: Vorher ein Backup erstellen oder stattdessen archivieren.',
-      confirmLabel: 'Endgültig löschen',
+      title: t('grow.gd.deleteTitle', { name: grow.name }),
+      message: t('grow.gd.deleteMsg'),
+      confirmLabel: t('grow.gd.deleteFinal'),
       tone: 'danger',
     });
     if (!ok) return;
     try {
       await deleteGrow(grow.id);
-      toast('Grow gelöscht');
+      toast(t('grow.gd.deleted'));
       navigate('grows', { replace: true });
     } catch (e) {
       toast(errorText(e), { tone: 'error' });
@@ -141,7 +142,7 @@ function StatusMenu({ grow, extra = [] }: { grow: GrowProject; extra?: { icon: R
   };
   return (
     <div className="relative" onBlur={(e) => !e.currentTarget.contains(e.relatedTarget as Node) && setOpen(false)}>
-      <button type="button" className="btn-ghost p-2" aria-label="Weitere Aktionen" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+      <button type="button" className="btn-ghost p-2" aria-label={t('grow.gd.more')} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         <MoreHorizontal className="size-4" />
       </button>
       {open && (
@@ -154,11 +155,11 @@ function StatusMenu({ grow, extra = [] }: { grow: GrowProject; extra?: { icon: R
               <div className="my-1 h-px bg-white/[0.06]" />
             </div>
           )}
-          {grow.status !== 'completed' && item(<CheckCircle2 className="size-4" />, 'Als abgeschlossen markieren', () => setStatus('completed'))}
-          {grow.status !== 'archived' && item(<Archive className="size-4" />, 'Archivieren', () => setStatus('archived'))}
-          {grow.status !== 'active' && item(<ArchiveRestore className="size-4" />, 'Wieder aktivieren', () => setStatus('active'))}
+          {grow.status !== 'completed' && item(<CheckCircle2 className="size-4" />, t('grow.gd.complete'), () => setStatus('completed'))}
+          {grow.status !== 'archived' && item(<Archive className="size-4" />, t('grow.gd.archive'), () => setStatus('archived'))}
+          {grow.status !== 'active' && item(<ArchiveRestore className="size-4" />, t('grow.gd.reactivate'), () => setStatus('active'))}
           <div className="my-1 h-px bg-white/[0.06]" />
-          {item(<Trash2 className="size-4" />, 'Grow löschen', remove, true)}
+          {item(<Trash2 className="size-4" />, t('grow.gd.delete'), remove, true)}
         </div>
       )}
     </div>
@@ -185,11 +186,11 @@ export function GrowDetail({ growId }: { growId: string }) {
   if (!grow) {
     return (
       <EmptyState
-        title="Grow nicht gefunden"
-        text="Der Grow wurde gelöscht oder der Link ist ungültig."
+        title={t('grow.gd.notFound')}
+        text={t('grow.gd.notFoundText')}
         action={
           <a href={href('grows')} className="btn-primary">
-            Zu den Grows
+            {t('grow.gd.toGrows')}
           </a>
         }
       />
@@ -214,9 +215,9 @@ export function GrowDetail({ growId }: { growId: string }) {
   const markers = new Map<string, DayMarker[]>();
   const add = (d: string, mk: DayMarker) => markers.set(d, [...(markers.get(d) ?? []), mk]);
   for (const a of activities) add(a.date.slice(0, 10), { color: a.type === 'issue' ? '#fbbf24' : a.type === 'watering' ? '#38bdf8' : a.type === 'feeding' ? '#c084fc' : '#5fe39a', label: ACTIVITY_LABEL[a.type] });
-  for (const p of photos) add(p.takenAt.slice(0, 10), { color: '#dfe7e3', label: 'Foto' });
-  for (const o of occurrencesInRange(reminders, grid[0]!, grid[41]!)) add(o.date, { color: o.done ? '#5f6d68' : '#fb923c', label: `Erinnerung: ${o.reminder.title}` });
-  for (const [p, d] of Object.entries(grow.phaseDates)) add(d!, { color: PHASE_COLOR[p as keyof typeof PHASE_COLOR], label: `Meilenstein` });
+  for (const p of photos) add(p.takenAt.slice(0, 10), { color: '#dfe7e3', label: t('grow.gd.photo') });
+  for (const o of occurrencesInRange(reminders, grid[0]!, grid[41]!)) add(o.date, { color: o.done ? '#5f6d68' : '#fb923c', label: t('grow.gd.reminderX', { title: o.reminder.title }) });
+  for (const [p, d] of Object.entries(grow.phaseDates)) add(d!, { color: PHASE_COLOR[p as keyof typeof PHASE_COLOR], label: t('grow.gd.milestone') });
   const dayActs: Activity[] = selectedDay ? activities.filter((a) => a.date.startsWith(selectedDay)) : [];
   const dayPhotos = selectedDay ? photos.filter((p) => p.takenAt.startsWith(selectedDay)) : [];
   const dayReminders = selectedDay ? occurrencesInRange(reminders, selectedDay, selectedDay) : [];
@@ -228,13 +229,13 @@ export function GrowDetail({ growId }: { growId: string }) {
       {/* Hero */}
       <section className="relative -mx-4 -mt-5 mb-6 overflow-hidden sm:mx-0 sm:mt-0 sm:rounded-2xl sm:border sm:border-white/[0.06] animate-fade-up">
         <div className="relative h-56 sm:h-72">
-          <PhotoImg photoId={cover} variant="full" alt={`Titelbild ${grow.name}`} className="h-full w-full" />
+          <PhotoImg photoId={cover} variant="full" alt={t('grow.gd.cover', { name: grow.name })} className="h-full w-full" />
           <div className="absolute inset-0 bg-gradient-to-t from-ink-950 via-ink-950/55 to-ink-950/10" />
         </div>
         <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6">
-          <nav aria-label="Brotkrumen" className="mb-2 text-xs text-ink-300">
+          <nav aria-label={t('grow.gd.crumbs')} className="mb-2 text-xs text-ink-300">
             <a href={href('grows')} className="hover:text-ink-50">
-              Grows
+              {t('grow.gd.grows')}
             </a>
             <span className="mx-1.5 text-ink-500">/</span>
             <span className="text-ink-200">{grow.name}</span>
@@ -252,15 +253,15 @@ export function GrowDetail({ growId }: { growId: string }) {
             </div>
             <div className="flex shrink-0 items-stretch gap-2">
               <div className="rounded-xl border border-white/10 bg-black/45 px-4 py-2 text-center backdrop-blur">
-                <div className="text-[10px] uppercase tracking-[0.14em] text-ink-400">{grow.completedDate ? 'Dauer' : 'Tag'}</div>
+                <div className="text-[10px] uppercase tracking-[0.14em] text-ink-400">{grow.completedDate ? t('grow.gd.duration') : t('grow.gd.day')}</div>
                 <div className="font-mono text-3xl font-semibold leading-tight text-white">{day ?? '–'}</div>
                 <div className="text-[10px] text-ink-400">seit {fmtDate(grow.startDate)}</div>
               </div>
               {currentSpan && (
                 <div className="hidden rounded-xl border border-white/10 bg-black/45 px-4 py-2 text-center backdrop-blur sm:block">
-                  <div className="text-[10px] uppercase tracking-[0.14em] text-ink-400">in Phase</div>
+                  <div className="text-[10px] uppercase tracking-[0.14em] text-ink-400">{t('grow.gd.inPhase')}</div>
                   <div className="font-mono text-3xl font-semibold leading-tight text-white">{currentSpan.days}</div>
-                  <div className="text-[10px] text-ink-400">Tage</div>
+                  <div className="text-[10px] text-ink-400">{t('grow.gd.days')}</div>
                 </div>
               )}
             </div>
@@ -271,44 +272,44 @@ export function GrowDetail({ growId }: { growId: string }) {
       {/* Aktionen */}
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <button type="button" className="btn-primary whitespace-nowrap" onClick={() => quick({ kind: 'log', growId })}>
-          <NotebookPen className="size-4" /> Schnell-Log
+          <NotebookPen className="size-4" /> {t('grow.gd.quick')}
         </button>
         <button type="button" className="btn-ghost" onClick={() => setModal('activity')}>
-          <Plus className="size-4" /> Eintrag
+          <Plus className="size-4" /> {t('grow.gd.entry')}
         </button>
         <button type="button" className="btn-ghost hidden sm:inline-flex" onClick={() => setModal('photo')}>
-          <Camera className="size-4" /> Fotos
+          <Camera className="size-4" /> {t('grow.gd.photos')}
         </button>
         <button type="button" className="btn-ghost hidden sm:inline-flex" onClick={() => quick({ kind: 'plant', growId })}>
-          <Sprout className="size-4" /> Pflanze
+          <Sprout className="size-4" /> {t('grow.gd.plant')}
         </button>
         {/* Seltener genutzt: ab sehr breiten Ansichten sichtbar, sonst im Menü „…“ (6.0.1) */}
         <button type="button" className="btn-ghost hidden xl:inline-flex" onClick={() => setModal('edit')}>
-          <Pencil className="size-4" /> Bearbeiten
+          <Pencil className="size-4" /> {t('common.edit')}
         </button>
         <a href={href(`grows/${growId}/report`)} className="btn-ghost hidden xl:inline-flex">
-          <FileText className="size-4" /> Bericht
+          <FileText className="size-4" /> {t('grow.gd.report')}
         </a>
         <ShareButton store="grows" ids={[growId]} />
         <a href={href(`grows/${growId}/experiments`)} className="btn-ghost hidden xl:inline-flex">
-          <FlaskConical className="size-4" /> Experimente
+          <FlaskConical className="size-4" /> {t('grow.gd.experiments')}
         </a>
         <div className="ml-auto">
           <StatusMenu
             grow={grow}
             extra={[
-              { icon: <Camera className="size-4" />, label: 'Fotos hochladen', run: () => setModal('photo') },
-              { icon: <Sprout className="size-4" />, label: 'Pflanze hinzufügen', run: () => quick({ kind: 'plant', growId }) },
-              { icon: <Pencil className="size-4" />, label: 'Grow bearbeiten', run: () => setModal('edit') },
-              { icon: <FileText className="size-4" />, label: 'Bericht', run: () => navigate(`grows/${growId}/report`) },
-              { icon: <FlaskConical className="size-4" />, label: 'Experimente', run: () => navigate(`grows/${growId}/experiments`) },
+              { icon: <Camera className="size-4" />, label: t('grow.gd.upload'), run: () => setModal('photo') },
+              { icon: <Sprout className="size-4" />, label: t('grow.gd.addPlant'), run: () => quick({ kind: 'plant', growId }) },
+              { icon: <Pencil className="size-4" />, label: t('grow.gd.editGrow'), run: () => setModal('edit') },
+              { icon: <FileText className="size-4" />, label: t('grow.gd.report'), run: () => navigate(`grows/${growId}/report`) },
+              { icon: <FlaskConical className="size-4" />, label: t('grow.gd.experiments'), run: () => navigate(`grows/${growId}/experiments`) },
             ]}
           />
         </div>
       </div>
 
       {/* Tabs */}
-      <nav aria-label="Grow-Bereiche" className="no-print sticky top-[3.6rem] z-20 -mx-4 mb-6 border-b border-white/[0.05] bg-ink-950/85 px-4 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:top-0 lg:-mx-10 lg:px-10">
+      <nav aria-label={t('grow.gd.areas')} className="no-print sticky top-[3.6rem] z-20 -mx-4 mb-6 border-b border-white/[0.05] bg-ink-950/85 px-4 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:top-0 lg:-mx-10 lg:px-10">
         <div className="-mb-px flex gap-1 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TABS.map((x) => (
             <button
@@ -331,10 +332,10 @@ export function GrowDetail({ growId }: { growId: string }) {
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
-              ['Pflanzen', String(plants.length)],
-              ['Fotos', String(photos.length)],
-              ['Einträge', String(activities.length)],
-              ['Ausgaben', money(expenseTotal, settings.currency)],
+              [t('grow.gd.tab.plants'), String(plants.length)],
+              [t('grow.gd.tab.photos'), String(photos.length)],
+              [t('grow.gd.entries'), String(activities.length)],
+              [t('grow.gd.tab.expenses'), money(expenseTotal, settings.currency)],
             ].map(([k, v]) => (
               <div key={k} className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-4">
                 <div className="text-xs text-ink-400">{k}</div>
@@ -342,10 +343,10 @@ export function GrowDetail({ growId }: { growId: string }) {
               </div>
             ))}
           </div>
-          <Card title="Phasen" subtitle="Aus erfassten Meilensteinen berechnet – keine Prognose">
+          <Card title={t('grow.gd.phases')} subtitle={t('grow.gd.phasesSub')}>
             <PhaseTimeline dates={grow.phaseDates} endDate={grow.completedDate} />
           </Card>
-          <Card title="Dokumentation" subtitle="Was ist erfasst? Bestandsaufnahme, keine Bewertung des Grows">
+          <Card title={t('grow.gd.docu')} subtitle={t('grow.gd.docuSub')}>
             <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {growCompleteness(grow, { plants, activities, photos, expenses: data.expenses.filter((e) => e.growId === growId) }).map((c) => (
                 <li key={c.id} className="flex items-start gap-2.5 rounded-xl border border-white/[0.05] bg-white/[0.015] px-3 py-2.5">
@@ -355,7 +356,7 @@ export function GrowDetail({ growId }: { growId: string }) {
                   <span className="min-w-0">
                     <span className="block text-[13px] text-ink-100">
                       {c.label}
-                      <span className="sr-only">: {c.state === 'ok' ? 'vollständig' : c.state === 'partial' ? 'teilweise' : 'fehlt'}</span>
+                      <span className="sr-only">: {c.state === 'ok' ? t('grow.gd.complete2') : c.state === 'partial' ? 'teilweise' : 'fehlt'}</span>
                     </span>
                     <span className="block text-[11px] text-ink-400">{c.detail}</span>
                   </span>
@@ -366,16 +367,16 @@ export function GrowDetail({ growId }: { growId: string }) {
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
             <div className="space-y-5">
               <Card
-                title="Pflanzen"
+                title={t('grow.gd.tab.plants')}
                 icon={<Sprout className="size-4" />}
                 actions={
                   <button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => quick({ kind: 'plant', growId })}>
-                    <Plus className="size-3.5" /> Pflanze
+                    <Plus className="size-3.5" /> {t('grow.gd.plant')}
                   </button>
                 }
               >
                 {plants.length === 0 ? (
-                  <EmptyState compact title="Noch keine Pflanzen" text="Jede Pflanze bekommt ein eigenes Profil mit Fotos und Messwerten." />
+                  <EmptyState compact title={t('grow.gd.noPlants')} text={t('grow.gd.noPlantsText')} />
                 ) : (
                   <div className="grid gap-2.5 sm:grid-cols-2">
                     {plants.map((p) => (
@@ -385,7 +386,7 @@ export function GrowDetail({ growId }: { growId: string }) {
                 )}
               </Card>
               <Card
-                title="Neueste Einträge"
+                title={t('grow.gd.recent')}
                 icon={<History className="size-4" />}
                 actions={
                   <button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setQuery(route, { tab: 'log' })}>
@@ -397,16 +398,16 @@ export function GrowDetail({ growId }: { growId: string }) {
               </Card>
             </div>
             <div className="space-y-5">
-              <Card title="Neueste Fotos" icon={<Images className="size-4" />} actions={<button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setQuery(route, { tab: 'photos' })}>Alle</button>}>
+              <Card title={t('grow.gd.recentPhotos')} icon={<Images className="size-4" />} actions={<button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setQuery(route, { tab: 'photos' })}>{t('grow.gd.all')}</button>}>
                 {photos.length === 0 ? (
-                  <EmptyState compact icon={<Camera />} title="Keine Fotos" action={<button type="button" className="btn-ghost" onClick={() => setModal('photo')}><Camera className="size-4" /> Fotos hinzufügen</button>} />
+                  <EmptyState compact icon={<Camera />} title={t('grow.gd.noPhotos')} action={<button type="button" className="btn-ghost" onClick={() => setModal('photo')}><Camera className="size-4" /> {t('grow.gd.addPhotos')}</button>} />
                 ) : (
                   <PhotoGrid photos={sortedPhotos.slice(0, 9)} group={false} dense />
                 )}
               </Card>
-              <Card title="Letzte Messwerte" icon={<Ruler className="size-4" />}>
+              <Card title={t('grow.gd.lastMeas')} icon={<Ruler className="size-4" />}>
                 {latest.length === 0 ? (
-                  <p className="hint">Noch keine Messwerte erfasst.</p>
+                  <p className="hint">{t('grow.gd.noMeas')}</p>
                 ) : (
                   <dl className="grid grid-cols-2 gap-2">
                     {latest.map(({ m, p }) => (
@@ -420,13 +421,13 @@ export function GrowDetail({ growId }: { growId: string }) {
                     ))}
                   </dl>
                 )}
-                {lastActivity && <p className="hint mt-3">Letzte Aktivität: {fmtDateTime(lastActivity.date)} ({daysBetween(lastActivity.date.slice(0, 10), todayStr)} Tage her)</p>}
+                {lastActivity && <p className="hint mt-3">{t('grow.gd.lastActivity', { date: fmtDateTime(lastActivity.date), count: daysBetween(lastActivity.date.slice(0, 10), todayStr) })}</p>}
               </Card>
               <GrowTasksCard reminders={reminders} today={todayStr} onAdd={() => setModal('reminder')} />
               <GrowStrainsCard plants={plants} strains={data.strains} />
               <GrowEquipmentCard plants={plants} inventory={data.inventory} />
               {(grow.description || grow.notes) && (
-                <Card title="Notizen">
+                <Card title={t('grow.gd.notes')}>
                   {grow.description && <p className="text-[13px] leading-relaxed text-ink-200">{grow.description}</p>}
                   {grow.notes && <p className="mt-2 whitespace-pre-wrap text-[13px] leading-relaxed text-ink-400">{grow.notes}</p>}
                 </Card>
@@ -438,23 +439,23 @@ export function GrowDetail({ growId }: { growId: string }) {
 
       {tab === 'plants' && (
         <Card
-          title="Pflanzen"
-          subtitle={`${plants.length} in diesem Grow`}
+          title={t('grow.gd.tab.plants')}
+          subtitle={t('grow.gd.inThisGrow', { n: plants.length })}
           actions={
             <div className="flex gap-2">
               {plants.length > 0 && (
                 <a href={href(`labels?grow=${encodeURIComponent(growId)}`)} className="btn-ghost py-1.5">
-                  <QrCode className="size-4" /> Etiketten
+                  <QrCode className="size-4" /> {t('grow.gd.labels')}
                 </a>
               )}
               <button type="button" className="btn-primary py-1.5" onClick={() => quick({ kind: 'plant', growId })}>
-                <Plus className="size-4" /> Pflanze
+                <Plus className="size-4" /> {t('grow.gd.plant')}
               </button>
             </div>
           }
         >
           {plants.length === 0 ? (
-            <EmptyState icon={<Sprout />} title="Noch keine Pflanzen" />
+            <EmptyState icon={<Sprout />} title={t('grow.gd.noPlants')} />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {plants.map((p) => (
@@ -467,42 +468,42 @@ export function GrowDetail({ growId }: { growId: string }) {
 
       {tab === 'photos' && (
         <Card
-          title="Foto-Zeitleiste"
-          subtitle={`${filteredPhotos.length} eigene Fotos`}
+          title={t('grow.gd.photoTimeline')}
+          subtitle={t('grow.gd.ownPhotos', { count: filteredPhotos.length })}
           actions={
             <>
               <a href={href(`photos?grow=${growId}&view=timelapse`)} className="btn-ghost py-1.5 text-xs">
-                <Clapperboard className="size-3.5" /> Zeitraffer
+                <Clapperboard className="size-3.5" /> {t('grow.gd.timelapse')}
               </a>
               <a href={href(`photos?grow=${growId}&view=compare`)} className="btn-ghost py-1.5 text-xs">
-                <Columns2 className="size-3.5" /> Vergleich
+                <Columns2 className="size-3.5" /> {t('grow.gd.compare')}
               </a>
               <button type="button" className="btn-primary py-1.5 text-xs" onClick={() => setModal('photo')}>
-                <Camera className="size-3.5" /> Hochladen
+                <Camera className="size-3.5" /> {t('grow.gd.uploadShort')}
               </button>
             </>
           }
         >
           {plants.length > 0 && (
             <div className="mb-4 flex gap-1.5 overflow-x-auto [scrollbar-width:none]">
-              {[{ id: '', name: 'Alle' }, ...plants].map((p) => (
+              {[{ id: '', name: t('grow.gd.all') }, ...plants].map((p) => (
                 <button key={p.id} type="button" aria-pressed={photoPlant === p.id} onClick={() => setPhotoPlant(p.id)} className={`shrink-0 rounded-full border px-2.5 py-1 text-xs ${photoPlant === p.id ? 'border-leaf-500/40 bg-leaf-500/15 text-leaf-200' : 'border-white/[0.08] text-ink-400'}`}>
                   {p.name}
                 </button>
               ))}
             </div>
           )}
-          {filteredPhotos.length === 0 ? <EmptyState icon={<Camera />} title="Noch keine Fotos" /> : <PhotoGrid photos={filteredPhotos} />}
+          {filteredPhotos.length === 0 ? <EmptyState icon={<Camera />} title={t('grow.gd.noPhotosYet')} /> : <PhotoGrid photos={filteredPhotos} />}
         </Card>
       )}
 
       {tab === 'log' && (
         <Card
-          title="Verlauf"
-          subtitle="Alle Einträge chronologisch"
+          title={t('grow.gd.tab.log')}
+          subtitle={t('grow.gd.allChrono')}
           actions={
             <button type="button" className="btn-primary py-1.5" onClick={() => setModal('activity')}>
-              <Plus className="size-4" /> Eintrag
+              <Plus className="size-4" /> {t('grow.gd.entry')}
             </button>
           }
         >
@@ -511,7 +512,7 @@ export function GrowDetail({ growId }: { growId: string }) {
       )}
 
       {tab === 'measurements' && (
-        <Card title="Messwerte" subtitle="Dokumentierte Werte je Pflanze bzw. für den ganzen Grow" actions={<ContextHelp ids={['ph-ec', 'klima-vpd', 'licht-ppfd-dli', 'mangel-erkennen']} />}>
+        <Card title={t('grow.gd.tab.measurements')} subtitle={t('grow.gd.measSub')} actions={<ContextHelp ids={['ph-ec', 'klima-vpd', 'licht-ppfd-dli', 'mangel-erkennen']} />}>
           <MeasurementCharts activities={activities} thresholds={grow.thresholds} onEditThresholds={() => setModal('thresholds')} fileName={`grow-${grow.name}`} />
         </Card>
       )}
@@ -519,22 +520,22 @@ export function GrowDetail({ growId }: { growId: string }) {
       {tab === 'calendar' && (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
           <Card
-            title="Grow-Kalender"
+            title={t('grow.gd.cal')}
             actions={
               <button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setModal('reminder')}>
-                <Plus className="size-3.5" /> Erinnerung
+                <Plus className="size-3.5" /> {t('grow.gd.reminder')}
               </button>
             }
           >
             <MonthCalendar month={month} onMonth={setMonth} markers={markers} selected={selectedDay} onSelect={setSelectedDay} />
             <div className="mt-4 flex flex-wrap gap-3 text-[11px] text-ink-400">
               {[
-                ['#5fe39a', 'Eintrag'],
-                ['#38bdf8', 'Gießen'],
-                ['#c084fc', 'Düngen'],
-                ['#fbbf24', 'Problem'],
+                ['#5fe39a', t('grow.gd.entry')],
+                ['#38bdf8', t('grow.gd.watering')],
+                ['#c084fc', t('grow.gd.feeding')],
+                ['#fbbf24', t('grow.gd.issue')],
                 ['#dfe7e3', 'Foto'],
-                ['#fb923c', 'Erinnerung'],
+                ['#fb923c', t('grow.gd.reminder')],
               ].map(([c, l]) => (
                 <span key={l} className="flex items-center gap-1.5">
                   <span className="size-2 rounded-full" style={{ background: c }} />
@@ -543,17 +544,17 @@ export function GrowDetail({ growId }: { growId: string }) {
               ))}
             </div>
           </Card>
-          <Card title={selectedDay ? fmtDateLong(selectedDay) : 'Tag auswählen'} subtitle={selectedDay && day !== undefined ? `Tag ${daysBetween(grow.startDate, selectedDay) + 1} des Grows` : undefined}>
+          <Card title={selectedDay ? fmtDateLong(selectedDay) : t('grow.gd.pickDay')} subtitle={selectedDay && day !== undefined ? t('grow.gd.dayOfGrow', { n: daysBetween(grow.startDate, selectedDay) + 1 }) : undefined}>
             {!selectedDay ? (
-              <p className="hint">Einen Tag im Kalender antippen, um Einträge, Fotos und Erinnerungen zu sehen.</p>
+              <p className="hint">{t('grow.gd.pickDayText')}</p>
             ) : dayActs.length + dayPhotos.length + dayReminders.length === 0 ? (
-              <EmptyState compact title="Nichts an diesem Tag" action={<button type="button" className="btn-ghost" onClick={() => setModal('reminder')}><Plus className="size-4" /> Erinnerung</button>} />
+              <EmptyState compact title={t('grow.gd.nothing')} action={<button type="button" className="btn-ghost" onClick={() => setModal('reminder')}><Plus className="size-4" /> {t('grow.gd.reminder')}</button>} />
             ) : (
               <div className="space-y-4">
                 {dayReminders.map((o) => (
                   <div key={o.reminder.id} className="flex items-center justify-between rounded-lg border border-orange-300/15 bg-orange-300/[0.05] px-3 py-2 text-[13px]">
                     <span className="text-ink-100">{o.reminder.title}</span>
-                    <span className="text-[11px] text-ink-400">{REMINDER_CATEGORY_LABEL[o.reminder.category]} {o.done ? '· erledigt' : ''}</span>
+                    <span className="text-[11px] text-ink-400">{REMINDER_CATEGORY_LABEL[o.reminder.category]} {o.done ? t('grow.gd.doneSuffix') : ''}</span>
                   </div>
                 ))}
                 {dayActs.length > 0 && <ActivityTimeline activities={dayActs} growId={growId} filterable={false} />}
@@ -565,7 +566,7 @@ export function GrowDetail({ growId }: { growId: string }) {
       )}
 
       {tab === 'expenses' && (
-        <Card title="Ausgaben" subtitle="Für diesen Grow erfasste Kosten">
+        <Card title={t('grow.gd.tab.expenses')} subtitle={t('grow.gd.expSub')}>
           <ExpenseList expenses={expenses} growId={growId} />
         </Card>
       )}
