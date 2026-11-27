@@ -17,7 +17,7 @@ function SideLink({ item, active, small }: { item: NavItem; active: boolean; sma
     <a
       href={href(item.to)}
       aria-current={active ? 'page' : undefined}
-      className={`group flex items-center gap-2.5 rounded-md px-2.5 ${small ? 'py-1 text-[12.5px]' : 'py-[6px] text-[13px]'} font-medium transition-colors ${
+      className={`group flex items-center gap-2.5 rounded-md px-2.5 ${small ? 'py-[3px] text-[12.5px]' : 'py-[5px] text-[13px]'} font-medium transition-colors ${
         active ? 'bg-white/[0.06] text-ink-50' : 'text-ink-400 hover:bg-white/[0.03] hover:text-ink-100'
       }`}
     >
@@ -124,7 +124,7 @@ export function Shell({ children }: { children: ReactNode }) {
     <div className="min-h-dvh lg:pl-60">
       {/* Desktop-Seitenleiste: Produktbereiche, darunter Einstellungen und Konto */}
       <aside className="no-print fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-white/[0.05] bg-ink-950 lg:flex">
-        <a href={href('')} className="flex items-center gap-2.5 px-5 pt-5 pb-4" aria-label="TERPGRID – Übersicht">
+        <a href={href('')} className="flex items-center gap-2.5 px-5 pt-4 pb-3" aria-label="TERPGRID – Übersicht">
           <LogoMark className="size-7 shrink-0" />
           <Wordmark withTagline={false} />
         </a>
@@ -142,7 +142,7 @@ export function Shell({ children }: { children: ReactNode }) {
             {server && <NotificationBell compact align="left" />}
           </div>
         </div>
-        <nav aria-label="Hauptnavigation" className="flex-1 space-y-4 overflow-y-auto px-3 pt-3 pb-4">
+        <nav aria-label="Hauptnavigation" className="flex-1 space-y-3 overflow-y-auto px-3 pt-2 pb-3">
           {groups.map((g) => (
             <div key={g.id} role="group" aria-labelledby={g.label ? `nav-${g.id}` : undefined}>
               {g.label && (
@@ -158,7 +158,7 @@ export function Shell({ children }: { children: ReactNode }) {
             </div>
           ))}
         </nav>
-        <div className="space-y-px border-t border-white/[0.05] px-3 py-2">
+        <div className="space-y-px border-t border-white/[0.05] px-3 py-1.5">
           {settingsNav.map((n) => (
             <SideLink key={n.id} item={n} small active={isActive(n, route.path)} />
           ))}
