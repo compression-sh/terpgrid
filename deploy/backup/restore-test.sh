@@ -2,11 +2,14 @@
 # TERPGRID – Restore-Test in einer isolierten Umgebung (berührt die Produktion NICHT).
 # Stellt einen Snapshot in Wegwerf-Containern ohne Netzwerkzugang wieder her und
 # entschlüsselt testweise alle Datensätze und Dateien mit dem Master-Key.
-# Empfehlung: monatlich ausführen. Aufruf: backup/restore-test.sh [snapshot|latest]
+# Empfehlung: monatlich ausführen. Aufruf: backup/restore-test.sh [--full-check] [snapshot|latest]
+#   --full-check: zusätzlich ALLE Daten des Repositorys lesen und prüfen (restic check --read-data) – erkennt auch
+#                 Schäden in älteren Snapshots; dauert und überträgt so viel wie das gesamte Repository.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 set -a; . backup/backup.env; [[ -f .env ]] && . ./.env; set +a
-SNAP="${1:-latest}"
+FULL=0; SNAP="latest"
+for a in "$@"; do case "$a" in --full-check) FULL=1 ;; *) SNAP="$a" ;; esac; done
 ID="tg-restoretest-$$"
 WORK="$(mktemp -d /var/tmp/terpgrid-restoretest.XXXXXX)"
 cleanup() {
@@ -19,6 +22,10 @@ chmod 700 "$WORK"
 
 echo "→ Repository-Struktur prüfen (erkennt fehlende oder beschädigte Indexe/Snapshots)"
 restic check >/dev/null || { echo "✗ restic check fehlgeschlagen – Repository beschädigt oder unvollständig" >&2; exit 1; }
+if (( FULL )); then
+  echo "→ Alle Daten des Repositorys lesen und prüfen (--full-check)"
+  restic check --read-data >/dev/null || { echo "✗ restic check --read-data: beschädigte Daten im Repository (betrifft mindestens einen Snapshot) – neues Vollbackup in ein frisches Repository anlegen" >&2; exit 1; }
+fi
 echo "→ Snapshot ${SNAP} wiederherstellen (Inhalte gegen ihre Prüfsummen verifiziert)"
 restic restore "$SNAP" --tag terpgrid --target "$WORK/restore" --verify >/dev/null || { echo "✗ Wiederherstellung fehlgeschlagen oder Inhalte beschädigt" >&2; exit 1; }
 DUMP="$(find "$WORK/restore" -name terpgrid.dump | head -1)"
@@ -63,3 +70,4 @@ docker run --rm --network "$ID" --read-only --cap-drop ALL --security-opt no-new
   -v "${FILES_SRC:-$WORK/empty}:/data/files:ro" \
   "terpgrid-api:${TERPGRID_VERSION:-local}" node dist/cli.js verify-data
 echo "✓ Restore-Test erfolgreich: Snapshot ist vollständig und mit dem Master-Key lesbar."
+(( FULL )) || echo "  Hinweis: Geprüft wurden die Daten dieses Snapshots. Ältere Snapshots prüft: backup/restore-test.sh --full-check"

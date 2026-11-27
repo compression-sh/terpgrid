@@ -122,7 +122,9 @@ export function labComparison(reports: LabReport[], strains: Strain[]): { rows: 
 
 const cell = (v: unknown) => {
   if (v === undefined || v === null) return '';
-  const s = typeof v === 'number' ? String(v).replace('.', ',') : String(v);
+  const t = typeof v === 'number' ? String(v).replace('.', ',') : String(v);
+  // Formel-Injektion verhindern (Texte, die mit =, +, -, @, Tab oder CR beginnen) – Zahlen bleiben Zahlen
+  const s = typeof v !== 'number' && /^[=+\-@\t\r]/.test(t) ? `'${t}` : t;
   return /[;"\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 export const toTableCsv = (header: string[], rows: unknown[][]) => '﻿' + [header, ...rows].map((r) => r.map(cell).join(';')).join('\r\n');

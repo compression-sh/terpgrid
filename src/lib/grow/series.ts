@@ -163,7 +163,10 @@ export function withinDays<T extends { t: number }>(points: T[], days: number | 
 
 /** CSV (Semikolon, deutsches Dezimalkomma) für Tabellenprogramme. */
 export function seriesCsv(rows: { date: string; ref: string; value: number; unit: string; context?: string; flag?: string }[]): string {
-  const esc = (v: string) => (/[";\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+  const esc = (raw: string) => {
+    const v = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw; // keine Formel-Ausführung in Tabellenprogrammen
+    return /[";\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+  };
   const head = 'Zeitpunkt;Bezug;Wert;Einheit;Kontext;Zielbereich';
   return [head, ...rows.map((r) => [r.date.replace('T', ' '), esc(r.ref), String(r.value).replace('.', ','), r.unit, r.context ?? '', r.flag ?? ''].join(';'))].join('\r\n') + '\r\n';
 }

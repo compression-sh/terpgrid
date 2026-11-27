@@ -382,7 +382,8 @@ async function printStatus(db: pg.Pool, c: ReturnType<typeof loadConfig>, verify
     try {
       const raw = JSON.parse(readFileSync(c.backupStatusFile, 'utf8')) as { ok?: boolean; lastSuccess?: string | null; lastCheck?: string | null };
       const ageH = raw.lastSuccess ? (Date.now() - Date.parse(raw.lastSuccess)) / 3600e3 : Infinity;
-      line(raw.ok === true && ageH < 36, `Backup: ${raw.ok ? 'zuletzt erfolgreich' : 'letzter Lauf FEHLGESCHLAGEN'} · letzter Erfolg ${raw.lastSuccess ?? 'nie'} (${Number.isFinite(ageH) ? `${Math.round(ageH)} h her` : '–'})`);
+      if (!raw.lastCheck && !raw.lastSuccess) line(false, 'Backup: noch kein Lauf (backup/backup.sh einrichten bzw. ausführen)');
+      else line(raw.ok === true && ageH < 36, `Backup: ${raw.ok ? (ageH < 36 ? 'zuletzt erfolgreich' : 'VERALTET (über 36 h)') : 'letzter Lauf FEHLGESCHLAGEN'} · letzter Erfolg ${raw.lastSuccess ?? 'nie'} (${Number.isFinite(ageH) ? `${Math.round(ageH)} h her` : '–'})`);
     } catch {
       line(false, 'Backup-Status nicht lesbar (noch nie gelaufen?)');
     }
