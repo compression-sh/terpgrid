@@ -76,8 +76,7 @@ export function BreedersPage() {
     <div>
       <DiscoverNav />
       <header className="mb-5 animate-fade-up">
-        <p className="eyebrow">Breeder-Verzeichnis</p>
-        <h1 className="mt-1 text-[28px] font-semibold tracking-tight text-ink-50 sm:text-[32px]">Breeder</h1>
+        <h1 className="page-title">Breeder-Verzeichnis</h1>
         <p className="mt-1 max-w-2xl text-sm text-ink-400">Alle Breeder im lokalen Katalog mit ihren gelisteten Sorten. Schreibvarianten (z. B. Groß-/Kleinschreibung) sind zusammengeführt; Kooperationen bleiben eigene Einträge.</p>
       </header>
 
@@ -218,7 +217,7 @@ export function BreederProfile({ id }: { id: string }) {
           {b.name.replace(/[^A-Za-z0-9]/g, '').slice(0, 2)}
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="break-words text-2xl font-semibold tracking-tight text-ink-50 sm:text-[32px]">{b.name}</h1>
+          <h1 className="page-title break-words">{b.name}</h1>
           {b.variants.length > 0 && <p className="mt-1 text-[12px] text-ink-500">Weitere Schreibweisen in der Quelle: {b.variants.join(', ')}</p>}
           <div className="mt-2 flex flex-wrap gap-1.5">
             {b.isSeedBank && (

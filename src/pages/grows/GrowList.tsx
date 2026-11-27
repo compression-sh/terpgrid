@@ -7,7 +7,7 @@ import { Segmented } from '../../components/ui/Segmented';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { PageHeader } from '../../components/ui/PageHeader';
 import type { GrowStatus } from '../../lib/db/types';
-import { GrowCard } from '../Dashboard';
+import { GrowCard } from '../../components/grow/GrowCard';
 
 export function GrowList() {
   const { data } = useData();
@@ -35,7 +35,7 @@ export function GrowList() {
   return (
     <div>
       <PageHeader
-        title="Growlogs"
+        title="Grows"
         subtitle="Deine Grow-Projekte mit Pflanzen, Fotos, Messwerten und Ausgaben."
         actions={
           <>

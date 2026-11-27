@@ -189,7 +189,7 @@ export function GrowDetail({ growId }: { growId: string }) {
         text="Der Grow wurde gelöscht oder der Link ist ungültig."
         action={
           <a href={href('grows')} className="btn-primary">
-            Zu den Growlogs
+            Zu den Grows
           </a>
         }
       />
@@ -234,14 +234,14 @@ export function GrowDetail({ growId }: { growId: string }) {
         <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6">
           <nav aria-label="Brotkrumen" className="mb-2 text-xs text-ink-300">
             <a href={href('grows')} className="hover:text-ink-50">
-              Growlogs
+              Grows
             </a>
             <span className="mx-1.5 text-ink-500">/</span>
             <span className="text-ink-200">{grow.name}</span>
           </nav>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">
-              <h1 className="truncate text-2xl font-semibold tracking-tight text-white sm:text-3xl">{grow.name}</h1>
+              <h1 className="page-title truncate">{grow.name}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 <PhaseChip phase={phase} />
                 <Chip tone={grow.status === 'active' ? 'green' : grow.status === 'completed' ? 'sky' : 'neutral'}>{STATUS_LABEL[grow.status]}</Chip>
@@ -282,14 +282,15 @@ export function GrowDetail({ growId }: { growId: string }) {
         <button type="button" className="btn-ghost hidden sm:inline-flex" onClick={() => quick({ kind: 'plant', growId })}>
           <Sprout className="size-4" /> Pflanze
         </button>
-        <button type="button" className="btn-ghost hidden sm:inline-flex" onClick={() => setModal('edit')}>
+        {/* Seltener genutzt: ab sehr breiten Ansichten sichtbar, sonst im Menü „…“ (6.0.1) */}
+        <button type="button" className="btn-ghost hidden xl:inline-flex" onClick={() => setModal('edit')}>
           <Pencil className="size-4" /> Bearbeiten
         </button>
-        <a href={href(`grows/${growId}/report`)} className="btn-ghost hidden sm:inline-flex">
+        <a href={href(`grows/${growId}/report`)} className="btn-ghost hidden xl:inline-flex">
           <FileText className="size-4" /> Bericht
         </a>
         <ShareButton store="grows" ids={[growId]} />
-        <a href={href(`grows/${growId}/experiments`)} className="btn-ghost hidden sm:inline-flex">
+        <a href={href(`grows/${growId}/experiments`)} className="btn-ghost hidden xl:inline-flex">
           <FlaskConical className="size-4" /> Experimente
         </a>
         <div className="ml-auto">

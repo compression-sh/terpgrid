@@ -82,22 +82,32 @@ function ListingRow({ l }: { l: LibListing }) {
   );
 }
 
-function MiniList({ items }: { items: LibCultivar[] }) {
+/** Kompakte Sortenliste; lange Listen (z. B. Nachkommen) zeigen zuerst {preview} Einträge (6.0.1). */
+function MiniList({ items, preview = 8 }: { items: LibCultivar[]; preview?: number }) {
+  const [all, setAll] = useState(false);
+  const shown = all ? items : items.slice(0, preview);
   return (
-    <ul className="divide-y divide-white/[0.04]">
-      {items.map((c) => (
-        <li key={c.id}>
-          <a href={href(`discover/cultivar/${c.id}`)} className="flex items-center justify-between gap-3 py-2 text-[13px] hover:text-ink-50">
-            <span className="min-w-0 truncate text-ink-200">
-              {c.name}
-              {c.version ? ` (${c.version})` : ''}
-              {c.auto && <span className="ml-1.5 text-[10px] text-ink-500">Auto</span>}
-            </span>
-            <span className="shrink-0 truncate text-[11px] text-ink-500">{c.breeder.name}</span>
-          </a>
-        </li>
-      ))}
-    </ul>
+    <>
+      <ul className="divide-y divide-white/[0.04]">
+        {shown.map((c) => (
+          <li key={c.id}>
+            <a href={href(`discover/cultivar/${c.id}`)} className="flex items-center justify-between gap-3 py-2 text-[13px] hover:text-ink-50">
+              <span className="min-w-0 truncate text-ink-200">
+                {c.name}
+                {c.version ? ` (${c.version})` : ''}
+                {c.auto && <span className="ml-1.5 text-[10px] text-ink-500">Auto</span>}
+              </span>
+              <span className="shrink-0 truncate text-[11px] text-ink-500">{c.breeder.name}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      {items.length > preview && (
+        <button type="button" className="mt-2 text-[12.5px] text-ink-300 underline-offset-2 hover:text-ink-50 hover:underline" aria-expanded={all} onClick={() => setAll((v) => !v)}>
+          {all ? 'Weniger anzeigen' : `Alle ${items.length} anzeigen`}
+        </button>
+      )}
+    </>
   );
 }
 
@@ -209,7 +219,7 @@ export function CultivarPage({ id }: { id: string }) {
             ))}
             {v.generation && <span className="rounded-full border border-white/[0.08] px-2 py-0.5 text-[11px] text-ink-300">{v.generation}</span>}
           </div>
-          <h1 className="mt-3 break-words text-3xl font-semibold tracking-tight text-ink-50 sm:text-[44px] sm:leading-[1.05]">
+          <h1 className="page-title mt-3 break-words">
             {c.name}
             {c.version && <span className="text-ink-400"> ({c.version})</span>}
           </h1>

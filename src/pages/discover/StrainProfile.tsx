@@ -157,7 +157,7 @@ export function StrainProfile({ slug }: { slug: string }) {
               </span>
             )}
           </div>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-ink-50 sm:text-[44px] sm:leading-[1.05]">{s.name}</h1>
+          <h1 className="page-title mt-3">{s.name}</h1>
           {research.profile && research.profile.aliases.length > 1 && <p className="mt-1.5 text-[13px] text-ink-500">auch: {research.profile.aliases.filter((a) => a.toLowerCase() !== s.name.toLowerCase()).slice(0, 4).join(', ')}</p>}
           <p className="mt-2 flex flex-wrap items-center gap-2 text-[15px] text-ink-300">
             {s.breeder ?? <span className="text-ink-500">Breeder: keine Angabe</span>}

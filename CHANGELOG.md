@@ -1,5 +1,46 @@
 # Änderungsprotokoll
 
+## 6.0.1 – Oberfläche und Informationsarchitektur (vorbereitet)
+
+Reine Oberflächen-Version: keine Migration, keine Serveränderung, keine neuen Abhängigkeiten. Alle Adressen und Deep Links
+bleiben gleich. Bericht: `docs/UI-POLISH-6.0.1-REPORT.md`, Audit: `docs/UI-POLISH-6.0.1-AUDIT.md`,
+Struktur: `docs/INFORMATION-ARCHITECTURE.md`, Gestaltung: `docs/DESIGN-SYSTEM.md`.
+
+### Navigation
+- Seitenleiste nach Bereichen:
+  - oben Übersicht, Entdecken, Gemeinsam;
+  - darunter Grow Studio, Labor, Mein Bereich;
+  - unten Einstellungen, Konto & Datenschutz, Daten & Backup.
+- Deutsche Bezeichnungen: „Entdecken“ statt „Discover“, „Auswertung“ statt „Insights“; die Seite „Werkzeuge“ heißt jetzt
+  „Grow-Rechner“ (zur Unterscheidung vom gleichnamigen Reiter im THC Lab).
+- Mobil:
+  - untere Navigation: Übersicht · Grows · Erfassen (Mitte) · Entdecken · Mehr;
+  - der schwebende Plus-Knopf entfällt;
+  - „Mehr“ ist nach Bereichen gegliedert.
+- Suche (Strg K): Breeder-Verzeichnis, Genetik-Explorer, Terpen-Atlas und Cannabis 101 direkt erreichbar.
+
+### Übersicht
+- Zeigt die ganze Plattform:
+  - Kennzahlen (nur mit Inhalt);
+  - Heute & demnächst (Aufgaben, Anfragen, Neuigkeiten aus Bereichen);
+  - aktive Grows;
+  - gemeinsamer Verlauf aller Module;
+  - Deine Bereiche;
+  - Weiter entdecken (Favoriten, zuletzt angesehene Sorten, Academy-Lesefortschritt);
+  - Fotos.
+- Bereiche ohne Inhalt erscheinen nicht als leere Karten; Reihenfolge und Sichtbarkeit weiter über „Anpassen“.
+- Keine zusätzlichen Serveranfragen, keine erfundenen Zahlen, keine fremden Inhalte.
+
+### Gestaltung
+- Ruhigere Karten:
+  - keine farbigen Symbolkacheln, keine Trennlinie im Kopf;
+  - kein Weichzeichner, kein Schlagschatten;
+  - ein dezenter Hintergrundverlauf.
+- Einheitliche Seitentitel; Slogans und doppelte Überzeilen entfernt.
+- Konto: Sitzungsliste ab fünf Einträgen eingeklappt. Sortenseite: lange Listen eingeklappt.
+- Grow-Seite: seltenere Aktionen (Bearbeiten, Bericht, Experimente) bis 1280 px im Menü „…“.
+- Einstellungen: doppelte Dashboard-Anpassung entfernt; Verlauf enthält jetzt auch die Sammlung.
+
 ## 6.0.0 – Stable (vorbereitet, Freigabe ausstehend)
 
 Erste stabile Version; bündelt die Phasen 5.0–5.9. **Keine Migration** gegenüber 5.7/5.8/5.9; Rollback ohne

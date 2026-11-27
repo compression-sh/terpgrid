@@ -208,8 +208,7 @@ export function VisualExplorer() {
       <DiscoverNav />
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between animate-fade-up">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-leaf-400/90">Visual Explorer</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink-50 sm:text-[40px] sm:leading-[1.1]">Galerie.</h1>
+          <h1 className="page-title">Galerie</h1>
           <p className="mt-2 max-w-xl text-sm text-ink-400">Sortenbilder der Quelle mit ihren dokumentierten Verbindungen. Ansichten basieren nur auf belegten Metadaten – keine Trends oder Beliebtheitswerte.</p>
         </div>
         {!full.loaded && (

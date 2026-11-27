@@ -10,26 +10,28 @@ interface CardProps {
   bodyClassName?: string;
 }
 
+/**
+ * Gruppierender Abschnitt. 6.0.1: Kopfzeile ohne Trennlinie und ohne farbige Symbolkachel –
+ * das Symbol steht gedämpft vor dem Titel, Akzentfarbe bleibt Aktionen und Zuständen vorbehalten.
+ */
 export function Card({ title, subtitle, icon, actions, children, className = '', bodyClassName = '' }: CardProps) {
+  const head = !!(title || actions);
   return (
     <section className={`card animate-fade-up ${className}`}>
-      {(title || actions) && (
-        <header className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2.5 border-b border-white/[0.05] px-5 py-4">
-          <div className="flex min-w-0 flex-1 basis-48 items-start gap-3">
-            {icon && (
-              <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-leaf-500/20 bg-leaf-500/10 text-leaf-400">
-                {icon}
-              </span>
-            )}
+      {head && (
+        <header className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 px-5 pt-4">
+          <div className="flex min-w-0 flex-1 basis-48 items-start gap-2">
+            {icon && <span className="mt-[3px] shrink-0 text-ink-500 [&>svg]:size-4">{icon}</span>}
             <div className="min-w-0">
-              {title && <h2 className="text-[15px] font-semibold tracking-tight text-ink-50">{title}</h2>}
-              {subtitle && <p className="mt-0.5 text-[13px] leading-snug text-ink-400">{subtitle}</p>}
+              {title && <h2 className="text-[14px] font-semibold tracking-tight text-ink-50">{title}</h2>}
+              {subtitle && <p className="mt-0.5 text-[12.5px] leading-snug text-ink-400">{subtitle}</p>}
             </div>
           </div>
           {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
         </header>
       )}
-      <div className={`p-5 ${bodyClassName}`}>{children}</div>
+      {/* Eigene Abstände (bodyClassName mit p-…) ersetzen die Standardabstände vollständig */}
+      <div className={/(^|\s)p-/.test(bodyClassName) ? bodyClassName : `${head ? 'px-5 pt-3 pb-5' : 'p-5'} ${bodyClassName}`}>{children}</div>
     </section>
   );
 }

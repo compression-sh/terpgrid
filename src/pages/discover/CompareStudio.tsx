@@ -338,8 +338,7 @@ export function CompareStudio() {
       <DiscoverNav />
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between animate-fade-up">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-leaf-400/90">Comparison Studio</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink-50">Sorten vergleichen</h1>
+          <h1 className="page-title mt-2">Sorten vergleichen</h1>
           <p className="mt-1 text-sm text-ink-400">2–4 Sorten aus dem Online-Katalog oder deinen eigenen Einträgen. Keine erfundenen Scores – nur belegte Angaben.</p>
         </div>
         <div className="flex flex-wrap gap-2">

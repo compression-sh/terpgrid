@@ -174,7 +174,7 @@ export function ExperimentsPage({ growId }: { growId: string }) {
   const [compare, setCompare] = useState<string[]>([]);
   const grow = data.grows.find((g) => g.id === growId);
   const plants = useMemo(() => data.plants.filter((p) => p.growId === growId), [data.plants, growId]);
-  if (!grow) return <EmptyState title="Grow nicht gefunden" action={<a href={href('grows')} className="btn-primary">Zu den Growlogs</a>} />;
+  if (!grow) return <EmptyState title="Grow nicht gefunden" action={<a href={href('grows')} className="btn-primary">Zu den Grows</a>} />;
   const exps = grow.experiments ?? [];
   const cover = (p: Plant) => p.coverPhotoId ?? [...data.photos].filter((x) => x.plantId === p.id).sort((a, b) => b.takenAt.localeCompare(a.takenAt))[0]?.id;
 
@@ -192,7 +192,7 @@ export function ExperimentsPage({ growId }: { growId: string }) {
   return (
     <div>
       <PageHeader
-        crumbs={[{ label: 'Growlogs', to: 'grows' }, { label: grow.name, to: `grows/${grow.id}` }, { label: 'Experimente & Phänotypen' }]}
+        crumbs={[{ label: 'Grows', to: 'grows' }, { label: grow.name, to: `grows/${grow.id}` }, { label: 'Experimente & Phänotypen' }]}
         title="Experimente & Phänotypen"
         subtitle="Strukturierte persönliche Beobachtungen zu Pflanzen dieses Grows."
         actions={

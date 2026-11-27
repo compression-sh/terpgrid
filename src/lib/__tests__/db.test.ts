@@ -169,8 +169,8 @@ describe('Einstellungen', () => {
     expect(s.currency).toBe('EUR');
   });
   it('speichert dauerhaft', async () => {
-    await saveSettings({ dashboardHidden: ['strains'] });
-    expect((await loadSettings()).dashboardHidden).toEqual(['strains']);
+    await saveSettings({ dashboardHidden: ['discover'] });
+    expect((await loadSettings()).dashboardHidden).toEqual(['discover']);
   });
 });
 

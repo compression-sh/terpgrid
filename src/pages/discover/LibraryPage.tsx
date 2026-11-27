@@ -172,11 +172,9 @@ export function LibraryPage({ status }: { status: LibStatus }) {
       )}
       <DiscoverNav />
       <header className="mb-5 animate-fade-up">
-        <p className="eyebrow">Sortenkatalog</p>
-        <h1 className="mt-1 text-[28px] font-semibold tracking-tight text-ink-50 sm:text-[32px]">Entdecken</h1>
+        <h1 className="page-title">Entdecken</h1>
         <p className="mt-1 max-w-2xl text-sm text-ink-400">
-          {fmt(status.counts?.cultivars ?? 0, 0)} Sorten von {fmt(status.counts?.breeders ?? 0, 0)} Breedern aus {fmt(status.counts?.listings ?? 0, 0)} Seedbank-Angeboten – auf deinem Server
-          indexiert. Suchanfragen verlassen deine Instanz nicht.
+          {fmt(status.counts?.cultivars ?? 0, 0)} Sorten von {fmt(status.counts?.breeders ?? 0, 0)} Breedern – auf deinem Server indexiert, Suchanfragen verlassen deine Instanz nicht.
         </p>
       </header>
 

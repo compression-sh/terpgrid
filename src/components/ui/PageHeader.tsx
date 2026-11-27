@@ -28,7 +28,7 @@ export function PageHeader({ title, subtitle, actions, crumbs, meta }: { title: 
       )}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <h1 className="truncate text-2xl font-semibold tracking-tight text-ink-50 sm:text-[28px]">{title}</h1>
+          <h1 className="page-title truncate">{title}</h1>
           {subtitle && <p className="mt-1 text-sm text-ink-400">{subtitle}</p>}
           {meta && <div className="mt-2.5 flex flex-wrap items-center gap-2">{meta}</div>}
         </div>

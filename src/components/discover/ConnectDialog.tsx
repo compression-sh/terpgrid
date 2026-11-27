@@ -86,7 +86,7 @@ export function ConnectDialog({ strain, onClose, initialMode = 'plant' }: { stra
             <SelectField label="Pflanze" value={plantId} onChange={setPlantId} placeholder="Pflanze wählen …" options={plants.map((p) => ({ value: p.id, label: `${p.name} · ${growName.get(p.growId) ?? ''}` }))} hint="Eine bisherige Sortenangabe der Pflanze wird ersetzt." />
           )
         ) : data.grows.length === 0 ? (
-          <Callout tone="info">Noch kein Grow vorhanden. Lege zuerst unter „Growlogs“ einen Grow an.</Callout>
+          <Callout tone="info">Noch kein Grow vorhanden. Lege zuerst unter „Grows“ einen Grow an.</Callout>
         ) : (
           <>
             <SelectField label="Grow" value={growId} onChange={setGrowId} options={data.grows.filter((g) => g.status !== 'archived').map((g) => ({ value: g.id, label: g.name }))} />

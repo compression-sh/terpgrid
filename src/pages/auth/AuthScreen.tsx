@@ -46,7 +46,7 @@ function Shell({ children, title, subtitle, back }: { children: ReactNode; title
               <ArrowLeft className="size-3.5" /> Zurück zur Anmeldung
             </button>
           )}
-          <h1 className="text-xl font-semibold tracking-tight text-ink-50">{title}</h1>
+          <h1 className="page-title">{title}</h1>
           {subtitle && <p className="mt-1.5 text-[13px] leading-relaxed text-ink-400">{subtitle}</p>}
           <div className="mt-6">{children}</div>
         </div>

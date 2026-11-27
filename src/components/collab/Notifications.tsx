@@ -8,7 +8,8 @@ import { CATEGORY_LABEL, notificationLink, notificationText } from '../../lib/co
 import { Avatar, relTime } from './ui';
 
 /** Glocke mit Zähler; öffnet ein kompaktes Panel. Nur im Servermodus. */
-export function NotificationBell({ compact = false }: { compact?: boolean }) {
+export function NotificationBell({ compact = false, align }: { compact?: boolean; align?: 'left' | 'right' }) {
+  const side = align ?? (compact ? 'right' : 'left');
   const available = useCollabAvailable();
   const { count } = useUnread(available);
   const [open, setOpen] = useState(false);
@@ -50,7 +51,7 @@ export function NotificationBell({ compact = false }: { compact?: boolean }) {
         )}
       </button>
       {open && (
-        <div role="dialog" aria-label="Benachrichtigungen" className={`absolute z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-white/[0.08] bg-ink-850 shadow-2xl animate-fade-up ${compact ? 'right-0' : 'left-0'}`}>
+        <div role="dialog" aria-label="Benachrichtigungen" className={`absolute z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-white/[0.08] bg-ink-850 shadow-2xl animate-fade-up ${side === 'right' ? 'right-0' : 'left-0'}`}>
           <NotificationList limit={8} onNavigate={() => setOpen(false)} />
           <div className="flex items-center justify-between border-t border-white/[0.06] px-3 py-2">
             <a href={href('together/notifications')} onClick={() => setOpen(false)} className="text-[12px] font-medium text-leaf-300 hover:underline">

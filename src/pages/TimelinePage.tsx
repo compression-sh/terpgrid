@@ -1,4 +1,4 @@
-import { Bell, BookOpenText, Camera, FlaskRound, Flag, Gauge, History, Leaf, type LucideIcon, Sprout } from 'lucide-react';
+import { Bell, BookOpenText, Camera, FlaskRound, Flag, Gauge, History, Leaf, type LucideIcon, Package, Sprout } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useData } from '../app/DataProvider';
 import { href, setQuery, useRoute } from '../app/router';
@@ -15,6 +15,7 @@ const KIND: Record<TimelineKind, { label: string; icon: LucideIcon; tone: string
   photo: { label: 'Fotos', icon: Camera, tone: 'text-violet-300 bg-violet-500/10' },
   journal: { label: 'Journal', icon: BookOpenText, tone: 'text-amber-200 bg-amber-400/10' },
   strain: { label: 'Sorten', icon: Leaf, tone: 'text-emerald-300 bg-emerald-500/10' },
+  collection: { label: 'Sammlung', icon: Package, tone: 'text-orange-200 bg-orange-400/10' },
   lab: { label: 'Labor', icon: FlaskRound, tone: 'text-rose-200 bg-rose-500/10' },
   reminder: { label: 'Kalender', icon: Bell, tone: 'text-ink-200 bg-white/[0.06]' },
 };

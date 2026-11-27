@@ -31,7 +31,7 @@ async function seed() {
   );
   await createRecord('activities', { growId: grow.id, plantId: plant.id, type: 'photo', date: '2026-01-05T10:00', title: '', notes: '', photoIds: [photo.id] });
   await createRecord('calculations', { kind: 'smoking', name: 'Joint', input: {}, summary: {} });
-  await saveSettings({ dashboardHidden: ['strains'] });
+  await saveSettings({ dashboardHidden: ['discover'] });
   return { grow, plant, photo };
 }
 
@@ -56,7 +56,7 @@ describe('Backup Export/Import', () => {
     expect(new Uint8Array((await getOne('photoData', photo.id))!.full)).toEqual(new Uint8Array([9, 8, 7, 6]));
     expect((await getAll('activities'))[0]?.photoIds).toEqual([photo.id]);
     expect(await count('calculations')).toBe(1);
-    expect(((await getOne('settings', 'app'))?.value as { dashboardHidden: string[] }).dashboardHidden).toEqual(['strains']);
+    expect(((await getOne('settings', 'app'))?.value as { dashboardHidden: string[] }).dashboardHidden).toEqual(['discover']);
   });
 
   it('Laborberichte samt Originaldokument im Roundtrip (Format 2)', async () => {

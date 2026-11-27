@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, BookOpen, Bookmark, CheckCircle2, Clock, ExternalLink, GraduationCap, Library, Route, Search } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, Bookmark, CheckCircle2, Clock, ExternalLink, Library, Route, Search } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useData } from '../../app/DataProvider';
 import { href } from '../../app/router';
@@ -121,7 +121,7 @@ function ArticleView({ a }: { a: KbArticle }) {
             </a>
             {a.level && <span className="rounded-full border border-white/[0.1] px-2 py-0.5 text-[10px] tracking-[0.1em] text-ink-300">{a.level}</span>}
           </div>
-          <h1 className="mt-3 text-[32px] font-semibold leading-[1.12] tracking-tight text-ink-50 sm:text-[42px]">{a.title}</h1>
+          <h1 className="page-title mt-3">{a.title}</h1>
           <p className="mt-4 text-[17px] leading-relaxed text-ink-300">{a.summary}</p>
           <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-white/[0.06] pb-6 text-[12px] text-ink-500">
             <span className="flex items-center gap-1.5">
@@ -359,12 +359,9 @@ export function KnowledgeHub({ articleId }: { articleId?: string }) {
   return (
     <div>
       <DiscoverNav />
-      <div className="mb-8 grid gap-6 animate-fade-up lg:grid-cols-[1fr_auto] lg:items-end">
+      <div className="mb-6 grid gap-3 animate-fade-up lg:grid-cols-[1fr_auto] lg:items-end">
         <div>
-          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-leaf-400/90">
-            <GraduationCap className="size-4" /> Cannabis 101 · Academy
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink-50 sm:text-[40px] sm:leading-[1.1]">Verstehen, was du anbaust.</h1>
+          <h1 className="page-title">Cannabis 101</h1>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-400">
             {KB_ARTICLES.length} belegte Artikel und Leitfäden – vom Licht bis zur Trocknung, von Cannabinoiden bis zu Risiken. Jede Zahl mit Quelle, jede Studie als das gekennzeichnet, was sie ist.
           </p>

@@ -109,6 +109,9 @@ function Section({ id, icon, title, subtitle, children }: { id: string; icon: Re
   );
 }
 
+/** Sitzungen, die ohne Aufklappen sichtbar sind */
+const SESSION_PREVIEW = 5;
+
 export function AccountPage() {
   const auth = useAuth();
   const reauth = useReauth();
@@ -118,6 +121,7 @@ export function AccountPage() {
   const offline = auth.state.kind === 'authenticated' && auth.state.offline;
   const [ov, setOv] = useState<Overview | null>(null);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
+  const [allSessions, setAllSessions] = useState(false);
   const [loadError, setLoadError] = useState<string>();
   const section = useRoute().query.get('abschnitt');
   useEffect(() => {
@@ -178,7 +182,11 @@ export function AccountPage() {
 
       <Section id="sitzungen" icon={<Laptop className="size-4" />} title="Aktive Sitzungen" subtitle="Geräte, auf denen du angemeldet bist. Unbekannte Sitzungen sofort beenden.">
         <ul className="divide-y divide-white/[0.05]">
-          {sessions.map((s) => {
+          {/* 6.0.1: aktuelle und zuletzt aktive Sitzungen zuerst; lange Listen eingeklappt (alle bleiben einsehbar) */}
+          {[...sessions]
+            .sort((a, b) => Number(b.current) - Number(a.current) || b.lastSeenAt.localeCompare(a.lastSeenAt))
+            .slice(0, allSessions ? undefined : SESSION_PREVIEW)
+            .map((s) => {
             const d = describeUa(s.userAgent);
             return (
               <li key={s.handle} className="flex items-center gap-3 py-3">
@@ -214,6 +222,11 @@ export function AccountPage() {
             );
           })}
         </ul>
+        {sessions.length > SESSION_PREVIEW && (
+          <button type="button" className="mt-1 text-[12.5px] text-ink-300 underline-offset-2 hover:text-ink-50 hover:underline" aria-expanded={allSessions} onClick={() => setAllSessions((v) => !v)}>
+            {allSessions ? 'Weniger anzeigen' : `Alle ${sessions.length} Sitzungen anzeigen`}
+          </button>
+        )}
         <div className="mt-3 flex flex-wrap gap-2">
           <button
             type="button"

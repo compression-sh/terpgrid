@@ -368,18 +368,11 @@ export interface CalculationRecord extends BaseRecord {
   summary: Record<string, string>;
 }
 
-export const DASHBOARD_WIDGETS = [
-  'stats',
-  'grows',
-  'reminders',
-  'photos',
-  'activity',
-  'measurements',
-  'journal',
-  'calculations',
-  'strains',
-  'favorites',
-] as const;
+/**
+ * Bereiche der Übersicht (6.0.1). Frühere IDs (Messwerte, Journal, Berechnungen, Sorten, Favoriten) sind in
+ * „Deine Bereiche“ bzw. „Weiter entdecken“ aufgegangen; gespeicherte Reihenfolgen werden beim Laden bereinigt.
+ */
+export const DASHBOARD_WIDGETS = ['stats', 'reminders', 'grows', 'activity', 'areas', 'discover', 'photos'] as const;
 export type DashboardWidget = (typeof DASHBOARD_WIDGETS)[number];
 
 export interface AppSettings {

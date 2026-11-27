@@ -3,11 +3,12 @@
  * des angemeldeten Kontos abgeleitet – keine Kopien, kein eigener Speicher, kein Feed
  * anderer Personen.
  */
-import type { Activity, GrowPhase, GrowProject, JournalEntry, LabReport, Photo, Plant, Reminder, Strain } from './db/types';
+import type { Activity, GrowPhase, GrowProject, InventoryItem, JournalEntry, LabReport, Photo, Plant, Reminder, Strain } from './db/types';
+import { INVENTORY_CATEGORY_LABEL } from './grow/labels';
 import { ACTIVITY_LABEL } from './grow/labels';
 import { PHASE_LABEL } from './grow/phases';
 
-export type TimelineKind = 'milestone' | 'activity' | 'measurement' | 'photo' | 'journal' | 'strain' | 'lab' | 'reminder';
+export type TimelineKind = 'milestone' | 'activity' | 'measurement' | 'photo' | 'journal' | 'strain' | 'collection' | 'lab' | 'reminder';
 
 export interface TimelineEvent {
   id: string;
@@ -30,6 +31,8 @@ export interface TimelineData {
   strains: Strain[];
   labReports: LabReport[];
   reminders: Reminder[];
+  /** Sammlung (optional, ab 6.0.1 in der Zeitachse) */
+  inventory?: InventoryItem[];
 }
 
 const day = (s: string) => s.slice(0, 10);
@@ -78,6 +81,9 @@ export function buildTimeline(d: TimelineData, opts: { today?: string } = {}): T
   }
   for (const l of d.labReports) {
     out.push({ id: `l-${l.id}`, kind: 'lab', at: l.testDate ?? l.createdAt, title: `Laborbericht: ${l.title}`, subtitle: l.labName, to: 'lab-reports' });
+  }
+  for (const i of d.inventory ?? []) {
+    out.push({ id: `i-${i.id}`, kind: 'collection', at: i.purchaseDate ?? i.createdAt, title: `Sammlung: ${i.name}`, subtitle: INVENTORY_CATEGORY_LABEL[i.category], to: `collection?item=${encodeURIComponent(i.id)}` });
   }
   // Kalender: einmalige Erinnerungen und erledigte Termine (Wiederholungen werden nicht vervielfältigt)
   const today = opts.today;

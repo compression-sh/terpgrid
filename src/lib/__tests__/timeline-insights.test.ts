@@ -43,6 +43,13 @@ describe('Aktivitäts-Zeitachse', () => {
     expect(d.photos).toHaveLength(3); // Quelle unverändert
   });
 
+  it('nimmt Einträge der Sammlung mit Deep Link auf (6.0.1) und bleibt ohne Sammlung kompatibel', () => {
+    const d = { ...data(), inventory: [{ ...base, id: 'i 1', name: 'Grinder', category: 'accessory', unit: 'Stk', notes: '', purchaseDate: '2026-11-12' }] as any };
+    const e = buildTimeline(d, { today: '2026-11-24' }).find((x) => x.kind === 'collection');
+    expect(e).toMatchObject({ id: 'i-i 1', at: '2026-11-12', title: 'Sammlung: Grinder', subtitle: 'Zubehör', to: 'collection?item=i%201' });
+    expect(buildTimeline(data(), { today: '2026-11-24' }).some((x) => x.kind === 'collection')).toBe(false);
+  });
+
   it('gruppiert nach Tag', () => {
     const g = groupByDay(buildTimeline(data(), { today: '2026-11-24' }));
     expect(g[0]!.day).toBe('2026-11-22');

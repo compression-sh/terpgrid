@@ -90,7 +90,7 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
     <div>
       <nav aria-label="Brotkrumen" className="mb-3 flex min-w-0 items-center gap-1.5 text-xs text-ink-400">
         <a href={href('grows')} className="hover:text-ink-100">
-          Growlogs
+          Grows
         </a>
         <span className="text-ink-600">/</span>
         <a href={href(`grows/${growId}`)} className="truncate hover:text-ink-100">
@@ -106,7 +106,7 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
           <div className="flex flex-col gap-4 p-5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h1 className="truncate text-2xl font-semibold tracking-tight text-ink-50">{plant.name}</h1>
+                <h1 className="page-title truncate">{plant.name}</h1>
                 <div className="mt-1 text-[13px] text-ink-400">
                   {strain ? (
                     <>
