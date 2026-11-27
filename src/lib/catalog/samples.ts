@@ -5,35 +5,36 @@
 import type { LabReport } from '../db/types';
 import { toPercent, totalCbd, totalThc } from '../lab';
 import { matchTerpene } from './terpenes';
+import { t } from '../../i18n';
 
 export const SAMPLE_CANNABINOIDS: { key: string; label: string }[] = [
-  { key: 'thc_total', label: 'Gesamt-THC' },
-  { key: 'cbd_total', label: 'Gesamt-CBD' },
-  { key: 'cbg_total', label: 'Gesamt-CBG' },
-  { key: 'cbc_total', label: 'Gesamt-CBC' },
-  { key: 'cbn_total', label: 'Gesamt-CBN' },
-  { key: 'thcv_total', label: 'Gesamt-THCV' },
+  { key: 'thc_total', get label() { return t('discover.total', { c: 'THC' }); } },
+  { key: 'cbd_total', get label() { return t('discover.total', { c: 'CBD' }); } },
+  { key: 'cbg_total', get label() { return t('discover.total', { c: 'CBG' }); } },
+  { key: 'cbc_total', get label() { return t('discover.total', { c: 'CBC' }); } },
+  { key: 'cbn_total', get label() { return t('discover.total', { c: 'CBN' }); } },
+  { key: 'thcv_total', get label() { return t('discover.total', { c: 'THCV' }); } },
 ];
 
 /** Quellspalte → Atlas-ID; isomerSum = Summe mehrerer Isomere (nicht die genannte Einzelform). */
 export const SAMPLE_TERPENES: { column: string; atlasId: string; label: string; isomerSum?: string }[] = [
-  { column: 'myrcene', atlasId: 'myrcene', label: 'Myrcen' },
-  { column: 'caryophyllene', atlasId: 'caryophyllene', label: 'β-Caryophyllen' },
-  { column: 'limonene', atlasId: 'limonene', label: 'Limonen' },
-  { column: 'humulene', atlasId: 'humulene', label: 'α-Humulen' },
+  { column: 'myrcene', atlasId: 'myrcene', get label() { return t('discover.terp.myrcene'); } },
+  { column: 'caryophyllene', atlasId: 'caryophyllene', get label() { return t('discover.terp.caryophyllene'); } },
+  { column: 'limonene', atlasId: 'limonene', get label() { return t('discover.terp.limonene'); } },
+  { column: 'humulene', atlasId: 'humulene', get label() { return t('discover.terp.humulene'); } },
   { column: 'linalool', atlasId: 'linalool', label: 'Linalool' },
-  { column: 'a_pinene', atlasId: 'alpha-pinene', label: 'α-Pinen' },
-  { column: 'b_pinene', atlasId: 'beta-pinene', label: 'β-Pinen' },
-  { column: 'terpinolene', atlasId: 'terpinolene', label: 'Terpinolen' },
-  { column: 'tot_ocimene', atlasId: 'beta-ocimene', label: 'Ocimen', isomerSum: 'Summe aller Ocimen-Isomere' },
+  { column: 'a_pinene', atlasId: 'alpha-pinene', get label() { return t('discover.terp.aPinene'); } },
+  { column: 'b_pinene', atlasId: 'beta-pinene', get label() { return t('discover.terp.bPinene'); } },
+  { column: 'terpinolene', atlasId: 'terpinolene', get label() { return t('discover.terp.terpinolene'); } },
+  { column: 'tot_ocimene', atlasId: 'beta-ocimene', get label() { return t('discover.terp.ocimene'); }, get isomerSum() { return t('discover.terp.ocimeneSum'); } },
   { column: 'bisabolol', atlasId: 'bisabolol', label: 'Bisabolol' },
-  { column: 'tot_nerolidol_ct', atlasId: 'trans-nerolidol', label: 'Nerolidol', isomerSum: 'Summe aus cis- und trans-Nerolidol' },
-  { column: 'camphene', atlasId: 'camphene', label: 'Camphen' },
-  { column: 'a_terpinene', atlasId: 'alpha-terpinene', label: 'α-Terpinen' },
-  { column: 'g_terpinene', atlasId: 'gamma-terpinene', label: 'γ-Terpinen' },
+  { column: 'tot_nerolidol_ct', atlasId: 'trans-nerolidol', label: 'Nerolidol', get isomerSum() { return t('discover.terp.nerolidolSum'); } },
+  { column: 'camphene', atlasId: 'camphene', get label() { return t('discover.terp.camphene'); } },
+  { column: 'a_terpinene', atlasId: 'alpha-terpinene', get label() { return t('discover.terp.aTerpinene'); } },
+  { column: 'g_terpinene', atlasId: 'gamma-terpinene', get label() { return t('discover.terp.gTerpinene'); } },
 ];
 
-export const REGION_LABEL: Record<string, string> = { AK: 'Alaska', CA: 'Kalifornien', FL: 'Florida', MI: 'Michigan', OR: 'Oregon', WA: 'Washington' };
+export const REGION_LABEL: Record<string, string> = { AK: 'Alaska', get CA() { return t('discover.region.CA'); }, FL: 'Florida', MI: 'Michigan', OR: 'Oregon', WA: 'Washington' };
 
 /**
  * Werte eines eigenen (privaten) Laborberichts in % (w/w) je Quellspalte – nur für die Anzeige im Browser.

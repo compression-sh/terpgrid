@@ -9,6 +9,7 @@ import { type ImageQuality, MAX_EDGE, formatBytes, formatSupportNote, processIma
 import { SelectField, TextArea } from '../forms/Fields';
 import { Callout } from '../ui/Callout';
 import { Modal } from '../ui/Modal';
+import { t } from '../../i18n';
 
 export interface PhotoTarget {
   growId?: string;
@@ -84,7 +85,7 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
   async function handle(files: File[]) {
     const images = files.filter((f) => f.type.startsWith('image/') || /\.(jpe?g|png|webp|heic|heif|avif|gif)$/i.test(f.name));
     if (images.length === 0) {
-      toast('Keine Bilddateien ausgewählt.', { tone: 'error' });
+      toast(t('photos.up.noImages'), { tone: 'error' });
       return;
     }
     const batch: UploadItem[] = images.map((file, i) => ({
@@ -148,17 +149,17 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
         plantId: pid || undefined,
         type: 'photo',
         date: nowLocal(),
-        title: ids.length === 1 ? 'Foto hinzugefügt' : `${ids.length} Fotos hinzugefügt`,
+        title: t('photos.up.added', { count: ids.length }),
         notes: note.trim(),
         photoIds: ids,
       }).catch(() => {});
     }
     setBusy(null);
     setResult(res);
-    if (downgraded) toast(`${downgraded} Foto(s) waren in Originalauflösung zu groß für die Synchronisation und wurden auf ${MAX_EDGE} px verkleinert.`, { tone: 'info' });
-    if (cancelRef.current) toast('Upload abgebrochen – bereits gespeicherte Fotos bleiben erhalten.', { tone: 'info' });
+    if (downgraded) toast(t('photos.up.downgraded', { count: downgraded, px: MAX_EDGE }), { tone: 'info' });
+    if (cancelRef.current) toast(t('photos.up.cancelled'), { tone: 'info' });
     if (res.ok) {
-      toast(res.ok === 1 ? 'Foto gespeichert' : `${res.ok} Fotos gespeichert`);
+      toast(t('photos.up.saved', { count: res.ok }));
       onUploaded?.(ids);
     }
   }
@@ -174,8 +175,8 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
     <Modal
       open={open}
       onClose={() => !busy && onClose()}
-      title="Fotos hochladen"
-      subtitle={server ? 'Werden auf diesem Gerät verarbeitet und verschlüsselt mit deinem Server synchronisiert.' : 'Bleiben ausschließlich auf diesem Gerät gespeichert.'}
+      title={t('photos.up.title')}
+      subtitle={server ? t('photos.up.hintServer') : t('photos.up.hintLocal')}
       size="md"
       footer={
         busy ? (
@@ -184,7 +185,7 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
           </button>
         ) : (
           <button type="button" className="btn-ghost" onClick={onClose}>
-            {result ? 'Fertig' : 'Schließen'}
+            {result ? t('photos.up.done') : t('common.close')}
           </button>
         )
       }
@@ -193,21 +194,21 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
         {selectable && (
           <div className="grid gap-4 sm:grid-cols-2">
             <SelectField
-              label="Grow"
+              label={t('photos.up.grow')}
               value={growId}
               onChange={(v) => {
                 setGrowId(v);
                 setPlantId('');
               }}
               options={data.grows.map((g) => ({ value: g.id, label: g.name }))}
-              placeholder="Ohne Zuordnung"
+              placeholder={t('photos.up.unassigned')}
             />
-            <SelectField label="Pflanze" value={plantId} onChange={setPlantId} options={plants.map((p) => ({ value: p.id, label: p.name }))} placeholder={growId ? 'Ganzer Grow' : '—'} disabled={!growId} />
+            <SelectField label={t('photos.up.plant')} value={plantId} onChange={setPlantId} options={plants.map((p) => ({ value: p.id, label: p.name }))} placeholder={growId ? t('photos.up.wholeGrow') : '—'} disabled={!growId} />
           </div>
         )}
-        <TextArea label="Notiz (für alle Fotos dieses Uploads)" value={note} onChange={setNote} rows={2} maxLength={300} />
+        <TextArea label={t('photos.up.note')} value={note} onChange={setNote} rows={2} maxLength={300} />
         <fieldset className="space-y-1.5" disabled={!!busy}>
-          <legend className="label mb-1">Bildqualität</legend>
+          <legend className="label mb-1">{t('photos.up.quality')}</legend>
           <label className="flex cursor-pointer items-start gap-2 text-[13px] text-ink-200">
             <input type="radio" name="photo-quality" className="mt-0.5 accent-leaf-500" checked={quality === 'standard'} onChange={() => setQuality('standard')} />
             <span>
@@ -217,14 +218,14 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
           <label className="flex cursor-pointer items-start gap-2 text-[13px] text-ink-200">
             <input type="radio" name="photo-quality" className="mt-0.5 accent-leaf-500" checked={quality === 'original'} onChange={() => setQuality('original')} />
             <span>
-              Originalauflösung <span className="text-ink-500">· keine Verkleinerung (bis 16 Megapixel), deutlich größere Dateien; Metadaten werden trotzdem entfernt</span>
+              {t('photos.up.original')} <span className="text-ink-500">· {t('photos.up.originalHint')}</span>
             </span>
           </label>
         </fieldset>
         {(selectable ? growId : target.growId) && (
           <label className="flex cursor-pointer items-center gap-2 text-[13px] text-ink-300">
             <input type="checkbox" className="accent-leaf-500" checked={logActivity} onChange={(e) => setLogActivity(e.target.checked)} />
-            Als Foto-Eintrag in der Grow-Zeitleiste vermerken
+            {t('photos.up.timeline')}
           </label>
         )}
 
@@ -253,12 +254,12 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
             <>
               <ImagePlus className="size-7 text-ink-400" />
               <p className="mt-3 text-sm text-ink-200">
-                <span className="hidden sm:inline">Bilder hierher ziehen oder </span>
+                <span className="hidden sm:inline">{t('photos.up.drop')} </span>
                 <label htmlFor={inputId} className="cursor-pointer font-medium text-leaf-400 hover:text-leaf-300">
-                  Dateien auswählen
+                  {t('photos.up.choose')}
                 </label>
               </p>
-              <p className="hint mt-1">JPEG, PNG, WebP, AVIF · HEIC nur in Safari · mehrere gleichzeitig möglich</p>
+              <p className="hint mt-1">{t('photos.up.formats')}</p>
               <div className="mt-4 flex flex-wrap justify-center gap-2">
                 <button type="button" className="btn-primary" onClick={() => inputRef.current?.click()}>
                   <Upload className="size-4" /> Fotos wählen
@@ -299,7 +300,7 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
         </div>
 
         {items.length > 0 && (
-          <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2" aria-label="Upload-Status je Datei">
+          <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2" aria-label={t('photos.up.status')}>
             {items.map((i) => (
               <li key={i.key} className="flex items-center gap-2.5 rounded-lg border border-white/[0.05] bg-white/[0.015] p-1.5 pr-2.5">
                 {i.preview ? <img src={i.preview} alt="" className="size-9 shrink-0 rounded-md object-cover" /> : <span className="size-9 shrink-0 rounded-md bg-white/[0.04]" />}
@@ -307,20 +308,20 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
                   <span className="block truncate text-[12.5px] text-ink-100">{i.file.name}</span>
                   <span className={`block text-[11px] ${i.status === 'error' ? 'text-rose-300' : 'truncate text-ink-500'}`}>
                     {i.status === 'queued'
-                      ? (i.hint ?? 'Wartet …')
+                      ? (i.hint ?? t('photos.up.waiting'))
                       : i.status === 'processing'
-                        ? quality === 'original' ? 'Wird bereinigt …' : 'Wird verkleinert und bereinigt …'
+                        ? quality === 'original' ? t('photos.up.cleaning') : t('photos.up.reducing')
                         : i.status === 'saved'
-                          ? `Auf diesem Gerät gespeichert${server ? ' · wird synchronisiert' : ''}`
+                          ? t('photos.up.savedDevice') + (server ? t('photos.up.willSync') : '')
                           : i.status === 'cancelled'
-                            ? 'Abgebrochen'
+                            ? t('photos.up.aborted')
                             : i.error}
                   </span>
                   {i.status === 'saved' && i.photoId && (
                     <input
                       className="input-base mt-1 py-1 text-[12px]"
-                      aria-label={`Beschreibung für ${i.file.name}`}
-                      placeholder="Beschreibung (optional)"
+                      aria-label={t('photos.up.descFor', { name: i.file.name })}
+                      placeholder={t('photos.up.descOptional')}
                       maxLength={300}
                       defaultValue={i.note ?? ''}
                       onBlur={(e) => e.target.value !== (i.note ?? '') && void saveItemNote(i, e.target.value)}
@@ -343,9 +344,9 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
         {result && (
           <div className="space-y-2">
             {result.ok > 0 && (
-              <Callout tone="ok" title={`${result.ok} ${result.ok === 1 ? 'Foto' : 'Fotos'} gespeichert`}>
+              <Callout tone="ok" title={t('photos.up.saved', { count: result.ok })}>
                 {formatBytes(result.originalBytes)} → {formatBytes(result.savedBytes)} lokal belegt.
-                {result.gpsRemoved > 0 && ` Bei ${result.gpsRemoved} ${result.gpsRemoved === 1 ? 'Foto' : 'Fotos'} wurden Standortdaten (GPS) entfernt.`}
+                {result.gpsRemoved > 0 && t('photos.up.gps', { count: result.gpsRemoved })}
               </Callout>
             )}
             {result.errors.map((e) => (
@@ -359,9 +360,8 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
         <div className="flex gap-2.5 rounded-xl border border-white/[0.05] bg-white/[0.015] p-3 text-xs leading-relaxed text-ink-400">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-leaf-400" />
           <span>
-            Fotos werden {quality === 'original' ? 'in voller Auflösung' : `auf max. ${MAX_EDGE} px verkleinert und`} neu kodiert. Dabei werden alle eingebetteten Metadaten entfernt – auch Standort, Kameramodell und
-            Seriennummern. Die ausgewählten Dateien liegen bis zur Verarbeitung nur im Arbeitsspeicher. Das Aufnahmedatum wird vorher ausgelesen und separat gespeichert.{' '}
-            {server ? 'Nur das bereinigte Bild wird verschlüsselt auf deinem Server gespeichert – das Original verlässt dein Gerät nicht.' : 'Nichts wird hochgeladen.'}
+            {t('photos.up.privacyA', { how: quality === 'original' ? t('photos.up.full') : t('photos.up.reduced', { px: MAX_EDGE }) })}{' '}
+            {server ? t('photos.up.serverOnly') : t('photos.up.nothingUploaded')}
           </span>
         </div>
       </div>

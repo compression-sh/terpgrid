@@ -10,6 +10,7 @@ import { SelectField, TextField } from '../forms/Fields';
 import { Callout } from '../ui/Callout';
 import { Modal } from '../ui/Modal';
 import { Segmented } from '../ui/Segmented';
+import { t } from '../../i18n';
 
 /**
  * Verknüpft eine Online-Sorte mit einer bestehenden Pflanze oder legt sie als
@@ -33,16 +34,16 @@ export function ConnectDialog({ strain, onClose, initialMode = 'plant' }: { stra
     try {
       const mine = await ensureStrainForExternal(seedFromCatalog(strain));
       if (mode === 'plant') {
-        if (!plantId) throw new Error('Bitte eine Pflanze wählen.');
+        if (!plantId) throw new Error(t('discover.connect.pickPlant'));
         await updateRecord('plants', plantId, { strainId: mine.id, strainName: undefined });
         const p = data.plants.find((x) => x.id === plantId);
-        toast(`„${p?.name}“ mit ${strain.name} verknüpft`, { action: { label: 'Öffnen', run: () => (window.location.hash = href(`grows/${p?.growId}/plants/${plantId}`)) } });
+        toast(t('discover.connect.linked', { plant: p?.name ?? '', strain: strain.name }), { action: { label: t('discover.open'), run: () => (window.location.hash = href(`grows/${p?.growId}/plants/${plantId}`)) } });
       } else {
-        if (!growId) throw new Error('Bitte einen Grow wählen.');
-        if (!name.trim()) throw new Error('Bitte einen Namen eingeben.');
+        if (!growId) throw new Error(t('discover.connect.pickGrow'));
+        if (!name.trim()) throw new Error(t('discover.connect.enterName'));
         const g = data.grows.find((x) => x.id === growId);
         const p = await createRecord('plants', { growId, name: name.trim(), strainId: mine.id, startDate: g?.startDate ?? today(), type: 'unknown', phaseDates: {}, notes: '' });
-        toast(`Pflanze „${p.name}“ in ${g?.name} angelegt`, { action: { label: 'Öffnen', run: () => (window.location.hash = href(`grows/${growId}/plants/${p.id}`)) } });
+        toast(t('discover.connect.created', { plant: p.name, grow: g?.name ?? '' }), { action: { label: t('discover.open'), run: () => (window.location.hash = href(`grows/${growId}/plants/${p.id}`)) } });
       }
       onClose();
     } catch (err) {
@@ -56,16 +57,16 @@ export function ConnectDialog({ strain, onClose, initialMode = 'plant' }: { stra
     <Modal
       open
       onClose={onClose}
-      title={`${strain.name} verknüpfen`}
-      subtitle="Wird als Eintrag in „Meine Sorten“ gespeichert – nur einmal je Quelle."
+      title={t('discover.connect.title', { strain: strain.name })}
+      subtitle={t('discover.connect.subtitle')}
       size="sm"
       footer={
         <>
           <button type="button" className="btn-ghost" onClick={onClose}>
-            Abbrechen
+            {t('common.cancel')}
           </button>
           <button type="submit" form="connect-form" className="btn-primary" disabled={saving}>
-            {mode === 'plant' ? 'Verknüpfen' : 'Pflanze anlegen'}
+            {mode === 'plant' ? t('discover.connect.link') : t('discover.connect.createPlant')}
           </button>
         </>
       }
@@ -75,22 +76,22 @@ export function ConnectDialog({ strain, onClose, initialMode = 'plant' }: { stra
           value={mode}
           onChange={setMode}
           options={[
-            { value: 'plant', label: 'Bestehende Pflanze' },
-            { value: 'grow', label: 'Neue Pflanze im Grow' },
+            { value: 'plant', label: t('discover.connect.existing') },
+            { value: 'grow', label: t('discover.connect.newInGrow') },
           ]}
         />
         {mode === 'plant' ? (
           plants.length === 0 ? (
-            <Callout tone="info">Noch keine Pflanzen vorhanden. Wähle „Neue Pflanze im Grow“.</Callout>
+            <Callout tone="info">{t('discover.connect.noPlants')}</Callout>
           ) : (
-            <SelectField label="Pflanze" value={plantId} onChange={setPlantId} placeholder="Pflanze wählen …" options={plants.map((p) => ({ value: p.id, label: `${p.name} · ${growName.get(p.growId) ?? ''}` }))} hint="Eine bisherige Sortenangabe der Pflanze wird ersetzt." />
+            <SelectField label={t('discover.connect.plant')} value={plantId} onChange={setPlantId} placeholder={t('discover.connect.plantPh')} options={plants.map((p) => ({ value: p.id, label: `${p.name} · ${growName.get(p.growId) ?? ''}` }))} hint={t('discover.connect.plantHint')} />
           )
         ) : data.grows.length === 0 ? (
-          <Callout tone="info">Noch kein Grow vorhanden. Lege zuerst unter „Grows“ einen Grow an.</Callout>
+          <Callout tone="info">{t('discover.connect.noGrows')}</Callout>
         ) : (
           <>
             <SelectField label="Grow" value={growId} onChange={setGrowId} options={data.grows.filter((g) => g.status !== 'archived').map((g) => ({ value: g.id, label: g.name }))} />
-            <TextField label="Name der Pflanze" value={name} onChange={setName} maxLength={60} />
+            <TextField label={t('discover.connect.plantName')} value={name} onChange={setName} maxLength={60} />
           </>
         )}
       </form>

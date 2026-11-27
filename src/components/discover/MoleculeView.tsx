@@ -1,4 +1,5 @@
 import type { TerpeneChem } from '../../lib/catalog/terpenes';
+import { t } from '../../i18n';
 
 /**
  * 2D-Strukturformel (Skelettformel) aus den PubChem-2D-Koordinaten.
@@ -78,7 +79,7 @@ export function MoleculeView({ chem, color = '#8fd3a8', size = 'md', label }: { 
   });
 
   return (
-    <svg viewBox={`0 0 ${w.toFixed(1)} ${h.toFixed(1)}`} className="h-full w-full" role="img" aria-label={`Strukturformel ${label} (2D, ohne Wasserstoffe am Kohlenstoff)`}>
+    <svg viewBox={`0 0 ${w.toFixed(1)} ${h.toFixed(1)}`} className="h-full w-full" role="img" aria-label={t('discover.molecule', { label })}>
       {lines}
       {labels}
     </svg>

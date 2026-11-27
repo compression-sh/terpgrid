@@ -8,6 +8,7 @@ import { CatalogFactsRow } from './CatalogFacts';
 import { TypeBadge, rangeText } from './Badges';
 import { StrainVisual } from './StrainVisual';
 import { TerpeneChips } from './TerpeneChips';
+import { t } from '../../i18n';
 
 export function StrainCard({ strain, priority, matchLabel }: { strain: CatalogStrain; priority?: boolean; matchLabel?: string }) {
   const linked = useLinkedStrains();
@@ -24,8 +25,8 @@ export function StrainCard({ strain, priority, matchLabel }: { strain: CatalogSt
         type="button"
         onClick={() => compare.toggle(strain.key)}
         aria-pressed={inCompare}
-        aria-label={inCompare ? `${strain.name} aus Vergleich entfernen` : `${strain.name} vergleichen`}
-        title="Zum Vergleich"
+        aria-label={inCompare ? t('discover.card.removeCompare', { name: strain.name }) : t('discover.card.compare', { name: strain.name })}
+        title={t('discover.card.toCompare')}
         className={`grid size-9 place-items-center rounded-lg transition-colors ${inCompare ? 'bg-sky-400/10 text-sky-300' : 'text-ink-400 hover:bg-white/[0.05] hover:text-ink-200'}`}
       >
         <GitCompare className="size-4" />
@@ -34,8 +35,8 @@ export function StrainCard({ strain, priority, matchLabel }: { strain: CatalogSt
         type="button"
         onClick={() => toggleFav(strain)}
         aria-pressed={fav}
-        aria-label={fav ? `${strain.name} aus Favoriten entfernen` : `${strain.name} als Favorit merken`}
-        title={fav ? 'Favorit' : 'Merken'}
+        aria-label={fav ? t('discover.card.removeFav', { name: strain.name }) : t('discover.card.addFav', { name: strain.name })}
+        title={fav ? t('discover.card.fav') : t('discover.card.remember')}
         className={`grid size-9 place-items-center rounded-lg transition-colors ${fav ? 'bg-leaf-500/10 text-leaf-300' : 'text-ink-400 hover:bg-white/[0.05] hover:text-ink-200'}`}
       >
         <Bookmark className={`size-4 ${fav ? 'fill-current' : ''}`} />
@@ -55,23 +56,23 @@ export function StrainCard({ strain, priority, matchLabel }: { strain: CatalogSt
           </div>
           <div className="relative z-10 -mr-1.5 -mt-1.5 shrink-0">{actions}</div>
         </div>
-        <a href={href(strainLink(strain))} className="mt-2 block min-w-0 after:absolute after:inset-0 after:rounded-2xl after:content-[''] focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-leaf-400" aria-label={`${strain.name} von ${strain.breeder ?? 'unbekanntem Breeder'} – Profil öffnen`}>
+        <a href={href(strainLink(strain))} className="mt-2 block min-w-0 after:absolute after:inset-0 after:rounded-2xl after:content-[''] focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-leaf-400" aria-label={t('discover.card.openBy', { name: strain.name, breeder: strain.breeder ?? t('discover.card.unknownBreeder') })}>
           <h3 className="truncate text-[15px] font-semibold tracking-tight text-ink-50">{strain.name}</h3>
-          <p className="truncate text-[12px] text-ink-400">{strain.breeder ?? 'Breeder: keine Angabe'}</p>
-          {matchLabel && <p className="mt-0.5 truncate text-[10px] uppercase tracking-wider text-ink-500">Treffer: {matchLabel}</p>}
+          <p className="truncate text-[12px] text-ink-400">{strain.breeder ?? t('discover.card.noBreeder')}</p>
+          {matchLabel && <p className="mt-0.5 truncate text-[10px] uppercase tracking-wider text-ink-500">{t('discover.card.match', { label: matchLabel })}</p>}
         </a>
         <p className={`mt-2 line-clamp-1 text-[12px] ${strain.genetics ? 'text-ink-300' : 'text-ink-500'}`} title={strain.genetics}>
-          {strain.genetics ? `Eltern: ${strain.genetics}` : 'Abstammung: keine Angabe'}
+          {strain.genetics ? t('discover.card.parents', { g: strain.genetics }) : t('discover.card.noLineage')}
         </p>
         <dl className="mt-2.5 grid grid-cols-3 gap-2 border-t border-white/[0.05] pt-2.5">
           {[
             ['THC', thc],
             ['CBD', cbd],
-            ['Blüte', strain.flowering ? `${strain.flowering.minDays ?? strain.flowering.maxDays}${strain.flowering.maxDays && strain.flowering.maxDays !== strain.flowering.minDays ? `–${strain.flowering.maxDays}` : ''} T.` : undefined],
+            [t('discover.card.flowering'), strain.flowering ? t('discover.card.days', { d: `${strain.flowering.minDays ?? strain.flowering.maxDays}${strain.flowering.maxDays && strain.flowering.maxDays !== strain.flowering.minDays ? `–${strain.flowering.maxDays}` : ''}` }) : undefined],
           ].map(([k, v]) => (
             <div key={k} className="min-w-0">
               <dt className="text-[10px] uppercase tracking-wider text-ink-500">{k}</dt>
-              <dd className={`truncate font-mono text-[12.5px] tabular ${v ? 'text-ink-100' : 'text-ink-500'}`}>{v ?? 'k. A.'}</dd>
+              <dd className={`truncate font-mono text-[12.5px] tabular ${v ? 'text-ink-100' : 'text-ink-500'}`}>{v ?? t('discover.card.na')}</dd>
             </div>
           ))}
         </dl>
@@ -83,7 +84,7 @@ export function StrainCard({ strain, priority, matchLabel }: { strain: CatalogSt
   }
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-ink-900/70 transition-all duration-300 hover:-translate-y-0.5 hover:border-white/[0.14] hover:shadow-[0_24px_48px_-28px_rgb(0_0_0/0.9)]">
-      <a href={href(strainLink(strain))} className="flex flex-1 flex-col focus-visible:outline-offset-[-2px]" aria-label={`${strain.name} – Profil öffnen`}>
+      <a href={href(strainLink(strain))} className="flex flex-1 flex-col focus-visible:outline-offset-[-2px]" aria-label={t('discover.card.open', { name: strain.name })}>
         <div className="relative aspect-[4/3] overflow-hidden">
           <StrainVisual image={strain.image} name={strain.name} eager={priority} className="h-full w-full transition-transform duration-700 group-hover:scale-[1.035]" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-ink-950/85 to-transparent" />
@@ -95,17 +96,17 @@ export function StrainCard({ strain, priority, matchLabel }: { strain: CatalogSt
         <div className="flex flex-1 flex-col gap-3 p-3.5">
           <div className="min-w-0">
             <h3 className="truncate text-[15px] font-semibold tracking-tight text-ink-50">{strain.name}</h3>
-            <p className="truncate text-[12px] text-ink-400">{strain.breeder ?? 'Breeder: keine Angabe'}</p>
-            {matchLabel && <p className="mt-1 truncate text-[10px] uppercase tracking-wider text-ink-500">Treffer: {matchLabel}</p>}
+            <p className="truncate text-[12px] text-ink-400">{strain.breeder ?? t('discover.card.noBreeder')}</p>
+            {matchLabel && <p className="mt-1 truncate text-[10px] uppercase tracking-wider text-ink-500">{t('discover.card.match', { label: matchLabel })}</p>}
           </div>
           <dl className="grid grid-cols-2 gap-2">
             <div>
               <dt className="text-[10px] uppercase tracking-wider text-ink-500">THC</dt>
-              <dd className={`font-mono text-[13px] tabular ${thc ? 'text-ink-100' : 'text-ink-600'}`}>{thc ?? 'k. A.'}</dd>
+              <dd className={`font-mono text-[13px] tabular ${thc ? 'text-ink-100' : 'text-ink-600'}`}>{thc ?? t('discover.card.na')}</dd>
             </div>
             <div>
               <dt className="text-[10px] uppercase tracking-wider text-ink-500">CBD</dt>
-              <dd className={`font-mono text-[13px] tabular ${cbd ? 'text-ink-100' : 'text-ink-600'}`}>{cbd ?? 'k. A.'}</dd>
+              <dd className={`font-mono text-[13px] tabular ${cbd ? 'text-ink-100' : 'text-ink-600'}`}>{cbd ?? t('discover.card.na')}</dd>
             </div>
           </dl>
           <div className="mt-auto min-h-[1.25rem]">
@@ -115,7 +116,7 @@ export function StrainCard({ strain, priority, matchLabel }: { strain: CatalogSt
       </a>
       <div className="flex items-center justify-between border-t border-white/[0.05] px-3.5 py-2">
         <a href={strain.attribution.recordUrl ?? strain.attribution.url} target="_blank" rel="noopener noreferrer nofollow" referrerPolicy="no-referrer" className="text-[10px] text-ink-500 hover:text-ink-300">
-          Daten: {strain.attribution.name}
+          {t('discover.card.data', { name: strain.attribution.name })}
         </a>
         {actions}
       </div>

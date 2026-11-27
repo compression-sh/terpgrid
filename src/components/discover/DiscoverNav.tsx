@@ -2,16 +2,17 @@ import { BookOpen, Compass, Dna, Droplets, GalleryHorizontalEnd, GitCompare, Ima
 import { useLibraryStatus } from '../../app/library';
 import { useCompare } from '../../app/catalog';
 import { href, useRoute } from '../../app/router';
+import { t } from '../../i18n';
 
 const ITEMS = [
-  { id: '', label: 'Entdecken', icon: Compass },
-  { id: 'breeders', label: 'Breeder', icon: Users, library: true },
-  { id: 'live', label: 'Live & Bilder', icon: Images, library: true },
-  { id: 'genetics', label: 'Genetik', icon: Dna },
-  { id: 'terpenes', label: 'Terpen-Atlas', icon: Droplets },
-  { id: 'compare', label: 'Vergleich', icon: GitCompare },
-  { id: 'gallery', label: 'Galerie', icon: GalleryHorizontalEnd },
-  { id: 'learn', label: 'Cannabis 101', icon: BookOpen },
+  { id: '', get label() { return t('discover.nav.discover'); }, icon: Compass },
+  { id: 'breeders', get label() { return t('discover.nav.breeders'); }, icon: Users, library: true },
+  { id: 'live', get label() { return t('discover.nav.live'); }, icon: Images, library: true },
+  { id: 'genetics', get label() { return t('discover.nav.genetics'); }, icon: Dna },
+  { id: 'terpenes', get label() { return t('discover.nav.terpenes'); }, icon: Droplets },
+  { id: 'compare', get label() { return t('discover.nav.compare'); }, icon: GitCompare },
+  { id: 'gallery', get label() { return t('discover.nav.gallery'); }, icon: GalleryHorizontalEnd },
+  { id: 'learn', get label() { return t('discover.nav.learn'); }, icon: BookOpen },
 ];
 
 /** Unternavigation des Discover-Bereichs (statt zusätzlicher Top-Level-Tabs). */

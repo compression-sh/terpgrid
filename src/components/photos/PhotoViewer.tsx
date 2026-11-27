@@ -12,6 +12,7 @@ import { formatBytes } from '../../lib/media/images';
 import { PhaseChip } from '../ui/Chip';
 import { PhotoImg } from './PhotoImg';
 import { forgetPhoto } from './usePhotoUrl';
+import { t } from '../../i18n';
 
 /** Phase eines Fotos aus den Meilensteinen der Pflanze (falls vorhanden) bzw. des Grows. */
 export function usePhotoPhase() {
@@ -86,7 +87,7 @@ export function PhotoViewer({ photos, index, onIndex, onClose }: { photos: Photo
     try {
       await updateRecord('photos', photo!.id, { note: note.trim(), takenAt: takenAt || photo!.takenAt });
       setEditing(false);
-      toast('Foto aktualisiert');
+      toast(t('photos.view.updated'));
     } catch (e) {
       toast(errorText(e), { tone: 'error' });
     }
@@ -94,16 +95,16 @@ export function PhotoViewer({ photos, index, onIndex, onClose }: { photos: Photo
 
   async function remove() {
     const ok = await confirm({
-      title: 'Foto löschen?',
-      message: 'Das Foto wird dauerhaft von diesem Gerät entfernt. Verknüpfungen (Titelbild, Zeitleiste) werden gelöst.',
-      confirmLabel: 'Löschen',
+      title: t('photos.view.deleteTitle'),
+      message: t('photos.view.deleteText'),
+      confirmLabel: t('common.delete'),
       tone: 'danger',
     });
     if (!ok) return;
     try {
       await deletePhotos([photo!.id]);
       forgetPhoto(photo!.id);
-      toast('Foto gelöscht');
+      toast(t('photos.view.deleted'));
     } catch (e) {
       toast(errorText(e), { tone: 'error' });
     }
@@ -124,7 +125,7 @@ export function PhotoViewer({ photos, index, onIndex, onClose }: { photos: Photo
     try {
       if (kind === 'grow' && grow) await updateRecord('grows', grow.id, { coverPhotoId: isGrowCover ? undefined : photo!.id });
       if (kind === 'plant' && plant) await updateRecord('plants', plant.id, { coverPhotoId: isPlantCover ? undefined : photo!.id });
-      toast('Titelbild aktualisiert');
+      toast(t('photos.view.coverUpdated'));
     } catch (e) {
       toast(errorText(e), { tone: 'error' });
     }
@@ -133,7 +134,7 @@ export function PhotoViewer({ photos, index, onIndex, onClose }: { photos: Photo
   return (
     <dialog
       ref={ref}
-      aria-label="Fotoansicht"
+      aria-label={t('photos.view.title')}
       onCancel={(e) => {
         e.preventDefault();
         onClose();
@@ -151,17 +152,17 @@ export function PhotoViewer({ photos, index, onIndex, onClose }: { photos: Photo
             touchX.current = null;
           }}
         >
-          <PhotoImg key={photo.id} photoId={photo.id} variant="full" alt={photo.note || `Foto vom ${fmtDateTime(photo.takenAt)}`} fit="contain" className="absolute inset-0 h-full w-full" />
-          <button type="button" onClick={onClose} aria-label="Schließen" className="absolute right-3 top-3 grid size-10 place-items-center rounded-full bg-black/60 text-ink-100 backdrop-blur hover:bg-black/80">
+          <PhotoImg key={photo.id} photoId={photo.id} variant="full" alt={photo.note || t('photos.view.alt', { date: fmtDateTime(photo.takenAt) })} fit="contain" className="absolute inset-0 h-full w-full" />
+          <button type="button" onClick={onClose} aria-label={t('common.close')} className="absolute right-3 top-3 grid size-10 place-items-center rounded-full bg-black/60 text-ink-100 backdrop-blur hover:bg-black/80">
             <X className="size-5" />
           </button>
           {index > 0 && (
-            <button type="button" onClick={prev} aria-label="Vorheriges Foto" className="absolute left-3 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-black/60 backdrop-blur hover:bg-black/80">
+            <button type="button" onClick={prev} aria-label={t('photos.view.prev')} className="absolute left-3 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-black/60 backdrop-blur hover:bg-black/80">
               <ChevronLeft className="size-5" />
             </button>
           )}
           {index < photos.length - 1 && (
-            <button type="button" onClick={next} aria-label="Nächstes Foto" className="absolute right-3 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-black/60 backdrop-blur hover:bg-black/80">
+            <button type="button" onClick={next} aria-label={t('photos.view.next')} className="absolute right-3 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-black/60 backdrop-blur hover:bg-black/80">
               <ChevronRight className="size-5" />
             </button>
           )}
@@ -193,24 +194,24 @@ export function PhotoViewer({ photos, index, onIndex, onClose }: { photos: Photo
           {editing ? (
             <div className="mt-4 space-y-3">
               <label className="block space-y-1.5">
-                <span className="label">Aufnahmezeitpunkt</span>
+                <span className="label">{t('photos.view.takenAt')}</span>
                 <input type="datetime-local" className="input-base" value={takenAt} onChange={(e) => setTakenAt(e.target.value)} />
               </label>
               <label className="block space-y-1.5">
-                <span className="label">Notiz</span>
+                <span className="label">{t('photos.view.note')}</span>
                 <textarea className="input-base" rows={3} value={note} maxLength={300} onChange={(e) => setNote(e.target.value)} />
               </label>
               <div className="flex gap-2">
                 <button type="button" className="btn-primary" onClick={save}>
-                  Speichern
+                  {t('common.save.button')}
                 </button>
                 <button type="button" className="btn-ghost" onClick={() => setEditing(false)}>
-                  Abbrechen
+                  {t('common.cancel')}
                 </button>
               </div>
             </div>
           ) : (
-            <p className="mt-4 whitespace-pre-wrap text-[13px] leading-relaxed text-ink-300">{photo.note || <span className="text-ink-500">Keine Notiz</span>}</p>
+            <p className="mt-4 whitespace-pre-wrap text-[13px] leading-relaxed text-ink-300">{photo.note || <span className="text-ink-500">{t('photos.view.noNote')}</span>}</p>
           )}
 
           <div className="mt-5 grid grid-cols-2 gap-2">
@@ -218,16 +219,16 @@ export function PhotoViewer({ photos, index, onIndex, onClose }: { photos: Photo
               <Pencil className="size-4" /> Bearbeiten
             </button>
             <button type="button" className="btn-ghost" onClick={download}>
-              <Download className="size-4" /> Speichern
+              <Download className="size-4" /> {t('common.save.button')}
             </button>
             {grow && (
               <button type="button" className="btn-ghost col-span-2" onClick={() => setCover('grow')}>
-                <Star className={`size-4 ${isGrowCover ? 'fill-amber-300 text-amber-300' : ''}`} /> {isGrowCover ? 'Titelbild des Grows' : 'Als Grow-Titelbild'}
+                <Star className={`size-4 ${isGrowCover ? 'fill-amber-300 text-amber-300' : ''}`} /> {isGrowCover ? t('photos.view.growCover') : t('photos.view.setGrowCover')}
               </button>
             )}
             {plant && (
               <button type="button" className="btn-ghost col-span-2" onClick={() => setCover('plant')}>
-                <Star className={`size-4 ${isPlantCover ? 'fill-amber-300 text-amber-300' : ''}`} /> {isPlantCover ? 'Titelbild der Pflanze' : 'Als Pflanzen-Titelbild'}
+                <Star className={`size-4 ${isPlantCover ? 'fill-amber-300 text-amber-300' : ''}`} /> {isPlantCover ? t('photos.view.plantCover') : t('photos.view.setPlantCover')}
               </button>
             )}
             <button type="button" className="btn-ghost col-span-2 text-rose-300 hover:text-rose-200" onClick={remove}>

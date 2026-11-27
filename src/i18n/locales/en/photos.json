@@ -1,0 +1,95 @@
+{
+ "compare": {
+  "after": "After",
+  "before": "Before",
+  "position": "Comparison position"
+ },
+ "grid": {
+  "count": {
+   "one": "{count} photo",
+   "other": "{count} photos"
+  },
+  "open": "Open photo from {date}{note}"
+ },
+ "img": {
+  "unavailable": "Photo unavailable",
+  "placeholder": "No photo (placeholder)",
+  "placeholder2": "Placeholder – no photo yet",
+  "loading": "Photo loading"
+ },
+ "up": {
+  "added": {
+   "one": "Photo added",
+   "other": "{count} photos added"
+  },
+  "downgraded": "{count} photo(s) were too large for synchronisation at original resolution and were reduced to {px} px.",
+  "saved": {
+   "one": "Photo saved",
+   "other": "{count} photos saved"
+  },
+  "gps": {
+   "one": " Location data (GPS) was removed from {count} photo.",
+   "other": " Location data (GPS) was removed from {count} photos."
+  },
+  "savedDevice": "Saved on this device",
+  "willSync": " · will sync",
+  "original": "Original resolution",
+  "originalHint": "no downscaling (up to 16 megapixels), much larger files; metadata is still removed",
+  "privacyA": "Photos are {how} re-encoded. All embedded metadata is removed in the process – including location, camera model and serial numbers. The selected files stay in memory only until processed. The capture date is read beforehand and stored separately.",
+  "full": "at full resolution",
+  "reduced": "reduced to max. {px} px and",
+  "noImages": "No image files selected.",
+  "cancelled": "Upload cancelled – photos already saved are kept.",
+  "title": "Upload photos",
+  "hintServer": "Processed on this device and synced encrypted with your server.",
+  "hintLocal": "Stored exclusively on this device.",
+  "done": "Done",
+  "grow": "Grow",
+  "unassigned": "Unassigned",
+  "plant": "Plant",
+  "wholeGrow": "Whole grow",
+  "note": "Note (for all photos in this upload)",
+  "quality": "Image quality",
+  "timeline": "Add as a photo entry to the grow timeline",
+  "drop": "Drag images here or",
+  "choose": "Choose files",
+  "formats": "JPEG, PNG, WebP, AVIF · HEIC in Safari only · several at once",
+  "status": "Upload status per file",
+  "waiting": "Waiting …",
+  "cleaning": "Cleaning …",
+  "reducing": "Reducing and cleaning …",
+  "aborted": "Cancelled",
+  "descOptional": "Description (optional)",
+  "serverOnly": "Only the cleaned image is stored encrypted on your server – the original never leaves your device.",
+  "nothingUploaded": "Nothing is uploaded.",
+  "descFor": "Description for {name}"
+ },
+ "view": {
+  "updated": "Photo updated",
+  "deleteTitle": "Delete photo?",
+  "deleteText": "The photo will be permanently removed from this device. Links (cover image, timeline) are removed.",
+  "deleted": "Photo deleted",
+  "coverUpdated": "Cover image updated",
+  "title": "Photo view",
+  "prev": "Previous photo",
+  "next": "Next photo",
+  "takenAt": "Captured",
+  "note": "Note",
+  "noNote": "No note",
+  "growCover": "Grow cover image",
+  "setGrowCover": "Set as grow cover",
+  "plantCover": "Plant cover image",
+  "setPlantCover": "Set as plant cover",
+  "alt": "Photo from {date}"
+ },
+ "tl": {
+  "frame": "Image {n} of {total}",
+  "choose": "Choose image",
+  "start": "To start",
+  "pause": "Pause",
+  "play": "Play",
+  "end": "To end",
+  "loop": "Repeat",
+  "speed": "Speed"
+ }
+}

@@ -1,6 +1,7 @@
 import { imageSrc } from '../../lib/catalog/endpoint';
 import { useState } from 'react';
 import type { CatalogImage } from '../../lib/catalog/types';
+import { t } from '../../i18n';
 
 function hash(s: string): number {
   let h = 2166136261;
@@ -22,7 +23,7 @@ export function AbstractPlaceholder({ seed, className = '', label = true }: { se
   const petals = 5 + (h % 4);
   const spread = 18 + (h % 14);
   return (
-    <div className={`relative overflow-hidden bg-ink-900 ${className}`} role="img" aria-label="Platzhalter – kein lizenziertes Sortenbild verfügbar">
+    <div className={`relative overflow-hidden bg-ink-900 ${className}`} role="img" aria-label={t('discover.vis.placeholder')}>
       <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
         <defs>
           <radialGradient id={`pg-${h}`} cx="50%" cy="45%" r="70%">
@@ -44,7 +45,7 @@ export function AbstractPlaceholder({ seed, className = '', label = true }: { se
           ))}
         </g>
       </svg>
-      {label && <span className="absolute bottom-2 left-2 rounded bg-black/40 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-ink-400">Kein Bild</span>}
+      {label && <span className="absolute bottom-2 left-2 rounded bg-black/40 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-ink-400">{t('discover.vis.noImage')}</span>}
     </div>
   );
 }
@@ -59,7 +60,7 @@ export function StrainVisual({ image, name, className = '', eager, fit = 'cover'
       {!loaded && <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-ink-800 to-ink-900" aria-hidden />}
       <img
         src={imageSrc(image.url)}
-        alt={image.alt || `${name} (Bild laut StrainAPI)`}
+        alt={image.alt || t('discover.vis.alt', { name })}
         width={image.width}
         height={image.height}
         loading={eager ? 'eager' : 'lazy'}

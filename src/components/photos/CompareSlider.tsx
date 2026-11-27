@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { fmtDateTime } from '../../lib/dates';
 import type { Photo } from '../../lib/db/types';
 import { PhotoImg } from './PhotoImg';
+import { t } from '../../i18n';
 
 /**
  * Vorher/Nachher-Vergleich mit Schieberegler (Maus, Touch und Tastatur).
@@ -33,9 +34,9 @@ export function CompareSlider({ before, after }: { before: Photo; after: Photo }
         onPointerUp={() => (dragging.current = false)}
         onPointerCancel={() => (dragging.current = false)}
       >
-        <PhotoImg photoId={after.id} variant="full" alt="Nachher" fit="contain" className="absolute inset-0 h-full w-full" />
+        <PhotoImg photoId={after.id} variant="full" alt={t('photos.compare.after')} fit="contain" className="absolute inset-0 h-full w-full" />
         <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}>
-          <PhotoImg photoId={before.id} variant="full" alt="Vorher" fit="contain" className="absolute inset-0 h-full w-full bg-black" />
+          <PhotoImg photoId={before.id} variant="full" alt={t('photos.compare.before')} fit="contain" className="absolute inset-0 h-full w-full bg-black" />
         </div>
         <div className="pointer-events-none absolute inset-y-0 w-px bg-white/80 shadow-[0_0_0_1px_rgb(0_0_0/0.4)]" style={{ left: `${pos}%` }}>
           <div className="absolute top-1/2 left-1/2 grid size-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-white/40 bg-black/70 text-white backdrop-blur">
@@ -52,7 +53,7 @@ export function CompareSlider({ before, after }: { before: Photo; after: Photo }
         max={100}
         step={1}
         value={pos}
-        aria-label="Vergleichsposition"
+        aria-label={t('photos.compare.position')}
         style={{ ['--fill' as string]: `${pos}%` }}
         onChange={(e) => setPos(Number(e.target.value))}
       />
@@ -65,9 +66,9 @@ export function SideBySide({ before, after }: { before: Photo; after: Photo }) {
     <div className="grid gap-3 sm:grid-cols-2">
       {[before, after].map((p, i) => (
         <figure key={p.id} className="overflow-hidden rounded-xl border border-white/[0.06] bg-black">
-          <PhotoImg photoId={p.id} variant="full" alt={i === 0 ? 'Vorher' : 'Nachher'} fit="contain" className="aspect-[4/3] w-full" />
+          <PhotoImg photoId={p.id} variant="full" alt={i === 0 ? t('photos.compare.before') : t('photos.compare.after')} fit="contain" className="aspect-[4/3] w-full" />
           <figcaption className="border-t border-white/[0.06] bg-ink-900 px-3 py-2 text-xs text-ink-300">
-            {i === 0 ? 'Vorher' : 'Nachher'} · {fmtDateTime(p.takenAt)}
+            {i === 0 ? t('photos.compare.before') : t('photos.compare.after')} · {fmtDateTime(p.takenAt)}
           </figcaption>
         </figure>
       ))}

@@ -1,5 +1,6 @@
 import { ImageOff, Sprout } from 'lucide-react';
 import { usePhotoUrl } from './usePhotoUrl';
+import { t } from '../../i18n';
 
 interface Props {
   photoId?: string;
@@ -19,13 +20,13 @@ export function PhotoImg({ photoId, variant = 'thumb', alt, className = '', plac
       <div
         className={`grid place-items-center bg-[repeating-linear-gradient(135deg,rgb(255_255_255/0.018)_0_8px,transparent_8px_16px)] text-ink-600 ${className}`}
         role="img"
-        aria-label={photoId ? 'Foto nicht verfügbar' : 'Kein Foto (Platzhalter)'}
-        title={photoId ? 'Foto nicht verfügbar' : 'Platzhalter – noch kein Foto'}
+        aria-label={photoId ? t('photos.img.unavailable') : t('photos.img.placeholder')}
+        title={photoId ? t('photos.img.unavailable') : t('photos.img.placeholder2')}
       >
         {photoId ? <ImageOff className="size-5" /> : <Sprout className="size-5" />}
       </div>
     );
   }
-  if (!url) return <div className={`animate-pulse bg-ink-800 ${className}`} aria-busy="true" aria-label="Foto wird geladen" />;
+  if (!url) return <div className={`animate-pulse bg-ink-800 ${className}`} aria-busy="true" aria-label={t('photos.img.loading')} />;
   return <img src={url} alt={alt} loading="lazy" decoding="async" draggable={false} className={`${fit === 'cover' ? 'object-cover' : 'object-contain'} ${className}`} />;
 }

@@ -4,6 +4,7 @@ import { daysBetween, fmtDateTime } from '../../lib/dates';
 import type { Photo } from '../../lib/db/types';
 import { loadPhotoUrl } from './usePhotoUrl';
 import { PhotoImg } from './PhotoImg';
+import { t } from '../../i18n';
 
 const SPEEDS = [
   { label: '0,5×', ms: 1600 },
@@ -49,7 +50,7 @@ export function Timelapse({ photos, startDate }: { photos: Photo[]; startDate?: 
   return (
     <div className="space-y-3">
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-white/[0.06] bg-black">
-        <PhotoImg key={frame.id} photoId={frame.id} variant="full" alt={`Bild ${i + 1} von ${frames.length}`} fit="contain" className="absolute inset-0 h-full w-full" />
+        <PhotoImg key={frame.id} photoId={frame.id} variant="full" alt={t('photos.tl.frame', { n: i + 1, total: frames.length })} fit="contain" className="absolute inset-0 h-full w-full" />
         <div className="absolute left-3 top-3 rounded-lg bg-black/65 px-2.5 py-1 text-xs text-ink-100 backdrop-blur">
           {fmtDateTime(frame.takenAt)}
           {day !== undefined && day > 0 && <span className="ml-2 font-mono text-leaf-300">Tag {day}</span>}
@@ -64,7 +65,7 @@ export function Timelapse({ photos, startDate }: { photos: Photo[]; startDate?: 
         min={0}
         max={Math.max(0, frames.length - 1)}
         value={i}
-        aria-label="Bild auswählen"
+        aria-label={t('photos.tl.choose')}
         style={{ ['--fill' as string]: `${frames.length > 1 ? (i / (frames.length - 1)) * 100 : 0}%` }}
         onChange={(e) => {
           setPlaying(false);
@@ -73,21 +74,21 @@ export function Timelapse({ photos, startDate }: { photos: Photo[]; startDate?: 
       />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1.5">
-          <button type="button" className="btn-ghost p-2" aria-label="Zum Anfang" onClick={() => setI(0)}>
+          <button type="button" className="btn-ghost p-2" aria-label={t('photos.tl.start')} onClick={() => setI(0)}>
             <SkipBack className="size-4" />
           </button>
-          <button type="button" className="btn-primary px-4" aria-label={playing ? 'Pause' : 'Abspielen'} onClick={() => setPlaying((p) => !p)} disabled={frames.length < 2}>
+          <button type="button" className="btn-primary px-4" aria-label={playing ? t('photos.tl.pause') : t('photos.tl.play')} onClick={() => setPlaying((p) => !p)} disabled={frames.length < 2}>
             {playing ? <Pause className="size-4" /> : <Play className="size-4" />}
-            {playing ? 'Pause' : 'Abspielen'}
+            {playing ? t('photos.tl.pause') : t('photos.tl.play')}
           </button>
-          <button type="button" className="btn-ghost p-2" aria-label="Zum Ende" onClick={() => setI(frames.length - 1)}>
+          <button type="button" className="btn-ghost p-2" aria-label={t('photos.tl.end')} onClick={() => setI(frames.length - 1)}>
             <SkipForward className="size-4" />
           </button>
-          <button type="button" className={`btn-ghost p-2 ${loop ? 'text-leaf-300' : ''}`} aria-pressed={loop} aria-label="Wiederholen" onClick={() => setLoop((l) => !l)}>
+          <button type="button" className={`btn-ghost p-2 ${loop ? 'text-leaf-300' : ''}`} aria-pressed={loop} aria-label={t('photos.tl.loop')} onClick={() => setLoop((l) => !l)}>
             <Repeat className="size-4" />
           </button>
         </div>
-        <div className="flex items-center gap-1 rounded-xl border border-white/[0.06] bg-ink-850 p-1" role="radiogroup" aria-label="Geschwindigkeit">
+        <div className="flex items-center gap-1 rounded-xl border border-white/[0.06] bg-ink-850 p-1" role="radiogroup" aria-label={t('photos.tl.speed')}>
           {SPEEDS.map((s, k) => (
             <button
               key={s.label}

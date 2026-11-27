@@ -1,0 +1,95 @@
+{
+ "compare": {
+  "after": "Nachher",
+  "before": "Vorher",
+  "position": "Vergleichsposition"
+ },
+ "grid": {
+  "count": {
+   "one": "{count} Foto",
+   "other": "{count} Fotos"
+  },
+  "open": "Foto vom {date} öffnen{note}"
+ },
+ "img": {
+  "unavailable": "Foto nicht verfügbar",
+  "placeholder": "Kein Foto (Platzhalter)",
+  "placeholder2": "Platzhalter – noch kein Foto",
+  "loading": "Foto wird geladen"
+ },
+ "up": {
+  "added": {
+   "one": "Foto hinzugefügt",
+   "other": "{count} Fotos hinzugefügt"
+  },
+  "downgraded": "{count} Foto(s) waren in Originalauflösung zu groß für die Synchronisation und wurden auf {px} px verkleinert.",
+  "saved": {
+   "one": "Foto gespeichert",
+   "other": "{count} Fotos gespeichert"
+  },
+  "gps": {
+   "one": " Bei {count} Foto wurden Standortdaten (GPS) entfernt.",
+   "other": " Bei {count} Fotos wurden Standortdaten (GPS) entfernt."
+  },
+  "savedDevice": "Auf diesem Gerät gespeichert",
+  "willSync": " · wird synchronisiert",
+  "original": "Originalauflösung",
+  "originalHint": "keine Verkleinerung (bis 16 Megapixel), deutlich größere Dateien; Metadaten werden trotzdem entfernt",
+  "privacyA": "Fotos werden {how} neu kodiert. Dabei werden alle eingebetteten Metadaten entfernt – auch Standort, Kameramodell und Seriennummern. Die ausgewählten Dateien liegen bis zur Verarbeitung nur im Arbeitsspeicher. Das Aufnahmedatum wird vorher ausgelesen und separat gespeichert.",
+  "full": "in voller Auflösung",
+  "reduced": "auf max. {px} px verkleinert und",
+  "noImages": "Keine Bilddateien ausgewählt.",
+  "cancelled": "Upload abgebrochen – bereits gespeicherte Fotos bleiben erhalten.",
+  "title": "Fotos hochladen",
+  "hintServer": "Werden auf diesem Gerät verarbeitet und verschlüsselt mit deinem Server synchronisiert.",
+  "hintLocal": "Bleiben ausschließlich auf diesem Gerät gespeichert.",
+  "done": "Fertig",
+  "grow": "Grow",
+  "unassigned": "Ohne Zuordnung",
+  "plant": "Pflanze",
+  "wholeGrow": "Ganzer Grow",
+  "note": "Notiz (für alle Fotos dieses Uploads)",
+  "quality": "Bildqualität",
+  "timeline": "Als Foto-Eintrag in der Grow-Zeitleiste vermerken",
+  "drop": "Bilder hierher ziehen oder",
+  "choose": "Dateien auswählen",
+  "formats": "JPEG, PNG, WebP, AVIF · HEIC nur in Safari · mehrere gleichzeitig möglich",
+  "status": "Upload-Status je Datei",
+  "waiting": "Wartet …",
+  "cleaning": "Wird bereinigt …",
+  "reducing": "Wird verkleinert und bereinigt …",
+  "aborted": "Abgebrochen",
+  "descOptional": "Beschreibung (optional)",
+  "serverOnly": "Nur das bereinigte Bild wird verschlüsselt auf deinem Server gespeichert – das Original verlässt dein Gerät nicht.",
+  "nothingUploaded": "Nichts wird hochgeladen.",
+  "descFor": "Beschreibung für {name}"
+ },
+ "view": {
+  "updated": "Foto aktualisiert",
+  "deleteTitle": "Foto löschen?",
+  "deleteText": "Das Foto wird dauerhaft von diesem Gerät entfernt. Verknüpfungen (Titelbild, Zeitleiste) werden gelöst.",
+  "deleted": "Foto gelöscht",
+  "coverUpdated": "Titelbild aktualisiert",
+  "title": "Fotoansicht",
+  "prev": "Vorheriges Foto",
+  "next": "Nächstes Foto",
+  "takenAt": "Aufnahmezeitpunkt",
+  "note": "Notiz",
+  "noNote": "Keine Notiz",
+  "growCover": "Titelbild des Grows",
+  "setGrowCover": "Als Grow-Titelbild",
+  "plantCover": "Titelbild der Pflanze",
+  "setPlantCover": "Als Pflanzen-Titelbild",
+  "alt": "Foto vom {date}"
+ },
+ "tl": {
+  "frame": "Bild {n} von {total}",
+  "choose": "Bild auswählen",
+  "start": "Zum Anfang",
+  "pause": "Pause",
+  "play": "Abspielen",
+  "end": "Zum Ende",
+  "loop": "Wiederholen",
+  "speed": "Geschwindigkeit"
+ }
+}
