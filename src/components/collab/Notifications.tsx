@@ -113,7 +113,7 @@ export function NotificationList({ limit, category, onNavigate }: { limit?: numb
           <input type="checkbox" checked={unreadOnly} onChange={(e) => setUnreadOnly(e.target.checked)} className="accent-[var(--color-leaf-400)]" /> Nur ungelesene
         </label>
         <button type="button" onClick={markAll} className="inline-flex min-h-6 items-center gap-1 text-[12px] text-ink-300 hover:text-ink-50">
-          <CheckCheck className="size-3.5" /> Alle gelesen
+          <CheckCheck className="size-3.5" /> {t('collab.notif.allRead')}
         </button>
       </div>
       {items === null ? (

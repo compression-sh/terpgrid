@@ -227,5 +227,16 @@
   "gTerpinene": "γ-Terpinene",
   "ocimeneSum": "Sum of all ocimene isomers",
   "nerolidolSum": "Sum of cis- and trans-nerolidol"
- }
+ },
+ "help": {
+  "fromAcademy": "From the Academy",
+  "background": "Background",
+  "loading": "Loading …"
+ },
+ "fav": {
+  "removed": "“{name}” removed from favourites",
+  "saved": "“{name}” saved as favourite",
+  "added": "“{name}” added to My strains"
+ },
+ "compareMax": "Compare at most {n} strains at a time."
 }

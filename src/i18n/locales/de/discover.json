@@ -227,5 +227,16 @@
   "gTerpinene": "γ-Terpinen",
   "ocimeneSum": "Summe aller Ocimen-Isomere",
   "nerolidolSum": "Summe aus cis- und trans-Nerolidol"
- }
+ },
+ "help": {
+  "fromAcademy": "Aus der Academy",
+  "background": "Hintergrund",
+  "loading": "Wird geladen …"
+ },
+ "fav": {
+  "removed": "„{name}“ aus Favoriten entfernt",
+  "saved": "„{name}“ als Favorit gespeichert",
+  "added": "„{name}“ zu Meinen Sorten hinzugefügt"
+ },
+ "compareMax": "Höchstens {n} Sorten gleichzeitig vergleichen."
 }

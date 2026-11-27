@@ -127,7 +127,7 @@ export function QuickLogModal({ onClose, plantId, growId }: { onClose: () => voi
             <Camera className="size-4" /> {empty ? t('grow.quick.photoOnly') : t('grow.quick.savePhoto')}
           </button>
           <button type="button" className="btn-primary" disabled={invalid || empty || saving} onClick={() => save(false)}>
-            <Check className="size-4" /> Speichern
+            <Check className="size-4" /> {t('common.save.button')}
           </button>
         </div>
       }

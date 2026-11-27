@@ -91,5 +91,12 @@
   "end": "Zum Ende",
   "loop": "Wiederholen",
   "speed": "Geschwindigkeit"
+ },
+ "viewer": {
+  "delete": "Foto löschen"
+ },
+ "upload": {
+  "choose": "Fotos wählen",
+  "retry": "Fehlgeschlagene und abgebrochene erneut versuchen"
  }
 }

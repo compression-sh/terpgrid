@@ -104,7 +104,7 @@ export function MeasurementCharts({
       const k = p.plantId ?? 'grow';
       byPlant.set(k, [...(byPlant.get(k) ?? []), p]);
     }
-    return [...byPlant.entries()].map(([k, points]) => ({ key: k, name: k === 'grow' ? 'Grow allgemein' : (plantName?.(k) ?? lookup.plant.get(k)?.name ?? 'Pflanze'), points }));
+    return [...byPlant.entries()].map(([k, points]) => ({ key: k, name: k === 'grow' ? t('grow.chart.growGeneral') : (plantName?.(k) ?? lookup.plant.get(k)?.name ?? t('grow.chart.plant')), points }));
   }, [opt, activities, splitByPlant, lookup, days, context, ctxKey, range, plantName]);
 
   if (!opt) {

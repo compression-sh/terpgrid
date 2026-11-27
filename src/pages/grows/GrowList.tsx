@@ -8,6 +8,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { PageHeader } from '../../components/ui/PageHeader';
 import type { GrowStatus } from '../../lib/db/types';
 import { GrowCard } from '../../components/grow/GrowCard';
+import { t } from '../../i18n';
 
 export function GrowList() {
   const { data } = useData();
@@ -36,16 +37,16 @@ export function GrowList() {
     <div>
       <PageHeader
         title="Grows"
-        subtitle="Deine Grow-Projekte mit Pflanzen, Fotos, Messwerten und Ausgaben."
+        subtitle={t('grow.list.subtitle')}
         actions={
           <>
             {data.grows.length >= 2 && (
               <a href={href('grows/compare')} className="btn-ghost">
-                <Columns3 className="size-4" /> Vergleichen
+                <Columns3 className="size-4" /> {t('grow.list.compare')}
               </a>
             )}
             <button type="button" className="btn-primary" onClick={() => quick({ kind: 'grow' })}>
-              <Plus className="size-4" /> Neuer Grow
+              <Plus className="size-4" /> {t('grow.list.new')}
             </button>
           </>
         }
@@ -54,11 +55,11 @@ export function GrowList() {
         <div className="card">
           <EmptyState
             icon={<Sprout />}
-            title="Noch kein Grow angelegt"
-            text="Ein Grow-Projekt hält Startdatum, Meilensteine, Pflanzen, Fotos, Messwerte und Ausgaben zusammen. Tage und Phasendauern werden aus deinen Einträgen berechnet."
+            title={t('grow.list.emptyTitle')}
+            text={t('grow.list.emptyText')}
             action={
               <button type="button" className="btn-primary" onClick={() => quick({ kind: 'grow' })}>
-                <Plus className="size-4" /> Ersten Grow anlegen
+                <Plus className="size-4" /> {t('grow.list.first')}
               </button>
             }
           />
@@ -72,22 +73,22 @@ export function GrowList() {
                 value={status}
                 onChange={setStatus}
                 options={[
-                  { value: 'active', label: `Aktiv (${counts.active})` },
-                  { value: 'completed', label: `Abgeschl. (${counts.completed})` },
-                  { value: 'archived', label: `Archiv (${counts.archived})` },
-                  { value: 'all', label: 'Alle' },
+                  { value: 'active', label: t('grow.list.active', { n: counts.active }) },
+                  { value: 'completed', label: t('grow.list.completed', { n: counts.completed }) },
+                  { value: 'archived', label: t('grow.list.archived', { n: counts.archived }) },
+                  { value: 'all', label: t('grow.list.all') },
                 ]}
               />
             </div>
             <label className="relative block sm:w-64">
-              <span className="sr-only">Grows durchsuchen</span>
+              <span className="sr-only">{t('grow.list.searchLabel')}</span>
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-500" />
-              <input className="input-base pl-9" placeholder="Suchen …" value={q} onChange={(e) => setQ(e.target.value)} />
+              <input className="input-base pl-9" placeholder={t('grow.list.search')} value={q} onChange={(e) => setQ(e.target.value)} />
             </label>
           </div>
           {grows.length === 0 ? (
             <div className="card">
-              <EmptyState compact title="Keine Grows in dieser Ansicht" text={q ? 'Suchbegriff anpassen.' : 'Andere Filter wählen.'} />
+              <EmptyState compact title={t('grow.list.noneTitle')} text={q ? t('grow.list.adjustSearch') : t('grow.list.otherFilter')} />
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

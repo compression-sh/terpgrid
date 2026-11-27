@@ -1,0 +1,46 @@
+{
+ "noServer": "kein TERPGRID-Server",
+ "dq": {
+  "sev": {
+   "critical": "Kritisch",
+   "high": "Hoch",
+   "medium": "Mittel",
+   "low": "Niedrig"
+  },
+  "title": "Datenqualität des Katalogs",
+  "recheck": "Neu prüfen",
+  "bySeverity": "Regeln mit Befund je Schweregrad",
+  "examples": "Beispiele und Aktion",
+  "sources": "Quellenregister",
+  "sourcesHint": "Geprüfte Quellen mit Lizenz und Entscheidung. Öffentliche Sichtbarkeit allein erlaubt keine Übernahme.",
+  "sourcesAria": "Quellenregister (horizontal scrollbar)",
+  "caption": "Quellen des Sortenkatalogs mit Lizenz, Einstufung und letztem Import",
+  "source": "Quelle",
+  "class": "Einstufung",
+  "licence": "Lizenz",
+  "lastSuccess": "Letzter Erfolg",
+  "decision": "Entscheidung",
+  "hint": "Reproduzierbare Prüfregeln – es wird nichts automatisch geändert.",
+  "asOf": "Stand: {date}."
+ },
+ "pw": {
+  "hide": "Passwort verbergen",
+  "show": "Passwort anzeigen",
+  "min12": "Mindestens 12 Zeichen",
+  "notLogin": "Nicht der Benutzername",
+  "distinct": "Mindestens 5 verschiedene Zeichen",
+  "tip": "Tipp: Eine Passphrase aus mehreren zufälligen Wörtern ist lang und gut merkbar. Ein Passwort-Manager ist ideal."
+ },
+ "rc": {
+  "continue": "Weiter zu TERPGRID",
+  "id": "Kennung",
+  "saveFile": "Als Datei speichern",
+  "copied": "Kopiert",
+  "copy": "Kopieren",
+  "confirm": "Ich habe Kennung und Wiederherstellungscodes sicher aufbewahrt.",
+  "noEmail": "Ohne E-Mail gibt es keinen anderen Weg zurück.",
+  "file": "TERPGRID – Wiederherstellungscodes\nKennung: {login}\nErstellt: {date}\n\nJeder Code funktioniert genau einmal.\n\n{codes}\n",
+  "warning": "Wenn du dein Passwort vergisst und diese Codes verlierst, ist dein Konto endgültig verloren – auch die Administration kann es nicht wiederherstellen. Bewahre die Codes getrennt vom Gerät auf (Passwort-Manager oder Papier).",
+  "fileName": "terpgrid-wiederherstellung-{login}.txt"
+ }
+}

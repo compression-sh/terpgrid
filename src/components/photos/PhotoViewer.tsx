@@ -216,7 +216,7 @@ export function PhotoViewer({ photos, index, onIndex, onClose }: { photos: Photo
 
           <div className="mt-5 grid grid-cols-2 gap-2">
             <button type="button" className="btn-ghost" onClick={() => setEditing(true)} disabled={editing}>
-              <Pencil className="size-4" /> Bearbeiten
+              <Pencil className="size-4" /> {t('common.edit')}
             </button>
             <button type="button" className="btn-ghost" onClick={download}>
               <Download className="size-4" /> {t('common.save.button')}
@@ -232,7 +232,7 @@ export function PhotoViewer({ photos, index, onIndex, onClose }: { photos: Photo
               </button>
             )}
             <button type="button" className="btn-ghost col-span-2 text-rose-300 hover:text-rose-200" onClick={remove}>
-              <Trash2 className="size-4" /> Foto löschen
+              <Trash2 className="size-4" /> {t('photos.viewer.delete')}
             </button>
           </div>
         </aside>

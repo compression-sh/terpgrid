@@ -91,5 +91,12 @@
   "end": "To end",
   "loop": "Repeat",
   "speed": "Speed"
+ },
+ "viewer": {
+  "delete": "Delete photo"
+ },
+ "upload": {
+  "choose": "Choose photos",
+  "retry": "Retry failed and cancelled uploads"
  }
 }

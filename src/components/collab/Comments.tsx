@@ -5,6 +5,7 @@ import { errorText, useToast } from '../../app/Toasts';
 import { type CommentView, collab } from '../../lib/collab/api';
 import { nameOf } from '../../lib/collab/labels';
 import { Avatar, relTime } from './ui';
+import { t } from '../../i18n';
 
 /** Kommentare zu einem Eintrag eines gemeinsamen Bereichs (eine Antwortebene). */
 export function CommentsPanel({ spaceId, store, target }: { spaceId: string; store: string; target: string }) {
@@ -56,7 +57,7 @@ export function CommentsPanel({ spaceId, store, target }: { spaceId: string; sto
     }
   };
   const remove = async (c: CommentView) => {
-    const ok = await confirm({ title: 'Kommentar entfernen?', message: c.mine ? 'Dein Kommentar wird für alle Mitglieder entfernt.' : 'Der Kommentar wird als Eigentümer für alle entfernt.', confirmLabel: 'Entfernen', tone: 'danger' });
+    const ok = await confirm({ title: t('collab.cm.removeTitle'), message: c.mine ? t('collab.cm.removeMine') : t('collab.cm.removeOwner'), confirmLabel: t('collab.cm.remove'), tone: 'danger' });
     if (!ok) return;
     try {
       await collab.deleteComment(spaceId, c.id);
@@ -85,15 +86,15 @@ export function CommentsPanel({ spaceId, store, target }: { spaceId: string; sto
               <textarea aria-label="Kommentar bearbeiten" className="input-base min-h-16 resize-y" maxLength={2000} value={editing.text} onChange={(e) => setEditing({ id: c.id, text: e.target.value })} />
               <div className="flex gap-2">
                 <button type="button" className="btn-primary py-1 text-[12px]" onClick={saveEdit} disabled={!editing.text.trim()}>
-                  Speichern
+                  {t('common.save.button')}
                 </button>
                 <button type="button" className="btn-ghost py-1 text-[12px]" onClick={() => setEditing(null)}>
-                  Abbrechen
+                  {t('common.cancel')}
                 </button>
               </div>
             </div>
           ) : (
-            <p className={`mt-0.5 whitespace-pre-wrap break-words text-[13px] leading-relaxed ${c.deleted ? 'italic text-ink-500' : 'text-ink-200'}`}>{c.deleted ? 'Kommentar entfernt' : c.text}</p>
+            <p className={`mt-0.5 whitespace-pre-wrap break-words text-[13px] leading-relaxed ${c.deleted ? 'italic text-ink-500' : 'text-ink-200'}`}>{c.deleted ? t('collab.cm.removed') : c.text}</p>
           )}
           {!c.deleted && editing?.id !== c.id && (
             <div className="mt-1 flex flex-wrap gap-3 text-[11.5px]">
@@ -104,12 +105,12 @@ export function CommentsPanel({ spaceId, store, target }: { spaceId: string; sto
               )}
               {c.canEdit && (
                 <button type="button" className="inline-flex min-h-6 items-center gap-1 text-ink-400 hover:text-ink-100" onClick={() => setEditing({ id: c.id, text: c.text ?? '' })}>
-                  <Pencil className="size-3" /> Bearbeiten
+                  <Pencil className="size-3" /> {t('common.edit')}
                 </button>
               )}
               {c.canDelete && (
                 <button type="button" className="inline-flex min-h-6 items-center gap-1 text-ink-400 hover:text-rose-300" onClick={() => remove(c)}>
-                  <Trash2 className="size-3" /> Entfernen
+                  <Trash2 className="size-3" /> {t('collab.cm.remove')}
                 </button>
               )}
             </div>
@@ -130,7 +131,7 @@ export function CommentsPanel({ spaceId, store, target }: { spaceId: string; sto
           <Loader2 className="size-4 animate-spin" />
         </div>
       ) : top.length === 0 ? (
-        <p className="text-[12.5px] text-ink-400">{canComment ? 'Noch keine Kommentare – schreib den ersten.' : 'Noch keine Kommentare.'}</p>
+        <p className="text-[12.5px] text-ink-400">{canComment ? t('collab.cm.emptyCan') : t('collab.cm.empty')}</p>
       ) : (
         <ul className="space-y-3">{top.map((c) => render(c))}</ul>
       )}
@@ -138,30 +139,30 @@ export function CommentsPanel({ spaceId, store, target }: { spaceId: string; sto
         <form onSubmit={submit} className="space-y-2">
           {replyTo && (
             <div className="flex items-center justify-between rounded-lg bg-white/[0.03] px-3 py-1.5 text-[12px] text-ink-300">
-              <span>Antwort an {nameOf(replyTo.author)}</span>
+              <span>{t('collab.cm.replyTo', { name: nameOf(replyTo.author) })}</span>
               <button type="button" className="text-ink-400 hover:text-ink-100" onClick={() => setReplyTo(null)}>
-                Abbrechen
+                {t('common.cancel')}
               </button>
             </div>
           )}
           <div className="flex items-end gap-2">
             <textarea
-              aria-label={replyTo ? 'Antwort schreiben' : 'Kommentar schreiben'}
-              placeholder={replyTo ? 'Antwort schreiben …' : 'Kommentar schreiben …'}
+              aria-label={replyTo ? t('collab.cm.replyAria') : t('collab.cm.writeAria')}
+              placeholder={replyTo ? t('collab.cm.replyPh') : t('collab.cm.writePh')}
               className="input-base min-h-10 flex-1 resize-y"
               rows={2}
               maxLength={2000}
               value={text}
               onChange={(e) => setText(e.target.value)}
             />
-            <button type="submit" className="btn-primary" disabled={busy || !text.trim()} aria-label="Kommentar senden">
+            <button type="submit" className="btn-primary" disabled={busy || !text.trim()} aria-label={t('collab.cm.send')}>
               {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
             </button>
           </div>
-          <p className="hint">Kommentare sehen alle Mitglieder, die diesen Eintrag sehen dürfen. Gespeichert verschlüsselt mit dem Bereichsschlüssel.</p>
+          <p className="hint">{t('collab.cm.hint')}</p>
         </form>
       ) : (
-        <p className="hint">Mit der Rolle „Ansehen“ kannst du Kommentare lesen, aber nicht schreiben.</p>
+        <p className="hint">{t('collab.cm.viewer')}</p>
       )}
     </section>
   );

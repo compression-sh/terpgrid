@@ -125,7 +125,9 @@
   "legendLines": "Dashed lines only connect consecutive data points.",
   "table": "Table",
   "belowShort": "↓ below target",
-  "aboveShort": "↑ above target"
+  "aboveShort": "↑ above target",
+  "growGeneral": "Grow (general)",
+  "plant": "Plant"
  },
  "form": {
   "milestones": "Milestones",
@@ -194,7 +196,8 @@
   "noGrow": "Not assigned to a grow",
   "expenseDescPh": "e.g. LED light, soil 50 l",
   "growCreated": "Grow “{name}” created",
-  "plantAdded": "Plant “{name}” added"
+  "plantAdded": "Plant “{name}” added",
+  "addMeasurements": "Add measurements"
  },
  "quick": {
   "addPhoto": "Add photo",
@@ -253,5 +256,26 @@
   "noUnit": "no unit",
   "min": "{name} minimum",
   "max": "{name} maximum"
+ },
+ "mf": {
+  "estimatedOnly": "estimated only, not measured",
+  "custom": "Custom metric"
+ },
+ "list": {
+  "subtitle": "Your grow projects with plants, photos, measurements and expenses.",
+  "compare": "Compare",
+  "new": "New grow",
+  "emptyTitle": "No grow yet",
+  "emptyText": "A grow project keeps start date, milestones, plants, photos, measurements and expenses together. Days and phase durations are calculated from your entries.",
+  "first": "Create first grow",
+  "all": "All",
+  "searchLabel": "Search grows",
+  "search": "Search …",
+  "noneTitle": "No grows in this view",
+  "adjustSearch": "Adjust your search.",
+  "otherFilter": "Choose other filters.",
+  "active": "Active ({n})",
+  "completed": "Done ({n})",
+  "archived": "Archive ({n})"
  }
 }

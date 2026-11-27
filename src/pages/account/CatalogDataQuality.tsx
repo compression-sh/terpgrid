@@ -1,7 +1,7 @@
 import { AlertOctagon, AlertTriangle, Info, Library, Loader2, RefreshCw, ShieldCheck } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../lib/server/api';
-import { intlLocale } from '../../i18n';
+import { t, intlLocale } from '../../i18n';
 
 type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 interface Finding {
@@ -33,10 +33,10 @@ interface Source {
 }
 
 const SEV: Record<Severity, { label: string; cls: string; icon: typeof Info }> = {
-  critical: { label: 'Kritisch', cls: 'border-rose-400/40 bg-rose-500/10 text-rose-200', icon: AlertOctagon },
-  high: { label: 'Hoch', cls: 'border-orange-400/35 bg-orange-500/10 text-orange-200', icon: AlertTriangle },
-  medium: { label: 'Mittel', cls: 'border-amber-400/30 bg-amber-400/10 text-amber-200', icon: AlertTriangle },
-  low: { label: 'Niedrig', cls: 'border-sky-400/25 bg-sky-400/10 text-sky-200', icon: Info },
+  critical: { get label() { return t('account.dq.sev.critical'); }, cls: 'border-rose-400/40 bg-rose-500/10 text-rose-200', icon: AlertOctagon },
+  high: { get label() { return t('account.dq.sev.high'); }, cls: 'border-orange-400/35 bg-orange-500/10 text-orange-200', icon: AlertTriangle },
+  medium: { get label() { return t('account.dq.sev.medium'); }, cls: 'border-amber-400/30 bg-amber-400/10 text-amber-200', icon: AlertTriangle },
+  low: { get label() { return t('account.dq.sev.low'); }, cls: 'border-sky-400/25 bg-sky-400/10 text-sky-200', icon: Info },
   info: { label: 'Info', cls: 'border-white/10 bg-white/[0.03] text-ink-300', icon: Info },
 };
 const PERM_CLS: Record<string, string> = {
@@ -76,17 +76,17 @@ export function CatalogDataQuality() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 id="dq-h" className="flex items-center gap-2 text-[15px] font-semibold text-ink-50">
-              <ShieldCheck className="size-4" /> Datenqualität des Katalogs
+              <ShieldCheck className="size-4" /> {t('account.dq.title')}
             </h2>
-            <p className="hint mt-0.5">Reproduzierbare Prüfregeln – es wird nichts automatisch geändert. {v && `Stand: ${dt(v.generatedAt)}.`}</p>
+            <p className="hint mt-0.5">{t('account.dq.hint')} {v && t('account.dq.asOf', { date: dt(v.generatedAt) })}</p>
           </div>
           <button type="button" className="btn-ghost" onClick={() => void load(true)} disabled={loading}>
-            {loading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />} Neu prüfen
+            {loading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />} {t('account.dq.recheck')}
           </button>
         </div>
         {v && (
           <>
-            <ul className="flex flex-wrap gap-1.5" aria-label="Regeln mit Befund je Schweregrad">
+            <ul className="flex flex-wrap gap-1.5" aria-label={t('account.dq.bySeverity')}>
               {(Object.keys(SEV) as Severity[]).map((s) => (
                 <li key={s} className={`rounded-full border px-2 py-0.5 text-[11.5px] ${SEV[s].cls}`}>
                   {SEV[s].label}: {v.summary[s]}
@@ -109,7 +109,7 @@ export function CatalogDataQuality() {
                         </p>
                         {f.count > 0 && f.examples.length > 0 && (
                           <details className="mt-1 text-[11.5px] text-ink-400">
-                            <summary className="inline-flex min-h-6 cursor-pointer items-center hover:text-ink-200">Beispiele und Aktion</summary>
+                            <summary className="inline-flex min-h-6 cursor-pointer items-center hover:text-ink-200">{t('account.dq.examples')}</summary>
                             <ul className="mt-1 flex flex-wrap gap-1">
                               {f.examples.map((e, i) => (
                                 <li key={i}>
@@ -139,21 +139,21 @@ export function CatalogDataQuality() {
       <section className="card space-y-3 p-5" aria-labelledby="src-h">
         <div>
           <h2 id="src-h" className="flex items-center gap-2 text-[15px] font-semibold text-ink-50">
-            <Library className="size-4" /> Quellenregister
+            <Library className="size-4" /> {t('account.dq.sources')}
           </h2>
-          <p className="hint mt-0.5">Geprüfte Quellen mit Lizenz und Entscheidung. Öffentliche Sichtbarkeit allein erlaubt keine Übernahme.</p>
+          <p className="hint mt-0.5">{t('account.dq.sourcesHint')}</p>
         </div>
         {sources && (
-          <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Quellenregister (horizontal scrollbar)">
+          <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={t('account.dq.sourcesAria')}>
             <table className="w-full min-w-[760px] text-left text-[12px]">
-              <caption className="sr-only">Quellen des Sortenkatalogs mit Lizenz, Einstufung und letztem Import</caption>
+              <caption className="sr-only">{t('account.dq.caption')}</caption>
               <thead className="text-[11px] text-ink-500">
                 <tr>
-                  <th className="py-1.5 pr-3 font-medium">Quelle</th>
-                  <th className="py-1.5 pr-3 font-medium">Einstufung</th>
-                  <th className="py-1.5 pr-3 font-medium">Lizenz</th>
-                  <th className="py-1.5 pr-3 font-medium">Letzter Erfolg</th>
-                  <th className="py-1.5 font-medium">Entscheidung</th>
+                  <th className="py-1.5 pr-3 font-medium">{t('account.dq.source')}</th>
+                  <th className="py-1.5 pr-3 font-medium">{t('account.dq.class')}</th>
+                  <th className="py-1.5 pr-3 font-medium">{t('account.dq.licence')}</th>
+                  <th className="py-1.5 pr-3 font-medium">{t('account.dq.lastSuccess')}</th>
+                  <th className="py-1.5 font-medium">{t('account.dq.decision')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 align-top">

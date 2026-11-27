@@ -125,7 +125,9 @@
   "legendLines": "Gestrichelte Linien verbinden nur aufeinanderfolgende Messpunkte.",
   "table": "Tabelle",
   "belowShort": "↓ unter Ziel",
-  "aboveShort": "↑ über Ziel"
+  "aboveShort": "↑ über Ziel",
+  "growGeneral": "Grow allgemein",
+  "plant": "Pflanze"
  },
  "form": {
   "milestones": "Meilensteine",
@@ -194,7 +196,8 @@
   "noGrow": "Keinem Grow zugeordnet",
   "expenseDescPh": "z. B. LED-Leuchte, Erde 50 l",
   "growCreated": "Grow „{name}“ angelegt",
-  "plantAdded": "Pflanze „{name}“ hinzugefügt"
+  "plantAdded": "Pflanze „{name}“ hinzugefügt",
+  "addMeasurements": "Messwerte hinzufügen"
  },
  "quick": {
   "addPhoto": "Foto hinzufügen",
@@ -253,5 +256,26 @@
   "noUnit": "ohne Einheit",
   "min": "{name} Minimum",
   "max": "{name} Maximum"
+ },
+ "mf": {
+  "estimatedOnly": "nur geschätzt, nicht gemessen",
+  "custom": "Eigene Messgröße"
+ },
+ "list": {
+  "subtitle": "Deine Grow-Projekte mit Pflanzen, Fotos, Messwerten und Ausgaben.",
+  "compare": "Vergleichen",
+  "new": "Neuer Grow",
+  "emptyTitle": "Noch kein Grow angelegt",
+  "emptyText": "Ein Grow-Projekt hält Startdatum, Meilensteine, Pflanzen, Fotos, Messwerte und Ausgaben zusammen. Tage und Phasendauern werden aus deinen Einträgen berechnet.",
+  "first": "Ersten Grow anlegen",
+  "all": "Alle",
+  "searchLabel": "Grows durchsuchen",
+  "search": "Suchen …",
+  "noneTitle": "Keine Grows in dieser Ansicht",
+  "adjustSearch": "Suchbegriff anpassen.",
+  "otherFilter": "Andere Filter wählen.",
+  "active": "Aktiv ({n})",
+  "completed": "Abgeschl. ({n})",
+  "archived": "Archiv ({n})"
  }
 }

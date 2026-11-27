@@ -19,6 +19,7 @@ import { DB_NAME, closeDatabase, deleteDatabase, getAll, requestPersistentStorag
 import { type AuthConfig, type ServerUser, type SessionResponse, ApiError, api, setCsrfToken, setOnUnauthorized } from '../lib/server/api';
 import { loginWithPasskey } from '../lib/server/passkeys';
 import { SyncEngine, type SyncStatus } from '../lib/sync/engine';
+import { t } from '../i18n';
 
 const MODE_KEY = 'terpgrid.mode';
 const LAST_ACCOUNT_KEY = 'terpgrid.lastAccount';
@@ -177,7 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let config: AuthConfig;
     try {
       config = await api<AuthConfig>('GET', '/api/auth/config');
-      if (typeof config?.inviteOnly !== 'boolean') throw new Error('kein TERPGRID-Server');
+      if (typeof config?.inviteOnly !== 'boolean') throw new Error(t('account.noServer'));
     } catch (e) {
       const knownServer = readJson<string>(MODE_KEY) === 'server';
       if (knownServer && (!(e instanceof ApiError) || e.status === 0 || e.status >= 500)) {

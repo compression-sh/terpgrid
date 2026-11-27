@@ -257,5 +257,29 @@
   "käsig": "käsig",
   "kräuter": "kräuter",
   "holzig": "holzig"
+ },
+ "store": {
+  "grows": "Grows",
+  "plants": "Pflanzen",
+  "activities": "Einträge",
+  "photos": "Fotos",
+  "strains": "Sorten",
+  "journal": "Journal",
+  "inventory": "Sammlung",
+  "labReports": "Laborberichte",
+  "notes": "Projektnotizen",
+  "tasks": "Aufgaben"
+ },
+ "storeOne": {
+  "grows": "Grow",
+  "plants": "Pflanze",
+  "activities": "Eintrag",
+  "photos": "Foto",
+  "strains": "Sorte",
+  "journal": "Journal-Eintrag",
+  "inventory": "Sammlungsstück",
+  "labReports": "Laborbericht",
+  "notes": "Notiz",
+  "tasks": "Aufgabe"
  }
 }

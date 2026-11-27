@@ -317,7 +317,7 @@ export function StrainFormModal({ open, onClose, strain, onSaved }: { open: bool
             ))}
           </datalist>
           <button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setTerpenes((s) => [...s, { name: '', percent: '', source: 'reported' }])}>
-            <Plus className="size-3.5" /> Terpen hinzufügen
+            <Plus className="size-3.5" /> {t('mine.lab.addTerpene')}
           </button>
         </fieldset>
         <ChipSelect label={t('mine.strain.aromaOwn')} options={AROMA_OPTIONS} labelOf={aromaLabel} value={aromas} onChange={setAromas} />
@@ -452,7 +452,7 @@ export function InventoryFormModal({ open, onClose, item, defaults }: { open: bo
         <TextField label={t('mine.journal.tags')} value={tags} onChange={setTags} maxLength={200} placeholder={t('mine.inv.tagsPh')} />
         <TextArea label={t('common.field.notes')} value={notes} onChange={setNotes} />
         <label className="flex items-center gap-2 text-[13px] text-ink-300">
-          <input type="checkbox" className="accent-leaf-500" checked={archived} onChange={(e) => setArchived(e.target.checked)} /> Archiviert (in der Liste ausgeblendet, Daten bleiben erhalten)
+          <input type="checkbox" className="accent-leaf-500" checked={archived} onChange={(e) => setArchived(e.target.checked)} /> {t('mine.inv.archivedLong')}
         </label>
         <p className="hint">{t('mine.inv.quantityHint')}</p>
       </form>

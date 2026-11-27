@@ -87,7 +87,7 @@ function RowMenu({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => voi
       {open && (
         <div role="menu" className="absolute right-0 z-20 mt-1 w-40 rounded-lg border border-white/[0.08] bg-ink-850 p-1 shadow-xl">
           <button type="button" role="menuitem" className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] text-ink-200 hover:bg-white/[0.05]" onClick={() => { setOpen(false); onEdit(); }}>
-            <Pencil className="size-3.5" /> Bearbeiten
+            <Pencil className="size-3.5" /> {t('common.edit')}
           </button>
           <button type="button" role="menuitem" className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] text-rose-300 hover:bg-rose-500/10" onClick={() => { setOpen(false); onDelete(); }}>
             <Trash2 className="size-3.5" /> {t('common.delete')}

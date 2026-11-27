@@ -257,5 +257,29 @@
   "käsig": "cheesy",
   "kräuter": "herbal",
   "holzig": "woody"
+ },
+ "store": {
+  "grows": "Grows",
+  "plants": "Plants",
+  "activities": "Entries",
+  "photos": "Photos",
+  "strains": "Strains",
+  "journal": "Journal",
+  "inventory": "Collection",
+  "labReports": "Lab reports",
+  "notes": "Project notes",
+  "tasks": "Tasks"
+ },
+ "storeOne": {
+  "grows": "Grow",
+  "plants": "Plant",
+  "activities": "Entry",
+  "photos": "Photo",
+  "strains": "Strain",
+  "journal": "Journal entry",
+  "inventory": "Collection item",
+  "labReports": "Lab report",
+  "notes": "Note",
+  "tasks": "Task"
  }
 }

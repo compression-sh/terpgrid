@@ -2,7 +2,7 @@ import { Copy, Eye, EyeOff, Lock, MessageSquare, Pencil, Shield, Users } from 'l
 import type { ReactNode } from 'react';
 import type { Access, Accent, Identity, Role } from '../../lib/collab/api';
 import { ACCENT_CLASS, ACCESS_HINT, ACCESS_LABEL, ROLE_HINT, ROLE_LABEL, initialsOf, nameOf } from '../../lib/collab/labels';
-import { intlLocale } from '../../i18n';
+import { t, intlLocale } from '../../i18n';
 
 const SIZES = { xs: 'size-6 text-[10px]', sm: 'size-8 text-[11px]', md: 'size-10 text-[13px]', lg: 'size-16 text-lg', xl: 'size-24 text-2xl' } as const;
 
@@ -78,11 +78,11 @@ export function OriginBadge({ origin }: { origin: 'created' | 'copy' | 'move' })
   if (origin === 'created') return null;
   return (
     <span
-      title={origin === 'copy' ? 'Geteilte Kopie – unabhängig vom privaten Original; spätere private Änderungen werden nicht übertragen.' : 'In den Bereich verschoben – gehört zum Bereich.'}
+      title={origin === 'copy' ? t('collab.origin.copyHint') : t('collab.origin.movedHint')}
       className="inline-flex items-center gap-1 rounded-full border border-teal-500/25 bg-teal-500/10 px-2 py-0.5 text-[11px] font-medium text-teal-200"
     >
       {origin === 'copy' ? <Copy className="size-3" aria-hidden /> : <Users className="size-3" aria-hidden />}
-      {origin === 'copy' ? 'Geteilte Kopie' : 'Verschoben'}
+      {origin === 'copy' ? t('collab.origin.copy') : t('collab.origin.moved')}
     </span>
   );
 }
@@ -92,7 +92,7 @@ export function RolePicker({ value, onChange, name }: { value: Role; onChange: (
   const roles: Role[] = ['editor', 'commenter', 'viewer'];
   return (
     <fieldset className="space-y-1.5">
-      <legend className="label mb-1.5">Rolle</legend>
+      <legend className="label mb-1.5">{t('collab.role')}</legend>
       {roles.map((r) => {
         const Icon = ROLE_ICON[r];
         const active = value === r;
@@ -126,9 +126,9 @@ export function SectionTitle({ children, action }: { children: ReactNode; action
 export function relTime(iso: string): string {
   const d = new Date(iso).getTime();
   const s = Math.round((Date.now() - d) / 1000);
-  if (s < 60) return 'gerade eben';
-  if (s < 3600) return `vor ${Math.round(s / 60)} Min.`;
-  if (s < 86400) return `vor ${Math.round(s / 3600)} Std.`;
-  if (s < 7 * 86400) return `vor ${Math.round(s / 86400)} T.`;
+  if (s < 60) return t('collab.rel.now');
+  if (s < 3600) return t('collab.rel.min', { n: Math.round(s / 60) });
+  if (s < 86400) return t('collab.rel.h', { n: Math.round(s / 3600) });
+  if (s < 7 * 86400) return t('collab.rel.d', { n: Math.round(s / 86400) });
   return new Date(iso).toLocaleDateString(intlLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
 }

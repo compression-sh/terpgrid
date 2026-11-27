@@ -10,6 +10,172 @@
   "none": "No notifications yet. Requests, invitations, comments and changes in your spaces will appear here.",
   "markRead": "Mark as read",
   "remove": "Remove notification",
-  "loadOlder": "Load older"
+  "loadOlder": "Load older",
+  "allRead": "All read"
+ },
+ "share": {
+  "noun": {
+   "grows": {
+    "one": "1 grow",
+    "other": "{count} grows"
+   },
+   "plants": {
+    "one": "1 plant profile",
+    "other": "{count} plant profiles"
+   },
+   "strains": {
+    "one": "1 strain",
+    "other": "{count} strains"
+   },
+   "journal": {
+    "one": "1 journal entry",
+    "other": "{count} journal entries"
+   },
+   "inventory": {
+    "one": "1 collection item",
+    "other": "{count} collection items"
+   },
+   "labReports": {
+    "one": "1 lab report",
+    "other": "{count} lab reports"
+   }
+  },
+  "button": "Share",
+  "nameMissing": "Please enter a name for the new space.",
+  "subtitle": "You choose exactly what is shared. Friendship alone gives nobody access.",
+  "copy": "Share a copy",
+  "move": "Move",
+  "notSynced": "Not synced yet",
+  "notSyncedText": "There are local changes the server does not know yet. Only the synced state can be shared – please go online and wait a moment.",
+  "target": "Target space",
+  "newSpace": "New space",
+  "spaceName": "Space name",
+  "spaceNamePh": "e.g. Tent with Alex",
+  "kind": "Type",
+  "ownerHint": "You become the owner. You then invite members from within the space – confirmed friends only.",
+  "modeLabel": "Sharing method",
+  "copyDefault": "Share a copy (default)",
+  "moveTo": "Move to space",
+  "moveWarn": "Moving changes ownership and visibility",
+  "moveWarnText": "The entries (including plants, entries and photos) then belong to the space and disappear from your private data. The space owner manages them; members see them according to their role. If you leave the space or it is deleted, you lose access – export anything you want to keep beforehand. The operation completes fully or not at all (no partial transfer).",
+  "notMovable": "Only grows, journal entries and lab reports can be moved – other entries are always shared as a copy.",
+  "preview": "Preview",
+  "previewTitle": "Preview – this will be shared",
+  "notShared": "Not shared:",
+  "understood": "I understand that the entries will then belong to the space and will no longer be in my private data.",
+  "pickerSubtitle": "Only the selected entries are shared – nothing else.",
+  "search": "Search …",
+  "searchAria": "Search entries",
+  "photos": "Share photos",
+  "photosHint": "Related photos are re-encrypted with the space key.",
+  "tasks": "Reminders as tasks",
+  "tasksHint": "The grow's reminders become shared tasks.",
+  "notes": "Share personal notes",
+  "notesHint": "Off: note fields are cleared.",
+  "quantities": "Share quantities",
+  "quantitiesHint": "Off by default: stock and quantity history stay private.",
+  "costs": "Share costs and purchase data",
+  "costsHint": "Off by default: prices, purchase date and warranty stay private.",
+  "documents": "Share original document",
+  "documentsHint": "PDF/image of the lab report.",
+  "sharing": "Share …",
+  "copied": {
+   "one": "{count} entry shared as a copy",
+   "other": "{count} entries shared as a copy"
+  },
+  "moved": {
+   "one": "{count} entry moved to the space",
+   "other": "{count} entries moved to the space"
+  },
+  "title": "Share {what}",
+  "copyA": "An independent copy is created. Your original stays private and unchanged; later private changes are",
+  "copyNot": "not",
+  "copyB": "transferred. The copy is marked as “Shared copy” in the space.",
+  "files": "{size} files",
+  "pick": "Select {what}",
+  "next": "Next ({n})"
+ },
+ "deletedAccount": "Deleted account",
+ "member": "Member",
+ "inSpace": " in “{space}”",
+ "n": {
+  "friendRequest": "{who} wants to be friends with you.",
+  "friendAccepted": "{who} is now your friend.",
+  "invite": "{who} invites you to a shared space.",
+  "joined": "{who} joined{inSpace}.",
+  "update": "{who} added or changed content{inSpace}{times}.",
+  "comment": "{who} commented{inSpace}{times}.",
+  "reply": "{who} replied to your comment{inSpace}.",
+  "role": "{who} set your role{inSpace} to “{role}”.",
+  "roleChanged": "changed",
+  "left": "{who} left{inSpace}.",
+  "aSpace": " a space",
+  "removed": "{who} removed you from a shared space. Your access has ended.",
+  "transferDeclined": "{who} declined the ownership transfer{inSpace}.",
+  "transferOffered": "{who} wants to transfer ownership{inSpace} to you.",
+  "transferAccepted": "{who} is now the owner{inSpace}.",
+  "deleted": "{who} deleted a shared space you were a member of.",
+  "default": "New notification"
+ },
+ "a": {
+  "aMember": "a member",
+  "anEntry": "an entry",
+  "created": "{actor} created the space.",
+  "updated": "{actor} changed the name or settings.",
+  "keyRotated": "{actor} renewed the space key.",
+  "transferOffered": "{actor} offered ownership to {subject}.",
+  "transferAccepted": "{actor} took over ownership.",
+  "joined": "{actor} joined as “{role}”.",
+  "left": "{actor} left the space.",
+  "removed": "{actor} removed {subject}.",
+  "role": "{actor} gave {subject} the role “{role}”.",
+  "invited": "{actor} invited {subject}.",
+  "revoked": "{actor} revoked the invitation to {subject}.",
+  "resCreated": "{actor} created {target}.",
+  "resUpdated": "{actor} edited {target}{n}.",
+  "resDeleted": "{actor} deleted {target}.",
+  "shared": "{actor} shared {items} private entries as a copy{target}.",
+  "moved": "{actor} moved {items} entries to the space{target}.",
+  "access": "{actor} set the access level of {target} to “{access}”.",
+  "file": "{actor} uploaded a file to {target}{n}.",
+  "comment": "{actor} commented on {target}{n}."
+ },
+ "quoted": "“{title}”",
+ "origin": {
+  "copyHint": "Shared copy – independent of the private original; later private changes are not transferred.",
+  "movedHint": "Moved to the space – belongs to the space.",
+  "copy": "Shared copy",
+  "moved": "Moved"
+ },
+ "role": "Role",
+ "rel": {
+  "now": "just now",
+  "min": "{n} min ago",
+  "h": "{n} h ago",
+  "d": "{n} d ago"
+ },
+ "cm": {
+  "removeTitle": "Remove comment?",
+  "removeMine": "Your comment will be removed for all members.",
+  "removeOwner": "As the owner, you remove the comment for everyone.",
+  "remove": "Remove",
+  "removed": "Comment removed",
+  "emptyCan": "No comments yet – write the first one.",
+  "empty": "No comments yet.",
+  "replyAria": "Write a reply",
+  "writeAria": "Write a comment",
+  "replyPh": "Write a reply …",
+  "writePh": "Write a comment …",
+  "send": "Send comment",
+  "hint": "Comments are visible to all members who may see this entry. Stored encrypted with the space key.",
+  "viewer": "With the “View” role you can read comments but not write them.",
+  "replyTo": "Reply to {name}"
+ },
+ "tabs": {
+  "spaces": "Spaces",
+  "friends": "Friends",
+  "profile": "My profile",
+  "notifications": "Notifications",
+  "aria": "Together"
  }
 }

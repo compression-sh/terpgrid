@@ -10,6 +10,172 @@
   "none": "Noch keine Benachrichtigungen. Hier erscheinen Anfragen, Einladungen, Kommentare und Änderungen in deinen Bereichen.",
   "markRead": "Als gelesen markieren",
   "remove": "Benachrichtigung entfernen",
-  "loadOlder": "Ältere laden"
+  "loadOlder": "Ältere laden",
+  "allRead": "Alle gelesen"
+ },
+ "share": {
+  "noun": {
+   "grows": {
+    "one": "1 Grow",
+    "other": "{count} Grows"
+   },
+   "plants": {
+    "one": "1 Pflanzenprofil",
+    "other": "{count} Pflanzenprofile"
+   },
+   "strains": {
+    "one": "1 Sorte",
+    "other": "{count} Sorten"
+   },
+   "journal": {
+    "one": "1 Journal-Eintrag",
+    "other": "{count} Journal-Einträge"
+   },
+   "inventory": {
+    "one": "1 Sammlungsstück",
+    "other": "{count} Sammlungsstücke"
+   },
+   "labReports": {
+    "one": "1 Laborbericht",
+    "other": "{count} Laborberichte"
+   }
+  },
+  "button": "Teilen",
+  "nameMissing": "Bitte einen Namen für den neuen Bereich angeben.",
+  "subtitle": "Du wählst genau, was geteilt wird. Freundschaft allein gibt niemandem Zugriff.",
+  "copy": "Kopie teilen",
+  "move": "Verschieben",
+  "notSynced": "Noch nicht synchronisiert",
+  "notSyncedText": "Es gibt lokale Änderungen, die der Server noch nicht kennt. Geteilt werden kann nur der synchronisierte Stand – bitte online gehen und kurz warten.",
+  "target": "Zielbereich",
+  "newSpace": "Neuer Bereich",
+  "spaceName": "Name des Bereichs",
+  "spaceNamePh": "z. B. Zelt mit Alex",
+  "kind": "Art",
+  "ownerHint": "Du wirst Eigentümer. Mitglieder lädst du danach im Bereich ein – nur bestätigte Freunde.",
+  "modeLabel": "Art des Teilens",
+  "copyDefault": "Kopie teilen (Standard)",
+  "moveTo": "In Bereich verschieben",
+  "moveWarn": "Verschieben ändert Eigentum und Sichtbarkeit",
+  "moveWarnText": "Die Einträge (samt Pflanzen, Einträgen und Fotos) gehören danach zum Bereich und verschwinden aus deinen privaten Daten. Der Bereichseigentümer verwaltet sie; Mitglieder sehen sie gemäß ihrer Rolle. Verlässt du den Bereich oder wird er gelöscht, hast du keinen Zugriff mehr – exportiere vorher, was du behalten möchtest. Der Vorgang läuft vollständig oder gar nicht (keine Teilübertragung).",
+  "notMovable": "Verschieben ist nur für Grows, Journal-Einträge und Laborberichte möglich – andere Einträge werden immer als Kopie geteilt.",
+  "preview": "Vorschau",
+  "previewTitle": "Vorschau – das wird geteilt",
+  "notShared": "Nicht mitgeteilt:",
+  "understood": "Ich habe verstanden, dass die Einträge danach zum Bereich gehören und nicht mehr in meinen privaten Daten liegen.",
+  "pickerSubtitle": "Nur die markierten Einträge werden geteilt – nichts sonst.",
+  "search": "Suchen …",
+  "searchAria": "Einträge durchsuchen",
+  "photos": "Fotos mitteilen",
+  "photosHint": "Zugehörige Fotos werden mit dem Bereichsschlüssel neu verschlüsselt.",
+  "tasks": "Erinnerungen als Aufgaben",
+  "tasksHint": "Erinnerungen des Grows werden zu gemeinsamen Aufgaben.",
+  "notes": "Persönliche Notizen mitteilen",
+  "notesHint": "Aus: Notizfelder werden geleert.",
+  "quantities": "Mengen mitteilen",
+  "quantitiesHint": "Standard aus: Bestände und Mengenverlauf bleiben privat.",
+  "costs": "Kosten und Kaufdaten mitteilen",
+  "costsHint": "Standard aus: Preise, Kaufdatum und Garantie bleiben privat.",
+  "documents": "Originaldokument mitteilen",
+  "documentsHint": "PDF/Bild des Laborberichts.",
+  "sharing": "Teilen …",
+  "copied": {
+   "one": "{count} Eintrag als Kopie geteilt",
+   "other": "{count} Einträge als Kopie geteilt"
+  },
+  "moved": {
+   "one": "{count} Eintrag in den Bereich verschoben",
+   "other": "{count} Einträge in den Bereich verschoben"
+  },
+  "title": "{what} teilen",
+  "copyA": "Es entsteht eine unabhängige Kopie. Dein Original bleibt privat und unverändert; spätere private Änderungen werden",
+  "copyNot": "nicht",
+  "copyB": "übertragen. Die Kopie ist im Bereich als „Geteilte Kopie“ gekennzeichnet.",
+  "files": "{size} Dateien",
+  "pick": "{what} auswählen",
+  "next": "Weiter ({n})"
+ },
+ "deletedAccount": "Gelöschtes Konto",
+ "member": "Mitglied",
+ "inSpace": " in „{space}“",
+ "n": {
+  "friendRequest": "{who} möchte mit dir befreundet sein.",
+  "friendAccepted": "{who} ist jetzt mit dir befreundet.",
+  "invite": "{who} lädt dich in einen gemeinsamen Bereich ein.",
+  "joined": "{who} ist{inSpace} beigetreten.",
+  "update": "{who} hat{inSpace} Inhalte hinzugefügt oder geändert{times}.",
+  "comment": "{who} hat{inSpace} kommentiert{times}.",
+  "reply": "{who} hat{inSpace} auf deinen Kommentar geantwortet.",
+  "role": "{who} hat deine Rolle{inSpace} auf „{role}“ gesetzt.",
+  "roleChanged": "geändert",
+  "left": "{who} hat{inSpace} verlassen.",
+  "aSpace": " einen Bereich",
+  "removed": "{who} hat dich aus einem gemeinsamen Bereich entfernt. Dein Zugriff wurde beendet.",
+  "transferDeclined": "{who} hat die Eigentumsübertragung{inSpace} abgelehnt.",
+  "transferOffered": "{who} möchte dir das Eigentum{inSpace} übertragen.",
+  "transferAccepted": "{who} ist jetzt Eigentümer{inSpace}.",
+  "deleted": "{who} hat einen gemeinsamen Bereich gelöscht, in dem du Mitglied warst.",
+  "default": "Neue Benachrichtigung"
+ },
+ "a": {
+  "aMember": "ein Mitglied",
+  "anEntry": "einen Eintrag",
+  "created": "{actor} hat den Bereich angelegt.",
+  "updated": "{actor} hat Name oder Einstellungen geändert.",
+  "keyRotated": "{actor} hat den Bereichsschlüssel erneuert.",
+  "transferOffered": "{actor} hat {subject} das Eigentum angeboten.",
+  "transferAccepted": "{actor} hat das Eigentum übernommen.",
+  "joined": "{actor} ist als „{role}“ beigetreten.",
+  "left": "{actor} hat den Bereich verlassen.",
+  "removed": "{actor} hat {subject} entfernt.",
+  "role": "{actor} hat {subject} die Rolle „{role}“ gegeben.",
+  "invited": "{actor} hat {subject} eingeladen.",
+  "revoked": "{actor} hat die Einladung an {subject} widerrufen.",
+  "resCreated": "{actor} hat {target} angelegt.",
+  "resUpdated": "{actor} hat {target} bearbeitet{n}.",
+  "resDeleted": "{actor} hat {target} gelöscht.",
+  "shared": "{actor} hat {items} private Einträge als Kopie geteilt{target}.",
+  "moved": "{actor} hat {items} Einträge in den Bereich verschoben{target}.",
+  "access": "{actor} hat die Zugriffsstufe von {target} auf „{access}“ gesetzt.",
+  "file": "{actor} hat zu {target} eine Datei hochgeladen{n}.",
+  "comment": "{actor} hat {target} kommentiert{n}."
+ },
+ "quoted": "„{title}“",
+ "origin": {
+  "copyHint": "Geteilte Kopie – unabhängig vom privaten Original; spätere private Änderungen werden nicht übertragen.",
+  "movedHint": "In den Bereich verschoben – gehört zum Bereich.",
+  "copy": "Geteilte Kopie",
+  "moved": "Verschoben"
+ },
+ "role": "Rolle",
+ "rel": {
+  "now": "gerade eben",
+  "min": "vor {n} Min.",
+  "h": "vor {n} Std.",
+  "d": "vor {n} T."
+ },
+ "cm": {
+  "removeTitle": "Kommentar entfernen?",
+  "removeMine": "Dein Kommentar wird für alle Mitglieder entfernt.",
+  "removeOwner": "Der Kommentar wird als Eigentümer für alle entfernt.",
+  "remove": "Entfernen",
+  "removed": "Kommentar entfernt",
+  "emptyCan": "Noch keine Kommentare – schreib den ersten.",
+  "empty": "Noch keine Kommentare.",
+  "replyAria": "Antwort schreiben",
+  "writeAria": "Kommentar schreiben",
+  "replyPh": "Antwort schreiben …",
+  "writePh": "Kommentar schreiben …",
+  "send": "Kommentar senden",
+  "hint": "Kommentare sehen alle Mitglieder, die diesen Eintrag sehen dürfen. Gespeichert verschlüsselt mit dem Bereichsschlüssel.",
+  "viewer": "Mit der Rolle „Ansehen“ kannst du Kommentare lesen, aber nicht schreiben.",
+  "replyTo": "Antwort an {name}"
+ },
+ "tabs": {
+  "spaces": "Bereiche",
+  "friends": "Freunde",
+  "profile": "Mein Profil",
+  "notifications": "Benachrichtigungen",
+  "aria": "Gemeinsam"
  }
 }

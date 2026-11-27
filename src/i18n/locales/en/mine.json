@@ -72,7 +72,8 @@
   "warranty": "Warranty until",
   "space": "Location (grow space)",
   "tagsPh": "comma-separated, e.g. tent-1, spare",
-  "quantityHint": "Quantities never change automatically – only via this form or the confirmed quick adjustments."
+  "quantityHint": "Quantities never change automatically – only via this form or the confirmed quick adjustments.",
+  "archivedLong": "Archived (hidden from the list, data is kept)"
  },
  "rem": {
   "titleRequired": "Please enter a title.",
@@ -93,5 +94,30 @@
   "everyDays": "Every … days",
   "everyWeeks": "Every … weeks",
   "until": "Ends on (optional)"
+ },
+ "lab": {
+  "addTerpene": "Add terpene"
+ },
+ "tl": {
+  "kind": {
+   "milestone": "Milestones",
+   "activity": "Care",
+   "measurement": "Measurements",
+   "photo": "Photos",
+   "journal": "Journal",
+   "strain": "Strains",
+   "collection": "Collection",
+   "lab": "Lab",
+   "reminder": "Calendar"
+  },
+  "title": "Timeline",
+  "subtitle": "Your personal timeline of grows, care, measurements, photos, journal, strains and lab reports.",
+  "emptyTitle": "Nothing has happened yet",
+  "emptyText": "As soon as you record grows, photos or journal entries, they appear here in chronological order. No sample data is shown.",
+  "byKind": "Filter by type",
+  "byGrow": "Filter by grow",
+  "allGrows": "All grows and areas",
+  "none": "No entries for this selection.",
+  "footer": "Only your own entries – no feed, nothing is shared. The timeline is calculated from existing data and not stored separately."
  }
 }

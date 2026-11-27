@@ -1,4 +1,4 @@
-import { labels } from '../../i18n';
+import { t, labels } from '../../i18n';
 /**
  * Deutsche Texte für Zusammenarbeit. Benachrichtigungs- und Verlaufstexte enthalten nie
  * Inhalte (Notizen, Kommentartexte, Messwerte) – nur, wer was in welchem Bereich getan hat.
@@ -10,30 +10,8 @@ export const ROLE_HINT = labels('labels.roleHint', ['owner', 'editor', 'commente
 export const ACCESS_LABEL = labels('labels.access', ['members', 'editors', 'readonly'] as Access[]);
 export const ACCESS_HINT = labels('labels.accessHint', ['members', 'editors', 'readonly'] as Access[]);
 export const KIND_LABEL = labels('labels.spaceType', ['project', 'collection', 'general'] as SpaceKind[]);
-export const STORE_LABEL: Record<SpaceStore, string> = {
-  grows: 'Grows',
-  plants: 'Pflanzen',
-  activities: 'Einträge',
-  photos: 'Fotos',
-  strains: 'Sorten',
-  journal: 'Journal',
-  inventory: 'Sammlung',
-  labReports: 'Laborberichte',
-  notes: 'Projektnotizen',
-  tasks: 'Aufgaben',
-};
-export const STORE_SINGULAR: Record<SpaceStore, string> = {
-  grows: 'Grow',
-  plants: 'Pflanze',
-  activities: 'Eintrag',
-  photos: 'Foto',
-  strains: 'Sorte',
-  journal: 'Journal-Eintrag',
-  inventory: 'Sammlungsstück',
-  labReports: 'Laborbericht',
-  notes: 'Notiz',
-  tasks: 'Aufgabe',
-};
+export const STORE_LABEL = labels('labels.store', ['grows', 'plants', 'activities', 'photos', 'strains', 'journal', 'inventory', 'labReports', 'notes', 'tasks'] as SpaceStore[]);
+export const STORE_SINGULAR = labels('labels.storeOne', ['grows', 'plants', 'activities', 'photos', 'strains', 'journal', 'inventory', 'labReports', 'notes', 'tasks'] as SpaceStore[]);
 export const CATEGORY_LABEL = labels('labels.notifCategory', ['friends', 'invites', 'comments', 'updates', 'access'] as NotificationCategory[]);
 export const CATEGORY_HINT = labels('labels.notifCategoryHint', ['friends', 'invites', 'comments', 'updates', 'access'] as NotificationCategory[]);
 
@@ -52,8 +30,8 @@ export const ACCENT_LABEL = labels('labels.accent', ['emerald', 'teal', 'sky', '
 
 /** Anzeigename einer Identität (privater Spitzname hat Vorrang) – nie der Anmeldename. */
 export function nameOf(i: Identity | null | undefined, nickname?: string | null): string {
-  if (!i || !i.ref) return 'Gelöschtes Konto';
-  return nickname || i.displayName || (i.handle ? `@${i.handle}` : i.socialId || 'Mitglied');
+  if (!i || !i.ref) return t('collab.deletedAccount');
+  return nickname || i.displayName || (i.handle ? `@${i.handle}` : i.socialId || t('collab.member'));
 }
 export function initialsOf(i: Identity | null | undefined): string {
   const n = (i?.displayName || i?.handle || '?').replace(/^@/, '').trim();
@@ -62,41 +40,42 @@ export function initialsOf(i: Identity | null | undefined): string {
 }
 
 const who = (n: NotificationView) => nameOf(n.actor);
-const inSpace = (n: NotificationView) => (n.spaceName ? ` in „${n.spaceName}“` : '');
+const inSpace = (n: NotificationView) => (n.spaceName ? t('collab.inSpace', { space: n.spaceName }) : '');
 const times = (n: NotificationView) => (n.count > 1 ? ` (${n.count}×)` : '');
 
 /** Text einer Benachrichtigung – ohne Inhalte, nur Ereignis, Auslöser und Bereich. */
 export function notificationText(n: NotificationView): string {
+  const p = { who: who(n), inSpace: inSpace(n), times: times(n) };
   switch (n.type) {
     case 'friend.request':
-      return `${who(n)} möchte mit dir befreundet sein.`;
+      return t('collab.n.friendRequest', p);
     case 'friend.accepted':
-      return `${who(n)} ist jetzt mit dir befreundet.`;
+      return t('collab.n.friendAccepted', p);
     case 'space.invite':
-      return `${who(n)} lädt dich in einen gemeinsamen Bereich ein.`;
+      return t('collab.n.invite', p);
     case 'space.invite.accepted':
     case 'member.joined':
-      return `${who(n)} ist${inSpace(n)} beigetreten.`;
+      return t('collab.n.joined', p);
     case 'space.update':
-      return `${who(n)} hat${inSpace(n)} Inhalte hinzugefügt oder geändert${times(n)}.`;
+      return t('collab.n.update', p);
     case 'comment.new':
-      return `${who(n)} hat${inSpace(n)} kommentiert${times(n)}.`;
+      return t('collab.n.comment', p);
     case 'comment.reply':
-      return `${who(n)} hat${inSpace(n)} auf deinen Kommentar geantwortet.`;
+      return t('collab.n.reply', p);
     case 'member.role':
-      return `${who(n)} hat deine Rolle${inSpace(n)} auf „${ROLE_LABEL[(n.ref as Role) ?? 'viewer'] ?? 'geändert'}“ gesetzt.`;
+      return t('collab.n.role', { ...p, role: ROLE_LABEL[(n.ref as Role) ?? 'viewer'] ?? t('collab.n.roleChanged') });
     case 'member.left':
-      return `${who(n)} hat${inSpace(n) || ' einen Bereich'} verlassen.`;
+      return t('collab.n.left', { ...p, inSpace: p.inSpace || t('collab.n.aSpace') });
     case 'member.removed':
-      return `${who(n)} hat dich aus einem gemeinsamen Bereich entfernt. Dein Zugriff wurde beendet.`;
+      return t('collab.n.removed', p);
     case 'space.transfer.offered':
-      return n.ref === 'declined' ? `${who(n)} hat die Eigentumsübertragung${inSpace(n)} abgelehnt.` : `${who(n)} möchte dir das Eigentum${inSpace(n)} übertragen.`;
+      return n.ref === 'declined' ? t('collab.n.transferDeclined', p) : t('collab.n.transferOffered', p);
     case 'space.transfer.accepted':
-      return `${who(n)} ist jetzt Eigentümer${inSpace(n)}.`;
+      return t('collab.n.transferAccepted', p);
     case 'space.deleted':
-      return `${who(n)} hat einen gemeinsamen Bereich gelöscht, in dem du Mitglied warst.`;
+      return t('collab.n.deleted', p);
     default:
-      return 'Neue Benachrichtigung';
+      return t('collab.n.default');
   }
 }
 
@@ -111,48 +90,50 @@ export function notificationLink(n: NotificationView): string {
 
 export function activityText(a: ActivityView, titleOf: (store: string, id: string) => string | undefined): string {
   const actor = nameOf(a.actor);
-  const subject = a.subject ? nameOf(a.subject) : 'ein Mitglied';
-  const target = a.store && a.targetId ? (titleOf(a.store, a.targetId) ? `„${titleOf(a.store, a.targetId)}“` : (STORE_SINGULAR[a.store as SpaceStore] ?? 'einen Eintrag')) : '';
+  const subject = a.subject ? nameOf(a.subject) : t('collab.a.aMember');
+  const title = a.store && a.targetId ? titleOf(a.store, a.targetId) : undefined;
+  const target = a.store && a.targetId ? (title ? t('collab.quoted', { title }) : (STORE_SINGULAR[a.store as SpaceStore] ?? t('collab.a.anEntry'))) : '';
   const n = a.count > 1 ? ` (${a.count}×)` : '';
+  const p = { actor, subject, target, n };
   switch (a.type) {
     case 'space.created':
-      return `${actor} hat den Bereich angelegt.`;
+      return t('collab.a.created', p);
     case 'space.updated':
-      return `${actor} hat Name oder Einstellungen geändert.`;
+      return t('collab.a.updated', p);
     case 'space.key.rotated':
-      return `${actor} hat den Bereichsschlüssel erneuert.`;
+      return t('collab.a.keyRotated', p);
     case 'space.transfer.offered':
-      return `${actor} hat ${subject} das Eigentum angeboten.`;
+      return t('collab.a.transferOffered', p);
     case 'space.transfer.accepted':
-      return `${actor} hat das Eigentum übernommen.`;
+      return t('collab.a.transferAccepted', p);
     case 'member.joined':
-      return `${actor} ist als „${ROLE_LABEL[a.meta.role as Role] ?? 'Mitglied'}“ beigetreten.`;
+      return t('collab.a.joined', { ...p, role: ROLE_LABEL[a.meta.role as Role] ?? t('collab.member') });
     case 'member.left':
-      return `${actor} hat den Bereich verlassen.`;
+      return t('collab.a.left', p);
     case 'member.removed':
-      return `${actor} hat ${subject} entfernt.`;
+      return t('collab.a.removed', p);
     case 'member.role':
-      return `${actor} hat ${subject} die Rolle „${ROLE_LABEL[a.meta.role as Role] ?? ''}“ gegeben.`;
+      return t('collab.a.role', { ...p, role: ROLE_LABEL[a.meta.role as Role] ?? '' });
     case 'member.invited':
-      return `${actor} hat ${subject} eingeladen.`;
+      return t('collab.a.invited', p);
     case 'invite.revoked':
-      return `${actor} hat die Einladung an ${subject} widerrufen.`;
+      return t('collab.a.revoked', p);
     case 'resource.created':
-      return `${actor} hat ${target} angelegt.`;
+      return t('collab.a.resCreated', p);
     case 'resource.updated':
-      return `${actor} hat ${target} bearbeitet${n}.`;
+      return t('collab.a.resUpdated', p);
     case 'resource.deleted':
-      return `${actor} hat ${target || 'einen Eintrag'} gelöscht.`;
+      return t('collab.a.resDeleted', { ...p, target: target || t('collab.a.anEntry') });
     case 'resource.shared':
-      return `${actor} hat ${a.meta.items ?? ''} private Einträge als Kopie geteilt${target ? ` (${target})` : ''}.`;
+      return t('collab.a.shared', { ...p, items: String(a.meta.items ?? ''), target: target ? ` (${target})` : '' });
     case 'resource.moved':
-      return `${actor} hat ${a.meta.items ?? ''} Einträge in den Bereich verschoben${target ? ` (${target})` : ''}.`;
+      return t('collab.a.moved', { ...p, items: String(a.meta.items ?? ''), target: target ? ` (${target})` : '' });
     case 'resource.access':
-      return `${actor} hat die Zugriffsstufe von ${target} auf „${ACCESS_LABEL[a.meta.access as Access] ?? ''}“ gesetzt.`;
+      return t('collab.a.access', { ...p, access: ACCESS_LABEL[a.meta.access as Access] ?? '' });
     case 'file.uploaded':
-      return `${actor} hat zu ${target} eine Datei hochgeladen${n}.`;
+      return t('collab.a.file', p);
     case 'comment.created':
-      return `${actor} hat ${target} kommentiert${n}.`;
+      return t('collab.a.comment', p);
     default:
       return `${actor}: ${a.type}`;
   }

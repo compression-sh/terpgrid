@@ -7,17 +7,18 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { PageHeader } from '../components/ui/PageHeader';
 import { fmtDateLong, relativeDay, today } from '../lib/dates';
 import { type TimelineEvent, type TimelineKind, buildTimeline, groupByDay } from '../lib/timeline';
+import { t } from '../i18n';
 
 const KIND: Record<TimelineKind, { label: string; icon: LucideIcon; tone: string }> = {
-  milestone: { label: 'Meilensteine', icon: Flag, tone: 'text-leaf-300 bg-leaf-500/10' },
-  activity: { label: 'Pflege', icon: Sprout, tone: 'text-sky-300 bg-sky-500/10' },
-  measurement: { label: 'Messwerte', icon: Gauge, tone: 'text-cyan-300 bg-cyan-500/10' },
-  photo: { label: 'Fotos', icon: Camera, tone: 'text-violet-300 bg-violet-500/10' },
-  journal: { label: 'Journal', icon: BookOpenText, tone: 'text-amber-200 bg-amber-400/10' },
-  strain: { label: 'Sorten', icon: Leaf, tone: 'text-emerald-300 bg-emerald-500/10' },
-  collection: { label: 'Sammlung', icon: Package, tone: 'text-orange-200 bg-orange-400/10' },
-  lab: { label: 'Labor', icon: FlaskRound, tone: 'text-rose-200 bg-rose-500/10' },
-  reminder: { label: 'Kalender', icon: Bell, tone: 'text-ink-200 bg-white/[0.06]' },
+  milestone: { get label() { return t('mine.tl.kind.milestone'); }, icon: Flag, tone: 'text-leaf-300 bg-leaf-500/10' },
+  activity: { get label() { return t('mine.tl.kind.activity'); }, icon: Sprout, tone: 'text-sky-300 bg-sky-500/10' },
+  measurement: { get label() { return t('mine.tl.kind.measurement'); }, icon: Gauge, tone: 'text-cyan-300 bg-cyan-500/10' },
+  photo: { get label() { return t('mine.tl.kind.photo'); }, icon: Camera, tone: 'text-violet-300 bg-violet-500/10' },
+  journal: { get label() { return t('mine.tl.kind.journal'); }, icon: BookOpenText, tone: 'text-amber-200 bg-amber-400/10' },
+  strain: { get label() { return t('mine.tl.kind.strain'); }, icon: Leaf, tone: 'text-emerald-300 bg-emerald-500/10' },
+  collection: { get label() { return t('mine.tl.kind.collection'); }, icon: Package, tone: 'text-orange-200 bg-orange-400/10' },
+  lab: { get label() { return t('mine.tl.kind.lab'); }, icon: FlaskRound, tone: 'text-rose-200 bg-rose-500/10' },
+  reminder: { get label() { return t('mine.tl.kind.reminder'); }, icon: Bell, tone: 'text-ink-200 bg-white/[0.06]' },
 };
 
 function Thumb({ id }: { id: string }) {
@@ -70,13 +71,13 @@ export function TimelinePage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader title="Verlauf" subtitle="Deine persönliche Zeitachse aus Grows, Pflege, Messwerten, Fotos, Journal, Sorten und Laborberichten." />
+      <PageHeader title={t('mine.tl.title')} subtitle={t('mine.tl.subtitle')} />
       {all.length === 0 ? (
-        <EmptyState icon={<History />} title="Noch nichts passiert" text="Sobald du Grows, Fotos oder Journal-Einträge erfasst, erscheinen sie hier chronologisch. Es werden keine Beispieldaten angezeigt." />
+        <EmptyState icon={<History />} title={t('mine.tl.emptyTitle')} text={t('mine.tl.emptyText')} />
       ) : (
         <>
           <div className="sticky top-[57px] z-10 -mx-4 mb-4 space-y-2 border-b border-white/[0.04] bg-ink-950/90 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:top-0 lg:mx-0 lg:rounded-xl lg:border lg:px-3">
-            <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5" role="group" aria-label="Nach Art filtern">
+            <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5" role="group" aria-label={t('mine.tl.byKind')}>
               {(Object.keys(KIND) as TimelineKind[])
                 .filter((k) => counts[k] > 0)
                 .map((k) => {
@@ -97,8 +98,8 @@ export function TimelinePage() {
                 })}
             </div>
             {data.grows.length > 0 && (
-              <select className="input-base py-1.5 text-[13px] sm:w-64" aria-label="Nach Grow filtern" value={growFilter} onChange={(e) => setQuery(route, { grow: e.target.value || undefined })}>
-                <option value="">Alle Grows und Bereiche</option>
+              <select className="input-base py-1.5 text-[13px] sm:w-64" aria-label={t('mine.tl.byGrow')} value={growFilter} onChange={(e) => setQuery(route, { grow: e.target.value || undefined })}>
+                <option value="">{t('mine.tl.allGrows')}</option>
                 {data.grows.map((g) => (
                   <option key={g.id} value={g.id}>
                     {g.name}
@@ -108,7 +109,7 @@ export function TimelinePage() {
             )}
           </div>
           {groups.length === 0 ? (
-            <p className="py-8 text-center text-[13px] text-ink-500">Keine Einträge für diese Auswahl.</p>
+            <p className="py-8 text-center text-[13px] text-ink-500">{t('mine.tl.none')}</p>
           ) : (
             <ol className="space-y-5">
               {groups.slice(0, days).map((g) => (
@@ -133,7 +134,7 @@ export function TimelinePage() {
               </button>
             </div>
           )}
-          <p className="mt-6 text-center text-[11.5px] text-ink-600">Nur deine eigenen Einträge – kein Feed, nichts wird geteilt. Die Zeitachse wird aus vorhandenen Daten berechnet und nicht separat gespeichert.</p>
+          <p className="mt-6 text-center text-[11.5px] text-ink-600">{t('mine.tl.footer')}</p>
         </>
       )}
     </div>

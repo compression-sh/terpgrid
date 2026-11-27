@@ -110,7 +110,7 @@ export function MeasurementFields({ state, onChange }: { state: MeasurementState
               <OptionalNumber label={m.label} unit={m.unit || undefined} text={state.texts[m.key]} onText={(t) => setText(m.key, t)} min={m.min} max={m.max} />
               {m.key === 'leafTempC' && state.texts.leafTempC.trim() && (
                 <label className="mt-1 flex items-center gap-2 text-[11px] text-ink-400">
-                  <input type="checkbox" className="accent-leaf-500" checked={state.leafEstimated} onChange={(e) => set({ leafEstimated: e.target.checked })} /> nur geschätzt, nicht gemessen
+                  <input type="checkbox" className="accent-leaf-500" checked={state.leafEstimated} onChange={(e) => set({ leafEstimated: e.target.checked })} /> {t('grow.mf.estimatedOnly')}
                 </label>
               )}
             </div>
@@ -170,7 +170,7 @@ export function MeasurementFields({ state, onChange }: { state: MeasurementState
           </div>
         ))}
         <button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => set({ custom: [...state.custom, { label: '', value: '', unit: '' }] })}>
-          <Plus className="size-3.5" /> Eigene Messgröße
+          <Plus className="size-3.5" /> {t('grow.mf.custom')}
         </button>
       </div>
     </div>

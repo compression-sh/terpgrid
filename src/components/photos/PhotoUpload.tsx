@@ -262,7 +262,7 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
               <p className="hint mt-1">{t('photos.up.formats')}</p>
               <div className="mt-4 flex flex-wrap justify-center gap-2">
                 <button type="button" className="btn-primary" onClick={() => inputRef.current?.click()}>
-                  <Upload className="size-4" /> Fotos wählen
+                  <Upload className="size-4" /> {t('photos.upload.choose')}
                 </button>
                 <button type="button" className="btn-ghost sm:hidden" onClick={() => cameraRef.current?.click()}>
                   <Camera className="size-4" /> Kamera
@@ -337,7 +337,7 @@ export function PhotoUploadModal({ open, onClose, target = {}, selectable, onUpl
         )}
         {!busy && items.some((i) => i.status === 'error' || i.status === 'cancelled') && (
           <button type="button" className="btn-ghost" onClick={() => handle(items.filter((i) => i.status === 'error' || i.status === 'cancelled').map((i) => i.file))}>
-            <RotateCcw className="size-4" /> Fehlgeschlagene und abgebrochene erneut versuchen
+            <RotateCcw className="size-4" /> {t('photos.upload.retry')}
           </button>
         )}
 

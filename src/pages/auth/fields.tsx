@@ -1,5 +1,6 @@
 import { Eye, EyeOff } from 'lucide-react';
 import { useId, useState } from 'react';
+import { t } from '../../i18n';
 
 export function PasswordField({
   label,
@@ -40,7 +41,7 @@ export function PasswordField({
         <button
           type="button"
           className="absolute inset-y-0 right-0 grid w-10 place-items-center text-ink-400 hover:text-ink-100"
-          aria-label={show ? 'Passwort verbergen' : 'Passwort anzeigen'}
+          aria-label={show ? t('account.pw.hide') : t('account.pw.show')}
           aria-pressed={show}
           onClick={() => setShow((s) => !s)}
         >
@@ -56,9 +57,9 @@ export function PasswordField({
 export function passwordHints(pw: string, login?: string): { ok: boolean; items: { text: string; ok: boolean }[] } {
   const len = [...pw].length;
   const items = [
-    { text: 'Mindestens 12 Zeichen', ok: len >= 12 },
-    { text: 'Nicht der Benutzername', ok: !login || login.length < 3 || !pw.toLowerCase().includes(login.toLowerCase()) },
-    { text: 'Mindestens 5 verschiedene Zeichen', ok: new Set([...pw]).size >= 5 },
+    { text: t('account.pw.min12'), ok: len >= 12 },
+    { text: t('account.pw.notLogin'), ok: !login || login.length < 3 || !pw.toLowerCase().includes(login.toLowerCase()) },
+    { text: t('account.pw.distinct'), ok: new Set([...pw]).size >= 5 },
   ];
   return { ok: items.every((i) => i.ok), items };
 }
@@ -82,7 +83,7 @@ export function PasswordStrength({ password, login }: { password: string; login?
           </li>
         ))}
       </ul>
-      <p className="hint">Tipp: Eine Passphrase aus mehreren zufälligen Wörtern ist lang und gut merkbar. Ein Passwort-Manager ist ideal.</p>
+      <p className="hint">{t('account.pw.tip')}</p>
     </div>
   );
 }

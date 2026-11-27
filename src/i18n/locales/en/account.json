@@ -1,0 +1,46 @@
+{
+ "noServer": "not a TERPGRID server",
+ "dq": {
+  "sev": {
+   "critical": "Critical",
+   "high": "High",
+   "medium": "Medium",
+   "low": "Low"
+  },
+  "title": "Catalogue data quality",
+  "recheck": "Re-check",
+  "bySeverity": "Rules with findings by severity",
+  "examples": "Examples and action",
+  "sources": "Source register",
+  "sourcesHint": "Reviewed sources with licence and decision. Public visibility alone does not permit reuse.",
+  "sourcesAria": "Source register (scrolls horizontally)",
+  "caption": "Strain catalogue sources with licence, classification and last import",
+  "source": "Source",
+  "class": "Classification",
+  "licence": "Licence",
+  "lastSuccess": "Last success",
+  "decision": "Decision",
+  "hint": "Reproducible validation rules – nothing is changed automatically.",
+  "asOf": "As of {date}."
+ },
+ "pw": {
+  "hide": "Hide password",
+  "show": "Show password",
+  "min12": "At least 12 characters",
+  "notLogin": "Not the username",
+  "distinct": "At least 5 different characters",
+  "tip": "Tip: a passphrase of several random words is long and easy to remember. A password manager is ideal."
+ },
+ "rc": {
+  "continue": "Continue to TERPGRID",
+  "id": "Login ID",
+  "saveFile": "Save as file",
+  "copied": "Copied",
+  "copy": "Copy",
+  "confirm": "I have stored my login ID and recovery codes safely.",
+  "noEmail": "Without email there is no other way back.",
+  "file": "TERPGRID – recovery codes\nLogin ID: {login}\nCreated: {date}\n\nEach code works exactly once.\n\n{codes}\n",
+  "warning": "If you forget your password and lose these codes, your account is lost for good – not even the administration can restore it. Keep the codes separate from the device (password manager or paper).",
+  "fileName": "terpgrid-recovery-{login}.txt"
+ }
+}

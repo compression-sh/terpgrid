@@ -397,7 +397,7 @@ export function ActivityFormModal({
           </fieldset>
         ) : (
           <button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setForceMeasure(true)}>
-            <Plus className="size-3.5" /> Messwerte hinzufügen
+            <Plus className="size-3.5" /> {t('grow.form.addMeasurements')}
           </button>
         )}
       </form>

@@ -5,6 +5,7 @@ import { ensureStrainForExternal, externalKey } from '../lib/db/repo';
 import type { Strain } from '../lib/db/types';
 import { useData } from './DataProvider';
 import { errorText, useToast } from './Toasts';
+import { t } from '../i18n';
 
 /** Synchronisiert die Einstellung „Online-Sortendaten“ mit dem Katalog-Service. */
 export function useCatalogOnlineSync() {
@@ -192,10 +193,10 @@ export function useFavoriteToggle() {
       try {
         if (existing) {
           await ensureStrainForExternal(seedFromCatalog(s), { favorite: !existing.favorite });
-          toast(existing.favorite ? `„${s.name}“ aus Favoriten entfernt` : `„${s.name}“ als Favorit gespeichert`);
+          toast(existing.favorite ? t('discover.fav.removed', { name: s.name }) : t('discover.fav.saved', { name: s.name }));
         } else {
           await ensureStrainForExternal(seedFromCatalog(s), { favorite: true });
-          toast(`„${s.name}“ zu Meinen Sorten hinzugefügt`);
+          toast(t('discover.fav.added', { name: s.name }));
         }
       } catch (e) {
         toast(errorText(e), { tone: 'error' });
@@ -245,7 +246,7 @@ export function CompareProvider({ children }: { children: ReactNode }) {
         setKeys((s) => {
           if (s.includes(k)) return s.filter((x) => x !== k);
           if (s.length >= MAX_COMPARE) {
-            toast(`Höchstens ${MAX_COMPARE} Sorten gleichzeitig vergleichen.`, { tone: 'info' });
+            toast(t('discover.compareMax', { n: MAX_COMPARE }), { tone: 'info' });
             return s;
           }
           return [...s, k];

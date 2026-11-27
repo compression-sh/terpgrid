@@ -11,19 +11,12 @@ import { Callout } from '../ui/Callout';
 import { Modal } from '../ui/Modal';
 import { Segmented } from '../ui/Segmented';
 import { Toggle } from '../ui/Toggle';
+import { t, tDynamic } from '../../i18n';
 
 const MOVABLE: ShareableStore[] = ['grows', 'journal', 'labReports'];
-const NOUN: Record<ShareableStore, [string, string]> = {
-  grows: ['Grow', 'Grows'],
-  plants: ['Pflanzenprofil', 'Pflanzenprofile'],
-  strains: ['Sorte', 'Sorten'],
-  journal: ['Journal-Eintrag', 'Journal-Einträge'],
-  inventory: ['Sammlungsstück', 'Sammlungsstücke'],
-  labReports: ['Laborbericht', 'Laborberichte'],
-};
 
 /** Knopf „Teilen“ – nur im Servermodus sichtbar. */
-export function ShareButton({ store, ids, label = 'Teilen', compact = false }: { store: ShareableStore; ids: string[]; label?: string; compact?: boolean }) {
+export function ShareButton({ store, ids, label = t('collab.share.button'), compact = false }: { store: ShareableStore; ids: string[]; label?: string; compact?: boolean }) {
   const available = useCollabAvailable();
   const [open, setOpen] = useState(false);
   if (!available || !ids.length) return null;
@@ -54,8 +47,7 @@ export function ShareDialog({ store, ids, onClose }: { store: ShareableStore; id
   const [understood, setUnderstood] = useState(false);
   const [busy, setBusy] = useState(false);
   const movable = MOVABLE.includes(store);
-  const [one, many] = NOUN[store];
-  const what = ids.length === 1 ? `1 ${one}` : `${ids.length} ${many}`;
+  const what = tDynamic(`collab.share.noun.${store}`, String(ids.length), { count: ids.length });
 
   useEffect(() => {
     collab
@@ -100,12 +92,12 @@ export function ShareDialog({ store, ids, onClose }: { store: ShareableStore; id
     try {
       let target = spaceId;
       if (creating) {
-        if (newName.trim().length < 2) throw new Error('Bitte einen Namen für den neuen Bereich angeben.');
+        if (newName.trim().length < 2) throw new Error(t('collab.share.nameMissing'));
         target = (await collab.createSpace({ name: newName.trim(), kind: newKind })).id;
       }
       const r = await collab.share(target, items, mode, opts);
       if (mode === 'move') await engine?.syncNow().catch(() => {});
-      toast(mode === 'copy' ? `${r.created} Einträge als Kopie geteilt` : `${r.created} Einträge in den Bereich verschoben`, { tone: 'ok' });
+      toast(mode === 'copy' ? t('collab.share.copied', { count: r.created }) : t('collab.share.moved', { count: r.created }), { tone: 'ok' });
       onClose();
       navigate(`together/spaces/${target}`);
     } catch (e) {
@@ -116,12 +108,12 @@ export function ShareDialog({ store, ids, onClose }: { store: ShareableStore; id
   };
 
   const toggles: { key: keyof ShareOptions; label: string; hint: string; show: boolean }[] = [
-    { key: 'photos', label: 'Fotos mitteilen', hint: 'Zugehörige Fotos werden mit dem Bereichsschlüssel neu verschlüsselt.', show: store !== 'labReports' },
-    { key: 'tasks', label: 'Erinnerungen als Aufgaben', hint: 'Erinnerungen des Grows werden zu gemeinsamen Aufgaben.', show: store === 'grows' },
-    { key: 'notes', label: 'Persönliche Notizen mitteilen', hint: 'Aus: Notizfelder werden geleert.', show: true },
-    { key: 'quantities', label: 'Mengen mitteilen', hint: 'Standard aus: Bestände und Mengenverlauf bleiben privat.', show: store === 'inventory' },
-    { key: 'costs', label: 'Kosten und Kaufdaten mitteilen', hint: 'Standard aus: Preise, Kaufdatum und Garantie bleiben privat.', show: store === 'inventory' },
-    { key: 'documents', label: 'Originaldokument mitteilen', hint: 'PDF/Bild des Laborberichts.', show: store === 'labReports' },
+    { key: 'photos', label: t('collab.share.photos'), hint: t('collab.share.photosHint'), show: store !== 'labReports' },
+    { key: 'tasks', label: t('collab.share.tasks'), hint: t('collab.share.tasksHint'), show: store === 'grows' },
+    { key: 'notes', label: t('collab.share.notes'), hint: t('collab.share.notesHint'), show: true },
+    { key: 'quantities', label: t('collab.share.quantities'), hint: t('collab.share.quantitiesHint'), show: store === 'inventory' },
+    { key: 'costs', label: t('collab.share.costs'), hint: t('collab.share.costsHint'), show: store === 'inventory' },
+    { key: 'documents', label: t('collab.share.documents'), hint: t('collab.share.documentsHint'), show: store === 'labReports' },
   ];
   const canSubmit = !busy && synced !== 'checking' && synced !== 'pending' && !!preview && (!creating || newName.trim().length >= 2) && (mode === 'copy' || understood);
 
@@ -130,29 +122,29 @@ export function ShareDialog({ store, ids, onClose }: { store: ShareableStore; id
       open
       onClose={onClose}
       size="lg"
-      title={`${what} teilen`}
-      subtitle="Du wählst genau, was geteilt wird. Freundschaft allein gibt niemandem Zugriff."
+      title={t('collab.share.title', { what })}
+      subtitle={t('collab.share.subtitle')}
       footer={
         <>
           <button type="button" className="btn-ghost" onClick={onClose}>
-            Abbrechen
+            {t('common.cancel')}
           </button>
           <button type="button" className={mode === 'move' ? 'btn bg-amber-500 text-ink-950 hover:bg-amber-400' : 'btn-primary'} disabled={!canSubmit} onClick={submit}>
             {busy ? <Loader2 className="size-4 animate-spin" /> : mode === 'copy' ? <Copy className="size-4" /> : <ArrowRightLeft className="size-4" />}
-            {mode === 'copy' ? 'Kopie teilen' : 'Verschieben'}
+            {mode === 'copy' ? t('collab.share.copy') : t('collab.share.move')}
           </button>
         </>
       }
     >
       <div className="space-y-5">
         {synced === 'pending' && (
-          <Callout tone="warn" title="Noch nicht synchronisiert">
-            Es gibt lokale Änderungen, die der Server noch nicht kennt. Geteilt werden kann nur der synchronisierte Stand – bitte online gehen und kurz warten.
+          <Callout tone="warn" title={t('collab.share.notSynced')}>
+            {t('collab.share.notSyncedText')}
           </Callout>
         )}
 
         <div className="space-y-2">
-          <div className="label">Zielbereich</div>
+          <div className="label">{t('collab.share.target')}</div>
           {spaces === null ? (
             <div className="skeleton h-10" />
           ) : (
@@ -180,7 +172,7 @@ export function ShareDialog({ store, ids, onClose }: { store: ShareableStore; id
               <label className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-2.5 ${creating ? 'border-leaf-500/40 bg-leaf-500/[0.07]' : 'border-dashed border-white/[0.1] hover:border-white/[0.18]'}`}>
                 <input type="radio" name="share-space" className="mt-1 accent-[var(--color-leaf-400)]" checked={creating} onChange={() => setCreating(true)} />
                 <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-100">
-                  <Plus className="size-4" /> Neuer Bereich
+                  <Plus className="size-4" /> {t('collab.share.newSpace')}
                 </span>
               </label>
             </div>
@@ -188,49 +180,49 @@ export function ShareDialog({ store, ids, onClose }: { store: ShareableStore; id
           {creating && (
             <div className="grid gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 sm:grid-cols-[1fr_auto]">
               <label className="space-y-1.5">
-                <span className="label">Name des Bereichs</span>
-                <input className="input-base" maxLength={60} value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="z. B. Zelt mit Alex" />
+                <span className="label">{t('collab.share.spaceName')}</span>
+                <input className="input-base" maxLength={60} value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={t('collab.share.spaceNamePh')} />
               </label>
-              <Segmented label="Art" size="sm" value={newKind} onChange={setNewKind} options={(['project', 'collection', 'general'] as SpaceKind[]).map((k) => ({ value: k, label: KIND_LABEL[k] }))} />
-              <p className="hint sm:col-span-2">Du wirst Eigentümer. Mitglieder lädst du danach im Bereich ein – nur bestätigte Freunde.</p>
+              <Segmented label={t('collab.share.kind')} size="sm" value={newKind} onChange={setNewKind} options={(['project', 'collection', 'general'] as SpaceKind[]).map((k) => ({ value: k, label: KIND_LABEL[k] }))} />
+              <p className="hint sm:col-span-2">{t('collab.share.ownerHint')}</p>
             </div>
           )}
         </div>
 
         <div className="space-y-2">
           <Segmented
-            label="Art des Teilens"
+            label={t('collab.share.modeLabel')}
             value={mode}
             onChange={setMode}
             options={[
-              { value: 'copy', label: 'Kopie teilen (Standard)' },
-              ...(movable ? [{ value: 'move' as const, label: 'In Bereich verschieben' }] : []),
+              { value: 'copy', label: t('collab.share.copyDefault') },
+              ...(movable ? [{ value: 'move' as const, label: t('collab.share.moveTo') }] : []),
             ]}
           />
           {mode === 'copy' ? (
             <p className="hint">
               <ShieldCheck className="mr-1 inline size-3.5 text-leaf-400" />
-              Es entsteht eine unabhängige Kopie. Dein Original bleibt privat und unverändert; spätere private Änderungen werden <strong>nicht</strong> übertragen. Die Kopie ist im Bereich als „Geteilte Kopie“ gekennzeichnet.
+              {t('collab.share.copyA')} <strong>{t('collab.share.copyNot')}</strong> {t('collab.share.copyB')}
             </p>
           ) : (
-            <Callout tone="warn" title="Verschieben ändert Eigentum und Sichtbarkeit">
-              Die Einträge (samt Pflanzen, Einträgen und Fotos) gehören danach zum Bereich und verschwinden aus deinen privaten Daten. Der Bereichseigentümer verwaltet sie; Mitglieder sehen sie gemäß ihrer Rolle. Verlässt du den Bereich oder wird er gelöscht, hast du keinen Zugriff mehr – exportiere vorher, was du behalten möchtest. Der Vorgang läuft vollständig oder gar nicht (keine Teilübertragung).
+            <Callout tone="warn" title={t('collab.share.moveWarn')}>
+              {t('collab.share.moveWarnText')}
             </Callout>
           )}
-          {!movable && <p className="hint">Verschieben ist nur für Grows, Journal-Einträge und Laborberichte möglich – andere Einträge werden immer als Kopie geteilt.</p>}
+          {!movable && <p className="hint">{t('collab.share.notMovable')}</p>}
         </div>
 
         <div className="space-y-3 rounded-xl border border-white/[0.06] p-3">
           {toggles
-            .filter((t) => t.show)
-            .map((t) => (
-              <Toggle key={t.key} label={t.label} hint={t.hint} checked={opts[t.key] !== false && (t.key === 'quantities' || t.key === 'costs' ? opts[t.key] === true : true)} onChange={(v) => setOpts((o) => ({ ...o, [t.key]: v }))} />
+            .filter((tg) => tg.show)
+            .map((tg) => (
+              <Toggle key={tg.key} label={tg.label} hint={tg.hint} checked={opts[tg.key] !== false && (tg.key === 'quantities' || tg.key === 'costs' ? opts[tg.key] === true : true)} onChange={(v) => setOpts((o) => ({ ...o, [tg.key]: v }))} />
             ))}
         </div>
 
         {(
-          <section aria-label="Vorschau" aria-live="polite" className="space-y-2">
-            <div className="label">Vorschau – das wird geteilt</div>
+          <section aria-label={t('collab.share.preview')} aria-live="polite" className="space-y-2">
+            <div className="label">{t('collab.share.previewTitle')}</div>
             {previewError ? (
               <Callout tone="danger">{previewError}</Callout>
             ) : !preview ? (
@@ -243,18 +235,18 @@ export function ShareDialog({ store, ids, onClose }: { store: ShareableStore; id
                       {n} {STORE_LABEL[k as keyof typeof STORE_LABEL]}
                     </span>
                   ))}
-                  {preview.summary.bytes > 0 && <span className="rounded-full border border-white/[0.08] px-2 py-0.5 text-ink-300">{formatBytes(preview.summary.bytes)} Dateien</span>}
+                  {preview.summary.bytes > 0 && <span className="rounded-full border border-white/[0.08] px-2 py-0.5 text-ink-300">{t('collab.share.files', { size: formatBytes(preview.summary.bytes) })}</span>}
                 </div>
                 <ul className="max-h-36 space-y-0.5 overflow-y-auto text-ink-300">
-                  {preview.summary.titles.map((t, i) => (
+                  {preview.summary.titles.map((ti, i) => (
                     <li key={i} className="truncate">
-                      <span className="text-ink-500">{STORE_LABEL[t.store]}:</span> {t.title}
+                      <span className="text-ink-500">{STORE_LABEL[ti.store]}:</span> {ti.title}
                     </li>
                   ))}
                 </ul>
                 {preview.summary.removed.length > 0 && (
                   <div>
-                    <div className="font-medium text-ink-200">Nicht mitgeteilt:</div>
+                    <div className="font-medium text-ink-200">{t('collab.share.notShared')}</div>
                     <ul className="ml-4 list-disc text-ink-400">
                       {preview.summary.removed.map((r) => (
                         <li key={r}>{r}</li>
@@ -275,7 +267,7 @@ export function ShareDialog({ store, ids, onClose }: { store: ShareableStore; id
         {mode === 'move' && (
           <label className="flex cursor-pointer items-start gap-2 text-[12.5px] text-ink-200">
             <input type="checkbox" className="mt-0.5 accent-[var(--color-amber-400)]" checked={understood} onChange={(e) => setUnderstood(e.target.checked)} />
-            Ich habe verstanden, dass die Einträge danach zum Bereich gehören und nicht mehr in meinen privaten Daten liegen.
+            {t('collab.share.understood')}
           </label>
         )}
       </div>
@@ -284,7 +276,7 @@ export function ShareDialog({ store, ids, onClose }: { store: ShareableStore; id
 }
 
 /** Mehrfachauswahl („Ausgewählte Einträge teilen“) für Listen wie Journal, Sammlung, Laborberichte. */
-export function SharePicker({ store, items, label = 'Teilen …' }: { store: ShareableStore; items: { id: string; title: string; sub?: string }[]; label?: string }) {
+export function SharePicker({ store, items, label = t('collab.share.sharing') }: { store: ShareableStore; items: { id: string; title: string; sub?: string }[]; label?: string }) {
   const available = useCollabAvailable();
   const [open, setOpen] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
@@ -301,21 +293,21 @@ export function SharePicker({ store, items, label = 'Teilen …' }: { store: Sha
         <Modal
           open
           onClose={() => setOpen(false)}
-          title={`${NOUN[store][1]} auswählen`}
-          subtitle="Nur die markierten Einträge werden geteilt – nichts sonst."
+          title={t('collab.share.pick', { what: STORE_LABEL[store] })}
+          subtitle={t('collab.share.pickerSubtitle')}
           footer={
             <>
               <button type="button" className="btn-ghost" onClick={() => setOpen(false)}>
-                Abbrechen
+                {t('common.cancel')}
               </button>
               <button type="button" className="btn-primary" disabled={!picked.length} onClick={() => setShare(true)}>
-                Weiter ({picked.length})
+                {t('collab.share.next', { n: picked.length })}
               </button>
             </>
           }
         >
           <div className="space-y-3">
-            <input className="input-base" placeholder="Suchen …" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Einträge durchsuchen" />
+            <input className="input-base" placeholder={t('collab.share.search')} value={q} onChange={(e) => setQ(e.target.value)} aria-label={t('collab.share.searchAria')} />
             <ul className="max-h-[50vh] space-y-1 overflow-y-auto">
               {shown.map((i) => (
                 <li key={i.id}>

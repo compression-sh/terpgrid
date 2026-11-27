@@ -72,7 +72,8 @@
   "warranty": "Garantie bis",
   "space": "Standort (Grow-Bereich)",
   "tagsPh": "durch Komma getrennt, z. B. zelt-1, ersatz",
-  "quantityHint": "Mengen werden nie automatisch verändert – nur über dieses Formular oder die bestätigten Schnellanpassungen."
+  "quantityHint": "Mengen werden nie automatisch verändert – nur über dieses Formular oder die bestätigten Schnellanpassungen.",
+  "archivedLong": "Archiviert (in der Liste ausgeblendet, Daten bleiben erhalten)"
  },
  "rem": {
   "titleRequired": "Bitte einen Titel eingeben.",
@@ -93,5 +94,30 @@
   "everyDays": "Alle … Tage",
   "everyWeeks": "Alle … Wochen",
   "until": "Endet am (optional)"
+ },
+ "lab": {
+  "addTerpene": "Terpen hinzufügen"
+ },
+ "tl": {
+  "kind": {
+   "milestone": "Meilensteine",
+   "activity": "Pflege",
+   "measurement": "Messwerte",
+   "photo": "Fotos",
+   "journal": "Journal",
+   "strain": "Sorten",
+   "collection": "Sammlung",
+   "lab": "Labor",
+   "reminder": "Kalender"
+  },
+  "title": "Verlauf",
+  "subtitle": "Deine persönliche Zeitachse aus Grows, Pflege, Messwerten, Fotos, Journal, Sorten und Laborberichten.",
+  "emptyTitle": "Noch nichts passiert",
+  "emptyText": "Sobald du Grows, Fotos oder Journal-Einträge erfasst, erscheinen sie hier chronologisch. Es werden keine Beispieldaten angezeigt.",
+  "byKind": "Nach Art filtern",
+  "byGrow": "Nach Grow filtern",
+  "allGrows": "Alle Grows und Bereiche",
+  "none": "Keine Einträge für diese Auswahl.",
+  "footer": "Nur deine eigenen Einträge – kein Feed, nichts wird geteilt. Die Zeitachse wird aus vorhandenen Daten berechnet und nicht separat gespeichert."
  }
 }
