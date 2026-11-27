@@ -9,6 +9,7 @@ import { useRoute } from './router';
 import { isSharedDevice } from '../lib/device';
 import { markOfflineAsked, offlineAsked } from '../lib/offline';
 import { type Platform, applyUpdate, detectPlatform, dismissInstall, installDismissed, promptInstall, usePwa } from '../lib/pwa/pwa';
+import { t } from '../i18n';
 
 /** „Neue Version verfügbar“ – aktualisiert erst auf Klick (nie mitten in einer Eingabe). */
 export function UpdateBanner() {
@@ -20,39 +21,28 @@ export function UpdateBanner() {
       <span className="flex items-start gap-2">
         <Sparkles className="mt-0.5 size-4 shrink-0 text-sky-300" />
         <span>
-          <strong className="font-semibold">Neue Version verfügbar.</strong> Beim Aktualisieren wird die App neu geladen. Lokal gespeicherte Einträge bleiben erhalten – ungespeicherte Formulareingaben vorher sichern.
+          <strong className="font-semibold">{t('shell.update.title')}</strong> {t('shell.update.text')}
         </span>
       </span>
       <span className="flex shrink-0 gap-2">
         <button type="button" className="btn-primary py-1.5" onClick={applyUpdate}>
-          Aktualisieren
+          {t('shell.update.action')}
         </button>
         <button type="button" className="btn-ghost py-1.5" onClick={() => setLater(true)}>
-          Später
+          {t('shell.later')}
         </button>
       </span>
     </div>
   );
 }
 
-const STEPS: Record<Platform, { title: string; steps: string[] }> = {
-  ios: {
-    title: 'iPhone (Safari)',
-    steps: ['Öffne TERPGRID in Safari.', 'Tippe unten auf „Teilen“ (Quadrat mit Pfeil).', 'Wähle „Zum Home-Bildschirm“.', 'Bestätige mit „Hinzufügen“.'],
-  },
-  ipados: {
-    title: 'iPad (Safari)',
-    steps: ['Öffne TERPGRID in Safari.', 'Tippe oben rechts auf „Teilen“.', 'Wähle „Zum Home-Bildschirm“.', 'Bestätige mit „Hinzufügen“.'],
-  },
-  android: {
-    title: 'Android (Chrome)',
-    steps: ['Öffne TERPGRID in Chrome.', 'Tippe oben rechts auf das Menü (⋮).', 'Wähle „App installieren“ oder „Zum Startbildschirm hinzufügen“.', 'Bestätige mit „Installieren“.'],
-  },
-  desktop: {
-    title: 'Computer (Chrome, Edge)',
-    steps: ['Öffne TERPGRID in Chrome oder Edge.', 'Klicke in der Adressleiste auf das Installationssymbol (Bildschirm mit Pfeil).', 'Bestätige mit „Installieren“.', 'Safari auf dem Mac (ab Version 17): Menü „Ablage“ → „Zum Dock hinzufügen“.'],
-  },
-};
+/** Installationsschritte je Plattform (übersetzt beim Zugriff). */
+const STEPS = new Proxy({} as Record<Platform, { title: string; steps: string[] }>, {
+  get: (_t, p: string) => ({
+    title: t(`shell.install.${p as Platform}.title`),
+    steps: [1, 2, 3, 4].map((i) => t(`shell.install.${p as Platform}.s${i as 1 | 2 | 3 | 4}`)),
+  }),
+});
 
 /** Installationsanleitungen für alle Plattformen (Einstellungen). */
 export function InstallInstructions({ only }: { only?: Platform }) {
@@ -91,20 +81,20 @@ export function InstallCard() {
       <div className="flex items-start gap-3">
         <Smartphone className="mt-0.5 size-4 shrink-0 text-leaf-400" />
         <div className="min-w-0 flex-1">
-          <p className="font-medium text-ink-50">TERPGRID als App installieren</p>
-          <p className="mt-0.5 text-ink-400">Eigenes Symbol auf dem Startbildschirm, Vollbild ohne Browserleisten und schneller Start. Keine Installation aus einem App-Store nötig.</p>
+          <p className="font-medium text-ink-50">{t('shell.install.cardTitle')}</p>
+          <p className="mt-0.5 text-ink-400">{t('shell.install.cardText')}</p>
           <div className="mt-2.5 flex flex-wrap gap-2">
             {pwa.canPrompt ? (
               <button type="button" className="btn-primary py-1.5" onClick={() => void promptInstall().then((r) => r !== 'unavailable' && setHidden(true))}>
-                <Download className="size-4" /> Installieren
+                <Download className="size-4" /> {t('shell.install.install')}
               </button>
             ) : (
               <button type="button" className="btn-primary py-1.5" aria-expanded={showSteps} onClick={() => setShowSteps((v) => !v)}>
-                <Share className="size-4" /> So geht’s
+                <Share className="size-4" /> {t('shell.install.howTo')}
               </button>
             )}
             <button type="button" className="btn-ghost py-1.5" onClick={close}>
-              Nicht jetzt
+              {t('shell.notNow')}
             </button>
           </div>
           {showSteps && (
@@ -113,7 +103,7 @@ export function InstallCard() {
             </div>
           )}
         </div>
-        <button type="button" className="btn-ghost -mt-1 -mr-1 p-1.5" aria-label="Hinweis schließen" onClick={close}>
+        <button type="button" className="btn-ghost -mt-1 -mr-1 p-1.5" aria-label={t('shell.install.dismiss')} onClick={close}>
           <X className="size-3.5" />
         </button>
       </div>
@@ -138,13 +128,13 @@ export function OfflineChoiceCard() {
       <div className="flex items-start gap-3">
         <CloudOff className="mt-0.5 size-4 shrink-0 text-leaf-400" />
         <div className="min-w-0 flex-1">
-          <p className="font-medium text-ink-50">Auf diesem Gerät auch offline arbeiten?</p>
+          <p className="font-medium text-ink-50">{t('shell.offlineAsk.title')}</p>
           <p className="mt-0.5 text-ink-400">
-            Dann bleibt eine Kopie deiner privaten Daten nach dem Abmelden in diesem Browser gespeichert. Sie ist nicht zusätzlich verschlüsselt und nur so gut geschützt wie dein Gerät (Gerätesperre). Empfohlen nur auf eigenen Geräten. Ohne Offline-Nutzung wird die Kopie beim Abmelden gelöscht.
+            {t('shell.offlineAsk.text')}
           </p>
           <div className="mt-2.5 flex flex-wrap gap-2">
             <button type="button" className="btn-primary py-1.5" onClick={() => auth.setOfflineMode(true)}>
-              Offline-Nutzung einschalten
+              {t('shell.offlineAsk.enable')}
             </button>
             <button
               type="button"
@@ -154,10 +144,10 @@ export function OfflineChoiceCard() {
                 force((n) => n + 1);
               }}
             >
-              Nicht jetzt
+              {t('shell.notNow')}
             </button>
           </div>
-          <p className="mt-2 text-[12px] text-ink-500">Jederzeit änderbar unter Konto → Dieses Gerät.</p>
+          <p className="mt-2 text-[12px] text-ink-500">{t('shell.offlineAsk.later')}</p>
         </div>
       </div>
     </div>

@@ -23,5 +23,37 @@
    "one": "in {count} Tag",
    "other": "in {count} Tagen"
   }
+ },
+ "loading": "Lade …",
+ "notFound": {
+  "title": "Seite nicht gefunden",
+  "text": "Dieser Bereich existiert nicht (mehr) – evtl. wurde der Eintrag gelöscht."
+ },
+ "storage": {
+  "title": "Lokaler Speicher nicht verfügbar",
+  "text": "TERPGRID benötigt IndexedDB in diesem Browser (im Servermodus als Arbeitskopie für Offline-Nutzung und Synchronisation). Im privaten Modus oder bei blockierter Website-Speicherung ist das nicht möglich. Das THC Lab funktioniert trotzdem.",
+  "unavailable": "Lokaler Speicher nicht verfügbar."
+ },
+ "toThcLab": "Zum THC Lab",
+ "localMode": {
+  "title": "Lokalmodus",
+  "noAccount": "Diese Installation läuft ohne Server. Daten liegen nur in diesem Browser – es gibt kein Konto."
+ },
+ "serverOnly": {
+  "title": "Nur mit eigenem Server",
+  "text": "Gemeinsame Bereiche und Freunde gibt es nur mit einem TERPGRID-Server und Konto. Im Lokalmodus bleiben alle Daten auf diesem Gerät."
+ },
+ "offline": {
+  "title": "Offline",
+  "collabText": "Für Freunde und gemeinsame Bereiche ist eine Verbindung zum Server nötig. Deine privaten Daten kannst du offline weiter nutzen."
+ },
+ "loadFailed": "Laden fehlgeschlagen",
+ "delete": "Löschen",
+ "edit": "Bearbeiten",
+ "cal": {
+  "prevMonth": "Vorheriger Monat",
+  "today": "Heute",
+  "nextMonth": "Nächster Monat",
+  "daysIn": "Tage im {month}"
  }
 }

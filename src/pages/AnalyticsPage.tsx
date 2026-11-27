@@ -39,8 +39,8 @@ function Kpi({ label, value, sub, missing }: { label: string; value: string; sub
 
 function InsightsHeader() {
   const { data, settings } = useData();
-  const t = today();
-  const i = useMemo(() => computeInsights(data, t), [data, t]);
+  const todayStr = today();
+  const i = useMemo(() => computeInsights(data, todayStr), [data, todayStr]);
   const d = (n: number | null) => (n === null ? '–' : `${fmt(n, 1)} Tage`);
   return (
     <div className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
@@ -62,22 +62,22 @@ function NoData({ text }: { text: string }) {
 
 export function AnalyticsPage() {
   const { data, settings } = useData();
-  const t = today();
+  const todayStr = today();
   const [growFilter, setGrowFilter] = useState('');
   const [range, setRange] = useState<ExplorerRange>('all');
-  const sd = useMemo(() => scopeData(data, { range, growId: growFilter }, t), [data, range, growFilter, t]);
+  const sd = useMemo(() => scopeData(data, { range, growId: growFilter }, todayStr), [data, range, growFilter, todayStr]);
 
-  const durations = useMemo(() => growDurations(sd.grows, t), [sd.grows, t]);
+  const durations = useMemo(() => growDurations(sd.grows, todayStr), [sd.grows, todayStr]);
   const byCat = useMemo(() => expensesByCategory(sd.expenses), [sd.expenses]);
   const byGrow = useMemo(() => expensesByGrow(sd.expenses, data.grows), [sd.expenses, data.grows]);
   const harvest = useMemo(() => harvestOutcomes(sd.plants, data.strains), [sd.plants, data.strains]);
   const ratings = useMemo(() => strainRatings(data.strains, sd.journal), [data.strains, sd.journal]);
-  const heat = useMemo(() => photoActivity(sd.photos, t, 26), [sd.photos, t]);
-  const journal = useMemo(() => journalSummary(sd.journal, t), [sd.journal, t]);
+  const heat = useMemo(() => photoActivity(sd.photos, todayStr, 26), [sd.photos, todayStr]);
+  const journal = useMemo(() => journalSummary(sd.journal, todayStr), [sd.journal, todayStr]);
   const measurementActs = sd.activities;
   const lab = useMemo(() => labComparison(sd.labReports, data.strains), [sd.labReports, data.strains]);
   const scopeLabel = `${RANGE_LABEL[range]}${growFilter ? ` · ${data.grows.find((g) => g.id === growFilter)?.name ?? ''}` : ' · alle Grows'}`;
-  const stamp = t;
+  const stamp = todayStr;
   const exportsList = [
     { label: `Messwerte (${measurementActs.filter((a) => a.measurements).length})`, run: () => downloadFile(`terpgrid-messwerte-${stamp}.csv`, measurementCsv(measurementActs, data.grows, data.plants), 'text/csv;charset=utf-8') },
     { label: `Ausgaben (${sd.expenses.length})`, run: () => downloadFile(`terpgrid-ausgaben-${stamp}.csv`, expenseCsv(sd.expenses, data.grows, EXPENSE_CATEGORY_LABEL), 'text/csv;charset=utf-8') },
@@ -398,9 +398,9 @@ function LabTable({ cmp }: { cmp: ReturnType<typeof labComparison> }) {
             <th className="py-1.5 pr-3 text-right font-medium">THC</th>
             <th className="py-1.5 pr-3 text-right font-medium">THCA</th>
             <th className="py-1.5 pr-3 text-right font-medium">CBD</th>
-            {terps.map((t) => (
-              <th key={t.id} className="py-1.5 pr-3 text-right font-medium">
-                {t.label}
+            {terps.map((todayStr) => (
+              <th key={todayStr.id} className="py-1.5 pr-3 text-right font-medium">
+                {todayStr.label}
               </th>
             ))}
             <th className="py-1.5 text-right font-medium">Terpene Σ</th>
@@ -420,9 +420,9 @@ function LabTable({ cmp }: { cmp: ReturnType<typeof labComparison> }) {
               <td className="py-2 pr-3 text-right">{pct(r.thc)}</td>
               <td className="py-2 pr-3 text-right">{pct(r.thca)}</td>
               <td className="py-2 pr-3 text-right">{pct(r.cbd)}</td>
-              {terps.map((t) => (
-                <td key={t.id} className="py-2 pr-3 text-right">
-                  {pct(r.terpenes[t.id])}
+              {terps.map((todayStr) => (
+                <td key={todayStr.id} className="py-2 pr-3 text-right">
+                  {pct(r.terpenes[todayStr.id])}
                 </td>
               ))}
               <td className="py-2 text-right">{pct(r.terpeneTotal)}</td>

@@ -15,7 +15,7 @@ import { CompareProvider, useCatalogOnlineSync } from './app/catalog';
 import { href, useRoute } from './app/router';
 import { EmptyState } from './components/ui/EmptyState';
 import { Dashboard } from './pages/Dashboard';
-import { useLocale } from './i18n';
+import { t, useLocale } from './i18n';
 import { LocaleSync } from './app/locale';
 
 const ThcLab = lazy(() => import('./pages/ThcLab').then((m) => ({ default: m.ThcLab })));
@@ -69,7 +69,7 @@ function Loading() {
   return (
     <div className="grid min-h-[40vh] place-items-center" role="status" aria-live="polite">
       <div className="flex items-center gap-2 text-sm text-ink-400">
-        <Loader2 className="size-4 animate-spin text-leaf-400" /> Lade …
+        <Loader2 className="size-4 animate-spin text-leaf-400" /> {t('common.loading')}
       </div>
     </div>
   );
@@ -78,11 +78,11 @@ function Loading() {
 function NotFound() {
   return (
     <EmptyState
-      title="Seite nicht gefunden"
-      text="Dieser Bereich existiert nicht (mehr) – evtl. wurde der Eintrag gelöscht."
+      title={t('common.notFound.title')}
+      text={t('common.notFound.text')}
       action={
         <a href={href('')} className="btn-primary">
-          Zur Übersicht
+          {t('common.toOverview')}
         </a>
       }
     />
@@ -192,16 +192,15 @@ function Gate({ children }: { children: ReactNode }) {
       <div className="mx-auto max-w-lg py-16">
         <EmptyState
           icon={<AlertTriangle />}
-          title="Lokaler Speicher nicht verfügbar"
+          title={t('common.storage.title')}
           text={
             <>
-              {error} TERPGRID benötigt IndexedDB in diesem Browser (im Servermodus als Arbeitskopie für Offline-Nutzung und Synchronisation). Im privaten Modus oder bei blockierter Website-Speicherung ist das nicht
-              möglich. Das THC Lab funktioniert trotzdem.
+              {error} {t('common.storage.text')}
             </>
           }
           action={
             <a href={href('lab/edibles')} className="btn-primary">
-              Zum THC Lab
+              {t('common.toThcLab')}
             </a>
           }
         />
@@ -273,7 +272,7 @@ function AuthGate() {
 function AccountGate() {
   const { state } = useAuth();
   if (state.kind !== 'authenticated')
-    return <EmptyState title="Lokalmodus" text="Diese Installation läuft ohne Server. Daten liegen nur in diesem Browser – es gibt kein Konto." action={<a href={href('data')} className="btn-primary">Daten & Backup</a>} />;
+    return <EmptyState title={t('common.localMode.title')} text={t('common.localMode.noAccount')} action={<a href={href('data')} className="btn-primary">{t('shell.nav.data')}</a>} />;
   return <AccountPage />;
 }
 
@@ -292,8 +291,8 @@ function togetherPage(b?: string, c?: string, d?: string, e?: string, query?: UR
 function TogetherGate({ children }: { children: ReactNode }) {
   const { state } = useAuth();
   if (state.kind !== 'authenticated')
-    return <EmptyState title="Nur mit eigenem Server" text="Gemeinsame Bereiche und Freunde gibt es nur mit einem TERPGRID-Server und Konto. Im Lokalmodus bleiben alle Daten auf diesem Gerät." />;
-  if (state.offline) return <EmptyState title="Offline" text="Für Freunde und gemeinsame Bereiche ist eine Verbindung zum Server nötig. Deine privaten Daten kannst du offline weiter nutzen." />;
+    return <EmptyState title={t('common.serverOnly.title')} text={t('common.serverOnly.text')} />;
+  if (state.offline) return <EmptyState title={t('common.offline.title')} text={t('common.offline.collabText')} />;
   return <>{children}</>;
 }
 

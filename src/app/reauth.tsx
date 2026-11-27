@@ -9,6 +9,7 @@ import { Modal } from '../components/ui/Modal';
 import { ApiError } from '../lib/server/api';
 import { FormError, PasswordField } from '../pages/auth/fields';
 import { useAuth } from './auth';
+import { t } from '../i18n';
 
 type Run = <T>(action: () => Promise<T>) => Promise<T | undefined>;
 const Ctx = createContext<Run>(async (a) => a());
@@ -59,7 +60,7 @@ export function ReauthProvider({ children }: { children: ReactNode }) {
       setOpen(false);
       resolver.current(true);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Bestätigung fehlgeschlagen.');
+      setError(err instanceof ApiError ? err.message : t('shell.reauth.failed'));
     } finally {
       setBusy(false);
       setPassword('');
@@ -76,22 +77,22 @@ export function ReauthProvider({ children }: { children: ReactNode }) {
           setOpen(false);
           resolver.current(false);
         }}
-        title="Aktion bestätigen"
-        subtitle="Aus Sicherheitsgründen bitte erneut mit deinem Passwort bestätigen."
+        title={t('shell.reauth.title')}
+        subtitle={t('shell.reauth.text')}
       >
         <form onSubmit={submit} className="space-y-4">
-          <PasswordField label="Passwort" value={password} onChange={setPassword} autoComplete="current-password" autoFocus />
+          <PasswordField label={t('shell.reauth.password')} value={password} onChange={setPassword} autoComplete="current-password" autoFocus />
           {totp && (
             <div className="space-y-1.5">
               <label className="label" htmlFor="reauth-code">
-                2FA-Code
+                {t('shell.reauth.code')}
               </label>
               <input id="reauth-code" className="input-base font-mono tracking-[0.3em]" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} required />
             </div>
           )}
           <FormError message={error} />
           <button type="submit" className="btn-primary w-full" disabled={busy || !password || (totp && code.length !== 6)}>
-            {busy ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />} Bestätigen
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />} {t('common.confirm')}
           </button>
         </form>
       </Modal>

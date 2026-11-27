@@ -47,11 +47,11 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
     return <EmptyState title="Pflanze nicht gefunden" text="Sie wurde gelöscht oder gehört zu einem anderen Grow." action={<a href={href(`grows/${growId}`)} className="btn-primary">Zum Grow</a>} />;
   }
 
-  const t = today();
+  const todayStr = today();
   const ownPhases = Object.keys(plant.phaseDates).length > 0;
   const dates = ownPhases ? plant.phaseDates : grow.phaseDates;
-  const phase = currentPhase(dates, t);
-  const day = growDay(plant.startDate, t, plant.outcome?.harvestDate ?? grow.completedDate);
+  const phase = currentPhase(dates, todayStr);
+  const day = growDay(plant.startDate, todayStr, plant.outcome?.harvestDate ?? grow.completedDate);
   const strain = plant.strainId ? data.strains.find((s) => s.id === plant.strainId) : undefined;
   const sortedPhotos = [...photos].sort((a, b) => b.takenAt.localeCompare(a.takenAt));
   const cover = plant.coverPhotoId ?? sortedPhotos[0]?.id;
@@ -135,8 +135,8 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
               <Chip>{PLANT_TYPE_LABEL[plant.type]}</Chip>
               {!ownPhases && <Chip title="Diese Pflanze hat keine eigenen Meilensteine">Phasen vom Grow</Chip>}
               {space && <Chip tone="sky">Standort: {space.name}</Chip>}
-              {(plant.tags ?? []).map((t) => (
-                <Chip key={t}>#{t}</Chip>
+              {(plant.tags ?? []).map((todayStr) => (
+                <Chip key={todayStr}>#{todayStr}</Chip>
               ))}
             </div>
             {latest.length > 0 && (

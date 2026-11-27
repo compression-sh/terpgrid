@@ -29,6 +29,7 @@ import { ActivityFormModal } from '../forms/GrowForms';
 import { PhotoImg } from '../photos/PhotoImg';
 import { PhotoViewer } from '../photos/PhotoViewer';
 import { EmptyState } from '../ui/EmptyState';
+import { t } from '../../i18n';
 
 export const ACTIVITY_ICON: Record<ActivityType, LucideIcon> = {
   observation: Eye,
@@ -60,7 +61,7 @@ function MeasurementPills({ a }: { a: Activity }) {
     if (typeof v !== 'number') continue;
     const ctx = d.contextKey && m?.[d.contextKey] ? ` · ${CONTEXT_LABEL[m[d.contextKey]!]}` : '';
     const orig = d.key === 'ecMsCm' && m?.ecInput ? ` (${fmt(m.ecInput.value)} ${EC_UNITS.find((u) => u.id === m.ecInput!.unit)?.label})` : '';
-    const est = d.key === 'leafTempC' && m?.leafTempEstimated ? ' geschätzt' : '';
+    const est = d.key === 'leafTempC' && m?.leafTempEstimated ? ` ${t('grow.activity.estimated')}` : '';
     pills.push(`${d.label} ${fmt(v)}${d.unit ? ` ${d.unit}` : ''}${orig}${est}${ctx}`);
   }
   for (const c of m?.custom ?? []) pills.push(`${c.label} ${fmt(c.value)}${c.unit ? ` ${c.unit}` : ''}`);
@@ -80,7 +81,7 @@ function RowMenu({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => voi
   const [open, setOpen] = useState(false);
   return (
     <div className="relative" onBlur={(e) => !e.currentTarget.contains(e.relatedTarget as Node) && setOpen(false)}>
-      <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5" aria-label="Aktionen" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+      <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5" aria-label={t('grow.activity.actions')} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         <MoreHorizontal className="size-4" />
       </button>
       {open && (
@@ -89,7 +90,7 @@ function RowMenu({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => voi
             <Pencil className="size-3.5" /> Bearbeiten
           </button>
           <button type="button" role="menuitem" className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] text-rose-300 hover:bg-rose-500/10" onClick={() => { setOpen(false); onDelete(); }}>
-            <Trash2 className="size-3.5" /> Löschen
+            <Trash2 className="size-3.5" /> {t('common.delete')}
           </button>
         </div>
       )}
@@ -126,15 +127,15 @@ export function ActivityTimeline({ activities, growId, showPlant = true, limit, 
 
   async function remove(a: Activity) {
     const ok = await confirm({
-      title: 'Eintrag löschen?',
-      message: `„${a.title || ACTIVITY_LABEL[a.type]}“ vom ${fmtDateLong(a.date.slice(0, 10))} wird entfernt. Verknüpfte Fotos bleiben erhalten.`,
-      confirmLabel: 'Löschen',
+      title: t('grow.activity.deleteTitle'),
+      message: t('grow.activity.deleteText', { title: a.title || ACTIVITY_LABEL[a.type], date: fmtDateLong(a.date.slice(0, 10)) }),
+      confirmLabel: t('common.delete'),
       tone: 'danger',
     });
     if (!ok) return;
     try {
       await deleteSimple('activities', a.id);
-      toast('Eintrag gelöscht');
+      toast(t('grow.activity.deleted'));
     } catch (e) {
       toast(errorText(e), { tone: 'error' });
     }
@@ -146,21 +147,21 @@ export function ActivityTimeline({ activities, growId, showPlant = true, limit, 
     <div>
       {filterable && types.length > 1 && (
         <div className="mb-4 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
-          {(['all', ...types] as const).map((t) => (
+          {(['all', ...types] as const).map((ty) => (
             <button
-              key={t}
+              key={ty}
               type="button"
-              aria-pressed={filter === t}
-              onClick={() => (setFilter(t), setVisible(PAGE))}
-              className={`shrink-0 rounded-full border px-2.5 py-1 text-xs ${filter === t ? 'border-leaf-500/40 bg-leaf-500/15 text-leaf-200' : 'border-white/[0.08] text-ink-400 hover:text-ink-200'}`}
+              aria-pressed={filter === ty}
+              onClick={() => (setFilter(ty), setVisible(PAGE))}
+              className={`shrink-0 rounded-full border px-2.5 py-1 text-xs ${filter === ty ? 'border-leaf-500/40 bg-leaf-500/15 text-leaf-200' : 'border-white/[0.08] text-ink-400 hover:text-ink-200'}`}
             >
-              {t === 'all' ? 'Alle' : ACTIVITY_LABEL[t]}
+              {ty === 'all' ? t('grow.activity.all') : ACTIVITY_LABEL[ty]}
             </button>
           ))}
         </div>
       )}
       {shown.length === 0 ? (
-        <EmptyState compact title="Noch keine Einträge" text="Gießen, Düngen, Messungen, Beobachtungen – alles mit Zeitstempel." />
+        <EmptyState compact title={t('grow.activity.emptyTitle')} text={t('grow.activity.emptyText')} />
       ) : (
         <div className="space-y-5">
           {groups.map(([day, items]) => (
@@ -190,7 +191,7 @@ export function ActivityTimeline({ activities, growId, showPlant = true, limit, 
                                       {plant.name}
                                     </a>
                                   ) : (
-                                    'ganzer Grow'
+                                    t('grow.activity.wholeGrow')
                                   )}
                                 </>
                               )}
@@ -203,7 +204,7 @@ export function ActivityTimeline({ activities, growId, showPlant = true, limit, 
                         {photos.length > 0 && (
                           <div className="mt-2.5 flex gap-1.5 overflow-x-auto">
                             {photos.slice(0, 6).map((id, i) => (
-                              <button key={id} type="button" className="size-16 shrink-0 overflow-hidden rounded-lg border border-white/[0.06]" onClick={() => setViewer({ ids: photos, index: i })} aria-label="Foto öffnen">
+                              <button key={id} type="button" className="size-16 shrink-0 overflow-hidden rounded-lg border border-white/[0.06]" onClick={() => setViewer({ ids: photos, index: i })} aria-label={t('grow.activity.openPhoto')}>
                                 <PhotoImg photoId={id} alt="" className="h-full w-full" />
                               </button>
                             ))}

@@ -1,0 +1,15 @@
+{
+ "notif": {
+  "unreadLabel": {
+   "one": "Notifications, {count} unread",
+   "other": "Notifications, {count} unread"
+  },
+  "title": "Notifications",
+  "showAll": "Show all",
+  "noneUnread": "No unread notifications.",
+  "none": "No notifications yet. Requests, invitations, comments and changes in your spaces will appear here.",
+  "markRead": "Mark as read",
+  "remove": "Remove notification",
+  "loadOlder": "Load older"
+ }
+}

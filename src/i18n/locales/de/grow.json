@@ -1,0 +1,130 @@
+{
+ "metric": {
+  "height": "Höhe",
+  "tempShort": "Temp."
+ },
+ "row": {
+  "day": "Tag {day}",
+  "starts": "startet {when}",
+  "plants": {
+   "one": "{count} Pflanze",
+   "other": "{count} Pflanzen"
+  },
+  "photos": {
+   "one": "{count} Foto",
+   "other": "{count} Fotos"
+  },
+  "phaseDays": {
+   "one": "{phase} {count} Tag",
+   "other": "{phase} {count} Tage"
+  },
+  "phases": "Phasen: {list}",
+  "noMilestones": "Noch keine Meilensteine erfasst",
+  "noMeasurements": "Noch keine Messwerte",
+  "lastMeasured": "zuletzt {when}",
+  "heightSeries": {
+   "one": "Höhe: {count} Messung",
+   "other": "Höhe: {count} Messungen"
+  },
+  "log": "Log"
+ },
+ "doc": {
+  "label": "Dokumentation: {list}",
+  "ok": "vollständig",
+  "partial": "teilweise",
+  "missing": "fehlt"
+ },
+ "activity": {
+  "estimated": "geschätzt",
+  "actions": "Aktionen",
+  "deleteTitle": "Eintrag löschen?",
+  "deleted": "Eintrag gelöscht",
+  "all": "Alle",
+  "emptyTitle": "Noch keine Einträge",
+  "emptyText": "Gießen, Düngen, Messungen, Beobachtungen – alles mit Zeitstempel.",
+  "wholeGrow": "ganzer Grow",
+  "openPhoto": "Foto öffnen",
+  "deleteText": "„{title}“ vom {date} wird entfernt. Verknüpfte Fotos bleiben erhalten."
+ },
+ "expense": {
+  "deleteTitle": "Ausgabe löschen?",
+  "deleted": "Ausgabe gelöscht",
+  "total": "Summe erfasster Ausgaben",
+  "none": "Keine Ausgaben erfasst",
+  "deleteText": "{amount} vom {date} wird entfernt."
+ },
+ "card": {
+  "since": "seit {date}",
+  "day": "Tag",
+  "startsIn": "startet {when}",
+  "phases": "Erfasste Phasen"
+ },
+ "context": {
+  "strainsTitle": "Sorten & Genetik",
+  "strainsSub": "Aus den Sorten-Verknüpfungen deiner Pflanzen",
+  "noBreeder": "Breeder nicht angegeben",
+  "catalog": "Katalog",
+  "lineage": "Abstammung",
+  "upcoming": "Anstehend",
+  "next14": "Erinnerungen der nächsten 14 Tage",
+  "reminder": "Erinnerung",
+  "noReminders": "Keine offenen Erinnerungen für diesen Grow.",
+  "spaceTitle": "Bereich & Ausrüstung",
+  "spaceSub": "Über die Bereichs-Zuordnung der Pflanzen",
+  "collection": "Sammlung",
+  "noEquipment": "Keine Geräte zugeordnet.",
+  "missingPower": {
+   "one": "{count} Gerät ohne Leistung/Laufzeit nicht eingerechnet",
+   "other": "{count} Geräte ohne Leistung/Laufzeit nicht eingerechnet"
+  },
+  "noSpaceA": "Keine Pflanze ist einem Grow-Bereich zugeordnet. Bereiche und Geräte verwaltest du in der",
+  "noSpaceB": "; die Zuordnung erfolgt im Pflanzenprofil."
+ },
+ "phases": {
+  "title": "Phasenverlauf",
+  "none": "Noch keine erreichten Meilensteine erfasst. Phasen-Daten lassen sich über „Bearbeiten“ eintragen.",
+  "notRecorded": "nicht erfasst",
+  "planned": "geplant",
+  "days": "{count} T.",
+  "ongoing": "laufend"
+ },
+ "chart": {
+  "rangeAll": "Alle",
+  "rangeDays": {
+   "one": "{count} Tag",
+   "other": "{count} Tage"
+  },
+  "emptyTitle": "Noch keine Messwerte",
+  "emptyText": "Höhe, Klima, pH, EC oder Licht über „Eintrag hinzufügen“ erfassen.",
+  "belowTarget": "unter Zielbereich",
+  "aboveTarget": "über Zielbereich",
+  "metric": "Messgröße",
+  "period": "Zeitraum",
+  "allContexts": "Alle Kontexte",
+  "noneInPeriod": "Keine Messwerte in diesem Zeitraum",
+  "changePeriod": "Zeitraum oder Kontext ändern.",
+  "measurements": "Messungen",
+  "lastValue": "Letzter Wert",
+  "minMax": "Min – Max",
+  "outside": "Außerhalb Zielbereich",
+  "maxGap": "Größte Lücke",
+  "time": "Zeitpunkt",
+  "ref": "Bezug",
+  "context": "Kontext",
+  "linesOff": "Linien aus",
+  "linesOn": "Linien an",
+  "ofCount": "{n} von {total}",
+  "days": {
+   "one": "{count} Tag",
+   "other": "{count} Tage"
+  },
+  "aria": "Diagramm {name}: {count} Messpunkte{flagged}. Werte auch als Tabelle verfügbar.",
+  "ariaFlagged": ", {count} außerhalb des eigenen Zielbereichs",
+  "legendPoints": "Punkte = erfasste Messungen",
+  "legendDiamonds": ", Rauten = außerhalb deines eigenen Zielbereichs (grüne Fläche – keine allgemeingültige Empfehlung)",
+  "legendLines": "Gestrichelte Linien verbinden nur aufeinanderfolgende Messpunkte.",
+  "table": "Tabelle",
+  "belowShort": "↓ unter Ziel",
+  "aboveShort": "↑ über Ziel"
+ }
+}

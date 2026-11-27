@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 
 import { collab } from '../lib/collab/api';
 import { type SpaceSession, spaceSession } from '../lib/collab/spaceSync';
 import { useAuth } from './auth';
+import { t } from '../i18n';
 
 export function useAccountKey(): string | null {
   const { state } = useAuth();
@@ -93,7 +94,7 @@ export function useLoad<T>(load: () => Promise<T>, deps: unknown[]): { data: T |
       setData(await run());
       setError(undefined);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Laden fehlgeschlagen');
+      setError(e instanceof Error ? e.message : t('common.loadFailed'));
     } finally {
       setLoading(false);
     }

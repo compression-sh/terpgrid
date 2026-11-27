@@ -99,5 +99,117 @@
  "language": {
   "label": "Language",
   "hint": "Applies immediately and is saved on this device and – when signed in – with your account. Your own entries are never translated."
+ },
+ "palette": {
+  "group": {
+   "data": "Your data",
+   "catalog": "Catalog",
+   "breeders": "Breeders",
+   "knowledge": "Knowledge",
+   "glossary": "Glossary",
+   "atlas": "Terpene Atlas",
+   "actions": "Actions",
+   "navigation": "Navigation"
+  },
+  "privacy": "Privacy Center",
+  "sync": "Synchronisation",
+  "admin": "Administration",
+  "syncNow": "Sync now",
+  "logout": "Sign out",
+  "allMatches": "All matches for “{q}” in the catalog",
+  "strainCount": {
+   "one": "{count} strain",
+   "other": "{count} strains"
+  },
+  "placeholder": "Search or type a command …",
+  "title": "Command palette",
+  "noMatches": "No matches for “{q}”.",
+  "scope": "Searches your grows, plants, strains, journal entries, collection, lab reports and reminders – locally on this device only.",
+  "footerServer": "Your data locally · catalog via your server · nothing sent to third parties",
+  "footerLocal": "Searches only your locally loaded data – nothing is sent.",
+  "keys": "↑↓ select · ↵ open"
+ },
+ "sync": {
+  "title": "Synchronisation"
+ },
+ "localModeFooter": "Local mode: data only on this device · no synchronisation · online strain data from external sources",
+ "logout": {
+  "pendingTitle": "Unsynced changes",
+  "pendingShared": {
+   "one": "{count} change has not been confirmed by the server yet. On a shared device, the local copy is deleted when you sign out – this change will be lost. Better connect and sync first. Sign out and delete anyway?",
+   "other": "{count} changes have not been confirmed by the server yet. On a shared device, the local copy is deleted when you sign out – these changes will be lost. Better connect and sync first. Sign out and delete anyway?"
+  },
+  "pendingKeep": {
+   "one": "{count} change has not been confirmed by the server yet. It stays saved on this device and will be sent the next time you sign in with this account. Sign out anyway?",
+   "other": "{count} changes have not been confirmed by the server yet. They stay saved on this device and will be sent the next time you sign in with this account. Sign out anyway?"
+  },
+  "deleteAndSignOut": "Sign out and delete",
+  "anyway": "Sign out anyway",
+  "offlineText": "Offline use is turned on for this account on this device, so the local copy is kept. Delete it now instead? Your data stays on the server.",
+  "deleteCopy": "Sign out and delete local copy",
+  "keepCopy": "Sign out, keep copy"
+ },
+ "legacy": {
+  "text": "This browser still holds data from the previous local version. You can review it and move it into your account.",
+  "action": "Review and import"
+ },
+ "nudge": {
+  "text": "Add two-factor authentication to further protect your account.",
+  "action": "Set up 2FA"
+ },
+ "later": "Later",
+ "update": {
+  "title": "New version available.",
+  "text": "Updating reloads the app. Locally saved entries are kept – save any unsaved form input first.",
+  "action": "Update"
+ },
+ "install": {
+  "ios": {
+   "title": "iPhone (Safari)",
+   "s1": "Open TERPGRID in Safari.",
+   "s2": "Tap “Share” at the bottom (square with an arrow).",
+   "s3": "Choose “Add to Home Screen”.",
+   "s4": "Confirm with “Add”."
+  },
+  "ipados": {
+   "title": "iPad (Safari)",
+   "s1": "Open TERPGRID in Safari.",
+   "s2": "Tap “Share” in the top right.",
+   "s3": "Choose “Add to Home Screen”.",
+   "s4": "Confirm with “Add”."
+  },
+  "android": {
+   "title": "Android (Chrome)",
+   "s1": "Open TERPGRID in Chrome.",
+   "s2": "Tap the menu (⋮) in the top right.",
+   "s3": "Choose “Install app” or “Add to Home screen”.",
+   "s4": "Confirm with “Install”."
+  },
+  "desktop": {
+   "title": "Computer (Chrome, Edge)",
+   "s1": "Open TERPGRID in Chrome or Edge.",
+   "s2": "Click the install icon in the address bar (screen with an arrow).",
+   "s3": "Confirm with “Install”.",
+   "s4": "Safari on the Mac (version 17 or later): menu “File” → “Add to Dock”."
+  },
+  "cardTitle": "Install TERPGRID as an app",
+  "cardText": "Its own icon on your home screen, full screen without browser bars and a fast start. No app store needed.",
+  "install": "Install",
+  "howTo": "How to",
+  "dismiss": "Dismiss notice"
+ },
+ "notNow": "Not now",
+ "offlineAsk": {
+  "title": "Work offline on this device too?",
+  "text": "A copy of your private data then stays in this browser after you sign out. It is not additionally encrypted and only as well protected as your device (device lock). Recommended on your own devices only. Without offline use, the copy is deleted when you sign out.",
+  "enable": "Turn on offline use",
+  "later": "You can change this any time under Account → This device."
+ },
+ "reauth": {
+  "failed": "Confirmation failed.",
+  "title": "Confirm action",
+  "text": "For security reasons, please confirm again with your password.",
+  "password": "Password",
+  "code": "2FA code"
  }
 }

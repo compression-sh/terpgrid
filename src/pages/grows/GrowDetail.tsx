@@ -63,15 +63,15 @@ const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
 export function PlantCard({ plant, growId }: { plant: Plant; growId: string }) {
   const { data } = useData();
   const grow = data.grows.find((g) => g.id === growId);
-  const t = today();
+  const todayStr = today();
   const photos = data.photos.filter((p) => p.plantId === plant.id).sort((a, b) => b.takenAt.localeCompare(a.takenAt));
   const acts = data.activities.filter((a) => a.plantId === plant.id);
   const dates = Object.keys(plant.phaseDates).length ? plant.phaseDates : (grow?.phaseDates ?? {});
-  const phase = currentPhase(dates, t);
+  const phase = currentPhase(dates, todayStr);
   const heights = metricSeries(acts, 'heightCm');
   const lastHeight = heights.at(-1);
   const strain = plant.strainId ? data.strains.find((s) => s.id === plant.strainId)?.name : plant.strainName;
-  const day = growDay(plant.startDate, t, grow?.completedDate);
+  const day = growDay(plant.startDate, todayStr, grow?.completedDate);
   return (
     <a href={href(`grows/${growId}/plants/${plant.id}`)} className="group flex gap-3 rounded-xl border border-white/[0.06] bg-ink-900/60 p-2.5 transition-colors hover:border-white/[0.12]">
       <PhotoImg photoId={plant.coverPhotoId ?? photos[0]?.id} alt={plant.name} className="size-20 shrink-0 rounded-lg" />
@@ -169,7 +169,7 @@ export function GrowDetail({ growId }: { growId: string }) {
   const { data, settings } = useData();
   const route = useRoute();
   const quick = useQuickActions();
-  const tab = (TABS.some((t) => t.id === route.query.get('tab')) ? route.query.get('tab') : 'overview') as Tab;
+  const tab = (TABS.some((todayStr) => todayStr.id === route.query.get('tab')) ? route.query.get('tab') : 'overview') as Tab;
   const [modal, setModal] = useState<'edit' | 'activity' | 'photo' | 'reminder' | 'thresholds' | null>(null);
   const [month, setMonth] = useState(startOfMonth(today()));
   const [selectedDay, setSelectedDay] = useState<string>();
@@ -196,10 +196,10 @@ export function GrowDetail({ growId }: { growId: string }) {
     );
   }
 
-  const t = today();
-  const day = growDay(grow.startDate, t, grow.completedDate);
-  const phase = currentPhase(grow.phaseDates, t);
-  const spans = phaseSpans(grow.phaseDates, t, grow.completedDate);
+  const todayStr = today();
+  const day = growDay(grow.startDate, todayStr, grow.completedDate);
+  const phase = currentPhase(grow.phaseDates, todayStr);
+  const spans = phaseSpans(grow.phaseDates, todayStr, grow.completedDate);
   const currentSpan = spans.at(-1);
   const sortedPhotos = [...photos].sort((a, b) => b.takenAt.localeCompare(a.takenAt));
   const cover = grow.coverPhotoId ?? sortedPhotos[0]?.id;
@@ -420,9 +420,9 @@ export function GrowDetail({ growId }: { growId: string }) {
                     ))}
                   </dl>
                 )}
-                {lastActivity && <p className="hint mt-3">Letzte Aktivität: {fmtDateTime(lastActivity.date)} ({daysBetween(lastActivity.date.slice(0, 10), t)} Tage her)</p>}
+                {lastActivity && <p className="hint mt-3">Letzte Aktivität: {fmtDateTime(lastActivity.date)} ({daysBetween(lastActivity.date.slice(0, 10), todayStr)} Tage her)</p>}
               </Card>
-              <GrowTasksCard reminders={reminders} today={t} onAdd={() => setModal('reminder')} />
+              <GrowTasksCard reminders={reminders} today={todayStr} onAdd={() => setModal('reminder')} />
               <GrowStrainsCard plants={plants} strains={data.strains} />
               <GrowEquipmentCard plants={plants} inventory={data.inventory} />
               {(grow.description || grow.notes) && (
@@ -574,7 +574,7 @@ export function GrowDetail({ growId }: { growId: string }) {
       {modal === 'thresholds' && <ThresholdsModal grow={grow} onClose={() => setModal(null)} />}
       {modal === 'activity' && <ActivityFormModal open onClose={() => setModal(null)} growId={growId} />}
       {modal === 'photo' && <PhotoUploadModal open onClose={() => setModal(null)} target={{ growId }} selectable />}
-      {modal === 'reminder' && <ReminderFormModal open onClose={() => setModal(null)} growId={growId} date={selectedDay && selectedDay >= t ? selectedDay : addDays(t, 0)} />}
+      {modal === 'reminder' && <ReminderFormModal open onClose={() => setModal(null)} growId={growId} date={selectedDay && selectedDay >= todayStr ? selectedDay : addDays(todayStr, 0)} />}
     </div>
   );
 }

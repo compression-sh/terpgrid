@@ -8,6 +8,7 @@ import { isSharedDevice } from '../lib/device';
 import { pendingSpaceOps } from '../lib/offline';
 import { deriveSyncState, syncStateText } from '../lib/sync/status';
 import { legacyDismissed, legacyExists, readImportMark } from '../lib/sync/legacy';
+import { t } from '../i18n';
 
 /** Kompakter Sync-Status. „Synchronisiert“ nur, wenn der Server alles bestätigt hat. */
 export function SyncPill({ compact = false }: { compact?: boolean }) {
@@ -25,7 +26,7 @@ export function SyncPill({ compact = false }: { compact?: boolean }) {
     : <CheckCircle2 className="size-3.5 text-leaf-400" />;
   const tone = st === 'offline' || st === 'conflict' ? 'text-amber-200' : st === 'failed' ? 'text-rose-200' : 'text-ink-300';
   return (
-    <a href={href('account/sync')} className={`inline-flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.02] px-2 py-1 text-[11px] font-medium hover:border-white/[0.14] ${tone}`} title="Synchronisation">
+    <a href={href('account/sync')} className={`inline-flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.02] px-2 py-1 text-[11px] font-medium hover:border-white/[0.14] ${tone}`} title={t('shell.sync.title')}>
       {icon}
       {!compact && <span>{text}</span>}
       {compact && <span className="sr-only">{text}</span>}
@@ -42,7 +43,7 @@ export function AccountFooter() {
     return (
       <div className="flex items-start gap-2 border-t border-white/[0.05] px-5 py-4 text-[11px] leading-snug text-ink-500">
         <HardDrive className="mt-0.5 size-3 shrink-0 text-amber-400" />
-        <span className="min-w-0 flex-1">Lokalmodus: Daten nur auf diesem Gerät · keine Synchronisation · Online-Sortendaten von externen Quellen</span>
+        <span className="min-w-0 flex-1">{t('shell.localModeFooter')}</span>
         <LanguageMenu />
       </div>
     );
@@ -60,7 +61,7 @@ export function AccountFooter() {
             {u.displayName && <span className="block truncate font-mono text-[10.5px] text-ink-500">{u.loginName}</span>}
           </span>
         </a>
-        <button type="button" className="btn-ghost p-1.5" aria-label="Abmelden" title="Abmelden" onClick={() => void logoutFlow(auth, confirm)}>
+        <button type="button" className="btn-ghost p-1.5" aria-label={t('shell.palette.logout')} title={t('shell.palette.logout')} onClick={() => void logoutFlow(auth, confirm)}>
           <LogOut className="size-4" />
         </button>
       </div>
@@ -78,11 +79,11 @@ export async function logoutFlow(auth: Pick<ReturnType<typeof useAuth>, 'logout'
   const shared = isSharedDevice();
   if (pending > 0) {
     const ok = await confirm({
-      title: 'Nicht synchronisierte Änderungen',
+      title: t('shell.logout.pendingTitle'),
       message: shared
-        ? `${pending} Änderung${pending === 1 ? ' wurde' : 'en wurden'} noch nicht vom Server bestätigt. Auf einem geteilten Gerät wird die lokale Kopie beim Abmelden gelöscht – diese Änderungen gehen dabei verloren. Verbinde dich besser zuerst und synchronisiere. Trotzdem abmelden und löschen?`
-        : `${pending} Änderung${pending === 1 ? ' wurde' : 'en wurden'} noch nicht vom Server bestätigt. Sie bleiben auf diesem Gerät gespeichert und werden beim nächsten Anmelden mit diesem Konto übertragen. Trotzdem abmelden?`,
-      confirmLabel: shared ? 'Abmelden und löschen' : 'Trotzdem abmelden',
+        ? t('shell.logout.pendingShared', { count: pending })
+        : t('shell.logout.pendingKeep', { count: pending }),
+      confirmLabel: shared ? t('shell.logout.deleteAndSignOut') : t('shell.logout.anyway'),
       tone: 'danger',
     });
     if (!ok) return;
@@ -91,10 +92,10 @@ export async function logoutFlow(auth: Pick<ReturnType<typeof useAuth>, 'logout'
   // Ohne Offline-Freigabe (oder auf geteilten Geräten) wird die lokale Kopie automatisch gelöscht
   if (shared || !auth.offlineEnabled) return auth.logout({ wipeLocal: true });
   const wipe = await confirm({
-    title: 'Abmelden',
-    message: 'Offline-Nutzung ist für dieses Konto auf diesem Gerät eingeschaltet, deshalb bleibt die lokale Kopie erhalten. Soll sie stattdessen jetzt gelöscht werden? Deine Daten bleiben auf dem Server erhalten.',
-    confirmLabel: 'Abmelden und lokale Kopie löschen',
-    cancelLabel: 'Abmelden, Kopie behalten',
+    title: t('shell.palette.logout'),
+    message: t('shell.logout.offlineText'),
+    confirmLabel: t('shell.logout.deleteCopy'),
+    cancelLabel: t('shell.logout.keepCopy'),
   });
   return auth.logout({ wipeLocal: wipe });
 }
@@ -111,9 +112,9 @@ export function LegacyBanner({ account }: { account: LastAccount | null }) {
   if (!show) return null;
   return (
     <div className="mb-5 flex flex-col gap-3 rounded-xl border border-leaf-500/20 bg-leaf-500/[0.06] p-4 text-[13px] text-leaf-100 sm:flex-row sm:items-center sm:justify-between">
-      <span>In diesem Browser liegen noch Daten aus der bisherigen lokalen Version. Du kannst sie geprüft in dein Konto übernehmen.</span>
+      <span>{t('shell.legacy.text')}</span>
       <a href={href('account/import')} className="btn-primary shrink-0">
-        Ansehen und übernehmen
+        {t('shell.legacy.action')}
       </a>
     </div>
   );
@@ -133,11 +134,11 @@ export function SecurityNudge() {
   return (
     <div className="mb-5 flex flex-col gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-[13px] text-ink-300 sm:flex-row sm:items-center sm:justify-between">
       <span className="flex items-start gap-2">
-        <ShieldCheck className="mt-0.5 size-4 shrink-0 text-leaf-400" /> Schütze dein Konto zusätzlich mit Zwei-Faktor-Authentifizierung.
+        <ShieldCheck className="mt-0.5 size-4 shrink-0 text-leaf-400" /> {t('shell.nudge.text')}
       </span>
       <span className="flex shrink-0 gap-2">
         <a href={href('account')} className="btn-primary py-1.5">
-          2FA einrichten
+          {t('shell.nudge.action')}
         </a>
         <button
           type="button"
@@ -151,7 +152,7 @@ export function SecurityNudge() {
             setHidden(true);
           }}
         >
-          Später
+          {t('shell.later')}
         </button>
       </span>
     </div>

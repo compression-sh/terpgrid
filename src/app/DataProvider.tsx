@@ -3,6 +3,7 @@ import { RECORD_STORES, type StoreMap, getAll, openDatabase, subscribe } from '.
 import { runDataMigrations } from '../lib/db/migrate';
 import { DEFAULT_SETTINGS, loadSettings, saveSettings } from '../lib/db/repo';
 import type { AppSettings } from '../lib/db/types';
+import { t } from '../i18n';
 
 type RecordStore = (typeof RECORD_STORES)[number];
 export type AppData = { [S in RecordStore]: StoreMap[S][] };
@@ -49,7 +50,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           setReady(true);
         }
       } catch (e) {
-        if (alive) setError(e instanceof Error ? e.message : 'Lokaler Speicher nicht verfügbar.');
+        if (alive) setError(e instanceof Error ? e.message : t('common.storage.unavailable'));
       }
     })();
     const off = subscribe((changed) => {

@@ -1,12 +1,14 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { addMonths, fmtMonth, monthGrid, startOfMonth, today, fmtDate } from '../../lib/dates';
+import { intlLocale, t } from '../../i18n';
 
 export interface DayMarker {
   color: string;
   label: string;
 }
 
-const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+/** Kurze Wochentagsnamen (Mo–So) in der aktiven Sprache – 2024-01-01 war ein Montag. */
+const weekdays = () => Array.from({ length: 7 }, (_, i) => new Intl.DateTimeFormat(intlLocale(), { weekday: 'short', timeZone: 'UTC' }).format(Date.UTC(2024, 0, 1 + i)));
 
 /** Kompakte Monatsansicht mit farbigen Markierungen je Tag. */
 export function MonthCalendar({
@@ -25,39 +27,39 @@ export function MonthCalendar({
   compact?: boolean;
 }) {
   const days = monthGrid(month);
-  const t = today();
+  const todayStr = today();
   const m = month.slice(0, 7);
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
-        <button type="button" className="btn-ghost p-1.5" aria-label="Vorheriger Monat" onClick={() => onMonth(addMonths(startOfMonth(month), -1))}>
+        <button type="button" className="btn-ghost p-1.5" aria-label={t('common.cal.prevMonth')} onClick={() => onMonth(addMonths(startOfMonth(month), -1))}>
           <ChevronLeft className="size-4" />
         </button>
         <div className="flex items-center gap-2">
           <span className="text-[14px] font-semibold capitalize text-ink-50">{fmtMonth(month)}</span>
-          {m !== t.slice(0, 7) && (
-            <button type="button" className="rounded-md px-1.5 py-0.5 text-[11px] text-leaf-300 hover:bg-white/[0.04]" onClick={() => onMonth(startOfMonth(t))}>
-              Heute
+          {m !== todayStr.slice(0, 7) && (
+            <button type="button" className="rounded-md px-1.5 py-0.5 text-[11px] text-leaf-300 hover:bg-white/[0.04]" onClick={() => onMonth(startOfMonth(todayStr))}>
+              {t('common.cal.today')}
             </button>
           )}
         </div>
-        <button type="button" className="btn-ghost p-1.5" aria-label="Nächster Monat" onClick={() => onMonth(addMonths(startOfMonth(month), 1))}>
+        <button type="button" className="btn-ghost p-1.5" aria-label={t('common.cal.nextMonth')} onClick={() => onMonth(addMonths(startOfMonth(month), 1))}>
           <ChevronRight className="size-4" />
         </button>
       </div>
       <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-medium uppercase tracking-wider text-ink-500">
-        {WEEKDAYS.map((w) => (
+        {weekdays().map((w) => (
           <div key={w} className="py-1">
             {w}
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-1" role="group" aria-label={`Tage im ${fmtMonth(month)}`}>
+      <div className="grid grid-cols-7 gap-1" role="group" aria-label={t('common.cal.daysIn', { month: fmtMonth(month) })}>
         {days.map((d) => {
           const inMonth = d.slice(0, 7) === m;
           const mk = markers.get(d) ?? [];
           const isSel = selected === d;
-          const isToday = d === t;
+          const isToday = d === todayStr;
           return (
             <button
               key={d}

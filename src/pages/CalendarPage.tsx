@@ -60,10 +60,10 @@ export function CalendarPage() {
   const route = useRoute();
   const toast = useToast();
   const confirm = useConfirm();
-  const t = today();
+  const todayStr = today();
   const [view, setView] = useState<'month' | 'week' | 'list'>(() => (['week', 'list'].includes(route.query.get('view') ?? '') ? (route.query.get('view') as 'week' | 'list') : 'month'));
-  const [cursor, setCursor] = useState(t);
-  const [selected, setSelected] = useState(t);
+  const [cursor, setCursor] = useState(todayStr);
+  const [selected, setSelected] = useState(todayStr);
   const [growId, setGrowIdRaw] = useState(route.query.get('grow') ?? '');
   const [plantId, setPlantId] = useState('');
   const setGrowId = (g: string) => {
@@ -76,10 +76,10 @@ export function CalendarPage() {
 
   useEffect(() => {
     if (route.query.get('new') === '1') {
-      setForm({ date: t });
+      setForm({ date: todayStr });
       setQuery(route, { new: undefined });
     }
-  }, [route, t]);
+  }, [route, todayStr]);
 
   const range = useMemo(() => {
     if (view === 'month') {
@@ -147,7 +147,7 @@ export function CalendarPage() {
   const markers = new Map<string, DayMarker[]>();
   for (const e of events) markers.set(e.date, [...(markers.get(e.date) ?? []), { color: e.color, label: e.title }]);
   const dayEvents = events.filter((e) => e.date === selected);
-  const late = overdue(data.reminders.filter((r) => !growId || r.growId === growId), t, 30);
+  const late = overdue(data.reminders.filter((r) => !growId || r.growId === growId), todayStr, 30);
 
   async function toggle(o: Occurrence) {
     try {
@@ -167,7 +167,7 @@ export function CalendarPage() {
   }
   function exportIcs() {
     const list = data.reminders.filter((r) => !growId || r.growId === growId);
-    downloadFile(`terpgrid-erinnerungen-${t}.ics`, remindersToIcs(list), 'text/calendar');
+    downloadFile(`terpgrid-erinnerungen-${todayStr}.ics`, remindersToIcs(list), 'text/calendar');
     toast(`${list.length} ${list.length === 1 ? 'Erinnerung' : 'Erinnerungen'} als ICS exportiert`);
   }
 
@@ -242,7 +242,7 @@ export function CalendarPage() {
             <button type="button" className="btn-ghost" onClick={exportIcs} disabled={data.reminders.length === 0}>
               <Download className="size-4" /> ICS-Export
             </button>
-            <button type="button" className="btn-primary" onClick={() => setForm({ date: selected >= t ? selected : t })}>
+            <button type="button" className="btn-primary" onClick={() => setForm({ date: selected >= todayStr ? selected : todayStr })}>
               <Plus className="size-4" /> Erinnerung
             </button>
           </>
@@ -279,7 +279,7 @@ export function CalendarPage() {
           {view === 'month' ? (
             <MonthCalendar month={startOfMonth(cursor)} onMonth={setCursor} markers={markers} selected={selected} onSelect={setSelected} />
           ) : view === 'list' ? (
-            <AgendaList from={range.from} to={range.to} today={t} events={events} onShift={(days) => setCursor(addDays(cursor, days))} onToday={() => setCursor(t)} render={(e) => <EventRow key={e.key} e={e} />} />
+            <AgendaList from={range.from} to={range.to} today={todayStr} events={events} onShift={(days) => setCursor(addDays(cursor, days))} onToday={() => setCursor(todayStr)} render={(e) => <EventRow key={e.key} e={e} />} />
           ) : (
             <div>
               <div className="mb-3 flex items-center justify-between">
@@ -304,7 +304,7 @@ export function CalendarPage() {
                         className={`w-full rounded-xl border p-3 text-left ${selected === d ? 'border-leaf-500/40 bg-leaf-500/[0.06]' : 'border-white/[0.05] hover:border-white/[0.1]'}`}
                       >
                         <div className="flex items-baseline justify-between">
-                          <span className={`text-[13px] font-medium ${d === t ? 'text-leaf-300' : 'text-ink-200'}`}>{fmtDateLong(d)}</span>
+                          <span className={`text-[13px] font-medium ${d === todayStr ? 'text-leaf-300' : 'text-ink-200'}`}>{fmtDateLong(d)}</span>
                           <span className="text-[11px] text-ink-500">{list.length || ''}</span>
                         </div>
                         {list.length > 0 && (
@@ -329,7 +329,7 @@ export function CalendarPage() {
         <div className="space-y-5">
           <Card
             title={fmtDateLong(selected)}
-            subtitle={selected === t ? 'Heute' : undefined}
+            subtitle={selected === todayStr ? 'Heute' : undefined}
             actions={
               <button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setForm({ date: selected })}>
                 <Plus className="size-3.5" /> Erinnerung
@@ -391,7 +391,7 @@ export function CalendarPage() {
 }
 
 /** Agenda: alle Ereignisse des Zeitraums nach Tagen gruppiert; Erinnerungen direkt abhakbar. */
-function AgendaList({ from, to, today: t, events, onShift, onToday, render }: { from: string; to: string; today: string; events: CalEvent[]; onShift: (days: number) => void; onToday: () => void; render: (e: CalEvent) => ReactNode }) {
+function AgendaList({ from, to, today: todayStr, events, onShift, onToday, render }: { from: string; to: string; today: string; events: CalEvent[]; onShift: (days: number) => void; onToday: () => void; render: (e: CalEvent) => ReactNode }) {
   const days = [...new Set(events.map((e) => e.date))].sort();
   return (
     <div>
@@ -403,7 +403,7 @@ function AgendaList({ from, to, today: t, events, onShift, onToday, render }: { 
           <span className="truncate text-[14px] font-semibold text-ink-50">
             {fmtDateShort(from)} – {fmtDateShort(to)}
           </span>
-          {from !== t && (
+          {from !== todayStr && (
             <button type="button" className="btn-ghost py-1 text-xs" onClick={onToday}>
               Heute
             </button>
@@ -419,9 +419,9 @@ function AgendaList({ from, to, today: t, events, onShift, onToday, render }: { 
         <ol className="space-y-4">
           {days.map((d) => (
             <li key={d}>
-              <h3 className={`mb-1.5 text-[12px] font-semibold uppercase tracking-[0.08em] ${d === t ? 'text-leaf-300' : 'text-ink-400'}`}>
+              <h3 className={`mb-1.5 text-[12px] font-semibold uppercase tracking-[0.08em] ${d === todayStr ? 'text-leaf-300' : 'text-ink-400'}`}>
                 {fmtDateLong(d)}
-                {d === t && ' · Heute'}
+                {d === todayStr && ' · Heute'}
               </h3>
               <ul className="space-y-1.5">{events.filter((e) => e.date === d).map(render)}</ul>
             </li>

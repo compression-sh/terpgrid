@@ -1,0 +1,15 @@
+{
+ "notif": {
+  "unreadLabel": {
+   "one": "Benachrichtigungen, {count} ungelesen",
+   "other": "Benachrichtigungen, {count} ungelesen"
+  },
+  "title": "Benachrichtigungen",
+  "showAll": "Alle anzeigen",
+  "noneUnread": "Keine ungelesenen Benachrichtigungen.",
+  "none": "Noch keine Benachrichtigungen. Hier erscheinen Anfragen, Einladungen, Kommentare und Änderungen in deinen Bereichen.",
+  "markRead": "Als gelesen markieren",
+  "remove": "Benachrichtigung entfernen",
+  "loadOlder": "Ältere laden"
+ }
+}

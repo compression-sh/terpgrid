@@ -8,13 +8,14 @@ import { CONTEXT_LABEL } from '../../lib/grow/measure';
 import { DERIVED, METRICS, METRIC_BY_KEY, type MetricKey, type SeriesPoint, customMetricKeys, customSeries, derivedSeries, metricSeries, outOfRange, seriesCsv, seriesStats, withinDays } from '../../lib/grow/series';
 import { fmt } from '../../lib/format';
 import { EmptyState } from '../ui/EmptyState';
+import { t } from '../../i18n';
 
 const SERIES_COLORS = ['#5fe39a', '#38bdf8', '#c084fc', '#fb923c', '#facc15', '#f472b6', '#a3e635', '#94a3b8'];
 const RANGES = [
-  { id: 0, label: 'Alle' },
-  { id: 7, label: '7 Tage' },
-  { id: 30, label: '30 Tage' },
-  { id: 90, label: '90 Tage' },
+  { id: 0, get label() { return t('grow.chart.rangeAll'); } },
+  { id: 7, get label() { return t('grow.chart.rangeDays', { count: 7 }); } },
+  { id: 30, get label() { return t('grow.chart.rangeDays', { count: 30 }); } },
+  { id: 90, get label() { return t('grow.chart.rangeDays', { count: 90 }); } },
 ];
 
 interface MetricOption {
@@ -107,7 +108,7 @@ export function MeasurementCharts({
   }, [opt, activities, splitByPlant, lookup, days, context, ctxKey, range, plantName]);
 
   if (!opt) {
-    return <EmptyState compact icon={<Ruler />} title="Noch keine Messwerte" text="Höhe, Klima, pH, EC oder Licht über „Eintrag hinzufügen“ erfassen." />;
+    return <EmptyState compact icon={<Ruler />} title={t('grow.chart.emptyTitle')} text={t('grow.chart.emptyText')} />;
   }
 
   const flat = series.flatMap((s) => s.points.map((p) => ({ ...p, name: s.name }))).sort((a, b) => a.t - b.t);
@@ -125,12 +126,12 @@ export function MeasurementCharts({
   const exportCsv = () =>
     download(
       `${fileName}-${opt.label.replace(/[^\wäöüÄÖÜß-]+/g, '_')}.csv`,
-      seriesCsv(flat.map((p) => ({ date: p.date, ref: p.name, value: p.value, unit: opt.unit, context: contextOf(p.activityId), flag: p.flag === 'low' ? 'unter Zielbereich' : p.flag === 'high' ? 'über Zielbereich' : '' }))),
+      seriesCsv(flat.map((p) => ({ date: p.date, ref: p.name, value: p.value, unit: opt.unit, context: contextOf(p.activityId), flag: p.flag === 'low' ? t('grow.chart.belowTarget') : p.flag === 'high' ? t('grow.chart.aboveTarget') : '' }))),
     );
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-1.5" role="radiogroup" aria-label="Messgröße">
+      <div className="flex flex-wrap items-center gap-1.5" role="radiogroup" aria-label={t('grow.chart.metric')}>
         {options.map((o) => (
           <button
             key={o.id}
@@ -150,7 +151,7 @@ export function MeasurementCharts({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex rounded-lg border border-white/[0.07] p-0.5" role="radiogroup" aria-label="Zeitraum">
+        <div className="flex rounded-lg border border-white/[0.07] p-0.5" role="radiogroup" aria-label={t('grow.chart.period')}>
           {RANGES.map((r) => (
             <button key={r.id} type="button" role="radio" aria-checked={days === r.id} onClick={() => setDays(r.id)} className={`rounded-md px-2.5 py-1 text-[12px] ${days === r.id ? 'bg-white/[0.08] text-ink-50' : 'text-ink-400 hover:text-ink-200'}`}>
               {r.label}
@@ -159,7 +160,7 @@ export function MeasurementCharts({
         </div>
         {contexts.length > 0 && (
           <select className="input-base h-8 w-auto py-0 text-[12px]" aria-label="Messkontext" value={context} onChange={(e) => setContext(e.target.value as MeasureContext | 'none' | '')}>
-            <option value="">Alle Kontexte</option>
+            <option value="">{t('grow.chart.allContexts')}</option>
             {MEASURE_CONTEXTS.filter((c) => contexts.includes(c)).map((c) => (
               <option key={c} value={c}>
                 {CONTEXT_LABEL[c]}
@@ -179,10 +180,10 @@ export function MeasurementCharts({
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {[
-          ['Messungen', String(stats.count)],
-          ['Letzter Wert', stats.latest ? `${fmt(stats.latest.value)}${unit}` : '–'],
-          ['Min – Max', stats.min !== undefined ? `${fmt(stats.min)} – ${fmt(stats.max!)}${unit}` : '–'],
-          range ? ['Außerhalb Zielbereich', `${flagged} von ${stats.count}`] : ['Größte Lücke', stats.maxGapDays !== undefined ? `${fmt(stats.maxGapDays)} Tage` : '–'],
+          [t('grow.chart.measurements'), String(stats.count)],
+          [t('grow.chart.lastValue'), stats.latest ? `${fmt(stats.latest.value)}${unit}` : '–'],
+          [t('grow.chart.minMax'), stats.min !== undefined ? `${fmt(stats.min)} – ${fmt(stats.max!)}${unit}` : '–'],
+          range ? [t('grow.chart.outside'), t('grow.chart.ofCount', { n: flagged, total: stats.count })] : [t('grow.chart.maxGap'), stats.maxGapDays !== undefined ? t('grow.chart.days', { count: stats.maxGapDays }) : '–'],
         ].map(([k, v]) => (
           <div key={k} className="rounded-lg border border-white/[0.06] bg-white/[0.015] px-3 py-2">
             <div className="text-[11px] text-ink-500">{k}</div>
@@ -192,9 +193,9 @@ export function MeasurementCharts({
       </div>
 
       {flat.length === 0 ? (
-        <EmptyState compact title="Keine Messwerte in diesem Zeitraum" text="Zeitraum oder Kontext ändern." />
+        <EmptyState compact title={t('grow.chart.noneInPeriod')} text={t('grow.chart.changePeriod')} />
       ) : (
-        <div className="h-64 w-full sm:h-72" role="img" aria-label={`Diagramm ${opt.label}: ${stats.count} Messpunkte${range ? `, ${flagged} außerhalb des eigenen Zielbereichs` : ''}. Werte auch als Tabelle verfügbar.`}>
+        <div className="h-64 w-full sm:h-72" role="img" aria-label={t('grow.chart.aria', { name: opt.label, count: stats.count, flagged: range ? t('grow.chart.ariaFlagged', { count: flagged }) : '' })}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart margin={{ top: 8, right: 12, bottom: 4, left: -8 }}>
               <CartesianGrid vertical={false} />
@@ -214,7 +215,7 @@ export function MeasurementCharts({
               <Tooltip
                 contentStyle={{ background: '#0e1211', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, fontSize: 12 }}
                 labelFormatter={(t: number) => fmtDateTime(nowLocal(new Date(t)))}
-                formatter={(v: number, name: string, item: { payload?: Point }) => [`${fmt(v)}${unit}${item.payload?.flag === 'low' ? ' (unter Zielbereich)' : item.payload?.flag === 'high' ? ' (über Zielbereich)' : ''}`, name]}
+                formatter={(v: number, name: string, item: { payload?: Point }) => [`${fmt(v)}${unit}${item.payload?.flag === 'low' ? ` (${t('grow.chart.belowTarget')})` : item.payload?.flag === 'high' ? ` (${t('grow.chart.aboveTarget')})` : ''}`, name]}
               />
               {series.length > 1 && <Legend wrapperStyle={{ fontSize: 11 }} />}
               {series.map((s, i) => (
@@ -242,14 +243,14 @@ export function MeasurementCharts({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="hint max-w-xl">
-          Punkte = erfasste Messungen{range ? ', Rauten = außerhalb deines eigenen Zielbereichs (grüne Fläche – keine allgemeingültige Empfehlung)' : ''}. {lines ? 'Gestrichelte Linien verbinden nur aufeinanderfolgende Messpunkte.' : ''}
+          {t('grow.chart.legendPoints')}{range ? t('grow.chart.legendDiamonds') : ''}. {lines ? t('grow.chart.legendLines') : ''}
         </p>
         <div className="flex flex-wrap gap-2">
           <button type="button" className="btn-ghost py-1 text-xs" aria-pressed={lines} onClick={() => setLines((l) => !l)}>
-            {lines ? 'Linien aus' : 'Linien an'}
+            {lines ? t('grow.chart.linesOff') : t('grow.chart.linesOn')}
           </button>
           <button type="button" className="btn-ghost py-1 text-xs" aria-expanded={table} onClick={() => setTable((t) => !t)}>
-            <Table2 className="size-3.5" /> Tabelle
+            <Table2 className="size-3.5" /> {t('grow.chart.table')}
           </button>
           <button type="button" className="btn-ghost py-1 text-xs" onClick={exportCsv} disabled={!flat.length}>
             <Download className="size-3.5" /> CSV
@@ -262,9 +263,9 @@ export function MeasurementCharts({
           <table className="w-full text-left text-[12px]">
             <thead className="sticky top-0 bg-ink-850 text-ink-400">
               <tr>
-                <th className="px-3 py-2 font-medium">Zeitpunkt</th>
-                {splitByPlant && <th className="px-3 py-2 font-medium">Bezug</th>}
-                {ctxKey && <th className="px-3 py-2 font-medium">Kontext</th>}
+                <th className="px-3 py-2 font-medium">{t('grow.chart.time')}</th>
+                {splitByPlant && <th className="px-3 py-2 font-medium">{t('grow.chart.ref')}</th>}
+                {ctxKey && <th className="px-3 py-2 font-medium">{t('grow.chart.context')}</th>}
                 <th className="px-3 py-2 text-right font-medium">{opt.label}</th>
               </tr>
             </thead>
@@ -277,7 +278,7 @@ export function MeasurementCharts({
                   <td className="px-3 py-1.5 text-right text-ink-100">
                     {fmt(p.value)}
                     {unit}
-                    {p.flag && <span className="ml-1.5 font-sans text-[10px] text-amber-300">{p.flag === 'low' ? '↓ unter Ziel' : '↑ über Ziel'}</span>}
+                    {p.flag && <span className="ml-1.5 font-sans text-[10px] text-amber-300">{p.flag === 'low' ? t('grow.chart.belowShort') : t('grow.chart.aboveShort')}</span>}
                   </td>
                 </tr>
               ))}

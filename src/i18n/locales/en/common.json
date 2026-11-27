@@ -23,5 +23,37 @@
    "one": "in {count} day",
    "other": "in {count} days"
   }
+ },
+ "loading": "Loading …",
+ "notFound": {
+  "title": "Page not found",
+  "text": "This area does not exist (any more) – the entry may have been deleted."
+ },
+ "storage": {
+  "title": "Local storage unavailable",
+  "text": "TERPGRID needs IndexedDB in this browser (in server mode as a working copy for offline use and synchronisation). This is not possible in private mode or when site storage is blocked. The THC Lab still works.",
+  "unavailable": "Local storage unavailable."
+ },
+ "toThcLab": "Open THC Lab",
+ "localMode": {
+  "title": "Local mode",
+  "noAccount": "This installation runs without a server. Data stays in this browser only – there is no account."
+ },
+ "serverOnly": {
+  "title": "Requires your own server",
+  "text": "Shared spaces and friends require a TERPGRID server and an account. In local mode, all data stays on this device."
+ },
+ "offline": {
+  "title": "Offline",
+  "collabText": "Friends and shared spaces need a connection to the server. You can keep using your private data offline."
+ },
+ "loadFailed": "Loading failed",
+ "delete": "Delete",
+ "edit": "Edit",
+ "cal": {
+  "prevMonth": "Previous month",
+  "today": "Today",
+  "nextMonth": "Next month",
+  "daysIn": "Days in {month}"
  }
 }

@@ -9,7 +9,7 @@ import { EXPENSE_CATEGORIES, type Expense, type ExpenseCategory } from '../../li
 import { EXPENSE_CATEGORY_LABEL } from '../../lib/grow/labels';
 import { ExpenseFormModal } from '../forms/GrowForms';
 import { EmptyState } from '../ui/EmptyState';
-import { intlLocale } from '../../i18n';
+import { t, intlLocale } from '../../i18n';
 
 export function money(value: number, currency: string): string {
   try {
@@ -45,10 +45,10 @@ export function ExpenseList({ expenses, growId, showGrow }: { expenses: Expense[
   const sorted = [...expenses].sort((a, b) => b.date.localeCompare(a.date));
 
   async function remove(e: Expense) {
-    if (!(await confirm({ title: 'Ausgabe löschen?', message: `${money(e.amount, settings.currency)} vom ${fmtDate(e.date)} wird entfernt.`, confirmLabel: 'Löschen', tone: 'danger' }))) return;
+    if (!(await confirm({ title: t('grow.expense.deleteTitle'), message: t('grow.expense.deleteText', { amount: money(e.amount, settings.currency), date: fmtDate(e.date) }), confirmLabel: t('common.delete'), tone: 'danger' }))) return;
     try {
       await deleteSimple('expenses', e.id);
-      toast('Ausgabe gelöscht');
+      toast(t('grow.expense.deleted'));
     } catch (err) {
       toast(errorText(err), { tone: 'error' });
     }
@@ -58,7 +58,7 @@ export function ExpenseList({ expenses, growId, showGrow }: { expenses: Expense[
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="text-xs text-ink-400">Summe erfasster Ausgaben</div>
+          <div className="text-xs text-ink-400">{t('grow.expense.total')}</div>
           <div className="font-mono text-2xl font-semibold tabular text-ink-50">{money(total, settings.currency)}</div>
         </div>
         <button type="button" className="btn-ghost" onClick={() => setForm({})}>
@@ -86,7 +86,7 @@ export function ExpenseList({ expenses, growId, showGrow }: { expenses: Expense[
         </div>
       )}
       {sorted.length === 0 ? (
-        <EmptyState compact icon={<Receipt />} title="Keine Ausgaben erfasst" />
+        <EmptyState compact icon={<Receipt />} title={t('grow.expense.none')} />
       ) : (
         <ul className="divide-y divide-white/[0.05] rounded-xl border border-white/[0.05]">
           {sorted.map((e) => (
@@ -100,10 +100,10 @@ export function ExpenseList({ expenses, growId, showGrow }: { expenses: Expense[
                 </div>
               </div>
               <span className="font-mono text-[13px] tabular text-ink-100">{money(e.amount, settings.currency)}</span>
-              <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5" aria-label="Bearbeiten" onClick={() => setForm({ expense: e })}>
+              <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5" aria-label={t('common.edit')} onClick={() => setForm({ expense: e })}>
                 <Pencil className="size-3.5" />
               </button>
-              <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5 hover:text-rose-300" aria-label="Löschen" onClick={() => remove(e)}>
+              <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5 hover:text-rose-300" aria-label={t('common.delete')} onClick={() => remove(e)}>
                 <Trash2 className="size-3.5" />
               </button>
             </li>

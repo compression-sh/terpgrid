@@ -1,0 +1,105 @@
+{
+ "widget": {
+  "stats": "Kennzahlen",
+  "reminders": "Heute & demnächst",
+  "grows": "Aktive Grows",
+  "activity": "Letzte Aktivitäten",
+  "areas": "Deine Bereiche",
+  "discover": "Weiter entdecken",
+  "photos": "Neueste Fotos"
+ },
+ "metric": {
+  "plants": {
+   "one": "{count} Pflanze",
+   "other": "{count} Pflanzen"
+  },
+  "tasks": "Aufgaben in 7 Tagen",
+  "overdue": "{count} überfällig",
+  "journal": "Journal-Einträge",
+  "collection": "In der Sammlung",
+  "strains": "Eigene Sorten",
+  "photos": "Fotos"
+ },
+ "area": {
+  "lastUpdated": "zuletzt {when}",
+  "favorites": {
+   "one": "{count} Favorit",
+   "other": "{count} Favoriten"
+  },
+  "calculations": "Gespeicherte Berechnungen",
+  "next7": "{count} in den nächsten 7 Tagen",
+  "empty": "Noch leer:"
+ },
+ "today": {
+  "requests": {
+   "one": "{count} Anfrage oder Einladung",
+   "other": "{count} Anfragen oder Einladungen"
+  },
+  "spaceNews": {
+   "one": "{count} Neuigkeit in Bereichen",
+   "other": "{count} Neuigkeiten in Bereichen"
+  },
+  "none": "Keine Aufgaben in den nächsten 7 Tagen.",
+  "markDone": "{title} als erledigt markieren",
+  "done": "Erledigt",
+  "overdue": "überfällig · {date}"
+ },
+ "undo": "Rückgängig",
+ "allGrows": "Alle Grows",
+ "fullTimeline": "Ganzer Verlauf",
+ "discover": {
+  "continueReading": "Artikel weiterlesen",
+  "readPct": "Cannabis 101 · {pct} % gelesen",
+  "favorite": "Favorit",
+  "recent": "Zuletzt angesehen",
+  "breeders": "Breeder",
+  "genetics": "Genetik",
+  "academyRead": "Academy · {count} gelesen",
+  "academy": "Academy"
+ },
+ "allPhotos": "Alle Fotos",
+ "summary": {
+  "grows": {
+   "one": "{count} aktiver Grow",
+   "other": "{count} aktive Grows"
+  },
+  "tasks": {
+   "one": "{count} Aufgabe in 7 Tagen",
+   "other": "{count} Aufgaben in 7 Tagen"
+  },
+  "news": {
+   "one": "{count} Neuigkeit",
+   "other": "{count} Neuigkeiten"
+  }
+ },
+ "title": "Übersicht",
+ "subtitle": "Deine Übersicht",
+ "customize": {
+  "done": "Fertig",
+  "button": "Anpassen",
+  "empty": "derzeit ohne Inhalt",
+  "up": "{name} nach oben",
+  "down": "{name} nach unten",
+  "show": "{name} einblenden",
+  "hide": "{name} ausblenden",
+  "later": "Erscheint, sobald es Inhalte gibt."
+ },
+ "welcome": {
+  "title": "Willkommen bei TERPGRID",
+  "text": "Dein persönlicher, privater Bereich für Grows, Fotos, Sorten-Notizen, Journal und das THC Lab. Noch ist alles leer – hier erscheinen ausschließlich deine eigenen Einträge.",
+  "firstGrow": "Ersten Grow anlegen",
+  "discover": "Sorten entdecken",
+  "backup": "Regelmäßig sichern: Backups unter „Daten & Backup“ exportieren.",
+  "privacyTitle": "Privat by Design",
+  "p1": "• Self-hosted: Daten liegen auf deinem eigenen Server",
+  "p2": "• Dort verschlüsselt gespeichert (Betreiber könnte technisch entschlüsseln)",
+  "p3": "• Kein Tracking, keine Analyse-Dienste",
+  "p4": "• Kein Konto, kein Tracking – persönliche Daten ohne Server",
+  "p5": "• Daten & Fotos bleiben in diesem Browser",
+  "p6": "• Standortdaten werden aus Fotos entfernt",
+  "p7": "• Vollständiger Export jederzeit möglich",
+  "copyServer": "Eine Kopie liegt zusätzlich unverschlüsselt in diesem Browser – auf gemeinsam genutzten Geräten beim Abmelden löschen.",
+  "copyLocal": "Browser-Daten sind gerätegebunden und können beim Löschen der Browserdaten verloren gehen."
+ },
+ "toThcLab": "Zum THC Lab"
+}

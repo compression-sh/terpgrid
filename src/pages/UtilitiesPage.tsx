@@ -68,8 +68,8 @@ function UnitConverter() {
         ]}
       />
       <div className="mt-4 grid grid-cols-2 gap-3">
-        <OptionalNumber label={u.a} unit={u.a} text={a} onText={(t) => sync('a', t)} min={kind === 'temp' ? -273.15 : 0} />
-        <OptionalNumber label={u.b} unit={u.b.split(' ')[0]} text={b} onText={(t) => sync('b', t)} min={kind === 'temp' ? -459.67 : 0} />
+        <OptionalNumber label={u.a} unit={u.a} text={a} onText={(todayStr) => sync('a', todayStr)} min={kind === 'temp' ? -273.15 : 0} />
+        <OptionalNumber label={u.b} unit={u.b.split(' ')[0]} text={b} onText={(todayStr) => sync('b', todayStr)} min={kind === 'temp' ? -459.67 : 0} />
       </div>
       <Formula>{u.formula}</Formula>
       <p className="hint mt-3">
@@ -155,13 +155,13 @@ function ExpenseCalc() {
 
 function DateCalc() {
   const { data } = useData();
-  const t = today();
-  const [from, setFrom] = useState(t);
-  const [to, setTo] = useState(addDays(t, 56));
-  const [base, setBase] = useState(t);
+  const todayStr = today();
+  const [from, setFrom] = useState(todayStr);
+  const [to, setTo] = useState(addDays(todayStr, 56));
+  const [base, setBase] = useState(todayStr);
   const [offset, setOffset] = useState('70');
   const [growId, setGrowId] = useState(data.grows[0]?.id ?? '');
-  const [growDate, setGrowDate] = useState(t);
+  const [growDate, setGrowDate] = useState(todayStr);
   const diff = from && to ? daysBetween(from, to) : undefined;
   const off = toOptionalNumber(offset);
   const grow = data.grows.find((g) => g.id === growId);

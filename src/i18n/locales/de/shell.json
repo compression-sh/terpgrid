@@ -99,5 +99,117 @@
  "language": {
   "label": "Sprache",
   "hint": "Gilt sofort, wird auf diesem Gerät und – angemeldet – mit deinem Konto gespeichert. Eigene Einträge werden nie übersetzt."
+ },
+ "palette": {
+  "group": {
+   "data": "Deine Daten",
+   "catalog": "Katalog",
+   "breeders": "Breeder",
+   "knowledge": "Wissen",
+   "glossary": "Glossar",
+   "atlas": "Terpen-Atlas",
+   "actions": "Aktionen",
+   "navigation": "Navigation"
+  },
+  "privacy": "Datenschutz-Center",
+  "sync": "Synchronisation",
+  "admin": "Administration",
+  "syncNow": "Jetzt synchronisieren",
+  "logout": "Abmelden",
+  "allMatches": "Alle Treffer für „{q}“ im Katalog",
+  "strainCount": {
+   "one": "{count} Sorte",
+   "other": "{count} Sorten"
+  },
+  "placeholder": "Suchen oder Befehl eingeben …",
+  "title": "Befehlspalette",
+  "noMatches": "Keine Treffer für „{q}“.",
+  "scope": "Gesucht wird in deinen Grows, Pflanzen, Sorten, Journal-Einträgen, der Sammlung, Laborberichten und Erinnerungen – nur lokal auf diesem Gerät.",
+  "footerServer": "Eigene Daten lokal · Katalog über deinen Server · nichts an Dritte",
+  "footerLocal": "Suche nur in deinen lokal geladenen Daten – nichts wird gesendet.",
+  "keys": "↑↓ wählen · ↵ öffnen"
+ },
+ "sync": {
+  "title": "Synchronisation"
+ },
+ "localModeFooter": "Lokalmodus: Daten nur auf diesem Gerät · keine Synchronisation · Online-Sortendaten von externen Quellen",
+ "logout": {
+  "pendingTitle": "Nicht synchronisierte Änderungen",
+  "pendingShared": {
+   "one": "{count} Änderung wurde noch nicht vom Server bestätigt. Auf einem geteilten Gerät wird die lokale Kopie beim Abmelden gelöscht – diese Änderung geht dabei verloren. Verbinde dich besser zuerst und synchronisiere. Trotzdem abmelden und löschen?",
+   "other": "{count} Änderungen wurden noch nicht vom Server bestätigt. Auf einem geteilten Gerät wird die lokale Kopie beim Abmelden gelöscht – diese Änderungen gehen dabei verloren. Verbinde dich besser zuerst und synchronisiere. Trotzdem abmelden und löschen?"
+  },
+  "pendingKeep": {
+   "one": "{count} Änderung wurde noch nicht vom Server bestätigt. Sie bleibt auf diesem Gerät gespeichert und wird beim nächsten Anmelden mit diesem Konto übertragen. Trotzdem abmelden?",
+   "other": "{count} Änderungen wurden noch nicht vom Server bestätigt. Sie bleiben auf diesem Gerät gespeichert und werden beim nächsten Anmelden mit diesem Konto übertragen. Trotzdem abmelden?"
+  },
+  "deleteAndSignOut": "Abmelden und löschen",
+  "anyway": "Trotzdem abmelden",
+  "offlineText": "Offline-Nutzung ist für dieses Konto auf diesem Gerät eingeschaltet, deshalb bleibt die lokale Kopie erhalten. Soll sie stattdessen jetzt gelöscht werden? Deine Daten bleiben auf dem Server erhalten.",
+  "deleteCopy": "Abmelden und lokale Kopie löschen",
+  "keepCopy": "Abmelden, Kopie behalten"
+ },
+ "legacy": {
+  "text": "In diesem Browser liegen noch Daten aus der bisherigen lokalen Version. Du kannst sie geprüft in dein Konto übernehmen.",
+  "action": "Ansehen und übernehmen"
+ },
+ "nudge": {
+  "text": "Schütze dein Konto zusätzlich mit Zwei-Faktor-Authentifizierung.",
+  "action": "2FA einrichten"
+ },
+ "later": "Später",
+ "update": {
+  "title": "Neue Version verfügbar.",
+  "text": "Beim Aktualisieren wird die App neu geladen. Lokal gespeicherte Einträge bleiben erhalten – ungespeicherte Formulareingaben vorher sichern.",
+  "action": "Aktualisieren"
+ },
+ "install": {
+  "ios": {
+   "title": "iPhone (Safari)",
+   "s1": "Öffne TERPGRID in Safari.",
+   "s2": "Tippe unten auf „Teilen“ (Quadrat mit Pfeil).",
+   "s3": "Wähle „Zum Home-Bildschirm“.",
+   "s4": "Bestätige mit „Hinzufügen“."
+  },
+  "ipados": {
+   "title": "iPad (Safari)",
+   "s1": "Öffne TERPGRID in Safari.",
+   "s2": "Tippe oben rechts auf „Teilen“.",
+   "s3": "Wähle „Zum Home-Bildschirm“.",
+   "s4": "Bestätige mit „Hinzufügen“."
+  },
+  "android": {
+   "title": "Android (Chrome)",
+   "s1": "Öffne TERPGRID in Chrome.",
+   "s2": "Tippe oben rechts auf das Menü (⋮).",
+   "s3": "Wähle „App installieren“ oder „Zum Startbildschirm hinzufügen“.",
+   "s4": "Bestätige mit „Installieren“."
+  },
+  "desktop": {
+   "title": "Computer (Chrome, Edge)",
+   "s1": "Öffne TERPGRID in Chrome oder Edge.",
+   "s2": "Klicke in der Adressleiste auf das Installationssymbol (Bildschirm mit Pfeil).",
+   "s3": "Bestätige mit „Installieren“.",
+   "s4": "Safari auf dem Mac (ab Version 17): Menü „Ablage“ → „Zum Dock hinzufügen“."
+  },
+  "cardTitle": "TERPGRID als App installieren",
+  "cardText": "Eigenes Symbol auf dem Startbildschirm, Vollbild ohne Browserleisten und schneller Start. Keine Installation aus einem App-Store nötig.",
+  "install": "Installieren",
+  "howTo": "So geht’s",
+  "dismiss": "Hinweis schließen"
+ },
+ "notNow": "Nicht jetzt",
+ "offlineAsk": {
+  "title": "Auf diesem Gerät auch offline arbeiten?",
+  "text": "Dann bleibt eine Kopie deiner privaten Daten nach dem Abmelden in diesem Browser gespeichert. Sie ist nicht zusätzlich verschlüsselt und nur so gut geschützt wie dein Gerät (Gerätesperre). Empfohlen nur auf eigenen Geräten. Ohne Offline-Nutzung wird die Kopie beim Abmelden gelöscht.",
+  "enable": "Offline-Nutzung einschalten",
+  "later": "Jederzeit änderbar unter Konto → Dieses Gerät."
+ },
+ "reauth": {
+  "failed": "Bestätigung fehlgeschlagen.",
+  "title": "Aktion bestätigen",
+  "text": "Aus Sicherheitsgründen bitte erneut mit deinem Passwort bestätigen.",
+  "password": "Passwort",
+  "code": "2FA-Code"
  }
 }

@@ -2,14 +2,15 @@ import { fmtDateShort, today } from '../../lib/dates';
 import { GROW_PHASES, type PhaseDates } from '../../lib/db/types';
 import { PHASE_COLOR, PHASE_LABEL, PHASE_SHORT, phaseOrderIssues, phaseSpans } from '../../lib/grow/phases';
 import { Callout } from '../ui/Callout';
+import { t } from '../../i18n';
 
 /**
  * Darstellung der erfassten Phasen als proportionale Leiste plus Meilenstein-Liste.
  * Nicht erfasste Phasen werden ausgegraut – es wird nichts geschätzt.
  */
 export function PhaseTimeline({ dates, endDate }: { dates: PhaseDates; endDate?: string }) {
-  const t = today();
-  const spans = phaseSpans(dates, t, endDate);
+  const todayStr = today();
+  const spans = phaseSpans(dates, todayStr, endDate);
   const total = spans.reduce((s, x) => s + Math.max(1, x.days), 0);
   const issues = phaseOrderIssues(dates);
 
@@ -17,7 +18,7 @@ export function PhaseTimeline({ dates, endDate }: { dates: PhaseDates; endDate?:
     <div className="space-y-4">
       {spans.length > 0 ? (
         <div>
-          <div className="flex h-9 overflow-hidden rounded-lg border border-white/[0.06]" role="img" aria-label="Phasenverlauf">
+          <div className="flex h-9 overflow-hidden rounded-lg border border-white/[0.06]" role="img" aria-label={t('grow.phases.title')}>
             {spans.map((s) => (
               <div
                 key={s.phase}
@@ -36,14 +37,14 @@ export function PhaseTimeline({ dates, endDate }: { dates: PhaseDates; endDate?:
           </div>
         </div>
       ) : (
-        <p className="hint">Noch keine erreichten Meilensteine erfasst. Phasen-Daten lassen sich über „Bearbeiten“ eintragen.</p>
+        <p className="hint">{t('grow.phases.none')}</p>
       )}
 
       <ol className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         {GROW_PHASES.map((p) => {
           const span = spans.find((s) => s.phase === p);
           const date = dates[p];
-          const future = date && date > t;
+          const future = date && date > todayStr;
           return (
             <li key={p} className={`rounded-lg border px-3 py-2 ${date ? 'border-white/[0.07] bg-white/[0.02]' : 'border-dashed border-white/[0.05] opacity-50'}`}>
               <div className="flex items-center gap-2 text-[12px] font-medium text-ink-200">
@@ -54,11 +55,11 @@ export function PhaseTimeline({ dates, endDate }: { dates: PhaseDates; endDate?:
                 {date ? (
                   <>
                     {fmtDateShort(date)}
-                    {span && ` · ${span.days} T.${span.ongoing ? ' laufend' : ''}`}
-                    {future && ' · geplant'}
+                    {span && ` · ${t('grow.phases.days', { count: span.days })}${span.ongoing ? ` ${t('grow.phases.ongoing')}` : ''}`}
+                    {future && ` · ${t('grow.phases.planned')}`}
                   </>
                 ) : (
-                  'nicht erfasst'
+                  t('grow.phases.notRecorded')
                 )}
               </div>
             </li>

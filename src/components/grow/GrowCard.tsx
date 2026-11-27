@@ -2,19 +2,20 @@ import { href } from '../../app/router';
 import { useData } from '../../app/DataProvider';
 import type { GrowProject } from '../../lib/db/types';
 import { fmtDateShort, relativeDay, today } from '../../lib/dates';
-import { PHASE_COLOR, currentPhase, growDay, phaseSpans } from '../../lib/grow/phases';
+import { PHASE_COLOR, PHASE_LABEL, currentPhase, growDay, phaseSpans } from '../../lib/grow/phases';
 import { PhotoImg } from '../photos/PhotoImg';
 import { Chip, PhaseChip } from '../ui/Chip';
+import { t } from '../../i18n';
 
 /** Karte eines Grow-Projekts (Grow-Liste). */
 export function GrowCard({ grow, compact }: { grow: GrowProject; compact?: boolean }) {
   const { data } = useData();
   const plants = data.plants.filter((p) => p.growId === grow.id);
   const photos = data.photos.filter((p) => p.growId === grow.id);
-  const t = today();
-  const day = growDay(grow.startDate, t, grow.completedDate);
-  const phase = currentPhase(grow.phaseDates, t);
-  const spans = phaseSpans(grow.phaseDates, t, grow.completedDate);
+  const todayStr = today();
+  const day = growDay(grow.startDate, todayStr, grow.completedDate);
+  const phase = currentPhase(grow.phaseDates, todayStr);
+  const spans = phaseSpans(grow.phaseDates, todayStr, grow.completedDate);
   const total = spans.reduce((s, x) => s + Math.max(1, x.days), 0);
   const cover = grow.coverPhotoId ?? [...photos].sort((a, b) => b.takenAt.localeCompare(a.takenAt))[0]?.id;
   return (
@@ -26,12 +27,12 @@ export function GrowCard({ grow, compact }: { grow: GrowProject; compact?: boole
           <div className="min-w-0">
             <div className="truncate text-[14px] font-semibold text-ink-50">{grow.name}</div>
             <div className="text-[11px] text-ink-300">
-              seit {fmtDateShort(grow.startDate)} · {plants.length} {plants.length === 1 ? 'Pflanze' : 'Pflanzen'}
+              {t('grow.card.since', { date: fmtDateShort(grow.startDate) })} · {t('grow.row.plants', { count: plants.length })}
             </div>
           </div>
           {day !== undefined ? (
             <div className="shrink-0 rounded-lg border border-white/10 bg-black/50 px-2 py-1 text-right backdrop-blur">
-              <div className="text-[9px] uppercase tracking-wider text-ink-400">Tag</div>
+              <div className="text-[9px] uppercase tracking-wider text-ink-400">{t('grow.card.day')}</div>
               <div className="font-mono text-base font-semibold leading-none text-ink-50">{day}</div>
             </div>
           ) : (
@@ -45,13 +46,13 @@ export function GrowCard({ grow, compact }: { grow: GrowProject; compact?: boole
           <span className="text-[11px] text-ink-500">{photos.length} Fotos</span>
         </div>
         {spans.length > 0 ? (
-          <div className="flex h-1.5 overflow-hidden rounded-full bg-ink-700" aria-label="Erfasste Phasen">
+          <div className="flex h-1.5 overflow-hidden rounded-full bg-ink-700" aria-label={t('grow.card.phases')}>
             {spans.map((s) => (
-              <div key={s.phase} title={`${s.phase}: ${s.days} Tage`} style={{ width: `${(Math.max(1, s.days) / total) * 100}%`, background: PHASE_COLOR[s.phase], opacity: s.ongoing ? 1 : 0.6 }} />
+              <div key={s.phase} title={t('grow.row.phaseDays', { phase: PHASE_LABEL[s.phase], count: s.days })} style={{ width: `${(Math.max(1, s.days) / total) * 100}%`, background: PHASE_COLOR[s.phase], opacity: s.ongoing ? 1 : 0.6 }} />
             ))}
           </div>
         ) : (
-          <div className="h-1.5 rounded-full bg-ink-700" title="Noch keine Meilensteine erfasst" />
+          <div className="h-1.5 rounded-full bg-ink-700" title={t('grow.row.noMilestones')} />
         )}
       </div>
     </a>

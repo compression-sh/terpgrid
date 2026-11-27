@@ -64,7 +64,7 @@ export function DataPage() {
   const [mode, setMode] = useState<RestoreMode>('merge');
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteText, setDeleteText] = useState('');
-  const t = today();
+  const todayStr = today();
 
   const refreshEstimate = () => storageEstimate().then(setEstimate);
   useEffect(() => {
@@ -73,7 +73,7 @@ export function DataPage() {
 
   const photoBytes = data.photos.reduce((s, p) => s + p.size, 0);
   const counts = (Object.keys(STORE_LABEL) as RecordStore[]).map((k) => ({ k, n: data[k].length }));
-  const lastBackupDays = settings.lastBackupAt ? daysBetween(today(new Date(settings.lastBackupAt)), t) : undefined;
+  const lastBackupDays = settings.lastBackupAt ? daysBetween(today(new Date(settings.lastBackupAt)), todayStr) : undefined;
 
   async function run(label: string, fn: () => Promise<void>) {
     setBusy(label);
@@ -89,7 +89,7 @@ export function DataPage() {
   const fullBackup = (includePhotos: boolean) =>
     run(includePhotos ? 'backup' : 'backup-nophotos', async () => {
       const { bytes, manifest } = await createFullBackup({ includePhotos });
-      download(bytes, `terpgrid-backup-${t}${includePhotos ? '' : '-ohne-fotos'}.zip`, 'application/zip');
+      download(bytes, `terpgrid-backup-${todayStr}${includePhotos ? '' : '-ohne-fotos'}.zip`, 'application/zip');
       await updateSettings({ lastBackupAt: manifest.exportedAt });
       toast(`Backup erstellt (${formatBytes(bytes.byteLength)})`);
     });
@@ -245,7 +245,7 @@ export function DataPage() {
               type="button"
               className="btn-ghost"
               disabled={!!busy}
-              onClick={() => run('json', async () => download(await exportStructuredJson(), `terpgrid-daten-${t}.json`, 'application/json'))}
+              onClick={() => run('json', async () => download(await exportStructuredJson(), `terpgrid-daten-${todayStr}.json`, 'application/json'))}
             >
               <FileJson className="size-4" /> Strukturierte Daten (JSON)
             </button>
@@ -256,7 +256,7 @@ export function DataPage() {
               onClick={() =>
                 run('photos', async () => {
                   const bytes = await exportPhotosZip();
-                  download(bytes, `terpgrid-fotos-${t}.zip`, 'application/zip');
+                  download(bytes, `terpgrid-fotos-${todayStr}.zip`, 'application/zip');
                   toast(`${data.photos.length} Fotos exportiert`);
                 })
               }

@@ -1,0 +1,130 @@
+{
+ "metric": {
+  "height": "Height",
+  "tempShort": "Temp."
+ },
+ "row": {
+  "day": "Day {day}",
+  "starts": "starts {when}",
+  "plants": {
+   "one": "{count} plant",
+   "other": "{count} plants"
+  },
+  "photos": {
+   "one": "{count} photo",
+   "other": "{count} photos"
+  },
+  "phaseDays": {
+   "one": "{phase} {count} day",
+   "other": "{phase} {count} days"
+  },
+  "phases": "Phases: {list}",
+  "noMilestones": "No milestones recorded yet",
+  "noMeasurements": "No measurements yet",
+  "lastMeasured": "last {when}",
+  "heightSeries": {
+   "one": "Height: {count} measurement",
+   "other": "Height: {count} measurements"
+  },
+  "log": "Log"
+ },
+ "doc": {
+  "label": "Documentation: {list}",
+  "ok": "complete",
+  "partial": "partial",
+  "missing": "missing"
+ },
+ "activity": {
+  "estimated": "estimated",
+  "actions": "Actions",
+  "deleteTitle": "Delete entry?",
+  "deleted": "Entry deleted",
+  "all": "All",
+  "emptyTitle": "No entries yet",
+  "emptyText": "Watering, feeding, measurements, observations – all with a timestamp.",
+  "wholeGrow": "whole grow",
+  "openPhoto": "Open photo",
+  "deleteText": "“{title}” from {date} will be removed. Linked photos are kept."
+ },
+ "expense": {
+  "deleteTitle": "Delete expense?",
+  "deleted": "Expense deleted",
+  "total": "Total recorded expenses",
+  "none": "No expenses recorded",
+  "deleteText": "{amount} from {date} will be removed."
+ },
+ "card": {
+  "since": "since {date}",
+  "day": "Day",
+  "startsIn": "starts {when}",
+  "phases": "Recorded phases"
+ },
+ "context": {
+  "strainsTitle": "Strains & genetics",
+  "strainsSub": "From the strain links of your plants",
+  "noBreeder": "Breeder not specified",
+  "catalog": "Catalogue",
+  "lineage": "Lineage",
+  "upcoming": "Upcoming",
+  "next14": "Reminders for the next 14 days",
+  "reminder": "Reminder",
+  "noReminders": "No open reminders for this grow.",
+  "spaceTitle": "Space & equipment",
+  "spaceSub": "Via the space assignment of the plants",
+  "collection": "Collection",
+  "noEquipment": "No equipment assigned.",
+  "missingPower": {
+   "one": "{count} device without power/runtime not included",
+   "other": "{count} devices without power/runtime not included"
+  },
+  "noSpaceA": "No plant is assigned to a grow space. You manage spaces and equipment in the",
+  "noSpaceB": "; the assignment is made in the plant profile."
+ },
+ "phases": {
+  "title": "Phase timeline",
+  "none": "No milestones reached yet. Phase dates can be entered via “Edit”.",
+  "notRecorded": "not recorded",
+  "planned": "planned",
+  "days": "{count} d",
+  "ongoing": "ongoing"
+ },
+ "chart": {
+  "rangeAll": "All",
+  "rangeDays": {
+   "one": "{count} day",
+   "other": "{count} days"
+  },
+  "emptyTitle": "No measurements yet",
+  "emptyText": "Record height, climate, pH, EC or light via “Add entry”.",
+  "belowTarget": "below target range",
+  "aboveTarget": "above target range",
+  "metric": "Metric",
+  "period": "Period",
+  "allContexts": "All contexts",
+  "noneInPeriod": "No measurements in this period",
+  "changePeriod": "Change the period or context.",
+  "measurements": "Measurements",
+  "lastValue": "Last value",
+  "minMax": "Min – max",
+  "outside": "Outside target range",
+  "maxGap": "Largest gap",
+  "time": "Time",
+  "ref": "Reference",
+  "context": "Context",
+  "linesOff": "Lines off",
+  "linesOn": "Lines on",
+  "ofCount": "{n} of {total}",
+  "days": {
+   "one": "{count} day",
+   "other": "{count} days"
+  },
+  "aria": "Chart {name}: {count} data points{flagged}. Values also available as a table.",
+  "ariaFlagged": ", {count} outside your own target range",
+  "legendPoints": "Dots = recorded measurements",
+  "legendDiamonds": ", diamonds = outside your own target range (green area – not a general recommendation)",
+  "legendLines": "Dashed lines only connect consecutive data points.",
+  "table": "Table",
+  "belowShort": "↓ below target",
+  "aboveShort": "↑ above target"
+ }
+}
