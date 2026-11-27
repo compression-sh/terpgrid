@@ -281,5 +281,12 @@
   "labReports": "Lab report",
   "notes": "Note",
   "tasks": "Task"
+ },
+ "sample": {
+  "Blüte": "Flower",
+  "Extrakt": "Extract",
+  "Öl": "Oil",
+  "Edible": "Edible",
+  "Harz": "Resin"
  }
 }

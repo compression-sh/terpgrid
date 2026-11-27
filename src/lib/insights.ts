@@ -4,6 +4,7 @@
  * Keine Empfehlungen, keine Vorhersagen, keine Vergleiche mit anderen Personen.
  */
 import type { Activity, Expense, GrowProject, JournalEntry, LabReport, Photo, Plant, Strain } from './db/types';
+import { t } from '../i18n';
 
 export interface Metric {
   value: number | null;
@@ -65,15 +66,15 @@ export function computeInsights(
   return {
     activeGrows: active.length,
     completedGrows: d.grows.filter((g) => g.status === 'completed').length,
-    avgGrowDays: durations.length >= 1 ? { value: avg(durations), n: durations.length } : { value: null, n: 0, missing: 'Noch kein abgeschlossener Grow mit Start- und Enddatum.' },
+    avgGrowDays: durations.length >= 1 ? { value: avg(durations), n: durations.length } : { value: null, n: 0, get missing() { return t('mine.ins.noCompleted'); } },
     activePlants: activePlants.length,
-    avgPlantAgeDays: ages.length ? { value: avg(ages), n: ages.length } : { value: null, n: 0, missing: 'Keine Pflanzen in aktiven Grows.' },
-    oldestPlantDays: ages.length ? { value: Math.max(...ages), n: ages.length } : { value: null, n: 0, missing: 'Keine Pflanzen in aktiven Grows.' },
+    avgPlantAgeDays: ages.length ? { value: avg(ages), n: ages.length } : { value: null, n: 0, get missing() { return t('mine.ins.noPlants'); } },
+    oldestPlantDays: ages.length ? { value: Math.max(...ages), n: ages.length } : { value: null, n: 0, get missing() { return t('mine.ins.noPlants'); } },
     photos30d: d.photos.filter((p) => p.takenAt.slice(0, 10) > since30 && p.takenAt.slice(0, 10) <= today).length,
     photosPerWeek12w:
       d.photos.length >= 3 && weeksCovered >= 2
         ? { value: Math.round((photos12w / weeksCovered) * 10) / 10, n: photos12w }
-        : { value: null, n: d.photos.length, missing: 'Mindestens 3 Fotos über 2 Wochen nötig.' },
+        : { value: null, n: d.photos.length, get missing() { return t('mine.ins.photos'); } },
     measurements: measurementActs.length,
     measurementKinds: [...kinds].sort(),
     strains: {
@@ -86,8 +87,8 @@ export function computeInsights(
     journal: {
       total: d.journal.length,
       last30d: d.journal.filter((j) => j.date.slice(0, 10) > since30 && j.date.slice(0, 10) <= today).length,
-      avgRating: ratings.length >= 3 ? { value: avg(ratings), n: ratings.length } : { value: null, n: ratings.length, missing: 'Mindestens 3 bewertete Einträge nötig.' },
+      avgRating: ratings.length >= 3 ? { value: avg(ratings), n: ratings.length } : { value: null, n: ratings.length, get missing() { return t('mine.ins.ratings'); } },
     },
-    expenses12m: exp.length ? { value: Math.round(exp.reduce((s, e) => s + e.amount, 0) * 100) / 100, n: exp.length } : { value: null, n: 0, missing: 'Keine Ausgaben in den letzten 12 Monaten.' },
+    expenses12m: exp.length ? { value: Math.round(exp.reduce((s, e) => s + e.amount, 0) * 100) / 100, n: exp.length } : { value: null, n: 0, get missing() { return t('mine.ins.noExpenses'); } },
   };
 }

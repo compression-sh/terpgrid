@@ -18,6 +18,7 @@ import { computeInsights } from '../lib/insights';
 import { METRICS } from '../lib/grow/series';
 import { downloadFile } from '../lib/exporters';
 import { type ExplorerRange, RANGE_LABEL, expenseCsv, journalCsv, labComparison, labCsv, measurementCsv, scopeData } from '../lib/explorer';
+import { t } from '../i18n';
 
 const tooltipStyle = { background: '#0e1211', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, fontSize: 12 };
 
@@ -41,23 +42,23 @@ function InsightsHeader() {
   const { data, settings } = useData();
   const todayStr = today();
   const i = useMemo(() => computeInsights(data, todayStr), [data, todayStr]);
-  const d = (n: number | null) => (n === null ? '–' : `${fmt(n, 1)} Tage`);
+  const d = (n: number | null) => (n === null ? '–' : t('mine.an.days', { n: fmt(n, 1) }));
   return (
     <div className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
-      <Kpi label="Aktive Grows" value={String(i.activeGrows)} sub={`${i.completedGrows} abgeschlossen`} />
-      <Kpi label="Ø dokumentierte Grow-Dauer" value={d(i.avgGrowDays.value)} sub={`aus ${i.avgGrowDays.n} abgeschlossenen`} missing={i.avgGrowDays.missing} />
-      <Kpi label="Pflanzen in aktiven Grows" value={String(i.activePlants)} sub={i.oldestPlantDays.value !== null ? `älteste ${i.oldestPlantDays.value} Tage · Ø ${fmt(i.avgPlantAgeDays.value ?? 0, 0)}` : undefined} />
-      <Kpi label="Fotos (30 Tage)" value={String(i.photos30d)} sub={i.photosPerWeek12w.value !== null ? `Ø ${fmt(i.photosPerWeek12w.value, 1)} pro Woche (12 Wo.)` : undefined} />
-      <Kpi label="Messungen" value={String(i.measurements)} sub={i.measurementKinds.length ? i.measurementKinds.map((k) => METRICS.find((m) => m.key === k)?.label ?? k).slice(0, 5).join(', ') : 'keine Messwerte erfasst'} />
-      <Kpi label="Eigene Sorten" value={String(i.strains.total)} sub={`${i.strains.favorites} Favoriten · ${i.strains.fromDiscover} aus Discover · ${i.strains.withLab} mit Laborwerten`} />
-      <Kpi label="Journal" value={String(i.journal.total)} sub={`${i.journal.last30d} in 30 Tagen${i.journal.avgRating.value !== null ? ` · Ø Bewertung ${fmt(i.journal.avgRating.value, 1)}` : ''}`} />
-      <Kpi label="Ausgaben (12 Monate)" value={i.expenses12m.value !== null ? money(i.expenses12m.value, settings.currency) : '–'} sub={`${i.expenses12m.n} Posten`} missing={i.expenses12m.missing} />
+      <Kpi label={t('mine.an.activeGrows')} value={String(i.activeGrows)} sub={t('mine.an.completed', { n: i.completedGrows })} />
+      <Kpi label={t('mine.an.avgGrow')} value={d(i.avgGrowDays.value)} sub={t('mine.an.fromCompleted', { n: i.avgGrowDays.n })} missing={i.avgGrowDays.missing} />
+      <Kpi label={t('mine.an.activePlants')} value={String(i.activePlants)} sub={i.oldestPlantDays.value !== null ? t('mine.an.oldest', { n: i.oldestPlantDays.value, avg: fmt(i.avgPlantAgeDays.value ?? 0, 0) }) : undefined} />
+      <Kpi label={t('mine.an.photos30')} value={String(i.photos30d)} sub={i.photosPerWeek12w.value !== null ? t('mine.an.perWeek', { n: fmt(i.photosPerWeek12w.value, 1) }) : undefined} />
+      <Kpi label={t('mine.an.measurements')} value={String(i.measurements)} sub={i.measurementKinds.length ? i.measurementKinds.map((k) => METRICS.find((m) => m.key === k)?.label ?? k).slice(0, 5).join(', ') : t('mine.an.noMeas')} />
+      <Kpi label={t('mine.an.ownStrains')} value={String(i.strains.total)} sub={t('mine.an.strainsSub', { fav: i.strains.favorites, disc: i.strains.fromDiscover, lab: i.strains.withLab })} />
+      <Kpi label={t('mine.an.journal')} value={String(i.journal.total)} sub={t('mine.an.journalSub', { n: i.journal.last30d }) + (i.journal.avgRating.value !== null ? t('mine.an.avgRating', { v: fmt(i.journal.avgRating.value, 1) }) : '')} />
+      <Kpi label={t('mine.an.expenses12')} value={i.expenses12m.value !== null ? money(i.expenses12m.value, settings.currency) : '–'} sub={t('mine.an.items', { n: i.expenses12m.n })} missing={i.expenses12m.missing} />
     </div>
   );
 }
 
 function NoData({ text }: { text: string }) {
-  return <EmptyState compact title="Noch keine Daten" text={text} />;
+  return <EmptyState compact title={t('mine.an.noData')} text={text} />;
 }
 
 export function AnalyticsPage() {
@@ -76,13 +77,13 @@ export function AnalyticsPage() {
   const journal = useMemo(() => journalSummary(sd.journal, todayStr), [sd.journal, todayStr]);
   const measurementActs = sd.activities;
   const lab = useMemo(() => labComparison(sd.labReports, data.strains), [sd.labReports, data.strains]);
-  const scopeLabel = `${RANGE_LABEL[range]}${growFilter ? ` · ${data.grows.find((g) => g.id === growFilter)?.name ?? ''}` : ' · alle Grows'}`;
+  const scopeLabel = `${RANGE_LABEL[range]}${growFilter ? ` · ${data.grows.find((g) => g.id === growFilter)?.name ?? ''}` : t('mine.an.allGrowsSuffix')}`;
   const stamp = todayStr;
   const exportsList = [
-    { label: `Messwerte (${measurementActs.filter((a) => a.measurements).length})`, run: () => downloadFile(`terpgrid-messwerte-${stamp}.csv`, measurementCsv(measurementActs, data.grows, data.plants), 'text/csv;charset=utf-8') },
-    { label: `Ausgaben (${sd.expenses.length})`, run: () => downloadFile(`terpgrid-ausgaben-${stamp}.csv`, expenseCsv(sd.expenses, data.grows, EXPENSE_CATEGORY_LABEL), 'text/csv;charset=utf-8') },
-    { label: `Journal (${sd.journal.length})`, run: () => downloadFile(`terpgrid-journal-${stamp}.csv`, journalCsv(sd.journal, data.strains), 'text/csv;charset=utf-8') },
-    { label: `Laborberichte (${lab.rows.length})`, run: () => downloadFile(`terpgrid-labor-${stamp}.csv`, labCsv(lab), 'text/csv;charset=utf-8') },
+    { label: t('mine.an.csvMeas', { n: measurementActs.filter((a) => a.measurements).length }), run: () => downloadFile(`terpgrid-messwerte-${stamp}.csv`, measurementCsv(measurementActs, data.grows, data.plants), 'text/csv;charset=utf-8') },
+    { label: t('mine.an.csvExp', { n: sd.expenses.length }), run: () => downloadFile(`terpgrid-ausgaben-${stamp}.csv`, expenseCsv(sd.expenses, data.grows, EXPENSE_CATEGORY_LABEL), 'text/csv;charset=utf-8') },
+    { label: t('mine.an.csvJournal', { n: sd.journal.length }), run: () => downloadFile(`terpgrid-journal-${stamp}.csv`, journalCsv(sd.journal, data.strains), 'text/csv;charset=utf-8') },
+    { label: t('mine.an.csvLab', { n: lab.rows.length }), run: () => downloadFile(`terpgrid-labor-${stamp}.csv`, labCsv(lab), 'text/csv;charset=utf-8') },
   ];
 
   const hasAny = data.grows.length + data.journal.length + data.photos.length + data.expenses.length + data.strains.length > 0;
@@ -94,27 +95,27 @@ export function AnalyticsPage() {
   return (
     <div>
       <PageHeader
-        title="Insights"
-        subtitle="Kennzahlen und Auswertungen ausschließlich aus deinen eigenen Einträgen. Fehlende Werte werden nicht ergänzt; reicht die Datengrundlage nicht, steht das dabei. Keine Empfehlungen, keine Vorhersagen."
+        title={t('mine.an.title')}
+        subtitle={t('mine.an.subtitle')}
       />
       {!hasAny ? (
         <div className="card">
-          <EmptyState icon={<BarChart3 />} title="Noch nichts auszuwerten" text="Sobald du Grows, Messwerte, Ausgaben, Sorten oder Journal-Einträge erfasst, erscheinen hier Diagramme. Es werden keine Beispieldaten angezeigt." />
+          <EmptyState icon={<BarChart3 />} title={t('mine.an.emptyTitle')} text={t('mine.an.emptyText')} />
         </div>
       ) : (
         <div className="space-y-5">
           <InsightsHeader />
-          <section aria-label="Filter für die Auswertungen" className="sticky top-0 z-20 -mx-1 flex flex-wrap items-center gap-2 rounded-2xl border border-white/[0.06] bg-ink-950/85 px-3 py-2.5 backdrop-blur-md">
+          <section aria-label={t('mine.an.filters')} className="sticky top-0 z-20 -mx-1 flex flex-wrap items-center gap-2 rounded-2xl border border-white/[0.06] bg-ink-950/85 px-3 py-2.5 backdrop-blur-md">
             <SlidersHorizontal className="size-4 text-ink-500" aria-hidden />
-            <select aria-label="Zeitraum" className="input-base h-9 w-auto text-[13px]" value={range} onChange={(e) => setRange(e.target.value as ExplorerRange)}>
+            <select aria-label={t('mine.an.period')} className="input-base h-9 w-auto text-[13px]" value={range} onChange={(e) => setRange(e.target.value as ExplorerRange)}>
               {(Object.keys(RANGE_LABEL) as ExplorerRange[]).map((r) => (
                 <option key={r} value={r}>
                   {RANGE_LABEL[r]}
                 </option>
               ))}
             </select>
-            <select aria-label="Grow" className="input-base h-9 w-auto max-w-[14rem] text-[13px]" value={growFilter} onChange={(e) => setGrowFilter(e.target.value)}>
-              <option value="">Alle Grows</option>
+            <select aria-label={t('mine.an.grow')} className="input-base h-9 w-auto max-w-[14rem] text-[13px]" value={growFilter} onChange={(e) => setGrowFilter(e.target.value)}>
+              <option value="">{t('mine.an.allGrows')}</option>
               {data.grows.map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.name}
@@ -132,9 +133,9 @@ export function AnalyticsPage() {
             Die Kacheln oben zeigen den Gesamtstand; alle Auswertungen darunter folgen dem Filter. Journal und Laborberichte erscheinen bei einem Grow-Filter nur, wenn sie über die Sorte einer Pflanze dieses Grows verknüpft sind.
           </p>
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-            <Card title="Grow-Dauer" subtitle="Tage seit Start; laufende Grows bis heute" icon={<Sprout className="size-4" />}>
+            <Card title={t('mine.an.growDur')} subtitle={t('mine.an.growDurSub')} icon={<Sprout className="size-4" />}>
               {durations.length === 0 ? (
-                <NoData text="Lege einen Grow an." />
+                <NoData text={t('mine.an.addGrow')} />
               ) : (
                 <ul className="space-y-3">
                   {durations.map((d) => {
@@ -153,9 +154,9 @@ export function AnalyticsPage() {
                         <div className="h-3 rounded-full bg-ink-700" style={{ width: `${Math.max(4, (d.days / max) * 100)}%` }}>
                           <div className="flex h-full overflow-hidden rounded-full">
                             {d.spans.length ? (
-                              d.spans.map((s) => <div key={s.phase} title={`${PHASE_SHORT[s.phase]}: ${s.days} T.`} style={{ width: `${(Math.max(1, s.days) / total) * 100}%`, background: PHASE_COLOR[s.phase], opacity: 0.75 }} />)
+                              d.spans.map((s) => <div key={s.phase} title={t('mine.an.phaseDays', { p: PHASE_SHORT[s.phase], n: s.days })} style={{ width: `${(Math.max(1, s.days) / total) * 100}%`, background: PHASE_COLOR[s.phase], opacity: 0.75 }} />)
                             ) : (
-                              <div className="h-full w-full bg-ink-500" title="Keine Phasen erfasst" />
+                              <div className="h-full w-full bg-ink-500" title={t('mine.an.noPhases')} />
                             )}
                           </div>
                         </div>
@@ -164,21 +165,21 @@ export function AnalyticsPage() {
                   })}
                 </ul>
               )}
-              <p className="hint mt-4">Phasenanteile nur aus erfassten Meilensteinen. Graue Balken: keine Meilensteine erfasst.</p>
+              <p className="hint mt-4">{t('mine.an.phaseNote')}</p>
             </Card>
 
-            <Card title="Ausgaben" subtitle={`Summe: ${money(byCat.reduce((s, c) => s + c.total, 0), settings.currency)}`} icon={<Receipt className="size-4" />}>
+            <Card title={t('mine.an.expenses')} subtitle={t('mine.an.sum', { v: money(byCat.reduce((s, c) => s + c.total, 0), settings.currency) })} icon={<Receipt className="size-4" />}>
               {byCat.length === 0 ? (
-                <NoData text="Ausgaben im Grow oder in der Sammlung erfassen." />
+                <NoData text={t('mine.an.addExpenses')} />
               ) : (
                 <>
-                  <div className="h-52" role="img" aria-label="Ausgaben nach Kategorie">
+                  <div className="h-52" role="img" aria-label={t('mine.an.byCat')}>
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={byCat.map((c) => ({ ...c, label: EXPENSE_CATEGORY_LABEL[c.category] }))} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 8 }}>
                         <CartesianGrid horizontal={false} />
                         <XAxis type="number" tickLine={false} axisLine={false} tickFormatter={(v: number) => money(v, settings.currency).replace(/,00/, '')} />
                         <YAxis type="category" dataKey="label" tickLine={false} axisLine={false} width={84} />
-                        <Tooltip cursor={{ fill: 'rgba(255,255,255,0.03)' }} contentStyle={tooltipStyle} formatter={(v: number) => [money(v, settings.currency), 'Summe']} />
+                        <Tooltip cursor={{ fill: 'rgba(255,255,255,0.03)' }} contentStyle={tooltipStyle} formatter={(v: number) => [money(v, settings.currency), t('mine.an.sumLabel')]} />
                         <Bar dataKey="total" radius={[0, 4, 4, 0]} maxBarSize={26} isAnimationActive={false}>
                           {byCat.map((c) => (
                             <Cell key={c.category} fill={CATEGORY_COLOR[c.category]} fillOpacity={0.75} />
@@ -201,26 +202,26 @@ export function AnalyticsPage() {
           </div>
 
           <Card
-            title="Messwert-Verlauf"
-            subtitle={`Dokumentierte Messungen · ${scopeLabel}`}
+            title={t('mine.an.measHist')}
+            subtitle={t('mine.an.measSub', { scope: scopeLabel })}
             icon={<Ruler className="size-4" />}
           >
             <MeasurementCharts activities={measurementActs} />
           </Card>
 
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-            <Card title="Ernteergebnisse" subtitle="Trockengewicht je Pflanze (eigene Angaben)" icon={<Scale className="size-4" />}>
+            <Card title={t('mine.an.harvest')} subtitle={t('mine.an.harvestSub')} icon={<Scale className="size-4" />}>
               {harvest.length === 0 ? (
-                <NoData text="Ergebnis im Pflanzenprofil unter „Bearbeiten“ erfassen." />
+                <NoData text={t('mine.an.harvestHint')} />
               ) : (
                 <>
-                  <div className="h-56" role="img" aria-label="Trockengewicht je Pflanze">
+                  <div className="h-56" role="img" aria-label={t('mine.an.dryPerPlant')}>
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={harvest.filter((h) => h.dryWeightG !== undefined)} margin={{ top: 4, right: 0, bottom: 0, left: -12 }}>
                         <CartesianGrid vertical={false} />
                         <XAxis dataKey="name" tickLine={false} axisLine={false} interval={0} tick={{ fontSize: 10 }} />
                         <YAxis tickLine={false} axisLine={false} unit=" g" width={56} />
-                        <Tooltip cursor={{ fill: 'rgba(255,255,255,0.03)' }} contentStyle={tooltipStyle} formatter={(v: number) => [`${fmt(v)} g`, 'Trocken']} />
+                        <Tooltip cursor={{ fill: 'rgba(255,255,255,0.03)' }} contentStyle={tooltipStyle} formatter={(v: number) => [`${fmt(v)} g`, t('mine.an.dry')]} />
                         <Bar dataKey="dryWeightG" fill="#fbbf24" fillOpacity={0.7} radius={[4, 4, 0, 0]} maxBarSize={44} isAnimationActive={false} />
                       </BarChart>
                     </ResponsiveContainer>
@@ -228,9 +229,9 @@ export function AnalyticsPage() {
                   <table className="mt-3 w-full text-left text-xs">
                     <thead className="text-ink-500">
                       <tr>
-                        <th className="py-1 font-medium">Pflanze</th>
-                        <th className="py-1 font-medium">Sorte</th>
-                        <th className="py-1 text-right font-medium">Nass</th>
+                        <th className="py-1 font-medium">{t('mine.an.plant')}</th>
+                        <th className="py-1 font-medium">{t('mine.an.strain')}</th>
+                        <th className="py-1 text-right font-medium">{t('mine.an.wet')}</th>
                         <th className="py-1 text-right font-medium">Trocken</th>
                       </tr>
                     </thead>
@@ -254,9 +255,9 @@ export function AnalyticsPage() {
               )}
             </Card>
 
-            <Card title="Sorten-Bewertungen" subtitle="Eigene Bewertung und Ø aus Journal" icon={<Leaf className="size-4" />}>
+            <Card title={t('mine.an.ratings')} subtitle={t('mine.an.ratingsSub')} icon={<Leaf className="size-4" />}>
               {ratings.length === 0 ? (
-                <NoData text="Sorten bewerten oder Journal-Einträge mit Bewertung anlegen." />
+                <NoData text={t('mine.an.ratingsHint')} />
               ) : (
                 <ul className="space-y-2.5">
                   {ratings.map((r) => (
@@ -266,8 +267,8 @@ export function AnalyticsPage() {
                           {r.name}
                         </a>
                         <span className="shrink-0 font-mono text-[11px] text-ink-400">
-                          {r.rating !== undefined && `eigene ${r.rating}/5`}
-                          {r.journalAvg !== undefined && ` · Journal Ø ${fmt(r.journalAvg)} (${r.journalCount})`}
+                          {r.rating !== undefined && t('mine.an.own', { n: r.rating })}
+                          {r.journalAvg !== undefined && t('mine.an.journalAvg', { v: fmt(r.journalAvg), n: r.journalCount })}
                         </span>
                       </div>
                       <div className="mt-1 grid grid-cols-2 gap-1">
@@ -284,17 +285,17 @@ export function AnalyticsPage() {
               )}
             </Card>
 
-            <Card title="Journal-Verlauf" subtitle={`${journal.total} Einträge im Filter · Monate der letzten 12 Monate`} icon={<BookOpenText className="size-4" />}>
+            <Card title={t('mine.an.journalHistTitle')} subtitle={t('mine.an.journalHist', { count: journal.total })} icon={<BookOpenText className="size-4" />}>
               {journal.total === 0 ? (
-                <NoData text="Das Journal ist optional." />
+                <NoData text={t('mine.an.journalOptional')} />
               ) : (
-                <div className="h-48" role="img" aria-label="Journal-Einträge pro Monat">
+                <div className="h-48" role="img" aria-label={t('mine.an.journalPerMonth')}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={journal.months} margin={{ top: 4, right: 0, bottom: 0, left: -28 }}>
                       <CartesianGrid vertical={false} />
                       <XAxis dataKey="label" tickLine={false} axisLine={false} interval={1} />
                       <YAxis allowDecimals={false} tickLine={false} axisLine={false} />
-                      <Tooltip cursor={{ fill: 'rgba(255,255,255,0.03)' }} contentStyle={tooltipStyle} formatter={(v: number) => [v, 'Einträge']} />
+                      <Tooltip cursor={{ fill: 'rgba(255,255,255,0.03)' }} contentStyle={tooltipStyle} formatter={(v: number) => [v, t('mine.an.entries')]} />
                       <Bar dataKey="count" fill="#38bdf8" fillOpacity={0.65} radius={[3, 3, 0, 0]} maxBarSize={22} isAnimationActive={false} />
                     </BarChart>
                   </ResponsiveContainer>
@@ -302,17 +303,17 @@ export function AnalyticsPage() {
               )}
             </Card>
 
-            <Card title="Foto-Aktivität" subtitle="Aufnahmetage der letzten 26 Wochen (gefiltert)" icon={<Camera className="size-4" />}>
+            <Card title={t('mine.an.photoAct')} subtitle={t('mine.an.photoActSub')} icon={<Camera className="size-4" />}>
               {sd.photos.length === 0 ? (
-                <NoData text="Noch keine Fotos." />
+                <NoData text={t('mine.an.noPhotos')} />
               ) : (
                 <>
                   <div className="overflow-x-auto pb-1">
-                    <div className="flex gap-[3px]" role="img" aria-label="Foto-Heatmap">
+                    <div className="flex gap-[3px]" role="img" aria-label={t('mine.an.heatmap')}>
                       {weeks.map((w) => (
                         <div key={w[0]!.date} className="flex flex-col gap-[3px]">
                           {w.map((d) => (
-                            <div key={d.date} className="size-3 rounded-[3px]" style={{ background: shades[level(d.count)] }} title={`${fmtDate(d.date)}: ${d.count} Fotos`} />
+                            <div key={d.date} className="size-3 rounded-[3px]" style={{ background: shades[level(d.count)] }} title={t('mine.an.photoDay', { date: fmtDate(d.date), count: d.count })} />
                           ))}
                         </div>
                       ))}
@@ -330,9 +331,9 @@ export function AnalyticsPage() {
             </Card>
           </div>
 
-          <Card title="Laborberichte im Vergleich" subtitle="Eigene Proben nebeneinander – Werte in %, aus mg/g umgerechnet (÷ 10); jede Zeile gilt nur für ihre Probe" icon={<FlaskRound className="size-4" />}>
+          <Card title={t('mine.an.labCmp')} subtitle={t('mine.an.labCmpSub')} icon={<FlaskRound className="size-4" />}>
             {lab.rows.length === 0 ? (
-              <NoData text="Laborberichte unter „Laborberichte“ erfassen." />
+              <NoData text={t('mine.an.labHint')} />
             ) : (
               <LabTable cmp={lab} />
             )}
@@ -360,11 +361,11 @@ function CsvMenu({ items }: { items: { label: string; run: () => void }[] }) {
   return (
     <div className="relative" ref={ref}>
       <button type="button" className="btn-ghost h-9 py-0 text-[13px]" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-        <Download className="size-4" aria-hidden /> CSV-Export
+        <Download className="size-4" aria-hidden /> {t('mine.an.csv')}
       </button>
       {open && (
         <div role="menu" className="absolute right-0 z-30 mt-2 w-60 rounded-xl border border-white/[0.08] bg-ink-850 p-1 shadow-2xl">
-          <p className="px-2.5 pb-1 pt-1.5 text-[10.5px] text-ink-500">Gefilterte Daten · lokal erzeugt, nichts wird hochgeladen</p>
+          <p className="px-2.5 pb-1 pt-1.5 text-[10.5px] text-ink-500">{t('mine.an.csvSub')}</p>
           {items.map((it) => (
             <button
               key={it.label}
@@ -391,10 +392,10 @@ function LabTable({ cmp }: { cmp: ReturnType<typeof labComparison> }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[560px] text-left text-[12px]">
-        <caption className="sr-only">Cannabinoide und Terpene eigener Laborberichte in Prozent</caption>
+        <caption className="sr-only">{t('mine.an.labCaption')}</caption>
         <thead className="text-[11px] text-ink-500">
           <tr>
-            <th className="py-1.5 pr-3 font-medium">Probe</th>
+            <th className="py-1.5 pr-3 font-medium">{t('mine.an.sample')}</th>
             <th className="py-1.5 pr-3 text-right font-medium">THC</th>
             <th className="py-1.5 pr-3 text-right font-medium">THCA</th>
             <th className="py-1.5 pr-3 text-right font-medium">CBD</th>
@@ -403,7 +404,7 @@ function LabTable({ cmp }: { cmp: ReturnType<typeof labComparison> }) {
                 {todayStr.label}
               </th>
             ))}
-            <th className="py-1.5 text-right font-medium">Terpene Σ</th>
+            <th className="py-1.5 text-right font-medium">{t('mine.an.terpSum')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-white/[0.04] font-mono tabular text-ink-200">
@@ -414,7 +415,7 @@ function LabTable({ cmp }: { cmp: ReturnType<typeof labComparison> }) {
                   {r.title}
                 </a>
                 <span className="block text-[10.5px] text-ink-500">
-                  {[r.strain, r.labName, r.testDate ? fmtDate(r.testDate) : undefined, r.unit === 'mg/g' ? 'aus mg/g' : undefined].filter(Boolean).join(' · ')}
+                  {[r.strain, r.labName, r.testDate ? fmtDate(r.testDate) : undefined, r.unit === 'mg/g' ? t('mine.an.fromMg') : undefined].filter(Boolean).join(' · ')}
                 </span>
               </td>
               <td className="py-2 pr-3 text-right">{pct(r.thc)}</td>
@@ -430,7 +431,7 @@ function LabTable({ cmp }: { cmp: ReturnType<typeof labComparison> }) {
           ))}
         </tbody>
       </table>
-      <p className="hint mt-2">Alle Angaben in Prozent. „–“ = im Bericht nicht angegeben. Unterschiede zwischen Proben sind keine Aussage über Ursachen.</p>
+      <p className="hint mt-2">{t('mine.an.labNote')}</p>
     </div>
   );
 }

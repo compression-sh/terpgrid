@@ -6,6 +6,7 @@ import { addDays, daysBetween, startOfWeek } from './dates';
 import type { Expense, GrowProject, JournalEntry, Photo, Plant, Strain } from './db/types';
 import { EXPENSE_CATEGORIES, type ExpenseCategory } from './db/types';
 import { type PhaseSpan, phaseSpans } from './grow/phases';
+import { t } from '../i18n';
 
 export interface GrowDurationRow {
   id: string;
@@ -44,7 +45,7 @@ export function expensesByGrow(expenses: Expense[], grows: GrowProject[]): { id:
     map.set(k, (map.get(k) ?? 0) + e.amount);
   }
   return [...map.entries()]
-    .map(([id, total]) => ({ id, name: id ? (name.get(id) ?? 'Gelöschter Grow') : 'Ohne Grow', total: round2(total) }))
+    .map(([id, total]) => ({ id, name: id ? (name.get(id) ?? t('mine.ins.deletedGrow')) : 'Ohne Grow', total: round2(total) }))
     .sort((a, b) => b.total - a.total);
 }
 

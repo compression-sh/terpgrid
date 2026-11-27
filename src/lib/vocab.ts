@@ -13,3 +13,5 @@ export const unitLabel = (u: string) => show('unit', u);
 export const moodLabel = (m: string) => show('mood', m);
 /** Aroma-Deskriptoren */
 export const aromaLabel = (a: string) => show('aroma', a);
+/** Probenart eines Laborberichts (Vorschläge; freie Eingaben bleiben unverändert) */
+export const sampleLabel = (s: string) => show('sample', s);

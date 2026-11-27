@@ -1,4 +1,4 @@
-import { labels } from '../i18n';
+import { t, labels } from '../i18n';
 /**
  * Laborberichte (Lab Insights): Umrechnungen für Cannabinoid-Gesamtgehalte.
  *
@@ -71,10 +71,10 @@ export function plausibilityIssues(r: Pick<LabReport, 'unit' | 'thc' | 'thca' | 
   const issues: string[] = [];
   const pct = (v?: number) => toPercent(v, r.unit) ?? 0;
   const cannabinoidSum = pct(r.thc) + pct(r.thca) + pct(r.cbd) + pct(r.cbda) + pct(r.cbg) + pct(r.cbn);
-  if (cannabinoidSum > 100) issues.push('Die Summe der Cannabinoide liegt über 100 %. Einheit prüfen (% oder mg/g?).');
+  if (cannabinoidSum > 100) issues.push(t('lab.li.sumOver'));
   const terpSum = r.terpenes.reduce((s, t) => s + pct(t.value), 0);
-  if (terpSum > 15) issues.push('Die Terpensumme ist ungewöhnlich hoch (> 15 %). Einheit prüfen.');
-  if ([r.thc, r.thca, r.cbd, r.cbda, r.cbg, r.cbn].some((v) => v !== undefined && v < 0)) issues.push('Negative Werte sind nicht zulässig.');
+  if (terpSum > 15) issues.push(t('lab.li.terpHigh'));
+  if ([r.thc, r.thca, r.cbd, r.cbda, r.cbg, r.cbn].some((v) => v !== undefined && v < 0)) issues.push(t('lab.li.negative'));
   return issues;
 }
 
