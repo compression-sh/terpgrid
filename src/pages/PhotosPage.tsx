@@ -123,7 +123,7 @@ export function PhotosPage() {
             </div>
             <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
               <span className="text-xs text-ink-400">
-                {filtered.length} von {data.photos.length} Fotos
+                {t('photos.page.filtered', { n: filtered.length, count: data.photos.length })}
                 {filtersActive && (
                   <button type="button" className="ml-2 text-leaf-300 hover:underline" onClick={() => set({ grow: undefined, plant: undefined, phase: undefined, from: undefined, to: undefined })}>
                     {t('photos.page.reset')}

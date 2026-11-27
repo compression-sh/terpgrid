@@ -134,6 +134,10 @@
    "one": "{count} of your photos in order taken",
    "other": "{count} of your photos in order taken"
   },
-  "metaNote": "On import, embedded metadata (including GPS) is removed by re-encoding. Images the browser cannot read (e.g. HEIC in some browsers) are rejected."
+  "metaNote": "On import, embedded metadata (including GPS) is removed by re-encoding. Images the browser cannot read (e.g. HEIC in some browsers) are rejected.",
+  "filtered": {
+   "one": "{n} of {count} photo",
+   "other": "{n} of {count} photos"
+  }
  }
 }

@@ -134,6 +134,10 @@
    "one": "{count} eigenes Foto in Aufnahmereihenfolge",
    "other": "{count} eigene Fotos in Aufnahmereihenfolge"
   },
-  "metaNote": "Beim Import werden eingebettete Metadaten (inkl. GPS) durch Neu-Kodierung entfernt. Bilder, die der Browser nicht lesen kann (z. B. HEIC in manchen Browsern), werden abgelehnt."
+  "metaNote": "Beim Import werden eingebettete Metadaten (inkl. GPS) durch Neu-Kodierung entfernt. Bilder, die der Browser nicht lesen kann (z. B. HEIC in manchen Browsern), werden abgelehnt.",
+  "filtered": {
+   "one": "{n} von {count} Foto",
+   "other": "{n} von {count} Fotos"
+  }
  }
 }
