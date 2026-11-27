@@ -3,7 +3,7 @@ import {
   HEALTH_CANADA_START_DOSE_MG,
   STANDARD_THC_UNIT_MG,
 } from './constants';
-import { intlLocale } from '../../i18n';
+import { t, intlLocale } from '../../i18n';
 
 /**
  * Vorsichtige Referenzbereiche für ORAL aufgenommenes THC (Edibles).
@@ -30,57 +30,51 @@ export interface DoseBand {
 export const EDIBLE_DOSE_BANDS: DoseBand[] = [
   {
     level: 'start',
-    label: 'Einstiegsbereich',
+    get label() { return t('lab.dose.start'); },
     minMg: 0,
     maxMg: HEALTH_CANADA_START_DOSE_MG,
     tone: 'ok',
-    description:
-      'Entspricht der Health-Canada-Empfehlung für den Einstieg (≤ 2,5 mg). Auch hier sind Wirkungen möglich – besonders ohne Toleranz.',
+    get description() { return t('lab.dose.startText'); },
   },
   {
     level: 'low',
-    label: 'Niedrig',
+    get label() { return t('lab.dose.low'); },
     minMg: HEALTH_CANADA_START_DOSE_MG,
     maxMg: STANDARD_THC_UNIT_MG,
     tone: 'info',
-    description:
-      'Bis zu einer "Standard THC Unit" (5 mg). Für Unerfahrene bereits spürbar; nicht nachdosieren, bevor die volle Wirkung erreicht ist.',
+    get description() { return t('lab.dose.lowText'); },
   },
   {
     level: 'moderate',
-    label: 'Moderat',
+    get label() { return t('lab.dose.moderate'); },
     minMg: STANDARD_THC_UNIT_MG,
     maxMg: HEALTH_CANADA_EDIBLE_PACKAGE_LIMIT_MG,
     tone: 'caution',
-    description:
-      'Bis zur kanadischen Höchstmenge pro Edible-Packung (10 mg). Für Personen ohne Toleranz können unangenehme Wirkungen auftreten.',
+    get description() { return t('lab.dose.moderateText'); },
   },
   {
     level: 'high',
-    label: 'Hoch',
+    get label() { return t('lab.dose.high'); },
     minMg: HEALTH_CANADA_EDIBLE_PACKAGE_LIMIT_MG,
     maxMg: 20,
     tone: 'warn',
-    description:
-      'Über der Health-Canada-Packungsgrenze. Deutlich erhöhtes Risiko für Angst, Herzrasen, Übelkeit und starke Beeinträchtigung – besonders bei geringer Toleranz.',
+    get description() { return t('lab.dose.highText'); },
   },
   {
     level: 'veryHigh',
-    label: 'Sehr hoch',
+    get label() { return t('lab.dose.veryHigh'); },
     minMg: 20,
     maxMg: 50,
     tone: 'danger',
-    description:
-      'Ein Vielfaches der Einstiegsdosis. Hohe Wahrscheinlichkeit starker, lang anhaltender Wirkungen; ohne ausgeprägte Toleranz nicht zu empfehlen.',
+    get description() { return t('lab.dose.veryHighText'); },
   },
   {
     level: 'extreme',
-    label: 'Extrem',
+    get label() { return t('lab.dose.extreme'); },
     minMg: 50,
     maxMg: Number.POSITIVE_INFINITY,
     tone: 'danger',
-    description:
-      'Sehr hohe Mengen können zu akuter Überdosierung mit Panik, Verwirrtheit, Erbrechen, Kreislaufproblemen oder psychotischen Symptomen führen. Bei Notfällen ärztliche Hilfe holen.',
+    get description() { return t('lab.dose.extremeText'); },
   },
 ];
 
@@ -126,19 +120,19 @@ export function assessEdibleDose(mid: number, low = mid, high = mid): DoseAssess
 
   if (high >= HEALTH_CANADA_EDIBLE_PACKAGE_LIMIT_MG) {
     warnings.push(
-      `Die mögliche Obergrenze (${fmt(high)} mg) liegt bei oder über ${HEALTH_CANADA_EDIBLE_PACKAGE_LIMIT_MG} mg – der Höchstmenge, die Health Canada für eine ganze Edible-Packung zulässt.`,
+      t('lab.dose.wPackage', { high: fmt(high), limit: HEALTH_CANADA_EDIBLE_PACKAGE_LIMIT_MG }),
     );
   }
   if (high > 2 * mid && mid > 0) {
-    warnings.push('Die Unsicherheit ist groß: Die tatsächliche Dosis kann mehr als doppelt so hoch sein wie der Mittelwert.');
+    warnings.push(t('lab.dose.wUncertainty'));
   }
   if (mid > HEALTH_CANADA_START_DOSE_MG) {
     warnings.push(
-      `Für Einsteigende empfiehlt Health Canada höchstens ${fmt(HEALTH_CANADA_START_DOSE_MG)} mg THC. Gegebenenfalls nur einen Teil der Portion essen.`,
+      t('lab.dose.wStart', { n: fmt(HEALTH_CANADA_START_DOSE_MG) }),
     );
   }
   if (highBand.level === 'veryHigh' || highBand.level === 'extreme') {
-    warnings.push('Erhebliches Risiko einer Überdosierung. Wirkungen können über 12 Stunden anhalten.');
+    warnings.push(t('lab.dose.wOverdose'));
   }
   return { band, lowBand, highBand, units: standardUnits(mid), warnings };
 }
@@ -153,35 +147,30 @@ function fmt(n: number): string {
  */
 export const INDIVIDUAL_FACTORS: { title: string; text: string }[] = [
   {
-    title: 'Toleranz',
-    text: 'Regelmäßiger Konsum führt zu Toleranz gegenüber vielen THC-Wirkungen. Nach Konsumpausen sinkt sie wieder – frühere Mengen können dann zu stark sein.',
+    get title() { return t('lab.factor.tolerance'); },
+    get text() { return t('lab.factor.toleranceText'); },
   },
   {
-    title: 'Körper & Stoffwechsel',
-    text: 'Körpergewicht, Fettanteil, Leberstoffwechsel (CYP-Enzyme) und Genetik beeinflussen Aufnahme und Abbau von THC deutlich.',
+    get title() { return t('lab.factor.body'); },
+    get text() { return t('lab.factor.bodyText'); },
   },
   {
-    title: 'Mageninhalt',
-    text: 'Bei Edibles verändern Mahlzeiten und Fettgehalt die Aufnahme. Der Wirkeintritt kann sich verzögern und die Wirkung stärker oder schwächer ausfallen.',
+    get title() { return t('lab.factor.stomach'); },
+    get text() { return t('lab.factor.stomachText'); },
   },
   {
-    title: 'Mischkonsum',
-    text: 'Alkohol und andere Substanzen verstärken die Beeinträchtigung. Wechselwirkungen mit Medikamenten sind möglich.',
+    get title() { return t('lab.factor.mixing'); },
+    get text() { return t('lab.factor.mixingText'); },
   },
   {
-    title: 'Set & Setting',
-    text: 'Stimmung, Erwartung und Umgebung beeinflussen das Erleben. Psychische Vorerkrankungen erhöhen das Risiko unangenehmer Reaktionen.',
+    get title() { return t('lab.factor.set'); },
+    get text() { return t('lab.factor.setText'); },
   },
   {
-    title: 'Risikogruppen',
-    text: 'Jugendliche, Schwangere und Stillende sowie Personen mit (familiärer) Psychose-Vorgeschichte sollten laut LRCUG auf Cannabis verzichten.',
+    get title() { return t('lab.factor.risk'); },
+    get text() { return t('lab.factor.riskText'); },
   },
 ];
 
 /** Warum Edible-mg und Joint-mg nicht gleichgesetzt werden dürfen. */
-export const EDIBLE_VS_SMOKING_FACTS: string[] = [
-  'Beim Rauchen erreicht nur ein Teil des THC den Blutkreislauf (typisch ca. 10–35 %). Beim Essen sind es nur ca. 4–12 % – trotzdem wirken Edibles oft stärker und länger.',
-  'Grund ist der Leberstoffwechsel: Oral aufgenommenes THC wird vermehrt in 11-Hydroxy-THC umgewandelt, das selbst psychoaktiv ist.',
-  'Edibles wirken verzögert (30 Min. bis 2 Std.) und deutlich länger (bis zu 12 Std., Restwirkungen bis 24 Std.).',
-  'Eine mg-Angabe für einen Joint (theoretischer Gehalt) und für ein Edible (eingenommene Menge) beschreiben grundverschiedene Dinge.',
-];
+export const edibleVsSmokingFacts = (): string[] => [t('lab.dose.fact1'), t('lab.dose.fact2'), t('lab.dose.fact3'), t('lab.dose.fact4')];

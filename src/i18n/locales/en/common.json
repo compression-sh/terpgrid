@@ -100,5 +100,11 @@
   "nOf5": "{n} of 5",
   "label": "Rating {n} of 5"
  },
- "saving": "Saving …"
+ "saving": "Saving …",
+ "val": {
+  "number": "{label}: please enter a valid number.",
+  "min": "{label} must be at least {min}{unit}.",
+  "max": "{label} may be at most {max}{unit}.",
+  "positive": "{label} must be greater than 0."
+ }
 }

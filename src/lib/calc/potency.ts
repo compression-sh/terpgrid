@@ -1,4 +1,5 @@
 import { MG_PER_G, PERCENT, THCA_TO_THC_FACTOR } from './constants';
+import { t } from '../../i18n';
 
 /** Ein Schätzwert mit unterer/oberer Grenze. */
 export interface Range {
@@ -93,37 +94,40 @@ export interface PotencyClassification {
  * Health Canada beschreibt einen Anstieg des durchschnittlichen THC-Gehalts von
  * ca. 3 % (1980er) auf ca. 15 % heute, mit einzelnen Sorten über 30 %.
  */
+/** Anzeigename einer Potenzstufe (die Stufen selbst bleiben stabile Kennungen). */
+export function potencyLabel(c: PotencyCategory): string {
+  return t(c === 'sehr hoch' ? 'lab.pot.cat.sehrHoch' : (`lab.pot.cat.${c}` as 'lab.pot.cat.niedrig'));
+}
+
 export function classifyFlowerPotency(totalThc: number): PotencyClassification {
   const scalePosition = Math.min(1, Math.max(0, totalThc / 35));
   if (totalThc < 10)
     return {
       category: 'niedrig',
-      description: 'Eher niedriger THC-Gehalt – vergleichbar mit älteren oder CBD-reicheren Sorten.',
+      get description() { return t('lab.pot.lowText'); },
       scalePosition,
     };
   if (totalThc < 15)
     return {
       category: 'mittel',
-      description: 'Mittlerer THC-Gehalt, etwa im Bereich heutiger Durchschnittswerte.',
+      get description() { return t('lab.pot.midText'); },
       scalePosition,
     };
   if (totalThc < 20)
     return {
       category: 'hoch',
-      description: 'Überdurchschnittlicher THC-Gehalt. Bereits kleine Mengen können stark wirken.',
+      get description() { return t('lab.pot.highText'); },
       scalePosition,
     };
   if (totalThc <= 35)
     return {
       category: 'sehr hoch',
-      description:
-        'Sehr hoher THC-Gehalt. Höhere THC-Gehalte sind mit einem höheren Risiko für akute und langfristige Schäden verbunden (LRCUG).',
+      get description() { return t('lab.pot.veryHighText'); },
       scalePosition,
     };
   return {
     category: 'extrem',
-    description:
-      'Werte über ~35 % sind für Blüten unüblich und typisch für Konzentrate/Extrakte. Bitte Angabe prüfen.',
+    get description() { return t('lab.pot.extremeText'); },
     scalePosition,
   };
 }

@@ -5,6 +5,7 @@ import { Callout } from '../components/ui/Callout';
 import { Card } from '../components/ui/Card';
 import { Segmented } from '../components/ui/Segmented';
 import { type Phase, type PhaseStatus, type Route, TIMELINES, formatMinutes, phaseStatusAt, relativeIntensityBand } from '../lib/calc/timeline';
+import { t } from '../i18n';
 
 const ROUTE_COLOR: Record<Route, string> = { smoking: '#38bdf8', edibles: '#5fe39a' };
 const PHASE_COLOR: Record<Phase['id'], string> = {
@@ -14,10 +15,10 @@ const PHASE_COLOR: Record<Phase['id'], string> = {
   residual: '#8c9a95',
 };
 const STATUS_LABEL: Record<PhaseStatus, string> = {
-  'not-yet': 'noch nicht',
-  possible: 'möglich',
-  likely: 'wahrscheinlich',
-  over: 'vorbei',
+  'not-yet': t('lab.tlv.notYet'),
+  get possible() { return t('lab.tlv.possible'); },
+  get likely() { return t('lab.tlv.likely'); },
+  get over() { return t('lab.tlv.over'); },
 };
 
 type Show = 'both' | Route;
@@ -25,7 +26,7 @@ type Show = 'both' | Route;
 export function TimelineView() {
   const [show, setShow] = useState<Show>('both');
   const [horizonH, setHorizonH] = useState<'6' | '12' | '24'>('12');
-  const [t, setT] = useState(90);
+  const [atMin, setT] = useState(90);
   const horizon = Number(horizonH) * 60;
   const routes: Route[] = show === 'both' ? ['smoking', 'edibles'] : [show];
 
@@ -41,34 +42,34 @@ export function TimelineView() {
     });
   }, [horizon]);
 
-  const time = Math.min(t, horizon);
+  const time = Math.min(atMin, horizon);
 
   return (
     <div className="space-y-5">
       <Card
-        title="Wirkungsverlauf"
-        subtitle="Schematische Darstellung typischer Zeitbereiche nach Health Canada. Die Kurvenhöhe ist relativ – keine Vorhersage der Wirkstärke."
+        title={t('lab.tlv.title')}
+        subtitle={t('lab.tlv.subtitle')}
         icon={<Clock className="size-4" />}
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <Segmented
-            label="Konsumform"
+            label={t('lab.tlv.route')}
             value={show}
             onChange={setShow}
             options={[
-              { value: 'both', label: 'Vergleich' },
-              { value: 'smoking', label: 'Rauchen' },
+              { value: 'both', label: t('lab.tlv.compare') },
+              { value: 'smoking', label: t('lab.tlv.smoking') },
               { value: 'edibles', label: 'Edibles' },
             ]}
           />
           <Segmented
-            label="Zeitraum"
+            label={t('lab.tlv.period')}
             value={horizonH}
             onChange={setHorizonH}
             options={[
-              { value: '6', label: '6 Std.' },
-              { value: '12', label: '12 Std.' },
-              { value: '24', label: '24 Std.' },
+              { value: '6', label: t('lab.tlv.6h') },
+              { value: '12', label: t('lab.tlv.12h') },
+              { value: '24', label: t('lab.tlv.24h') },
             ]}
           />
         </div>
@@ -94,13 +95,13 @@ export function TimelineView() {
                 tickLine={false}
                 axisLine={false}
               />
-              <YAxis domain={[0, 1]} ticks={[0, 0.5, 1]} tickFormatter={() => ''} tickLine={false} axisLine={false} width={30} label={{ value: 'relativ', angle: -90, position: 'insideLeft', offset: 18, fill: '#5f6d68', fontSize: 10 }} />
+              <YAxis domain={[0, 1]} ticks={[0, 0.5, 1]} tickFormatter={() => ''} tickLine={false} axisLine={false} width={30} label={{ value: t('lab.tlv.relative'), angle: -90, position: 'insideLeft', offset: 18, fill: '#5f6d68', fontSize: 10 }} />
               <Tooltip
                 contentStyle={{ background: '#0e1211', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, fontSize: 12 }}
-                labelFormatter={(m: number) => `${formatMinutes(m)} nach Konsum`}
+                labelFormatter={(m: number) => t('lab.tlv.after', { t: formatMinutes(m) })}
                 formatter={(_v: unknown, name: string) => [
-                  'typischer Bereich',
-                  name === 'smoking' ? 'Rauchen' : 'Edibles',
+                  t('lab.tlv.typical'),
+                  name === 'smoking' ? t('lab.tlv.smoking') : 'Edibles',
                 ]}
               />
               {routes.map((r) => (
@@ -118,13 +119,13 @@ export function TimelineView() {
               {TIMELINES[r].title}
             </span>
           ))}
-          <span className="text-ink-500">Band = Spanne zwischen frühem und spätem typischen Verlauf · schematisch, nicht individuell</span>
+          <span className="text-ink-500">{t('lab.tlv.band')}</span>
         </div>
 
         <div className="mt-4 space-y-1.5">
           <div className="flex items-center justify-between">
             <label htmlFor="tl-time" className="label">
-              Zeit seit Konsum
+              {t('lab.tlv.since')}
             </label>
             <span className="font-mono text-sm tabular text-ink-50">{formatMinutes(time)}</span>
           </div>
@@ -139,7 +140,7 @@ export function TimelineView() {
             style={{ ['--fill' as string]: `${(time / horizon) * 100}%` }}
             onChange={(e) => setT(Number(e.target.value))}
           />
-          <div className="flex flex-wrap gap-1.5 pt-1" role="group" aria-label="Zeitpunkt wählen">
+          <div className="flex flex-wrap gap-1.5 pt-1" role="group" aria-label={t('lab.tlv.pick')}>
             {[15, 30, 60, 120, 240, 480, 720].filter((m) => m <= horizon).map((m) => (
               <button key={m} type="button" onClick={() => setT(m)} aria-pressed={time === m} className={`rounded-md border px-2 py-1 font-mono text-[11px] ${time === m ? 'border-leaf-500/40 bg-leaf-500/15 text-leaf-200' : 'border-white/[0.08] text-ink-400 hover:text-ink-200'}`}>
                 {formatMinutes(m)}
@@ -150,14 +151,14 @@ export function TimelineView() {
 
         <div className={`mt-5 grid gap-3 ${routes.length > 1 ? 'md:grid-cols-2' : ''}`}>
           {routes.map((r) => (
-            <PhaseStatusPanel key={r} route={r} t={time} />
+            <PhaseStatusPanel key={r} route={r} at={time} />
           ))}
         </div>
       </Card>
 
       <div className="grid gap-5 lg:grid-cols-2">
         {(['smoking', 'edibles'] as const).map((r) => (
-          <Card key={r} title={TIMELINES[r].title} subtitle="Phasen mit unscharfen Grenzen (früheste bis späteste Übergänge)">
+          <Card key={r} title={TIMELINES[r].title} subtitle={t('lab.tlv.phases')}>
             <PhaseGantt route={r} />
             <dl className="mt-4 grid grid-cols-2 gap-2">
               {TIMELINES[r].keyFacts.map((f) => (
@@ -177,7 +178,7 @@ export function TimelineView() {
   );
 }
 
-function PhaseStatusPanel({ route, t }: { route: Route; t: number }) {
+function PhaseStatusPanel({ route, at }: { route: Route; at: number }) {
   const tl = TIMELINES[route];
   return (
     <div className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-4">
@@ -187,7 +188,7 @@ function PhaseStatusPanel({ route, t }: { route: Route; t: number }) {
       </div>
       <ul className="space-y-2">
         {tl.phases.map((p) => {
-          const s = phaseStatusAt(p, t);
+          const s = phaseStatusAt(p, at);
           const active = s === 'likely' || s === 'possible';
           return (
             <li key={p.id} className={`flex items-start justify-between gap-3 text-[13px] transition-opacity ${active ? '' : 'opacity-45'}`}>
@@ -235,7 +236,7 @@ function PhaseGantt({ route }: { route: Route }) {
                 <div
                   className="absolute inset-y-0 rounded-md opacity-80"
                   style={{ left: `${s0}%`, width: `${w}%`, background: g }}
-                  title={`${p.label}: Beginn ${formatMinutes(p.startMin[0])}–${formatMinutes(p.startMin[1])}, Ende ${formatMinutes(p.endMin[0])}–${formatMinutes(p.endMin[1])}`}
+                  title={t('lab.tlv.phaseTitle', { label: p.label, s0: formatMinutes(p.startMin[0]), s1: formatMinutes(p.startMin[1]), e0: formatMinutes(p.endMin[0]), e1: formatMinutes(p.endMin[1]) })}
                 />
               </div>
             </div>

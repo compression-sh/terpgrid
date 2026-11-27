@@ -11,6 +11,7 @@ import { type SmokingInput, type SmokingResult, calculateSmoking, validateSmokin
 import { TIMELINES } from '../lib/calc/timeline';
 import type { ExportPayload } from '../lib/exporters';
 import { fmt, fmtPercent, fmtRange } from '../lib/format';
+import { t } from '../i18n';
 
 interface Props {
   input: SmokingInput;
@@ -20,44 +21,44 @@ interface Props {
 }
 
 const profileLabel: Record<SmokingInput['profile'], string> = {
-  unknown: 'Keine Angabe',
-  occasional: 'Gelegentlich',
-  regular: 'Regelmäßig',
+  get unknown() { return t('lab.smk.profUnknown'); },
+  get occasional() { return t('lab.smk.occasional'); },
+  get regular() { return t('lab.smk.regular'); },
 };
 const toleranceLabel: Record<SmokingInput['tolerance'], string> = {
-  none: 'Keine',
-  low: 'Gering',
-  medium: 'Mittel',
-  high: 'Hoch',
+  get none() { return t('lab.smk.tolNone'); },
+  get low() { return t('lab.smk.tolLow'); },
+  get medium() { return t('lab.smk.tolMid'); },
+  get high() { return t('lab.smk.tolHigh'); },
 };
 
 export function smokingSummary(r: SmokingResult): Record<string, string> {
   return {
-    'theoretisch gesamt': `${fmt(r.theoreticalTotalMg)} mg`,
-    'theor. pro Person': `${fmt(r.theoreticalPerPersonMg)} mg`,
-    'systemisch (grob)': fmtRange(r.systemicPerPersonMg, 'mg'),
+    [t('lab.smk.sumTotal')]: `${fmt(r.theoreticalTotalMg)} mg`,
+    [t('lab.smk.sumPerson')]: `${fmt(r.theoreticalPerPersonMg)} mg`,
+    [t('lab.smk.sumSystemic')]: fmtRange(r.systemicPerPersonMg, 'mg'),
   };
 }
 
 function exportData(input: SmokingInput, r: SmokingResult): ExportPayload {
   return {
-    title: 'Joint & Smoking Rechner',
+    title: t('lab.smk.title'),
     generatedAt: new Date().toISOString(),
     inputs: [
-      { label: 'Cannabis im Joint', value: `${fmt(input.grams)} g` },
-      { label: 'THC-Gehalt', value: `${fmt(input.thcPercent)} %` },
-      { label: 'Konsumierter Anteil', value: fmtPercent(input.fractionConsumed) },
-      { label: 'Personen', value: String(input.people) },
-      { label: 'Nutzungsprofil', value: profileLabel[input.profile] },
-      { label: 'Toleranz', value: toleranceLabel[input.tolerance] },
+      { label: t('lab.smk.joint'), value: `${fmt(input.grams)} g` },
+      { label: t('lab.smk.thc'), value: `${fmt(input.thcPercent)} %` },
+      { label: t('lab.smk.fraction'), value: fmtPercent(input.fractionConsumed) },
+      { label: t('lab.smk.people'), value: String(input.people) },
+      { label: t('lab.smk.profile'), value: profileLabel[input.profile] },
+      { label: t('lab.smk.tolerance'), value: toleranceLabel[input.tolerance] },
     ],
     results: [
-      { label: 'Theoretischer THC-Gehalt (gesamt)', value: `${fmt(r.theoreticalTotalMg)} mg` },
-      { label: 'Theoretisch im konsumierten Anteil', value: `${fmt(r.theoreticalConsumedMg)} mg` },
-      { label: 'Theoretisch pro Person', value: `${fmt(r.theoreticalPerPersonMg)} mg` },
-      { label: 'Systemische Aufnahme pro Person (grob)', value: fmtRange(r.systemicPerPersonMg, 'mg') },
-      { label: 'Literatur-Extremwerte', value: fmtRange(r.systemicExtremePerPersonMg, 'mg') },
-      { label: 'Angenommene Bioverfügbarkeit', value: `${fmtPercent(r.bioavailability.low)}–${fmtPercent(r.bioavailability.high)} (${r.bioavailability.source})` },
+      { label: t('lab.smk.rTotal'), value: `${fmt(r.theoreticalTotalMg)} mg` },
+      { label: t('lab.smk.rConsumed'), value: `${fmt(r.theoreticalConsumedMg)} mg` },
+      { label: t('lab.smk.rPerson'), value: `${fmt(r.theoreticalPerPersonMg)} mg` },
+      { label: t('lab.smk.rSystemic'), value: fmtRange(r.systemicPerPersonMg, 'mg') },
+      { label: t('lab.smk.rExtremes'), value: fmtRange(r.systemicExtremePerPersonMg, 'mg') },
+      { label: t('lab.smk.rBio'), value: `${fmtPercent(r.bioavailability.low)}–${fmtPercent(r.bioavailability.high)} (${r.bioavailability.source})` },
     ],
     notes: r.notes,
   };
@@ -72,22 +73,22 @@ export function SmokingCalculator({ input, onChange, onSave, onShowTimeline }: P
 
   const max = r.theoreticalTotalMg || 1;
   const segments = [
-    { label: 'Nicht konsumiert', value: r.theoreticalTotalMg - r.theoreticalConsumedMg, cls: 'bg-ink-600' },
-    { label: 'Anteil anderer Personen', value: r.theoreticalConsumedMg - r.theoreticalPerPersonMg, cls: 'bg-ink-500' },
-    { label: 'Verluste (Pyrolyse, Nebenstrom, ausgeatmet …)', value: r.theoreticalPerPersonMg - r.systemicPerPersonMg.high, cls: 'bg-rose-400/40' },
-    { label: 'Spanne der Annahme (oberer Teil)', value: r.systemicPerPersonMg.high - r.systemicPerPersonMg.low, cls: 'bg-leaf-500/40' },
-    { label: 'Unteres Ende der Annahme (kein garantiertes Minimum)', value: r.systemicPerPersonMg.low, cls: 'bg-leaf-500' },
+    { label: t('lab.smk.segNot'), value: r.theoreticalTotalMg - r.theoreticalConsumedMg, cls: 'bg-ink-600' },
+    { label: t('lab.smk.segOthers'), value: r.theoreticalConsumedMg - r.theoreticalPerPersonMg, cls: 'bg-ink-500' },
+    { label: t('lab.smk.segLoss'), value: r.theoreticalPerPersonMg - r.systemicPerPersonMg.high, cls: 'bg-rose-400/40' },
+    { label: t('lab.smk.segSpan'), value: r.systemicPerPersonMg.high - r.systemicPerPersonMg.low, cls: 'bg-leaf-500/40' },
+    { label: t('lab.smk.segLow'), value: r.systemicPerPersonMg.low, cls: 'bg-leaf-500' },
   ];
 
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
       <div className="space-y-5">
-        <Card title="Joint" subtitle="Menge, Gehalt und Konsum" icon={<Cigarette className="size-4" />}>
+        <Card title={t('lab.smk.card')} subtitle={t('lab.smk.cardSub')} icon={<Cigarette className="size-4" />}>
           <div className="space-y-5">
-            <NumberField label="Cannabis im Joint" unit="g" value={input.grams} onChange={(v) => set('grams', v)} min={0} max={10} sliderMax={2} step={0.05} positive />
-            <NumberField label="THC-Gehalt (gesamt)" unit="%" value={input.thcPercent} onChange={(v) => set('thcPercent', v)} min={0} max={100} sliderMax={35} step={0.5} positive />
+            <NumberField label={t('lab.smk.joint')} unit="g" value={input.grams} onChange={(v) => set('grams', v)} min={0} max={10} sliderMax={2} step={0.05} positive />
+            <NumberField label={t('lab.smk.thcTotal')} unit="%" value={input.thcPercent} onChange={(v) => set('thcPercent', v)} min={0} max={100} sliderMax={35} step={0.5} positive />
             <NumberField
-              label="Tatsächlich konsumierter Anteil"
+              label={t('lab.smk.actual')}
               unit="%"
               value={input.fractionConsumed}
               onChange={(v) => set('fractionConsumed', v)}
@@ -96,42 +97,42 @@ export function SmokingCalculator({ input, onChange, onSave, onShowTimeline }: P
               scale={100}
               step={5}
               positive
-              hint="Der Rest (Stummel, ausgegangen, weggeworfen) wird nicht berücksichtigt."
+              hint={t('lab.smk.restHint')}
             />
-            <NumberField label="Beteiligte Personen" value={input.people} onChange={(v) => set('people', v)} min={1} max={50} sliderMax={8} step={1} integer />
+            <NumberField label={t('lab.smk.participants')} value={input.people} onChange={(v) => set('people', v)} min={1} max={50} sliderMax={8} step={1} integer />
           </div>
         </Card>
-        <Card title="Profil (optional)" subtitle="Verändert nur den Literaturbereich und die Hinweise" icon={<Users className="size-4" />}>
+        <Card title={t('lab.smk.profileCard')} subtitle={t('lab.smk.profileSub')} icon={<Users className="size-4" />}>
           <div className="space-y-5">
             <Segmented
-              label="Nutzungsprofil"
+              label={t('lab.smk.profile')}
               value={input.profile}
               onChange={(v) => set('profile', v)}
               options={[
-                { value: 'unknown', label: 'k. A.' },
-                { value: 'occasional', label: 'Gelegentlich' },
-                { value: 'regular', label: 'Regelmäßig' },
+                { value: 'unknown', get label() { return t('lab.smk.na'); } },
+                { value: 'occasional', get label() { return t('lab.smk.occasional'); } },
+                { value: 'regular', get label() { return t('lab.smk.regular'); } },
               ]}
             />
             <Segmented
-              label="Toleranz"
+              label={t('lab.smk.tolerance')}
               value={input.tolerance}
               onChange={(v) => set('tolerance', v)}
               options={[
-                { value: 'none', label: 'Keine' },
-                { value: 'low', label: 'Gering' },
-                { value: 'medium', label: 'Mittel' },
-                { value: 'high', label: 'Hoch' },
+                { value: 'none', get label() { return t('lab.smk.tolNone'); } },
+                { value: 'low', get label() { return t('lab.smk.tolLow'); } },
+                { value: 'medium', get label() { return t('lab.smk.tolMid'); } },
+                { value: 'high', get label() { return t('lab.smk.tolHigh'); } },
               ]}
             />
-            <p className="hint">Die Toleranz verändert die berechneten mg nicht. Sie beeinflusst die Wirkung, nicht die Aufnahme.</p>
+            <p className="hint">{t('lab.smk.tolHint')}</p>
           </div>
         </Card>
       </div>
 
       <div className="space-y-5">
         {!valid && (
-          <Callout tone="danger" title="Bitte Eingaben prüfen">
+          <Callout tone="danger" title={t('lab.smk.check')}>
             <ul className="list-disc pl-4">
               {issues.map((i) => (
                 <li key={i.message}>{i.message}</li>
@@ -141,43 +142,42 @@ export function SmokingCalculator({ input, onChange, onSave, onShowTimeline }: P
         )}
         <div className={`space-y-5 ${valid ? '' : 'pointer-events-none opacity-40 blur-[1px]'}`}>
           <Card
-            title="Ergebnis"
-            subtitle="Theoretischer Gehalt ≠ aufgenommene Menge"
+            title={t('lab.smk.result')}
+            subtitle={t('lab.smk.resultSub')}
             icon={<Flame className="size-4" />}
             actions={
               <>
-                <SaveButton defaultName={`Joint ${fmt(input.grams)} g · ${fmt(input.thcPercent)} %`} onSave={(n) => onSave(n, input, smokingSummary(r))} />
+                <SaveButton defaultName={t('lab.smk.saveName', { g: fmt(input.grams), p: fmt(input.thcPercent) })} onSave={(n) => onSave(n, input, smokingSummary(r))} />
                 <ExportMenu build={() => exportData(input, r)} />
               </>
             }
           >
             <div className="grid gap-3 sm:grid-cols-3">
-              <Stat step={1} label="Theoretischer THC-Gehalt" value={r.theoreticalTotalMg} unit="mg" theoretical hint="Gesamter Joint, rein rechnerisch aus Menge × Gehalt." />
+              <Stat step={1} label={t('lab.smk.sTheo')} value={r.theoreticalTotalMg} unit="mg" theoretical hint={t('lab.smk.sTheoHint')} />
               <Stat
                 step={2}
-                label={input.people > 1 ? 'Theoretisch konsumiert (pro Person)' : 'Theoretisch konsumiert'}
+                label={input.people > 1 ? t('lab.smk.sConsumedPP') : t('lab.smk.sConsumed')}
                 value={r.theoreticalPerPersonMg}
                 unit="mg"
                 theoretical
-                hint={`${fmtPercent(input.fractionConsumed)} geraucht${input.people > 1 ? `, geteilt durch ${input.people}` : ''} – noch ohne Verluste.`}
+                hint={t('lab.smk.smoked', { p: fmtPercent(input.fractionConsumed), shared: input.people > 1 ? t('lab.smk.shared', { n: input.people }) : '' })}
               />
               <Stat
                 step={3}
-                label="Geschätzte systemische Aufnahme"
+                label={t('lab.smk.sSystemic')}
                 range={r.systemicPerPersonMg}
                 rangeOnly
                 unit="mg"
                 emphasis
-                hint={`Sehr grobe Spanne aus ${fmtPercent(r.bioavailability.low)}–${fmtPercent(r.bioavailability.high)} Bioverfügbarkeit (Literatur). Auch Werte außerhalb sind möglich.`}
+                hint={t('lab.smk.spanHint', { lo: fmtPercent(r.bioavailability.low), hi: fmtPercent(r.bioavailability.high) })}
               />
             </div>
             <p className="hint mt-3">
-              Die drei Werte beschreiben unterschiedliche Dinge und dürfen nicht gleichgesetzt werden. Selbst das untere Ende der Spanne ist kein garantiertes Minimum –
-              individuelle Aufnahme kann darunter oder darüber liegen.
+              {t('lab.smk.threeValues')}
             </p>
 
             <div className="mt-6">
-              <h3 className="mb-2 text-[13px] font-medium text-ink-200">Wohin geht das THC? (pro Person, grob)</h3>
+              <h3 className="mb-2 text-[13px] font-medium text-ink-200">{t('lab.smk.where')}</h3>
               <div className="flex h-4 overflow-hidden rounded-full bg-ink-700">
                 {segments.map((s) => (
                   <div
@@ -202,10 +202,8 @@ export function SmokingCalculator({ input, onChange, onSave, onShowTimeline }: P
             </div>
 
             <div className="mt-5 space-y-2">
-              <Callout tone="warn" title="Starke individuelle Variabilität">
-                In Studien schwankte die Bioverfügbarkeit beim Rauchen zwischen etwa 2 und 56 % (Huestis 2007). Bezogen auf diese
-                Eingaben wären das <span className="font-mono">{fmtRange(r.systemicExtremePerPersonMg, 'mg')}</span>. Zugtechnik, Atemanhalten,
-                Pausen und Erfahrung machen einen großen Unterschied.
+              <Callout tone="warn" title={t('lab.smk.variability')}>
+                {t('lab.smk.varA')} <span className="font-mono">{fmtRange(r.systemicExtremePerPersonMg, 'mg')}</span>. {t('lab.smk.varB')}
               </Callout>
               {r.notes.slice(1).map((n) => (
                 <Callout key={n} tone="info">
@@ -215,7 +213,7 @@ export function SmokingCalculator({ input, onChange, onSave, onShowTimeline }: P
             </div>
           </Card>
 
-          <Card title="Mögliche Verluste beim Rauchen" subtitle="Größenordnungen aus der Literatur – keine exakten Werte">
+          <Card title={t('lab.smk.losses')} subtitle={t('lab.smk.lossesSub')}>
             <ul className="divide-y divide-white/[0.05]">
               {r.losses.map((l) => (
                 <li key={l.id} className="grid gap-1 py-3 first:pt-0 last:pb-0 sm:grid-cols-[1fr_auto] sm:gap-4">
@@ -230,12 +228,12 @@ export function SmokingCalculator({ input, onChange, onSave, onShowTimeline }: P
           </Card>
 
           <Card
-            title="Wirkeintritt und Wirkungsdauer"
-            subtitle="Typische Zeitbereiche laut Health Canada"
+            title={t('lab.smk.timing')}
+            subtitle={t('lab.smk.timingSub')}
             icon={<Clock className="size-4" />}
             actions={
               <button type="button" className="btn-ghost py-1.5" onClick={onShowTimeline}>
-                Zeitachse
+                {t('lab.smk.timeline')}
               </button>
             }
           >

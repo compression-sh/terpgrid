@@ -1,4 +1,5 @@
 
+import { t } from '../../i18n';
 import { intlLocale } from '../../i18n';/**
  * Typische Wirkverläufe nach Health Canada ("Cannabis health effects" /
  * "Edible cannabis: Start low and go slow"):
@@ -39,89 +40,87 @@ export interface RouteTimeline {
 export const TIMELINES: Record<Route, RouteTimeline> = {
   smoking: {
     route: 'smoking',
-    title: 'Rauchen / Inhalieren',
+    get title() { return t('lab.tl.smoking'); },
     horizonMin: 24 * 60,
     phases: [
       {
         id: 'onset',
-        label: 'Wirkeintritt',
+        get label() { return t('lab.tl.onset'); },
         startMin: [0, 1],
         endMin: [5, 10],
-        description: 'Erste Wirkungen nach Sekunden bis wenigen Minuten.',
+        get description() { return t('lab.tl.smOnsetText'); },
       },
       {
         id: 'peak',
-        label: 'Hauptwirkung',
+        get label() { return t('lab.tl.peak'); },
         startMin: [10, 15],
         endMin: [60, 120],
-        description: 'Stärkste Wirkung typischerweise um ca. 30 Minuten nach Konsum.',
+        get description() { return t('lab.tl.smPeakText'); },
       },
       {
         id: 'comedown',
-        label: 'Abklingen',
+        get label() { return t('lab.tl.decline'); },
         startMin: [60, 120],
         endMin: [180, 360],
-        description: 'Die Wirkung lässt nach; insgesamt kann sie bis zu 6 Stunden anhalten.',
+        get description() { return t('lab.tl.smDeclineText'); },
       },
       {
         id: 'residual',
-        label: 'Nachwirkungen',
+        get label() { return t('lab.tl.after'); },
         startMin: [180, 360],
         endMin: [720, 1440],
-        description: 'Restwirkungen (z. B. auf Reaktionsfähigkeit) bis zu 24 Stunden möglich.',
+        get description() { return t('lab.tl.smAfterText'); },
       },
     ],
     keyFacts: [
-      { label: 'Wirkeintritt', value: 'Sekunden – Minuten' },
-      { label: 'Maximum', value: 'ca. 30 Min.' },
-      { label: 'Wirkdauer', value: 'bis ca. 6 Std.' },
-      { label: 'Restwirkungen', value: 'bis 24 Std.' },
+      { get label() { return t('lab.tl.onset'); }, get value() { return t('lab.tl.secMin'); } },
+      { get label() { return t('lab.tl.maximum'); }, get value() { return t('lab.tl.approx30'); } },
+      { get label() { return t('lab.tl.duration'); }, get value() { return t('lab.tl.upTo6'); } },
+      { get label() { return t('lab.tl.residual'); }, get value() { return t('lab.tl.upTo24'); } },
     ],
-    warning:
-      'Auch nach dem Abklingen spürbarer Wirkungen können Reaktionszeit und Aufmerksamkeit beeinträchtigt sein. Nicht Auto fahren oder Maschinen bedienen.',
+    get warning() { return t('lab.tl.smWarning'); },
   },
   edibles: {
     route: 'edibles',
-    title: 'Edibles / Essen',
+    get title() { return t('lab.tl.edibles'); },
     horizonMin: 24 * 60,
     phases: [
       {
         id: 'onset',
-        label: 'Wirkeintritt',
+        get label() { return t('lab.tl.onset'); },
         startMin: [30, 120],
         endMin: [60, 180],
-        description: 'Erste Wirkungen nach 30 Minuten bis 2 Stunden – manchmal später.',
+        get description() { return t('lab.tl.edOnsetText'); },
       },
       {
         id: 'peak',
-        label: 'Hauptwirkung',
+        get label() { return t('lab.tl.peak'); },
         startMin: [90, 180],
         endMin: [300, 480],
-        description: 'Stärkste Wirkung typischerweise um ca. 4 Stunden nach Einnahme.',
+        get description() { return t('lab.tl.edPeakText'); },
       },
       {
         id: 'comedown',
-        label: 'Abklingen',
+        get label() { return t('lab.tl.decline'); },
         startMin: [300, 480],
         endMin: [480, 720],
-        description: 'Die Wirkung lässt langsam nach; insgesamt bis zu 12 Stunden.',
+        get description() { return t('lab.tl.edDeclineText'); },
       },
       {
         id: 'residual',
-        label: 'Nachwirkungen',
+        get label() { return t('lab.tl.after'); },
         startMin: [480, 720],
         endMin: [1080, 1440],
-        description: 'Restwirkungen bis zu 24 Stunden möglich.',
+        get description() { return t('lab.tl.edAfterText'); },
       },
     ],
     keyFacts: [
-      { label: 'Wirkeintritt', value: '30 Min. – 2 Std.' },
-      { label: 'Maximum', value: 'ca. 4 Std.' },
-      { label: 'Wirkdauer', value: 'bis ca. 12 Std.' },
-      { label: 'Restwirkungen', value: 'bis 24 Std.' },
+      { get label() { return t('lab.tl.onset'); }, get value() { return t('lab.tl.30to2'); } },
+      { get label() { return t('lab.tl.maximum'); }, get value() { return t('lab.tl.approx4'); } },
+      { get label() { return t('lab.tl.duration'); }, get value() { return t('lab.tl.upTo12'); } },
+      { get label() { return t('lab.tl.residual'); }, get value() { return t('lab.tl.upTo24'); } },
     ],
-    warning:
-      'Häufigster Fehler: Nachdosieren, weil "noch nichts passiert". Die Wirkung kann bis zu 2 Stunden (oder länger) auf sich warten lassen. Mindestens die volle Wirkzeit abwarten, bevor erneut konsumiert wird.',
+    get warning() { return t('lab.tl.edWarning'); },
   },
 };
 
@@ -174,8 +173,8 @@ function curve(t: number, start: number, peakStart: number, peakEnd: number, com
 }
 
 export function formatMinutes(min: number): string {
-  if (min < 60) return `${Math.round(min)} Min.`;
+  if (min < 60) return t('lab.tl.min', { n: Math.round(min) });
   const h = min / 60;
   const rounded = Math.round(h * 2) / 2;
-  return `${rounded.toLocaleString(intlLocale())} Std.`;
+  return t('lab.tl.h', { n: rounded.toLocaleString(intlLocale()) });
 }

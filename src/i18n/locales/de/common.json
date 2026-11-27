@@ -100,5 +100,11 @@
   "nOf5": "{n} von 5",
   "label": "Bewertung {n} von 5"
  },
- "saving": "Speichern …"
+ "saving": "Speichern …",
+ "val": {
+  "number": "{label}: bitte eine gültige Zahl eingeben.",
+  "min": "{label} muss mindestens {min}{unit} betragen.",
+  "max": "{label} darf höchstens {max}{unit} betragen.",
+  "positive": "{label} muss größer als 0 sein."
+ }
 }

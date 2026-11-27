@@ -12,6 +12,7 @@ import { totalThcPercent } from '../lib/calc/potency';
 import type { ExportPayload } from '../lib/exporters';
 import { fmt, fmtRange } from '../lib/format';
 import { toneHex } from './DoseBadge';
+import { t } from '../i18n';
 
 interface Props {
   recipes: Recipe[];
@@ -37,30 +38,30 @@ export function CompareView({ recipes, onChange, currentEdible, onSave }: Props)
     tone: classifyEdibleDose(row.result.perPortionMg.mid).tone,
   }));
 
-  const summary = Object.fromEntries(rows.map((r) => [r.name, fmtRange(r.result.perPortionMg, 'mg/Portion')]));
+  const summary = Object.fromEntries(rows.map((r) => [r.name, fmtRange(r.result.perPortionMg, t('lab.cmp.mgPortion'))]));
   const buildExport = (): ExportPayload => ({
-    title: 'Rezeptvergleich',
+    title: t('lab.cmp.title'),
     generatedAt: new Date().toISOString(),
     inputs: recipes.map((r) => ({
       label: r.name,
-      value: `${fmt(r.input.cannabisGrams)} g · ${fmt(totalThcPercent(r.input.potency).totalThcPercent)} % THC · ${fmt(r.input.fatGrams)} g Fett · ${r.input.portions} Portionen`,
+      value: t('lab.cmp.inputLine', { c: fmt(r.input.cannabisGrams), thc: fmt(totalThcPercent(r.input.potency).totalThcPercent), fat: fmt(r.input.fatGrams), n: r.input.portions }),
     })),
     results: rows.flatMap((r) => [
-      { label: `${r.name}: mg/g Butter`, value: fmtRange(r.result.mgPerGramFat, 'mg/g') },
-      { label: `${r.name}: pro Portion`, value: `ca. ${fmt(r.result.perPortionMg.mid)} mg (${fmtRange(r.result.perPortionMg, 'mg')})` },
+      { label: t('lab.cmp.rowButter', { name: r.name }), value: fmtRange(r.result.mgPerGramFat, 'mg/g') },
+      { label: t('lab.cmp.rowPortion', { name: r.name }), value: t('lab.approxRange', { v: fmt(r.result.perPortionMg.mid), unit: 'mg', range: fmtRange(r.result.perPortionMg, 'mg') }) },
     ]),
-    notes: ['Hypothetische Rezepte – alle Werte sind Schätzungen mit Unsicherheit.'],
+    notes: [t('lab.cmp.note')],
   });
 
   return (
     <div className="space-y-5">
       <Card
-        title="Rezepte vergleichen"
-        subtitle="Hypothetische Varianten nebeneinander – Mittelwert und Schwankungsbreite pro Portion"
+        title={t('lab.cmp.card')}
+        subtitle={t('lab.cmp.cardSub')}
         icon={<GitCompare className="size-4" />}
         actions={
           <>
-            <SaveButton defaultName={`Vergleich (${recipes.length} Rezepte)`} onSave={(n) => onSave(n, recipes, summary)} />
+            <SaveButton defaultName={t('lab.cmp.count', { n: recipes.length })} onSave={(n) => onSave(n, recipes, summary)} />
             <ExportMenu build={buildExport} />
           </>
         }
@@ -76,7 +77,7 @@ export function CompareView({ recipes, onChange, currentEdible, onSave }: Props)
                 contentStyle={{ background: '#0e1211', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, fontSize: 12 }}
                 formatter={(v: number, _n: string, item: { payload?: { err: [number, number]; mid: number } }) => {
                   const p = item.payload;
-                  return p ? [`ca. ${fmt(v)} mg (${fmt(p.mid - p.err[0])}–${fmt(p.mid + p.err[1])})`, 'pro Portion'] : [v, ''];
+                  return p ? [t('lab.approxRange', { v: fmt(v), unit: 'mg', range: `${fmt(p.mid - p.err[0])}–${fmt(p.mid + p.err[1])}` }), t('lab.cmp.perPortion')] : [v, ''];
                 }}
               />
               <ReferenceLine y={10} stroke="#fb7185" strokeDasharray="4 4" label={{ value: '10 mg', position: 'insideTopRight', fill: '#fb7185', fontSize: 10 }} />
@@ -95,11 +96,11 @@ export function CompareView({ recipes, onChange, currentEdible, onSave }: Props)
           <table className="w-full min-w-[560px] text-left text-[13px]">
             <thead>
               <tr className="border-b border-white/[0.06] text-xs text-ink-400">
-                <th className="py-2 pr-3 font-medium">Rezept</th>
-                <th className="py-2 pr-3 font-medium">Theoretisch</th>
-                <th className="py-2 pr-3 font-medium">mg/g Butter</th>
-                <th className="py-2 pr-3 font-medium">Rezept gesamt</th>
-                <th className="py-2 font-medium">pro Portion</th>
+                <th className="py-2 pr-3 font-medium">{t('lab.cmp.recipe')}</th>
+                <th className="py-2 pr-3 font-medium">{t('lab.cmp.theoretical')}</th>
+                <th className="py-2 pr-3 font-medium">{t('lab.cmp.mgButter')}</th>
+                <th className="py-2 pr-3 font-medium">{t('lab.cmp.total')}</th>
+                <th className="py-2 font-medium">{t('lab.cmp.perPortion')}</th>
               </tr>
             </thead>
             <tbody className="font-mono tabular">
@@ -107,8 +108,8 @@ export function CompareView({ recipes, onChange, currentEdible, onSave }: Props)
                 <tr key={r.id} className="border-b border-white/[0.04] last:border-0">
                   <td className="py-2.5 pr-3 font-sans font-medium text-ink-100">
                     {r.name}
-                    {r.id === maxId && rows.length > 1 && <span className="ml-2 text-[10px] text-rose-300">stärkstes</span>}
-                    {r.id === minId && rows.length > 1 && <span className="ml-2 text-[10px] text-leaf-300">schwächstes</span>}
+                    {r.id === maxId && rows.length > 1 && <span className="ml-2 text-[10px] text-rose-300">{t('lab.cmp.strongest')}</span>}
+                    {r.id === minId && rows.length > 1 && <span className="ml-2 text-[10px] text-leaf-300">{t('lab.cmp.weakest')}</span>}
                   </td>
                   <td className="py-2.5 pr-3 text-ink-300">{fmt(r.result.theoreticalMg.mid)} mg</td>
                   <td className="py-2.5 pr-3 text-ink-200">{fmtRange(r.result.mgPerGramFat)}</td>
@@ -130,15 +131,15 @@ export function CompareView({ recipes, onChange, currentEdible, onSave }: Props)
           disabled={recipes.length >= MAX_RECIPES}
           onClick={() => onChange([...recipes, newRecipe(recipes.length)])}
         >
-          <Plus className="size-4" /> Neues Rezept
+          <Plus className="size-4" /> {t('lab.cmp.new')}
         </button>
         <button
           type="button"
           className="btn-ghost"
           disabled={recipes.length >= MAX_RECIPES}
-          onClick={() => onChange([...recipes, { ...newRecipe(recipes.length, currentEdible), name: 'Aus Edibles-Rechner' }])}
+          onClick={() => onChange([...recipes, { ...newRecipe(recipes.length, currentEdible), name: t('lab.cmp.fromEdibles') }])}
         >
-          <Copy className="size-4" /> Aktuelle Edibles-Berechnung übernehmen
+          <Copy className="size-4" /> {t('lab.cmp.fromEdiblesHint')}
         </button>
       </div>
 
@@ -148,7 +149,7 @@ export function CompareView({ recipes, onChange, currentEdible, onSave }: Props)
             key={r.id}
             title={
               <input
-                aria-label="Rezeptname"
+                aria-label={t('lab.cmp.name')}
                 className="-ml-1 w-full rounded bg-transparent px-1 font-semibold text-ink-50 outline-none hover:bg-white/[0.03] focus:bg-white/[0.05]"
                 value={r.name}
                 maxLength={40}
@@ -160,11 +161,11 @@ export function CompareView({ recipes, onChange, currentEdible, onSave }: Props)
                 <button
                   type="button"
                   className="btn-ghost p-1.5"
-                  aria-label="Duplizieren"
-                  title="Duplizieren"
+                  aria-label={t('lab.cmp.duplicate')}
+                  title={t('lab.cmp.duplicate')}
                   disabled={recipes.length >= MAX_RECIPES}
                   onClick={() => {
-                    const copy = { ...newRecipe(recipes.length, r.input), name: `${r.name} (Kopie)` };
+                    const copy = { ...newRecipe(recipes.length, r.input), name: t('lab.cmp.copy', { name: r.name }) };
                     const next = [...recipes];
                     next.splice(idx + 1, 0, copy);
                     onChange(next);
@@ -175,8 +176,8 @@ export function CompareView({ recipes, onChange, currentEdible, onSave }: Props)
                 <button
                   type="button"
                   className="btn-ghost p-1.5 hover:text-rose-300"
-                  aria-label="Entfernen"
-                  title="Entfernen"
+                  aria-label={t('lab.cmp.remove')}
+                  title={t('lab.cmp.remove')}
                   disabled={recipes.length <= 1}
                   onClick={() => onChange(recipes.filter((x) => x.id !== r.id))}
                 >
@@ -186,9 +187,9 @@ export function CompareView({ recipes, onChange, currentEdible, onSave }: Props)
             }
           >
             <div className="space-y-4">
-              <NumberField label="Cannabis" unit="g" value={r.input.cannabisGrams} onChange={(v) => setInput(r.id, { cannabisGrams: v })} min={0} max={1000} sliderMax={56} step={0.5} positive />
+              <NumberField label={t('lab.cmp.cannabis')} unit="g" value={r.input.cannabisGrams} onChange={(v) => setInput(r.id, { cannabisGrams: v })} min={0} max={1000} sliderMax={56} step={0.5} positive />
               <NumberField
-                label="Gesamt-THC"
+                label={t('lab.cmp.totalThc')}
                 unit="%"
                 value={totalThcPercent(r.input.potency).totalThcPercent}
                 onChange={(v) => setInput(r.id, { potency: { mode: 'total', thcPercent: v } })}
@@ -198,9 +199,9 @@ export function CompareView({ recipes, onChange, currentEdible, onSave }: Props)
                 step={0.5}
                 positive
               />
-              <NumberField label="Butter / Öl gesamt" unit="g" value={r.input.fatGrams} onChange={(v) => setInput(r.id, { fatGrams: v })} min={0} max={10000} sliderMax={1000} step={5} positive />
+              <NumberField label={t('lab.cmp.fatTotal')} unit="g" value={r.input.fatGrams} onChange={(v) => setInput(r.id, { fatGrams: v })} min={0} max={10000} sliderMax={1000} step={5} positive />
               <NumberField
-                label="Butter im Rezept"
+                label={t('lab.cmp.fatRecipe')}
                 unit="g"
                 value={r.input.recipeFatGrams}
                 onChange={(v) => setInput(r.id, { recipeFatGrams: v, recipeFatMode: 'perRecipe' })}
@@ -210,10 +211,10 @@ export function CompareView({ recipes, onChange, currentEdible, onSave }: Props)
                 step={5}
                 positive
               />
-              <NumberField label="Portionen" value={r.input.portions} onChange={(v) => setInput(r.id, { portions: v })} min={1} max={1000} sliderMax={48} integer />
+              <NumberField label={t('lab.cmp.portions')} value={r.input.portions} onChange={(v) => setInput(r.id, { portions: v })} min={1} max={1000} sliderMax={48} integer />
               <div className="space-y-3">
-                <NumberField label="Decarboxylierung" unit="%" value={r.input.decarbEfficiency} onChange={(v) => setInput(r.id, { decarbEfficiency: v })} min={0.01} max={1} scale={100} slider={false} />
-                <NumberField label="Extraktion" unit="%" value={r.input.extractionEfficiency} onChange={(v) => setInput(r.id, { extractionEfficiency: v })} min={0.01} max={1} scale={100} slider={false} />
+                <NumberField label={t('lab.cmp.decarb')} unit="%" value={r.input.decarbEfficiency} onChange={(v) => setInput(r.id, { decarbEfficiency: v })} min={0.01} max={1} scale={100} slider={false} />
+                <NumberField label={t('lab.cmp.extraction')} unit="%" value={r.input.extractionEfficiency} onChange={(v) => setInput(r.id, { extractionEfficiency: v })} min={0.01} max={1} scale={100} slider={false} />
               </div>
             </div>
           </Card>

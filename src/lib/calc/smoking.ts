@@ -1,6 +1,7 @@
 import { SMOKING_BIOAVAILABILITY } from './constants';
 import { type Range, makeRange, mgFromPercent } from './potency';
 import { type FieldRule, type ValidationIssue, validate } from './validation';
+import { t } from '../../i18n';
 
 export type UsageProfile = 'unknown' | 'occasional' | 'regular';
 export type Tolerance = 'none' | 'low' | 'medium' | 'high';
@@ -42,16 +43,16 @@ export interface SmokingResult {
 }
 
 export const SMOKING_RULES: Record<string, FieldRule> = {
-  grams: { min: 0, max: 10, label: 'Cannabis im Joint', unit: 'g' },
+  grams: { min: 0, max: 10, get label() { return t('lab.val.joint'); }, unit: 'g' },
   thcPercent: { min: 0, max: 100, label: 'THC-Gehalt', unit: '%' },
-  fractionConsumed: { min: 0, max: 1, label: 'Konsumierter Anteil' },
-  people: { min: 1, max: 50, label: 'Personen' },
+  fractionConsumed: { min: 0, max: 1, get label() { return t('lab.val.fraction'); } },
+  people: { min: 1, max: 50, get label() { return t('lab.val.people'); } },
 };
 
 export function validateSmokingInput(input: SmokingInput): ValidationIssue[] {
   const issues = validate(input, SMOKING_RULES as Partial<Record<keyof SmokingInput, FieldRule>>);
   if (!Number.isInteger(input.people)) {
-    issues.push({ field: 'people', message: 'Personen müssen eine ganze Zahl sein.' });
+    issues.push({ field: 'people', get message() { return t('lab.val.peopleInt'); } });
   }
   return issues;
 }
@@ -61,61 +62,61 @@ export function bioavailabilityForProfile(profile: UsageProfile): { low: number;
     case 'occasional':
       return {
         ...SMOKING_BIOAVAILABILITY.occasional,
-        source: 'Lindgren et al. 1981: gelegentlich Konsumierende ca. 10 ± 7 %',
+        get source() { return t('lab.sm.srcOccasional'); },
       };
     case 'regular':
       return {
         ...SMOKING_BIOAVAILABILITY.regular,
-        source: 'Lindgren et al. 1981: regelmäßig Konsumierende ca. 23 ± 16 %',
+        get source() { return t('lab.sm.srcRegular'); },
       };
     default:
-      return { ...SMOKING_BIOAVAILABILITY.typical, source: 'Grotenhermen 2003: typischerweise ca. 10–35 %' };
+      return { ...SMOKING_BIOAVAILABILITY.typical, get source() { return t('lab.sm.srcTypical'); } };
   }
 }
 
 export const SMOKING_LOSSES: LossFactor[] = [
   {
     id: 'pyrolysis',
-    title: 'Pyrolyse / Verbrennung',
-    description: 'Ein Teil des THC wird in der Glut thermisch zerstört, bevor es inhaliert werden kann.',
-    magnitude: 'Häufig zitierte Schätzung: ca. 30 % (Grotenhermen 2003)',
+    get title() { return t('lab.sm.pyro'); },
+    get description() { return t('lab.sm.pyroText'); },
+    get magnitude() { return t('lab.sm.pyroMag'); },
   },
   {
     id: 'sidestream',
-    title: 'Nebenstromrauch',
-    description: 'Zwischen den Zügen verbrennt der Joint weiter; dieser Rauch wird nicht inhaliert.',
-    magnitude: 'Stark abhängig von Zugpausen und Glimmdauer',
+    get title() { return t('lab.sm.side'); },
+    get description() { return t('lab.sm.sideText'); },
+    get magnitude() { return t('lab.sm.sideMag'); },
   },
   {
     id: 'residue',
-    title: 'Rückstände im Endstück',
-    description: 'THC kondensiert im hinteren Teil des Joints, im Filter bzw. Tip und wird oft weggeworfen.',
-    magnitude: 'Variabel; abhängig vom nicht gerauchten Rest',
+    get title() { return t('lab.sm.butt'); },
+    get description() { return t('lab.sm.buttText'); },
+    get magnitude() { return t('lab.sm.buttMag'); },
   },
   {
     id: 'exhaled',
-    title: 'Ausgeatmet / nicht absorbiert',
-    description: 'Nicht der gesamte inhalierte Rauch gibt sein THC in der Lunge ab; ein Teil wird wieder ausgeatmet.',
-    magnitude: 'Abhängig von Zugvolumen, Atemanhalten und Technik',
+    get title() { return t('lab.sm.exhaled'); },
+    get description() { return t('lab.sm.exhaledText'); },
+    get magnitude() { return t('lab.sm.exhaledMag'); },
   },
   {
     id: 'technique',
-    title: 'Konsumtechnik & Erfahrung',
-    description: 'Erfahrene Konsumierende nehmen typischerweise mehr THC pro Joint auf als unerfahrene.',
-    magnitude: 'Literatur: 2–56 % Bioverfügbarkeit (Huestis 2007)',
+    get title() { return t('lab.sm.technique'); },
+    get description() { return t('lab.sm.techniqueText'); },
+    get magnitude() { return t('lab.sm.techniqueMag'); },
   },
 ];
 
 export function toleranceNote(tolerance: Tolerance): string {
   switch (tolerance) {
     case 'none':
-      return 'Ohne Toleranz können schon geringe THC-Mengen deutliche Wirkungen und Nebenwirkungen (Angst, Herzrasen, Schwindel) auslösen.';
+      return t('lab.sm.tolNone');
     case 'low':
-      return 'Geringe Toleranz: Die Reaktion auf THC ist schwer vorherzusagen – vorsichtig dosieren.';
+      return t('lab.sm.tolLow');
     case 'medium':
-      return 'Mittlere Toleranz reduziert manche Wirkungen, schützt aber nicht vor Beeinträchtigung der Fahrtüchtigkeit oder Konzentration.';
+      return t('lab.sm.tolMid');
     case 'high':
-      return 'Hohe Toleranz entsteht durch häufigen Konsum und ist mit erhöhtem Risiko einer Abhängigkeit verbunden. Toleranz baut sich bei Pausen wieder ab – nach einer Pause ist Vorsicht geboten.';
+      return t('lab.sm.tolHigh');
   }
 }
 
@@ -140,12 +141,12 @@ export function calculateSmoking(input: SmokingInput): SmokingResult {
   );
 
   const notes: string[] = [
-    'Der theoretische THC-Gehalt ist NICHT die aufgenommene Menge. Die systemisch verfügbare Menge ist meist deutlich kleiner und individuell sehr verschieden.',
+    t('lab.sm.noteTheoretical'),
     toleranceNote(input.tolerance),
   ];
   if (people > 1) {
     notes.push(
-      'Beim Teilen wird eine gleichmäßige Aufteilung angenommen. In der Praxis unterscheiden sich Zuganzahl und Zugtiefe teils erheblich.',
+      t('lab.sm.noteSharing'),
     );
   }
 

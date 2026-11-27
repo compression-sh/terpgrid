@@ -5,12 +5,12 @@ import { Callout } from '../components/ui/Callout';
 import { Card } from '../components/ui/Card';
 import { downloadFile } from '../lib/exporters';
 import type { SavedCalculation } from '../lib/storage';
-import { intlLocale } from '../i18n';
+import { t, intlLocale } from '../i18n';
 
 const KIND_LABEL: Record<SavedCalculation['kind'], string> = {
-  edibles: 'Edibles',
-  smoking: 'Joint',
-  compare: 'Vergleich',
+  get edibles() { return t('lab.saved.kindEdibles'); },
+  get smoking() { return t('lab.saved.kindJoint'); },
+  get compare() { return t('lab.saved.kindCompare'); },
 };
 
 interface Props {
@@ -30,19 +30,18 @@ export function SavedView({ items, onOpen, onDelete, onClear, onImport }: Props)
   return (
     <div className="space-y-5">
       {server ? (
-        <Callout tone="ok" title="Mit deinem Konto synchronisiert">
-          Gespeicherte Berechnungen gehören zu deinem Konto und werden verschlüsselt auf deinem TERPGRID-Server gespeichert. Auch die aktuellen Eingaben werden als Entwurf mit deinem Konto synchronisiert.
+        <Callout tone="ok" title={t('lab.saved.synced')}>
+          {t('lab.saved.syncedText')}
         </Callout>
       ) : (
-        <Callout tone="ok" title="Nur auf diesem Gerät gespeichert">
-          Gespeicherte Berechnungen liegen ausschließlich im lokalen Speicher dieses Browsers. Es werden keine Daten an einen Server übertragen.
-          Beim Löschen der Browserdaten gehen sie verloren – für eine Sicherung die JSON-Exportfunktion nutzen.
+        <Callout tone="ok" title={t('lab.saved.local')}>
+          {t('lab.saved.localText')}
         </Callout>
       )}
 
       <Card
-        title="Gespeicherte Berechnungen"
-        subtitle={`${items.length} ${items.length === 1 ? 'Eintrag' : 'Einträge'}`}
+        title={t('lab.saved.title')}
+        subtitle={t('lab.saved.count', { count: items.length })}
         icon={<Bookmark className="size-4" />}
         actions={
           <div className="flex gap-2 no-print">
@@ -53,11 +52,11 @@ export function SavedView({ items, onOpen, onDelete, onClear, onImport }: Props)
               onClick={() => downloadFile(`cannabisrechner-sicherung-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(items, null, 2), 'application/json')}
             >
               <Download className="size-4" />
-              <span className="hidden sm:inline">Sichern</span>
+              <span className="hidden sm:inline">{t('lab.saved.backup')}</span>
             </button>
             <button type="button" className="btn-ghost py-1.5" onClick={() => fileRef.current?.click()}>
               <Upload className="size-4" />
-              <span className="hidden sm:inline">Importieren</span>
+              <span className="hidden sm:inline">{t('lab.saved.import')}</span>
             </button>
             <input
               ref={fileRef}
@@ -72,9 +71,9 @@ export function SavedView({ items, onOpen, onDelete, onClear, onImport }: Props)
                   if (file.size > 2_000_000) throw new Error('zu groß');
                   const parsed: unknown = JSON.parse(await file.text());
                   const n = onImport(Array.isArray(parsed) ? (parsed as SavedCalculation[]) : []);
-                  setMsg(n > 0 ? { tone: 'ok', text: `${n} Berechnung(en) importiert.` } : { tone: 'warn', text: 'Keine gültigen Einträge gefunden.' });
+                  setMsg(n > 0 ? { tone: 'ok', text: t('lab.saved.imported', { count: n }) } : { tone: 'warn', text: t('lab.saved.noneValid') });
                 } catch {
-                  setMsg({ tone: 'warn', text: 'Die Datei konnte nicht gelesen werden.' });
+                  setMsg({ tone: 'warn', text: t('lab.saved.unreadable') });
                 }
               }}
             />
@@ -89,8 +88,8 @@ export function SavedView({ items, onOpen, onDelete, onClear, onImport }: Props)
         {items.length === 0 ? (
           <div className="grid place-items-center py-12 text-center">
             <Bookmark className="size-8 text-ink-500" />
-            <p className="mt-3 text-sm text-ink-300">Noch keine Berechnungen gespeichert.</p>
-            <p className="hint mt-1">In den Rechnern auf „Speichern“ klicken, um ein Ergebnis hier abzulegen.</p>
+            <p className="mt-3 text-sm text-ink-300">{t('lab.saved.empty')}</p>
+            <p className="hint mt-1">{t('lab.saved.emptyHint')}</p>
           </div>
         ) : (
           <ul className="divide-y divide-white/[0.05]">
@@ -115,9 +114,9 @@ export function SavedView({ items, onOpen, onDelete, onClear, onImport }: Props)
                 </div>
                 <div className="flex shrink-0 gap-2 no-print">
                   <button type="button" className="btn-ghost py-1.5" onClick={() => onOpen(it)}>
-                    <FolderOpen className="size-4" /> Öffnen
+                    <FolderOpen className="size-4" /> {t('lab.saved.open')}
                   </button>
-                  <button type="button" className="btn-ghost py-1.5 hover:text-rose-300" aria-label={`${it.name} löschen`} onClick={() => onDelete(it.id)}>
+                  <button type="button" className="btn-ghost py-1.5 hover:text-rose-300" aria-label={t('lab.saved.deleteOne', { name: it.name })} onClick={() => onDelete(it.id)}>
                     <Trash2 className="size-4" />
                   </button>
                 </div>
@@ -129,17 +128,17 @@ export function SavedView({ items, onOpen, onDelete, onClear, onImport }: Props)
           <div className="mt-5 flex justify-end border-t border-white/[0.05] pt-4 no-print">
             {confirmClear ? (
               <div className="flex items-center gap-2 text-[13px] text-ink-300">
-                Wirklich alle löschen?
+                {t('lab.saved.reallyAll')}
                 <button type="button" className="btn rounded-lg bg-rose-500/80 py-1.5 text-white hover:bg-rose-500" onClick={() => { onClear(); setConfirmClear(false); }}>
-                  Ja, löschen
+                  {t('lab.saved.yesDelete')}
                 </button>
                 <button type="button" className="btn-ghost py-1.5" onClick={() => setConfirmClear(false)}>
-                  Abbrechen
+                  {t('common.cancel')}
                 </button>
               </div>
             ) : (
               <button type="button" className="btn-ghost py-1.5 text-rose-300/80" onClick={() => setConfirmClear(true)}>
-                <Trash2 className="size-4" /> Alle löschen
+                <Trash2 className="size-4" /> {t('lab.saved.deleteAll')}
               </button>
             )}
           </div>

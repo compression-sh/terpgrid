@@ -5,14 +5,15 @@ import { Card } from '../components/ui/Card';
 import { NumberField } from '../components/ui/NumberField';
 import {
   EDIBLE_DOSE_BANDS,
-  EDIBLE_VS_SMOKING_FACTS,
+  edibleVsSmokingFacts,
   INDIVIDUAL_FACTORS,
   assessEdibleDose,
   doseScalePosition,
 } from '../lib/calc/dosage';
-import { classifyFlowerPotency, mgFromPercent } from '../lib/calc/potency';
+import { classifyFlowerPotency, mgFromPercent, potencyLabel } from '../lib/calc/potency';
 import { fmt } from '../lib/format';
 import { DoseBadge, toneHex } from './DoseBadge';
+import { t } from '../i18n';
 
 const POTENCY_STOPS = [
   { at: 0, label: '0 %' },
@@ -22,14 +23,7 @@ const POTENCY_STOPS = [
   { at: 35, label: '35 %' },
 ];
 
-export const OVERDOSE_SIGNS = [
-  'Starke Angst, Panik oder Paranoia',
-  'Verwirrtheit, Orientierungslosigkeit',
-  'Herzrasen, Kreislaufprobleme, Schwindel',
-  'Übelkeit und Erbrechen',
-  'Halluzinationen oder psychotische Symptome',
-  'Starke Müdigkeit, Koordinationsstörungen',
-];
+export const overdoseSigns = (): string[] => [1, 2, 3, 4, 5, 6].map((i) => t(`lab.da.sign${i}` as 'lab.da.sign1'));
 
 export function DosageAnalyzer({ initialDoseMg }: { initialDoseMg?: number }) {
   const [thc, setThc] = useState(18);
@@ -40,8 +34,8 @@ export function DosageAnalyzer({ initialDoseMg }: { initialDoseMg?: number }) {
   return (
     <div className="space-y-5">
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card title="Potenz der Blüte" subtitle="Einordnung anhand des THC-Prozentwerts" icon={<Gauge className="size-4" />}>
-          <NumberField label="THC-Gehalt (gesamt)" unit="%" value={thc} onChange={setThc} min={0} max={100} sliderMax={35} step={0.5} />
+        <Card title={t('lab.da.potency')} subtitle={t('lab.da.potencySub')} icon={<Gauge className="size-4" />}>
+          <NumberField label={t('lab.da.thcTotal')} unit="%" value={thc} onChange={setThc} min={0} max={100} sliderMax={35} step={0.5} />
           <div className="mt-6">
             <div className="relative h-3 rounded-full bg-gradient-to-r from-leaf-600/70 via-yellow-400/70 to-rose-500/80">
               <div
@@ -62,18 +56,17 @@ export function DosageAnalyzer({ initialDoseMg }: { initialDoseMg?: number }) {
             </div>
           </div>
           <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.015] p-4">
-            <div className="text-xs text-ink-400">Grobe Einordnung</div>
-            <div className="mt-0.5 text-lg font-semibold capitalize text-ink-50">{potency.category}</div>
+            <div className="text-xs text-ink-400">{t('lab.da.rough')}</div>
+            <div className="mt-0.5 text-lg font-semibold capitalize text-ink-50">{potencyLabel(potency.category)}</div>
             <p className="mt-1 text-[13px] leading-relaxed text-ink-300">{potency.description}</p>
             <p className="hint mt-3">
-              Theoretisch enthält 0,1 g dieser Blüte {fmt(mgFromPercent(0.1, thc))} mg THC, 1 g enthält {fmt(mgFromPercent(1, thc))} mg. Wie viel
-              davon aufgenommen wird, hängt stark von der Konsumform ab. Die Einteilung ist nicht offiziell.
+              {t('lab.da.theory', { a: fmt(0.1), mgA: fmt(mgFromPercent(0.1, thc)), mgB: fmt(mgFromPercent(1, thc)) })}
             </p>
           </div>
         </Card>
 
-        <Card title="Edible-Dosis einordnen" subtitle="Vorsichtige Referenzbereiche für oral aufgenommenes THC" icon={<Scale className="size-4" />}>
-          <NumberField label="THC im Edible" unit="mg" value={dose} onChange={setDose} min={0} max={1000} sliderMax={60} step={0.5} />
+        <Card title={t('lab.da.edible')} subtitle={t('lab.da.edibleSub')} icon={<Scale className="size-4" />}>
+          <NumberField label={t('lab.da.thcEdible')} unit="mg" value={dose} onChange={setDose} min={0} max={1000} sliderMax={60} step={0.5} />
           <div className="mt-6">
             <div className="flex h-3 overflow-hidden rounded-full">
               {EDIBLE_DOSE_BANDS.map((b) => {
@@ -95,7 +88,7 @@ export function DosageAnalyzer({ initialDoseMg }: { initialDoseMg?: number }) {
                 </span>
               ))}
             </div>
-            <p className="hint mt-1 text-right">logarithmische Skala, mg THC</p>
+            <p className="hint mt-1 text-right">{t('lab.da.logScale')}</p>
           </div>
           <div className="mt-3 space-y-3 rounded-xl border border-white/[0.06] bg-white/[0.015] p-4">
             <DoseBadge band={assessment.band} />
@@ -116,14 +109,14 @@ export function DosageAnalyzer({ initialDoseMg }: { initialDoseMg?: number }) {
         </Card>
       </div>
 
-      <Card title="Referenzbereiche für Edibles" subtitle="Orientierung, kein Dosierungsrat. Grundlage: Health Canada, Standard-THC-Einheit">
+      <Card title={t('lab.da.ref')} subtitle={t('lab.da.refSub')}>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[520px] text-left text-[13px]">
             <thead>
               <tr className="border-b border-white/[0.06] text-xs text-ink-400">
-                <th className="py-2 pr-4 font-medium">Bereich</th>
+                <th className="py-2 pr-4 font-medium">{t('lab.da.range')}</th>
                 <th className="py-2 pr-4 font-medium">mg THC</th>
-                <th className="py-2 font-medium">Einordnung</th>
+                <th className="py-2 font-medium">{t('lab.da.class')}</th>
               </tr>
             </thead>
             <tbody>
@@ -147,9 +140,9 @@ export function DosageAnalyzer({ initialDoseMg }: { initialDoseMg?: number }) {
       </Card>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card title="Edible ≠ Joint" subtitle="Warum mg-Angaben nicht vergleichbar sind" icon={<Activity className="size-4" />}>
+        <Card title={t('lab.da.vs')} subtitle={t('lab.da.vsSub')} icon={<Activity className="size-4" />}>
           <ul className="space-y-3">
-            {EDIBLE_VS_SMOKING_FACTS.map((f) => (
+            {edibleVsSmokingFacts().map((f) => (
               <li key={f} className="flex gap-3 text-[13px] leading-relaxed text-ink-300">
                 <span className="mt-2 size-1.5 shrink-0 rounded-full bg-leaf-500" />
                 {f}
@@ -157,26 +150,24 @@ export function DosageAnalyzer({ initialDoseMg }: { initialDoseMg?: number }) {
             ))}
           </ul>
         </Card>
-        <Card title="Überdosierung und verzögerter Wirkeintritt" subtitle="Das größte Risiko bei Edibles" icon={<ShieldAlert className="size-4" />}>
+        <Card title={t('lab.da.overdose')} subtitle={t('lab.da.overdoseSub')} icon={<ShieldAlert className="size-4" />}>
           <p className="text-[13px] leading-relaxed text-ink-300">
-            Weil die Wirkung erst nach 30 Minuten bis 2 Stunden einsetzt, wird oft nachgelegt. Das kann zu einer unbeabsichtigt hohen Dosis führen,
-            die über viele Stunden wirkt. Selbstgemachte Edibles sind besonders unsicher, weil der THC-Gehalt pro Portion stark schwanken kann.
+            {t('lab.da.overdoseText')}
           </p>
           <div className="mt-3 grid gap-1.5 sm:grid-cols-2">
-            {OVERDOSE_SIGNS.map((s) => (
+            {overdoseSigns().map((s) => (
               <div key={s} className="rounded-lg border border-rose-400/10 bg-rose-500/[0.04] px-3 py-2 text-xs text-rose-100/90">
                 {s}
               </div>
             ))}
           </div>
           <p className="hint mt-3">
-            Bei starken Symptomen: ruhige Umgebung, nicht allein bleiben. Bei Bewusstseinsstörung, Brustschmerz oder schweren psychischen Symptomen den
-            Notruf wählen (EU: 112). Edibles kindersicher und getrennt von Lebensmitteln aufbewahren.
+            {t('lab.da.emergency')}
           </p>
         </Card>
       </div>
 
-      <Card title="Toleranz und individuelle Unterschiede" icon={<HeartPulse className="size-4" />}>
+      <Card title={t('lab.da.factors')} icon={<HeartPulse className="size-4" />}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {INDIVIDUAL_FACTORS.map((f) => (
             <div key={f.title} className="rounded-xl border border-white/[0.06] bg-white/[0.015] p-4">

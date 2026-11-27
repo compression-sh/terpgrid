@@ -1,4 +1,5 @@
-/** Eingabevalidierung – rein funktional, UI-unabhängig. */
+
+import { t } from '../../i18n';/** Eingabevalidierung – rein funktional, UI-unabhängig. */
 
 export interface FieldRule {
   min: number;
@@ -27,16 +28,16 @@ export function clamp(value: number, min: number, max: number): number {
 export function checkField(field: string, value: number, rule: FieldRule): ValidationIssue | null {
   const unit = rule.unit ? ` ${rule.unit}` : '';
   if (!isFiniteNumber(value)) {
-    return { field, message: `${rule.label}: bitte eine gültige Zahl eingeben.` };
+    return { field, message: t('common.val.number', { label: rule.label }) };
   }
   if (value < rule.min) {
-    return { field, message: `${rule.label} muss mindestens ${rule.min}${unit} betragen.` };
+    return { field, message: t('common.val.min', { label: rule.label, min: rule.min, unit }) };
   }
   if (value > rule.max) {
-    return { field, message: `${rule.label} darf höchstens ${rule.max}${unit} betragen.` };
+    return { field, message: t('common.val.max', { label: rule.label, max: rule.max, unit }) };
   }
   if (!rule.allowZero && value === 0 && rule.min === 0) {
-    return { field, message: `${rule.label} muss größer als 0 sein.` };
+    return { field, message: t('common.val.positive', { label: rule.label }) };
   }
   return null;
 }

@@ -6,6 +6,7 @@ import {
 } from './constants';
 import { type PotencyInput, type Range, makeRange, totalThcPercent } from './potency';
 import { type FieldRule, type ValidationIssue, clamp, validate } from './validation';
+import { t } from '../../i18n';
 
 /**
  * Modell (jeder Verlust wird genau EINMAL angewandt):
@@ -73,16 +74,16 @@ export interface EdibleResult {
 }
 
 export const EDIBLE_RULES: Record<string, FieldRule> = {
-  cannabisGrams: { min: 0, max: 1000, label: 'Cannabis-Menge', unit: 'g' },
-  thcPercent: { min: 0, max: 100, allowZero: true, label: 'THC-Gehalt', unit: '%' },
-  thcaPercent: { min: 0, max: 100, allowZero: true, label: 'THCA-Gehalt', unit: '%' },
-  fatGrams: { min: 0, max: 10000, label: 'Butter-/Ölmenge', unit: 'g' },
-  strainLoss: { min: 0, max: 0.9, allowZero: true, label: 'Abseihverlust' },
-  decarbEfficiency: { min: 0.01, max: 1, label: 'Decarboxylierungsausbeute' },
-  extractionEfficiency: { min: 0.01, max: 1, label: 'Extraktionsausbeute' },
-  labelUncertainty: { min: 0, max: 0.9, allowZero: true, label: 'Unsicherheit THC-Angabe' },
-  recipeFatGrams: { min: 0, max: 10000, label: 'Butter im Rezept', unit: 'g' },
-  portions: { min: 1, max: 1000, label: 'Portionen' },
+  cannabisGrams: { min: 0, max: 1000, get label() { return t('lab.val.amount'); }, unit: 'g' },
+  thcPercent: { min: 0, max: 100, allowZero: true, get label() { return t('lab.val.thc'); }, unit: '%' },
+  thcaPercent: { min: 0, max: 100, allowZero: true, get label() { return t('lab.val.thca'); }, unit: '%' },
+  fatGrams: { min: 0, max: 10000, get label() { return t('lab.val.fat'); }, unit: 'g' },
+  strainLoss: { min: 0, max: 0.9, allowZero: true, get label() { return t('lab.val.strainLoss'); } },
+  decarbEfficiency: { min: 0.01, max: 1, get label() { return t('lab.val.decarb'); } },
+  extractionEfficiency: { min: 0.01, max: 1, get label() { return t('lab.val.extract'); } },
+  labelUncertainty: { min: 0, max: 0.9, allowZero: true, get label() { return t('lab.val.labelUnc'); } },
+  recipeFatGrams: { min: 0, max: 10000, get label() { return t('lab.val.recipeFat'); }, unit: 'g' },
+  portions: { min: 1, max: 1000, get label() { return t('lab.val.portions'); } },
 };
 
 export function validateEdibleInput(input: EdibleInput): ValidationIssue[] {
@@ -94,16 +95,16 @@ export function validateEdibleInput(input: EdibleInput): ValidationIssue[] {
   const issues = validate(flat, EDIBLE_RULES as Partial<Record<keyof typeof flat, FieldRule>>);
   const total = totalThcPercent(input.potency).totalThcPercent;
   if (total > 100) {
-    issues.push({ field: 'thcPercent', message: 'THC + THCA ergibt mehr als 100 % – bitte Werte prüfen.' });
+    issues.push({ field: 'thcPercent', get message() { return t('lab.val.over100'); } });
   }
   if (input.potency.mode === 'separate' && total === 0) {
-    issues.push({ field: 'thcPercent', message: 'Bitte THC- oder THCA-Gehalt angeben.' });
+    issues.push({ field: 'thcPercent', get message() { return t('lab.val.needThc'); } });
   }
   if (input.potency.mode === 'total' && input.potency.thcPercent === 0) {
-    issues.push({ field: 'thcPercent', message: 'THC-Gehalt muss größer als 0 sein.' });
+    issues.push({ field: 'thcPercent', get message() { return t('lab.val.thcPositive'); } });
   }
   if (!Number.isInteger(input.portions)) {
-    issues.push({ field: 'portions', message: 'Portionen müssen eine ganze Zahl sein.' });
+    issues.push({ field: 'portions', get message() { return t('lab.val.portionsInt'); } });
   }
   return issues;
 }
@@ -192,14 +193,12 @@ export function calculateEdibles(input: EdibleInput): EdibleResult {
   const warnings: string[] = [];
   if (recipeFatGrams > recoveredFatGrams + 1e-9) {
     warnings.push(
-      `Das Rezept benötigt ${round1(recipeFatGrams)} g Butter/Öl, nach dem Abseihen stehen aber nur ca. ${round1(
-        recoveredFatGrams,
-      )} g zur Verfügung.`,
+      t('lab.ed.wFat', { need: round1(recipeFatGrams), have: round1(recoveredFatGrams) }),
     );
   }
   if (input.cannabisGrams > 0 && fat > 0 && input.cannabisGrams / fat > 0.5) {
     warnings.push(
-      'Sehr hohes Cannabis-zu-Fett-Verhältnis: Das Fett kann gesättigt sein bzw. vom Pflanzenmaterial aufgesogen werden – die Extraktion ist dann vermutlich geringer.',
+      t('lab.ed.wRatio'),
     );
   }
 
