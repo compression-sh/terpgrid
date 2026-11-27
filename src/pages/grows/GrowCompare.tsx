@@ -71,14 +71,14 @@ export function GrowCompare() {
   return (
     <div>
       <PageHeader
-        crumbs={[{ label: 'Growlogs', to: 'grows' }, { label: 'Vergleich' }]}
+        crumbs={[{ label: 'Grows', to: 'grows' }, { label: 'Vergleich' }]}
         title="Grow-Vergleich"
         subtitle="Bis zu vier Projekte nebeneinander – nur dokumentierte Werte, Zeitachse in Grow-Tagen ab Start."
         actions={
           <>
             <ContextHelp ids={['anbau-ueberblick', 'licht-ppfd-dli', 'klima-vpd']} />
             <a href={href('grows')} className="btn-ghost">
-              <ArrowLeft className="size-4" /> Growlogs
+              <ArrowLeft className="size-4" /> Grows
             </a>
           </>
         }

@@ -35,7 +35,7 @@ export function GrowList() {
   return (
     <div>
       <PageHeader
-        title="Growlogs"
+        title="Grows"
         subtitle="Deine Grow-Projekte mit Pflanzen, Fotos, Messwerten und Ausgaben."
         actions={
           <>

@@ -125,7 +125,7 @@ export function GrowReport({ growId }: { growId: string }) {
         title="Grow nicht gefunden"
         action={
           <a href={href("grows")} className="btn-primary">
-            Zu den Growlogs
+            Zu den Grows
           </a>
         }
       />

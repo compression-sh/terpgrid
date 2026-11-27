@@ -90,7 +90,7 @@ export function PlantDetail({ growId, plantId }: { growId: string; plantId: stri
     <div>
       <nav aria-label="Brotkrumen" className="mb-3 flex min-w-0 items-center gap-1.5 text-xs text-ink-400">
         <a href={href('grows')} className="hover:text-ink-100">
-          Growlogs
+          Grows
         </a>
         <span className="text-ink-600">/</span>
         <a href={href(`grows/${growId}`)} className="truncate hover:text-ink-100">

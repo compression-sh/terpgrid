@@ -49,7 +49,7 @@ export function LabelsPage() {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const path = typeof window !== 'undefined' ? window.location.pathname : '/';
 
-  if (!grow) return <EmptyState icon={<QrCode />} title="Grow nicht gefunden" action={<a href={href('grows')} className="btn-primary">Zu den Growlogs</a>} />;
+  if (!grow) return <EmptyState icon={<QrCode />} title="Grow nicht gefunden" action={<a href={href('grows')} className="btn-primary">Zu den Grows</a>} />;
   const S = SIZES[size];
   const strainName = (p: Plant) => (p.strainId ? data.strains.find((s) => s.id === p.strainId)?.name : p.strainName);
 

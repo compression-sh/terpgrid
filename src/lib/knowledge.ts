@@ -203,7 +203,7 @@ const BASE_ARTICLES: KbArticle[] = [
           'Photoperiodische Pflanzen beginnen zu blühen, wenn die Nächte länger werden. Autoflower-Pflanzen – mit Erbgut aus Cannabis ruderalis – blühen weitgehend altersabhängig.',
           'Zeitangaben zu Blütedauer und Ernte sind immer nur Richtwerte; Umgebung, Genetik und Pflege verändern sie deutlich.',
         ],
-        links: [{ label: 'Growlogs', to: 'grows' }],
+        links: [{ label: 'Grows', to: 'grows' }],
       },
     ],
     related: ['lebenszyklus', 'genetik'],
@@ -250,7 +250,7 @@ const BASE_ARTICLES: KbArticle[] = [
           'Keimung → Sämling → vegetative Phase → Blüte → Ernte → Trocknung → Aushärtung (Curing). Diese Meilensteine kannst du in deinen Growlogs mit eigenen Daten erfassen; TERPGRID berechnet daraus Phasendauern, sagt aber nichts voraus.',
           'Wie lange eine Phase dauert, hängt von Genetik, Licht, Temperatur, Medium und Pflege ab.',
         ],
-        links: [{ label: 'Growlogs', to: 'grows' }],
+        links: [{ label: 'Grows', to: 'grows' }],
       },
       {
         heading: 'Rechtliches',

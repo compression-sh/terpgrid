@@ -189,7 +189,7 @@ export function GrowDetail({ growId }: { growId: string }) {
         text="Der Grow wurde gelöscht oder der Link ist ungültig."
         action={
           <a href={href('grows')} className="btn-primary">
-            Zu den Growlogs
+            Zu den Grows
           </a>
         }
       />
@@ -234,7 +234,7 @@ export function GrowDetail({ growId }: { growId: string }) {
         <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6">
           <nav aria-label="Brotkrumen" className="mb-2 text-xs text-ink-300">
             <a href={href('grows')} className="hover:text-ink-50">
-              Growlogs
+              Grows
             </a>
             <span className="mx-1.5 text-ink-500">/</span>
             <span className="text-ink-200">{grow.name}</span>

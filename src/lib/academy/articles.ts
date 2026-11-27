@@ -45,7 +45,7 @@ export const ACADEMY_ARTICLES: KbArticle[] = [
           'Werte aus Studien beschreiben deshalb, was unter bestimmten Bedingungen beobachtet wurde. Für den eigenen Anbau sind sie ein Ausgangspunkt, den man mit eigenen Messungen überprüft.',
         ],
         note: 'In TERPGRID kannst du Messwerte je Pflanze oder Grow-Bereich erfassen und über die Zeit vergleichen – so werden aus Faustregeln eigene Erfahrungswerte.',
-        links: [{ label: 'Growlogs öffnen', to: 'grows' }],
+        links: [{ label: 'Grows öffnen', to: 'grows' }],
       },
       {
         heading: 'Rechtlicher Rahmen',
