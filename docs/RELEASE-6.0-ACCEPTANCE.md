@@ -40,13 +40,29 @@ Alle Zahlen stammen aus Läufen in dieser Umgebung; nichts ist geschätzt oder �
 | `npm audit` Frontend/Server | 0/0 | **0/0** | Bestanden |
 | Secret-Scan (gitleaks, CI-Konfiguration) | keine Funde | **keine Funde** in `HEAD` und `origin/main` | Bestanden (§7) |
 | Migrationen | 009 | **009** (keine neue) | Bestanden |
-| Seitenprüfung 34 Routen × 6 Breiten | 0 Überlauf, 0 Fehler | siehe §3 | |
+| Seitenprüfung 34 Routen × 6 Breiten, 3 Engines | 0 Überlauf, 0 Fehler | **0 Überlauf, 0 Fehler** | Bestanden |
+| Browser-Suiten (Workflows, Zusammenarbeit, Offline, Offline-Sicherheit, Mobil) | bestanden, WebKit B-4/B-5 | **gleich** (§3) | Bestanden |
 
 ## 3. Browser (automatisiert, **keine** physischen Geräte)
 
 Engines: Chromium 157, Firefox 155, WebKit 26.6 (Playwright). Build: Produktions-Build des Release-Stands, Vorschau gegen die Entwicklungs-API mit PostgreSQL.
 
-<!-- BROWSER -->
+Lauf auf dem endgültigen Build (676eea1).
+
+| Suite | Inhalt | Chromium 157 | Firefox 155 | WebKit 26.6 |
+| --- | --- | --- | --- | --- |
+| Seitenprüfung | 34 Routen × 6 Breiten (360–1440), angemeldet mit Daten: horizontaler Überlauf, JS- und Konsolenfehler | 204 Aufrufe · Überlauf **0** · Fehler **0** | 204 · **0** · **0** | 204 · **0** · **0** |
+| Workflows | Grow, Messung, Foto-Upload (EXIF entfernt), Journal-Tags, Kalender, Suche, Katalog, 2FA, Sitzungen, Export, Administration | **30/30** | **30/30** | **30/30** |
+| Zusammenarbeit (`e2e-55`) | Freunde, Bereiche, Rollen, 403, Entzug, keine Anmeldenamen | **26/26** | **26/26** | **26/26** |
+| Offline (`e2e-offline`) | Opt-in, Offline-Start, Bearbeiten, Sync, Kontowechsel | **26/26** | **26/26** | **22/23** – alle Funktionsprüfungen bestanden; die Prüfung „keine JS-Fehler“ meldet B-5; Offline-Neuladen mit Service Worker nicht automatisierbar (B-4) |
+| Offline-Sicherheit (`offline-sec`) | Abmelden in allen Tabs, ausstehendes Abmelden, keine privaten Reste, Konto B sieht nichts von A | **16/16** | **16/16** | **16/16** |
+| Mobil und Barrierefreiheit (axe) | Touch-Ziele, Safe Areas, Dialoge, Fokus, axe | **16/16** | **16/16** | **16/16** |
+
+**Verlauf der Abnahme:**
+- Der erste Seitenprüfungslauf in Firefox (vor 676eea1) fand einen JS-Fehler. Er ist behoben (`RELEASE-6.0-REPORT.md` §2), danach liefen alle Engines erneut.
+- Die Workflows meldeten im ersten Lauf 28/29: Eine Kopie des Testskripts außerhalb des Repositorys fand den Serverordner für den CLI-Schritt nicht. Mit dem Skript aus `scripts/browser-acceptance/` liefen alle Engines mit 30/30. Das war ein Fehler im Testaufbau, nicht in der App.
+
+**B-4 und B-5 sind unverändert gegenüber 5.9** (`PHASE5-9-BROWSER-COMPATIBILITY.md`): Grenzen der WebKit-Automation unter Offline-Emulation. Prüfung auf dem iPhone in der Geräteabnahme, Schritte 13–15.
 
 **Wichtig:** Diese Ergebnisse ersetzen die Geräteabnahme nicht. Playwrights WebKit ist nicht Safari auf iOS; installierte Apps, Kamera, HEIC, echte Passkeys, Safe Areas und Screenreader sind nur auf Geräten prüfbar (G3).
 
