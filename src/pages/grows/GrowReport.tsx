@@ -37,14 +37,15 @@ import {
   seriesByGrowDay,
   summarizeGrow,
 } from "../../lib/grow/summary";
+import { t } from '../../i18n';
 
 const SECTIONS = [
-  { id: "plants", label: "Pflanzen" },
-  { id: "measurements", label: "Messwerte & Diagramme" },
-  { id: "timeline", label: "Verlauf" },
-  { id: "photos", label: "Foto-Auswahl" },
-  { id: "expenses", label: "Ausgaben" },
-  { id: "experiments", label: "Experimente & Phänotypen" },
+  { id: "plants", get label() { return t('grow.rp.secPlants'); } },
+  { id: "measurements", get label() { return t('grow.rp.secMeas'); } },
+  { id: "timeline", get label() { return t('grow.rp.secTimeline'); } },
+  { id: "photos", get label() { return t('grow.rp.secPhotos'); } },
+  { id: "expenses", get label() { return t('grow.rp.secExpenses'); } },
+  { id: "experiments", get label() { return t('grow.rp.secExp'); } },
 ] as const;
 type SectionId = (typeof SECTIONS)[number]["id"];
 
@@ -61,12 +62,12 @@ function ReportChart({
     <figure className="break-inside-avoid rounded-lg border border-white/[0.08] p-3 print:border-gray-300">
       <figcaption className="mb-1 text-[12px] font-medium">
         {label}
-        {unit ? ` (${unit})` : ""} – Tage seit Start
+        {unit ? ` (${unit})` : ""} {t('grow.rp.daysSince')}
       </figcaption>
       <div
         className="h-40 w-full"
         role="img"
-        aria-label={`${label}: ${points.length} Messpunkte`}
+        aria-label={t('grow.rp.points', { label, count: points.length })}
       >
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
@@ -122,10 +123,10 @@ export function GrowReport({ growId }: { growId: string }) {
   if (!grow)
     return (
       <EmptyState
-        title="Grow nicht gefunden"
+        title={t('grow.rp.notFound')}
         action={
           <a href={href("grows")} className="btn-primary">
-            Zu den Grows
+            {t('grow.rp.toGrows')}
           </a>
         }
       />
@@ -178,12 +179,10 @@ export function GrowReport({ growId }: { growId: string }) {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="page-title">
-              Projektbericht
+              {t('grow.rp.title')}
             </h1>
             <p className="mt-1 max-w-2xl text-sm text-ink-400">
-              Druckansicht aus deinen eigenen Daten. Für eine PDF-Datei im
-              Druckdialog „Als PDF speichern“ wählen. Der Bericht verlässt dein
-              Gerät nur, wenn du die Datei selbst weitergibst.
+              {t('grow.rp.intro')}
             </p>
           </div>
           <div className="flex gap-2">
@@ -192,19 +191,19 @@ export function GrowReport({ growId }: { growId: string }) {
               className="btn-ghost"
               onClick={() => window.print()}
             >
-              <FileDown className="size-4" /> Als PDF
+              <FileDown className="size-4" /> {t('grow.rp.asPdf')}
             </button>
             <button
               type="button"
               className="btn-primary"
               onClick={() => window.print()}
             >
-              <Printer className="size-4" /> Drucken
+              <Printer className="size-4" /> {t('grow.rp.print')}
             </button>
           </div>
         </div>
         <fieldset className="flex flex-wrap gap-2">
-          <legend className="sr-only">Abschnitte</legend>
+          <legend className="sr-only">{t('grow.rp.sections')}</legend>
           {SECTIONS.map((x) => (
             <label
               key={x.id}
@@ -237,31 +236,31 @@ export function GrowReport({ growId }: { growId: string }) {
           )}
           <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-[13px] sm:grid-cols-4">
             {[
-              ["Status", STATUS_LABEL[grow.status]],
-              ["Start", fmtDate(grow.startDate)],
+              [t('grow.rp.status'), STATUS_LABEL[grow.status]],
+              [t('grow.rp.start'), fmtDate(grow.startDate)],
               [
-                "Dauer",
+                t('grow.rp.durationL'),
                 s.durationDays !== undefined
-                  ? `${s.durationDays} Tage${s.running ? " (läuft)" : ""}`
+                  ? t('grow.rp.duration', { n: s.durationDays, running: s.running ? t('grow.rp.running') : '' })
                   : "–",
               ],
               [
-                "Umgebung",
+                t('grow.rp.env'),
                 [SETTING_LABEL[grow.setting], grow.medium, grow.environment]
                   .filter(Boolean)
                   .join(" · "),
               ],
-              ["Pflanzen", String(s.plants)],
+              [t('grow.rp.secPlants'), String(s.plants)],
               [
-                "Einträge",
-                `${s.activities} (${s.measurements} mit Messwerten)`,
+                t('grow.rp.entries'),
+                t('grow.rp.acts', { a: s.activities, m: s.measurements }),
               ],
-              ["Fotos", String(s.photos)],
+              [t('grow.rp.photos'), String(s.photos)],
               [
-                "Ausgaben",
+                t('grow.rp.secExpenses'),
                 s.expenseCount
                   ? money(s.expenses, settings.currency)
-                  : "keine erfasst",
+                  : t('grow.rp.noneRecorded'),
               ],
             ].map(([k, v]) => (
               <div key={k}>
@@ -276,7 +275,7 @@ export function GrowReport({ growId }: { growId: string }) {
               {spans
                 .map(
                   (p) =>
-                    `${PHASE_LABEL[p.phase]} ab ${fmtDate(p.start)} (${p.days} T.${p.ongoing ? ", läuft" : ""})`,
+                    t('grow.rp.phase', { p: PHASE_LABEL[p.phase], date: fmtDate(p.start), n: p.days, ongoing: p.ongoing ? t('grow.rp.ongoing') : '' }),
                 )
                 .join(" · ")}
             </p>
@@ -294,7 +293,7 @@ export function GrowReport({ growId }: { growId: string }) {
             {completeness
               .map(
                 (c) =>
-                  `${c.label} ${c.state === "ok" ? "vollständig" : c.state === "partial" ? "teilweise" : "fehlt"} (${c.detail})`,
+                  `${c.label} ${t(c.state === 'ok' ? 'grow.doc.ok' : c.state === 'partial' ? 'grow.doc.partial' : 'grow.doc.missing')} (${c.detail})`,
               )
               .join(" · ")}
           </p>
@@ -307,20 +306,20 @@ export function GrowReport({ growId }: { growId: string }) {
             </h3>
             {d.plants.length === 0 ? (
               <p className="text-[13px] text-ink-400">
-                Keine Pflanzen erfasst.
+                {t('grow.rp.noPlants')}
               </p>
             ) : (
               <div className="overflow-x-auto print:overflow-visible">
                 <table className="w-full text-left text-[12px]">
                   <thead className="text-ink-400">
                     <tr>
-                      <th className="py-1 pr-2 font-medium">Name</th>
-                      <th className="py-1 pr-2 font-medium">Sorte</th>
-                      <th className="py-1 pr-2 font-medium">Typ</th>
-                      <th className="py-1 pr-2 font-medium">Start</th>
-                      <th className="py-1 pr-2 font-medium">Standort</th>
+                      <th className="py-1 pr-2 font-medium">{t('grow.rp.name')}</th>
+                      <th className="py-1 pr-2 font-medium">{t('grow.rp.strain')}</th>
+                      <th className="py-1 pr-2 font-medium">{t('grow.rp.type')}</th>
+                      <th className="py-1 pr-2 font-medium">{t('grow.rp.start')}</th>
+                      <th className="py-1 pr-2 font-medium">{t('grow.rp.location')}</th>
                       <th className="py-1 text-right font-medium">
-                        Ergebnis trocken
+                        {t('grow.rp.dryResult')}
                       </th>
                     </tr>
                   </thead>
@@ -344,7 +343,7 @@ export function GrowReport({ growId }: { growId: string }) {
                         <td className="py-1.5 text-right font-mono">
                           {p.outcome?.dryWeightG !== undefined
                             ? `${fmt(p.outcome.dryWeightG)} g`
-                            : "nicht erfasst"}
+                            : t('grow.rp.notRecorded')}
                         </td>
                       </tr>
                     ))}
@@ -362,7 +361,7 @@ export function GrowReport({ growId }: { growId: string }) {
             </h3>
             {metrics.length === 0 ? (
               <p className="text-[13px] text-ink-400">
-                Keine Messwerte erfasst.
+                {t('grow.rp.noMeas')}
               </p>
             ) : (
               <>
@@ -370,15 +369,15 @@ export function GrowReport({ growId }: { growId: string }) {
                   <table className="mb-3 w-full text-left text-[12px]">
                     <thead className="text-ink-400">
                       <tr>
-                        <th className="py-1 pr-2 font-medium">Messgröße</th>
+                        <th className="py-1 pr-2 font-medium">{t('grow.rp.metric')}</th>
                         <th className="py-1 pr-2 text-right font-medium">
-                          Anzahl
+                          {t('grow.rp.count')}
                         </th>
                         <th className="py-1 pr-2 text-right font-medium">
-                          Min – Max
+                          {t('grow.rp.minMax')}
                         </th>
                         <th className="py-1 text-right font-medium">
-                          Letzter Wert
+                          {t('grow.rp.latest')}
                         </th>
                       </tr>
                     </thead>
@@ -416,8 +415,7 @@ export function GrowReport({ growId }: { growId: string }) {
                   </table>
                 </div>
                 <p className="mb-3 text-[11px] text-ink-400">
-                  pH/EC über alle Messkontexte; berechnete Größen (VPD, DLI) aus
-                  Rohwerten derselben Messung. Keine Interpolation.
+                  {t('grow.rp.measNote')}
                 </p>
                 <div className="grid gap-3 sm:grid-cols-2 print:grid-cols-2">
                   {metrics.slice(0, 6).map(({ m, pts }) => (
@@ -443,7 +441,7 @@ export function GrowReport({ growId }: { growId: string }) {
               </span>
             </h3>
             {timeline.length === 0 ? (
-              <p className="text-[13px] text-ink-400">Keine Einträge.</p>
+              <p className="text-[13px] text-ink-400">{t('grow.rp.noEntries')}</p>
             ) : (
               <ol className="space-y-1.5 text-[12px]">
                 {timeline.map((a) => {
@@ -508,7 +506,7 @@ export function GrowReport({ growId }: { growId: string }) {
               </span>
             </h3>
             {picks.length === 0 ? (
-              <p className="text-[13px] text-ink-400">Keine Fotos.</p>
+              <p className="text-[13px] text-ink-400">{t('grow.rp.noPhotos')}</p>
             ) : (
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 print:grid-cols-4">
                 {picks.map((p) => (
@@ -516,7 +514,7 @@ export function GrowReport({ growId }: { growId: string }) {
                     <PhotoImg
                       photoId={p.id}
                       variant="full"
-                      alt={`Foto vom ${fmtDate(p.takenAt.slice(0, 10))}`}
+                      alt={t('grow.rp.photoOf', { date: fmtDate(p.takenAt.slice(0, 10)) })}
                       className="aspect-square w-full rounded-md"
                     />
                     <figcaption className="mt-0.5 text-[10px] text-ink-400">
@@ -536,7 +534,7 @@ export function GrowReport({ growId }: { growId: string }) {
             </h3>
             {d.expenses.length === 0 ? (
               <p className="text-[13px] text-ink-400">
-                Keine Ausgaben erfasst.
+                {t('grow.rp.noExpenses')}
               </p>
             ) : (
               <div className="overflow-x-auto print:overflow-visible">
@@ -563,7 +561,7 @@ export function GrowReport({ growId }: { growId: string }) {
                       ))}
                     <tr className="border-t border-white/[0.12] font-semibold print:border-gray-400">
                       <td colSpan={3} className="py-1.5">
-                        Summe
+                        {t('grow.rp.sum')}
                       </td>
                       <td className="py-1.5 text-right font-mono">
                         {money(s.expenses, settings.currency)}
@@ -581,7 +579,7 @@ export function GrowReport({ growId }: { growId: string }) {
             d.plants.some((p) => p.phenotype)) && (
             <section aria-labelledby="r-exp2">
               <h3 id="r-exp2" className="mb-2 text-lg font-semibold">
-                Experimente & Phänotypen
+                {t('grow.rp.secExp')}
               </h3>
               {(grow.experiments ?? []).map((x) => (
                 <div key={x.id} className="mb-3 break-inside-avoid text-[12px]">
@@ -592,7 +590,7 @@ export function GrowReport({ growId }: { growId: string }) {
                       {x.endDate ? ` – ${fmtDate(x.endDate)}` : ""})
                     </span>
                   </p>
-                  {x.purpose && <p>Ziel: {x.purpose}</p>}
+                  {x.purpose && <p>{t('grow.rp.goal', { v: x.purpose })}</p>}
                   <p className="text-ink-300">
                     Pflanzen:{" "}
                     {x.plantIds
@@ -606,7 +604,7 @@ export function GrowReport({ growId }: { growId: string }) {
                     </p>
                   )}
                   {x.outcome && (
-                    <p className="whitespace-pre-wrap">Ergebnis: {x.outcome}</p>
+                    <p className="whitespace-pre-wrap">{t('grow.rp.result', { v: x.outcome })}</p>
                   )}
                 </div>
               ))}
@@ -617,7 +615,7 @@ export function GrowReport({ growId }: { growId: string }) {
                     key={p.id}
                     className="mb-2 break-inside-avoid text-[12px]"
                   >
-                    <p className="font-medium">Phänotyp: {p.name}</p>
+                    <p className="font-medium">{t('grow.rp.pheno')} {p.name}</p>
                     <p className="text-ink-300">
                       {Object.entries(p.phenotype!)
                         .filter(([k, v]) => k !== "updatedAt" && v)
@@ -627,8 +625,7 @@ export function GrowReport({ growId }: { growId: string }) {
                   </div>
                 ))}
               <p className="text-[11px] text-ink-400">
-                Persönliche Beobachtungen – keine belegten
-                Ursache-Wirkungs-Zusammenhänge.
+                {t('grow.rp.personal')}
               </p>
             </section>
           )}
@@ -636,14 +633,13 @@ export function GrowReport({ growId }: { growId: string }) {
         {grow.notes && (
           <section aria-labelledby="r-notes" className="break-inside-avoid">
             <h3 id="r-notes" className="mb-2 text-lg font-semibold">
-              Notizen
+              {t('grow.rp.notes')}
             </h3>
             <p className="whitespace-pre-wrap text-[13px]">{grow.notes}</p>
           </section>
         )}
         <footer className="border-t border-white/[0.08] pt-3 text-[10px] text-ink-400 print:border-gray-300">
-          Erstellt mit TERPGRID aus persönlichen Aufzeichnungen. Werte sind
-          eigene Angaben bzw. Messungen mit eigenen Geräten.
+          {t('grow.rp.footer')}
         </footer>
       </article>
     </div>

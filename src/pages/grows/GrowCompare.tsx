@@ -18,15 +18,16 @@ import { CONTEXT_LABEL } from '../../lib/grow/measure';
 import { PHASE_LABEL } from '../../lib/grow/phases';
 import { DERIVED, METRICS, type DerivedKey, type MetricKey } from '../../lib/grow/series';
 import { contextsUsed, growData, seriesByGrowDay, summarizeGrow } from '../../lib/grow/summary';
+import { t } from '../../i18n';
 
 const COLORS = ['#5fe39a', '#38bdf8', '#c084fc', '#fbbf24'];
 const DASH = [undefined, '6 3', '2 3', '8 3 2 3'];
 const MAX = 4;
 const RANGES = [
-  { id: 0, label: 'Alle Tage' },
-  { id: 30, label: 'Tag 0–30' },
-  { id: 60, label: 'Tag 0–60' },
-  { id: 120, label: 'Tag 0–120' },
+  { id: 0, get label() { return t('grow.gc.all'); } },
+  { id: 30, get label() { return t('grow.gc.d30'); } },
+  { id: 60, get label() { return t('grow.gc.d60'); } },
+  { id: 120, get label() { return t('grow.gc.d120'); } },
 ];
 
 /** Vergleich von bis zu vier Grow-Projekten auf Basis dokumentierter Werte. */
@@ -53,40 +54,40 @@ export function GrowCompare() {
   const available = [...METRICS, ...DERIVED].filter((m) => per.some(({ g, d }) => seriesByGrowDay(g, d.activities, m.key).length > 0));
 
   const rows: { label: string; value: (i: number) => string; hint?: string }[] = [
-    { label: 'Start', value: (i) => fmtDate(summaries[i]!.grow.startDate) },
-    { label: 'Dauer', value: (i) => (summaries[i]!.durationDays !== undefined ? `${summaries[i]!.durationDays} Tage${summaries[i]!.running ? ' (läuft)' : ''}` : 'keine Daten') },
-    { label: 'Aktuelle Phase', value: (i) => (summaries[i]!.phase ? PHASE_LABEL[summaries[i]!.phase as keyof typeof PHASE_LABEL] : 'nicht erfasst') },
-    { label: 'Pflanzen', value: (i) => String(summaries[i]!.plants) },
-    { label: 'Max. Höhe', value: (i) => (summaries[i]!.maxHeightCm !== undefined ? `${fmt(summaries[i]!.maxHeightCm!)} cm` : 'keine Messung') },
-    { label: 'Einträge / Messungen', value: (i) => `${summaries[i]!.activities} / ${summaries[i]!.measurements}` },
-    { label: 'Fotos', value: (i) => String(summaries[i]!.photos) },
-    { label: 'Ausgaben', value: (i) => (summaries[i]!.expenseCount ? money(summaries[i]!.expenses, settings.currency) : 'keine erfasst') },
+    { get label() { return t('grow.gc.start'); }, value: (i) => fmtDate(summaries[i]!.grow.startDate) },
+    { get label() { return t('grow.gc.duration'); }, value: (i) => (summaries[i]!.durationDays !== undefined ? t('grow.rp.duration', { n: summaries[i]!.durationDays!, running: summaries[i]!.running ? t('grow.rp.running') : '' }) : t('grow.gc.noData')) },
+    { get label() { return t('grow.gc.phase'); }, value: (i) => (summaries[i]!.phase ? PHASE_LABEL[summaries[i]!.phase as keyof typeof PHASE_LABEL] : t('grow.gc.notRecorded')) },
+    { get label() { return t('grow.gc.plants'); }, value: (i) => String(summaries[i]!.plants) },
+    { get label() { return t('grow.gc.maxHeight'); }, value: (i) => (summaries[i]!.maxHeightCm !== undefined ? `${fmt(summaries[i]!.maxHeightCm!)} cm` : t('grow.gc.noMeasure')) },
+    { get label() { return t('grow.gc.entriesMeas'); }, value: (i) => `${summaries[i]!.activities} / ${summaries[i]!.measurements}` },
+    { get label() { return t('grow.gc.photos'); }, value: (i) => String(summaries[i]!.photos) },
+    { get label() { return t('grow.gc.expenses'); }, value: (i) => (summaries[i]!.expenseCount ? money(summaries[i]!.expenses, settings.currency) : t('grow.gc.noneRecorded')) },
     {
-      label: 'Ergebnis (trocken)',
-      value: (i) => (summaries[i]!.dryWeightG !== undefined ? `${fmt(summaries[i]!.dryWeightG!)} g (${summaries[i]!.plantsWithOutcome} von ${summaries[i]!.plants} Pfl.)` : 'nicht erfasst'),
-      hint: 'Summe der erfassten Trockengewichte – Pflanzen ohne Angabe fehlen in der Summe.',
+      get label() { return t('grow.gc.result'); },
+      value: (i) => (summaries[i]!.dryWeightG !== undefined ? t('grow.gc.dry', { g: fmt(summaries[i]!.dryWeightG!), a: summaries[i]!.plantsWithOutcome, b: summaries[i]!.plants }) : t('grow.gc.notRecorded')),
+      get hint() { return t('grow.gc.resultHint'); },
     },
   ];
 
   return (
     <div>
       <PageHeader
-        crumbs={[{ label: 'Grows', to: 'grows' }, { label: 'Vergleich' }]}
-        title="Grow-Vergleich"
-        subtitle="Bis zu vier Projekte nebeneinander – nur dokumentierte Werte, Zeitachse in Grow-Tagen ab Start."
+        crumbs={[{ label: t('grow.gc.crumbGrows'), to: 'grows' }, { label: t('grow.gc.crumbCmp') }]}
+        title={t('grow.gc.title')}
+        subtitle={t('grow.gc.subtitle')}
         actions={
           <>
             <ContextHelp ids={['anbau-ueberblick', 'licht-ppfd-dli', 'klima-vpd']} />
             <a href={href('grows')} className="btn-ghost">
-              <ArrowLeft className="size-4" /> Grows
+              <ArrowLeft className="size-4" /> {t('grow.gc.crumbGrows')}
             </a>
           </>
         }
       />
 
-      <Card title="Projekte wählen" subtitle={`${ids.length} von höchstens ${MAX}`} className="mb-5">
+      <Card title={t('grow.gc.pick')} subtitle={t('grow.gc.ofMax', { n: ids.length, max: MAX })} className="mb-5">
         {data.grows.length < 2 ? (
-          <p className="text-[13px] text-ink-400">Für einen Vergleich werden mindestens zwei Grow-Projekte benötigt.</p>
+          <p className="text-[13px] text-ink-400">{t('grow.gc.needTwo')}</p>
         ) : (
           <ul className="flex flex-wrap gap-2">
             {[...data.grows]
@@ -116,13 +117,13 @@ export function GrowCompare() {
 
       {grows.length < 2 ? (
         <div className="card">
-          <EmptyState icon={<Columns3 />} title="Zwei bis vier Projekte wählen" text="Der Vergleich zeigt Dauer, Pflanzen, Messwerte, Ausgaben, Ergebnisse und Fotos nebeneinander." />
+          <EmptyState icon={<Columns3 />} title={t('grow.gc.pickTitle')} text={t('grow.gc.pickText')} />
         </div>
       ) : (
         <div className="space-y-5">
           {/* Kennzahlen: Desktop als Tabelle, mobil als Karten je Projekt */}
           <Card
-            title="Kennzahlen"
+            title={t('grow.gc.figures')}
             bodyClassName="p-0"
             actions={
               <button
@@ -139,7 +140,7 @@ export function GrowCompare() {
                 <thead>
                   <tr className="border-b border-white/[0.06] text-[11px] uppercase tracking-wider text-ink-500">
                     <th className="px-4 py-3 font-medium" scope="col">
-                      <span className="sr-only">Kennzahl</span>
+                      <span className="sr-only">{t('grow.gc.figure')}</span>
                     </th>
                     {grows.map((g, i) => (
                       <th key={g.id} className="px-4 py-3 font-medium normal-case tracking-normal" scope="col">
@@ -158,7 +159,7 @@ export function GrowCompare() {
                         {r.label}
                       </th>
                       {grows.map((g, i) => (
-                        <td key={g.id} className={`px-4 py-2.5 font-mono tabular ${/keine|nicht/.test(r.value(i)) ? 'font-sans text-ink-500' : 'text-ink-100'}`}>
+                        <td key={g.id} className={`px-4 py-2.5 font-mono tabular ${/^(keine|nicht|no |not |none)/.test(r.value(i)) ? 'font-sans text-ink-500' : 'text-ink-100'}`}>
                           {r.value(i)}
                         </td>
                       ))}
@@ -187,8 +188,8 @@ export function GrowCompare() {
           </Card>
 
           <Card
-            title="Verlauf"
-            subtitle="X-Achse: Tage seit Projektstart. Nur gemessene Punkte; Linien verbinden Messungen."
+            title={t('grow.gc.history')}
+            subtitle={t('grow.gc.xAxis')}
             actions={
               available.length > 0 && (
                 <button
@@ -197,7 +198,7 @@ export function GrowCompare() {
                   onClick={() =>
                     downloadFile(
                       `terpgrid-grow-vergleich-${metric}-${today()}.csv`,
-                      compareSeriesCsv(`${def?.label ?? der?.label ?? metric}${unit ? ` (${unit})` : ''}`, ctxMetric ? (context ? (context === 'none' ? 'ohne Angabe' : CONTEXT_LABEL[context]) : 'alle Kontexte') : '', series.map(({ g, pts }) => ({ name: g.name, pts }))),
+                      compareSeriesCsv(`${def?.label ?? der?.label ?? metric}${unit ? ` (${unit})` : ''}`, ctxMetric ? (context ? (context === 'none' ? t('grow.gc.noCtx') : CONTEXT_LABEL[context]) : t('grow.gc.allCtx')) : '', series.map(({ g, pts }) => ({ name: g.name, pts }))),
                       'text/csv',
                     )
                   }
@@ -208,11 +209,11 @@ export function GrowCompare() {
             }
           >
             {available.length === 0 ? (
-              <EmptyState compact title="Keine Messwerte in diesen Projekten" />
+              <EmptyState compact title={t('grow.gc.noMeas')} />
             ) : (
               <div className="space-y-3">
                 <div className="flex flex-wrap gap-2">
-                  <select className="input-base h-9 w-auto text-[13px]" aria-label="Messgröße" value={metric} onChange={(e) => setMetric(e.target.value as MetricKey | DerivedKey)}>
+                  <select className="input-base h-9 w-auto text-[13px]" aria-label={t('grow.gc.metric')} value={metric} onChange={(e) => setMetric(e.target.value as MetricKey | DerivedKey)}>
                     {available.map((m) => (
                       <option key={m.key} value={m.key}>
                         {m.label}
@@ -221,17 +222,17 @@ export function GrowCompare() {
                     ))}
                   </select>
                   {ctxMetric && (
-                    <select className="input-base h-9 w-auto text-[13px]" aria-label="Messkontext" value={context} onChange={(e) => setContext(e.target.value as MeasureContext | 'none' | '')}>
-                      <option value="">Alle Kontexte</option>
+                    <select className="input-base h-9 w-auto text-[13px]" aria-label={t('grow.gc.context')} value={context} onChange={(e) => setContext(e.target.value as MeasureContext | 'none' | '')}>
+                      <option value="">{t('grow.gc.allContexts')}</option>
                       {MEASURE_CONTEXTS.map((c) => (
                         <option key={c} value={c}>
                           {CONTEXT_LABEL[c]}
                         </option>
                       ))}
-                      <option value="none">ohne Kontextangabe</option>
+                      <option value="none">{t('grow.gc.noContext')}</option>
                     </select>
                   )}
-                  <select className="input-base h-9 w-auto text-[13px]" aria-label="Zeitraum" value={range} onChange={(e) => setRange(Number(e.target.value))}>
+                  <select className="input-base h-9 w-auto text-[13px]" aria-label={t('grow.gc.period')} value={range} onChange={(e) => setRange(Number(e.target.value))}>
                     {RANGES.map((r) => (
                       <option key={r.id} value={r.id}>
                         {r.label}
@@ -241,11 +242,11 @@ export function GrowCompare() {
                 </div>
                 {mixed && (
                   <p className="flex items-start gap-2 rounded-lg border border-amber-400/20 bg-amber-400/[0.06] px-3 py-2 text-[12px] text-amber-200">
-                    <AlertTriangle className="mt-0.5 size-3.5 shrink-0" /> Die Werte stammen aus verschiedenen Messkontexten (z. B. Gießwasser und Drainage) und sind so nicht direkt vergleichbar. Bitte einen Kontext wählen.
+                    <AlertTriangle className="mt-0.5 size-3.5 shrink-0" /> {t('grow.gc.mixed')}
                   </p>
                 )}
-                {der && <p className="text-[12px] text-ink-400">Berechnet, nicht gemessen: {der.note}</p>}
-                <div className="h-72 w-full" role="img" aria-label={`Verlauf ${def?.label ?? der?.label} für ${grows.map((g) => g.name).join(', ')}`}>
+                {der && <p className="text-[12px] text-ink-400">{t('grow.gc.derived')} {der.note}</p>}
+                <div className="h-72 w-full" role="img" aria-label={t('grow.gc.chartAria', { m: def?.label ?? der?.label ?? '', list: grows.map((g) => g.name).join(', ') })}>
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart margin={{ top: 8, right: 12, bottom: 4, left: -8 }}>
                       <CartesianGrid vertical={false} />
@@ -253,7 +254,7 @@ export function GrowCompare() {
                       <YAxis dataKey="value" tickLine={false} axisLine={false} width={52} unit={unit ? ` ${unit}` : ''} domain={['auto', 'auto']} />
                       <Tooltip
                         contentStyle={{ background: '#0e1211', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, fontSize: 12 }}
-                        labelFormatter={(d: number) => `Tag ${d}`}
+                        labelFormatter={(d: number) => t('grow.gd.dayN', { n: d })}
                         formatter={(v: number, name: string) => [`${fmt(v)}${unit ? ` ${unit}` : ''}`, name]}
                       />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
@@ -266,7 +267,7 @@ export function GrowCompare() {
                 <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-ink-400">
                   {series.map(({ g, pts }, i) => (
                     <li key={g.id}>
-                      <span style={{ color: COLORS[i] }}>●</span> {g.name}: {pts.length ? `${pts.length} Messpunkte, ${fmt(Math.min(...pts.map((p) => p.value)))}–${fmt(Math.max(...pts.map((p) => p.value)))}${unit ? ` ${unit}` : ''}` : 'keine Werte'}
+                      <span style={{ color: COLORS[i] }}>●</span> {g.name}: {pts.length ? t('grow.gc.ptsSummary', { count: pts.length, min: fmt(Math.min(...pts.map((p) => p.value))), max: fmt(Math.max(...pts.map((p) => p.value))), unit: unit ? ` ${unit}` : '' }) : t('grow.gc.noValues')}
                     </li>
                   ))}
                 </ul>
@@ -274,12 +275,12 @@ export function GrowCompare() {
             )}
           </Card>
 
-          <Card title="Fotos" subtitle="Jeweils die neuesten Aufnahmen">
+          <Card title={t('grow.gc.photos')} subtitle={t('grow.gc.photosSub')}>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {per.map(({ g, d }, i) => {
                 const latest = [...d.photos].sort((a, b) => b.takenAt.localeCompare(a.takenAt)).slice(0, 4);
                 return (
-                  <section key={g.id} aria-label={`Fotos ${g.name}`}>
+                  <section key={g.id} aria-label={t('grow.gc.photosOf', { name: g.name })}>
                     <p className="mb-1.5 flex items-center gap-2 text-[12px] text-ink-300">
                       <span className="size-2 rounded-full" style={{ background: COLORS[i] }} aria-hidden /> {g.name}
                     </p>
@@ -290,7 +291,7 @@ export function GrowCompare() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[12px] text-ink-500">Keine Fotos.</p>
+                      <p className="text-[12px] text-ink-500">{t('grow.gc.noPhotos')}</p>
                     )}
                   </section>
                 );
@@ -301,7 +302,7 @@ export function GrowCompare() {
           <div className="flex flex-wrap gap-2">
             {grows.map((g) => (
               <a key={g.id} href={href(`grows/${g.id}/report`)} className="btn-ghost">
-                <FileText className="size-4" /> Bericht: {g.name}
+                <FileText className="size-4" /> {t('grow.gc.reportOf', { name: g.name })}
               </a>
             ))}
           </div>
