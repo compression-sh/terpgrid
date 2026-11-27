@@ -13,6 +13,7 @@ import { RoleBadge } from '../../components/collab/ui';
 import { Callout } from '../../components/ui/Callout';
 import { type ProfileField, collab } from '../../lib/collab/api';
 import { CATEGORY_LABEL, ROLE_LABEL, nameOf } from '../../lib/collab/labels';
+import { intlLocale } from '../../i18n';
 
 const FIELD: Record<ProfileField, string> = { displayName: 'Anzeigename', bio: 'Über mich', accent: 'Akzentfarbe', avatar: 'Profilbild', favoriteStrains: 'Lieblingssorten', favoriteTerpenes: 'Lieblingsterpene', interests: 'Interessen' };
 
@@ -239,7 +240,7 @@ export function PrivacyCenter2({ disabled }: { disabled: boolean }) {
                 .filter((i) => i.status === 'active')
                 .map((i) => (
                   <li key={i.id} className="flex items-center justify-between gap-2">
-                    <span>Aktiver Einladungslink (bis {new Date(i.expiresAt).toLocaleDateString('de-DE')})</span>
+                    <span>Aktiver Einladungslink (bis {new Date(i.expiresAt).toLocaleDateString(intlLocale())})</span>
                     <button type="button" className="inline-flex min-h-6 items-center gap-1 text-ink-400 hover:text-ink-100" onClick={() => run(() => collab.revokeInvite(i.id), 'Link widerrufen')}>
                       <X className="size-3.5" /> Widerrufen
                     </button>

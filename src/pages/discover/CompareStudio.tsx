@@ -20,6 +20,7 @@ import { SAMPLE_TERPENES } from '../../lib/catalog/samples';
 import type { CatalogImage, CatalogStrain, EvidenceState, TypeClass, ValueRange } from '../../lib/catalog/types';
 import type { Strain } from '../../lib/db/types';
 import { CLAIM_SOURCE_LABEL } from '../../lib/grow/labels';
+import { intlLocale } from '../../i18n';
 
 /** Gemeinsames Vergleichsmodell für Online- und eigene Sorten. */
 interface CompareItem {
@@ -285,11 +286,11 @@ export function CompareStudio() {
       render: (i) =>
         i.samples ? (
           <span className="text-[12px] text-ink-300">
-            <span className="font-mono tabular text-ink-100">{i.samples.samples.toLocaleString('de-DE')}</span> Proben
+            <span className="font-mono tabular text-ink-100">{i.samples.samples.toLocaleString(intlLocale())}</span> Proben
             {i.samples.stats.thc_total && (
               <>
                 {' '}
-                · Gesamt-THC Median <span className="font-mono tabular text-ink-100">{i.samples.stats.thc_total.median.toLocaleString('de-DE', { maximumFractionDigits: 1 })} %</span>
+                · Gesamt-THC Median <span className="font-mono tabular text-ink-100">{i.samples.stats.thc_total.median.toLocaleString(intlLocale(), { maximumFractionDigits: 1 })} %</span>
               </>
             )}
             <span className="block text-[10.5px] text-amber-200/80">ohne Breeder-Zuordnung{i.samples.sameNameBreeders > 1 ? ` · Name bei ${i.samples.sameNameBreeders} Breedern` : ''}</span>
@@ -310,7 +311,7 @@ export function CompareStudio() {
           : [];
         return top.length ? (
           <span className="text-[12px] text-ink-300">
-            {top.map((x) => `${x.t.label}${x.t.isomerSum ? ' (Σ)' : ''} ${x.st!.median.toLocaleString('de-DE', { maximumFractionDigits: 2 })} %`).join(' · ')}
+            {top.map((x) => `${x.t.label}${x.t.isomerSum ? ' (Σ)' : ''} ${x.st!.median.toLocaleString(intlLocale(), { maximumFractionDigits: 2 })} %`).join(' · ')}
           </span>
         ) : (
           <NoData />

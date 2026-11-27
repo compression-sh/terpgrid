@@ -6,14 +6,20 @@ import './index.css';
 import App from './App';
 import { initPwa } from './lib/pwa/pwa';
 import { applyReduceMotion } from './lib/pwa/prefs';
+import { initLocale } from './i18n';
 
 applyReduceMotion();
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+// Sprache vor dem ersten Rendern festlegen (Gerätewahl → Browsersprache → Deutsch), damit nichts umspringt.
+void initLocale()
+  .catch(() => {})
+  .then(() =>
+    createRoot(document.getElementById('root')!).render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    ),
+  );
 
 // PWA: nur die öffentliche App-Hülle wird gecacht (siehe public/sw.js) – nie API-Antworten.
 // Updates werden erst nach Bestätigung aktiviert (src/lib/pwa/pwa.ts).

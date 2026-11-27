@@ -8,6 +8,7 @@ import { BottomSheet } from '../components/ui/BottomSheet';
 import { useAuth } from './auth';
 import { useToast } from './Toasts';
 import { navigate } from './router';
+import { t } from '../i18n';
 
 export type Action =
   | { kind: 'grow' }
@@ -26,15 +27,15 @@ const Ctx = createContext<(a: Action) => void>(() => {});
 
 /** Erfassungsarten der Schnellerfassung – alle nutzen die bestehenden Formulare. */
 export const CAPTURE_ITEMS: { kind: Exclude<Action['kind'], 'capture'>; label: string; hint: string; icon: typeof Gauge }[] = [
-  { kind: 'log', label: 'Messung / Beobachtung', hint: 'pH, EC, Klima, Pflege, Notiz', icon: Gauge },
-  { kind: 'photo', label: 'Foto', hint: 'Kamera oder Mediathek', icon: Camera },
-  { kind: 'journal', label: 'Journal', hint: 'Erfahrung festhalten', icon: BookOpenText },
-  { kind: 'task', label: 'Aufgabe', hint: 'Erinnerung mit Datum', icon: ClipboardList },
-  { kind: 'collection', label: 'Sammlungsnotiz', hint: 'Sorte, Samen, Vorrat', icon: Package },
-  { kind: 'equipment', label: 'Ausrüstungsnotiz', hint: 'Lampe, Zelt, Messgerät', icon: Wrench },
-  { kind: 'labReport', label: 'Laborbericht', hint: 'Werte oder PDF hinterlegen', icon: FlaskRound },
-  { kind: 'plant', label: 'Pflanze', hint: 'Zu einem Grow hinzufügen', icon: Leaf },
-  { kind: 'grow', label: 'Neuer Grow', hint: 'Projekt anlegen', icon: Sprout },
+  { kind: 'log', get label() { return t('shell.capture.log.label'); }, get hint() { return t('shell.capture.log.hint'); }, icon: Gauge },
+  { kind: 'photo', get label() { return t('shell.capture.photo.label'); }, get hint() { return t('shell.capture.photo.hint'); }, icon: Camera },
+  { kind: 'journal', get label() { return t('shell.capture.journal.label'); }, get hint() { return t('shell.capture.journal.hint'); }, icon: BookOpenText },
+  { kind: 'task', get label() { return t('shell.capture.task.label'); }, get hint() { return t('shell.capture.task.hint'); }, icon: ClipboardList },
+  { kind: 'collection', get label() { return t('shell.capture.collection.label'); }, get hint() { return t('shell.capture.collection.hint'); }, icon: Package },
+  { kind: 'equipment', get label() { return t('shell.capture.equipment.label'); }, get hint() { return t('shell.capture.equipment.hint'); }, icon: Wrench },
+  { kind: 'labReport', get label() { return t('shell.capture.labReport.label'); }, get hint() { return t('shell.capture.labReport.hint'); }, icon: FlaskRound },
+  { kind: 'plant', get label() { return t('shell.capture.plant.label'); }, get hint() { return t('shell.capture.plant.hint'); }, icon: Leaf },
+  { kind: 'grow', get label() { return t('shell.capture.grow.label'); }, get hint() { return t('shell.capture.grow.hint'); }, icon: Sprout },
 ];
 
 /** Globale Schnellaktionen (Dashboard, Kopfzeile, mobiler Plus-Knopf, App-Verknüpfungen). */
@@ -60,21 +61,21 @@ export function QuickActionsProvider({ children }: { children: ReactNode }) {
     const before = pendingAtOpen.current;
     pendingAtOpen.current = null;
     if (!server || before === null || sync.pending <= before) return;
-    if (offline) toast('Auf diesem Gerät gespeichert – wird übertragen, sobald eine Verbindung besteht.', { tone: 'info' });
+    if (offline) toast(t('shell.saved.local'), { tone: 'info' });
     else awaitSync.current = true;
   };
   useEffect(() => {
     if (!awaitSync.current || sync.pending > 0 || sync.phase === 'syncing') return;
     awaitSync.current = false;
-    if (sync.phase === 'idle') toast('Mit dem Server synchronisiert.');
-    else if (sync.phase === 'offline') toast('Auf diesem Gerät gespeichert – wird übertragen, sobald eine Verbindung besteht.', { tone: 'info' });
+    if (sync.phase === 'idle') toast(t('shell.saved.synced'));
+    else if (sync.phase === 'offline') toast(t('shell.saved.local'), { tone: 'info' });
   }, [sync.pending, sync.phase, toast]);
   const value = useMemo(() => open, [open]);
   return (
     <Ctx.Provider value={value}>
       {children}
       {action?.kind === 'capture' && (
-        <BottomSheet title="Schnell erfassen" onClose={() => setAction(null)}>
+        <BottomSheet title={t('shell.capture.title')} onClose={() => setAction(null)}>
           <ul className="grid grid-cols-1 gap-1.5 min-[400px]:grid-cols-2">
             {CAPTURE_ITEMS.map((it) => {
               const Icon = it.icon;
@@ -98,7 +99,7 @@ export function QuickActionsProvider({ children }: { children: ReactNode }) {
             })}
           </ul>
           <p className="mt-3 text-[12px] leading-snug text-ink-400">
-            {server ? 'Einträge werden sofort auf diesem Gerät gespeichert und danach mit deinem Server synchronisiert.' : 'Einträge werden in diesem Browser gespeichert.'}
+            {server ? t('shell.capture.serverHint') : t('shell.capture.localHint')}
           </p>
         </BottomSheet>
       )}

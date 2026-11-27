@@ -1,4 +1,6 @@
-/**
+
+import { t } from '../i18n';
+import { intlLocale } from '../i18n';/**
  * Datumshilfen für Kalendertage. Gerechnet wird in UTC mit "YYYY-MM-DD",
  * damit Sommerzeitwechsel keine Tageszählungen verfälschen.
  */
@@ -68,10 +70,18 @@ export function weekDays(d: string): string[] {
   return Array.from({ length: 7 }, (_, i) => addDays(start, i));
 }
 
-const dateFmt = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
-const dateLongFmt = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
-const monthFmt = new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-const shortFmt = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+// Formatierer je Sprache zwischenspeichern (die Sprache kann zur Laufzeit wechseln)
+const fmtCache = new Map<string, Intl.DateTimeFormat>();
+function dtf(name: string, opts: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+  const key = `${intlLocale()}|${name}`;
+  let f = fmtCache.get(key);
+  if (!f) fmtCache.set(key, (f = new Intl.DateTimeFormat(intlLocale(), opts)));
+  return f;
+}
+const dateFmt = { format: (ms: number) => dtf('date', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }).format(ms) };
+const dateLongFmt = { format: (ms: number) => dtf('long', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(ms) };
+const monthFmt = { format: (ms: number) => dtf('month', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(ms) };
+const shortFmt = { format: (ms: number) => dtf('short', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(ms) };
 
 export function fmtDate(d?: string): string {
   if (!d) return '–';
@@ -102,9 +112,9 @@ export function fmtDateTime(dt?: string): string {
 /** Relative Angabe: "heute", "gestern", "vor 3 Tagen", "in 2 Tagen". */
 export function relativeDay(d: string, ref: string = today()): string {
   const diff = daysBetween(ref, d.slice(0, 10));
-  if (diff === 0) return 'heute';
-  if (diff === -1) return 'gestern';
-  if (diff === 1) return 'morgen';
-  if (diff < 0) return `vor ${-diff} Tagen`;
-  return `in ${diff} Tagen`;
+  if (diff === 0) return t('common.rel.today');
+  if (diff === -1) return t('common.rel.yesterday');
+  if (diff === 1) return t('common.rel.tomorrow');
+  if (diff < 0) return t('common.rel.ago', { count: -diff });
+  return t('common.rel.in', { count: diff });
 }

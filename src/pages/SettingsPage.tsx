@@ -1,3 +1,5 @@
+import { LanguageOptions } from '../app/locale';
+import { t } from '../i18n';
 import { useAuth, useIsServerMode } from '../app/auth';
 import { InstallInstructions } from '../app/pwaUi';
 import { applyUpdate, checkForUpdate, promptInstall, swVersion, usePwa } from '../lib/pwa/pwa';
@@ -29,6 +31,13 @@ export function SettingsPage() {
         <div className="space-y-5">
           <Card title="Allgemein" icon={<Settings className="size-4" />}>
             <div className="space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="label">{t('shell.language.label')}</div>
+                  <p className="hint">{t('shell.language.hint')}</p>
+                </div>
+                <LanguageOptions />
+              </div>
               <SelectField label="Währung" value={settings.currency} onChange={(v) => v && updateSettings({ currency: v })} options={CURRENCIES.map((c) => ({ value: c, label: c }))} hint="Für Ausgaben, Sammlung und Rechner. Beträge werden nicht umgerechnet." />
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>

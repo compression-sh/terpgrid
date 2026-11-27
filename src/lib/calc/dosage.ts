@@ -3,6 +3,7 @@ import {
   HEALTH_CANADA_START_DOSE_MG,
   STANDARD_THC_UNIT_MG,
 } from './constants';
+import { intlLocale } from '../../i18n';
 
 /**
  * Vorsichtige Referenzbereiche für ORAL aufgenommenes THC (Edibles).
@@ -143,7 +144,7 @@ export function assessEdibleDose(mid: number, low = mid, high = mid): DoseAssess
 }
 
 function fmt(n: number): string {
-  return n.toLocaleString('de-DE', { maximumFractionDigits: 1 });
+  return n.toLocaleString(intlLocale(), { maximumFractionDigits: 1 });
 }
 
 /**

@@ -8,6 +8,7 @@ import { Callout } from '../../components/ui/Callout';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { SYNC_STORE_LABEL } from '../../lib/sync/labels';
 import { type ImportReport, type LegacySnapshot, deleteLegacy, dismissLegacy, importLegacy, legacyBackupZip, legacyExists, readImportMark, readLegacy } from '../../lib/sync/legacy';
+import { intlLocale } from '../../i18n';
 
 type Step = 'loading' | 'none' | 'preview' | 'running' | 'done';
 
@@ -111,7 +112,7 @@ export function ImportPage() {
         <>
           {mark && (
             <Callout tone={mark.accountKey === user.accountKey ? 'info' : 'warn'} title="Bereits übernommen">
-              Diese Daten wurden am {new Date(mark.at).toLocaleString('de-DE')} in das Konto <strong>{mark.loginName}</strong> übernommen
+              Diese Daten wurden am {new Date(mark.at).toLocaleString(intlLocale())} in das Konto <strong>{mark.loginName}</strong> übernommen
               {mark.accountKey === user.accountKey ? '. Ein erneuter Durchlauf legt nichts doppelt an.' : '. Du bist jetzt mit einem anderen Konto angemeldet – bitte prüfe, ob du wirklich auch hierhin übertragen möchtest.'}
             </Callout>
           )}

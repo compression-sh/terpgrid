@@ -1,6 +1,7 @@
 import { Star } from 'lucide-react';
 import { type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes, useId } from 'react';
 import { parseLocaleNumber } from '../../lib/calc/validation';
+import { intlLocale } from '../../i18n';
 
 interface FieldProps {
   label: string;
@@ -162,8 +163,8 @@ export function numberError(text: string, { min, max, required }: { min?: number
   if (text.trim() === '') return required ? 'Pflichtfeld' : undefined;
   const n = parseLocaleNumber(text);
   if (Number.isNaN(n)) return 'Bitte eine Zahl eingeben.';
-  if (min !== undefined && n < min) return `Mindestens ${min.toLocaleString('de-DE')}`;
-  if (max !== undefined && n > max) return `Höchstens ${max.toLocaleString('de-DE')}`;
+  if (min !== undefined && n < min) return `Mindestens ${min.toLocaleString(intlLocale())}`;
+  if (max !== undefined && n > max) return `Höchstens ${max.toLocaleString(intlLocale())}`;
   return undefined;
 }
 

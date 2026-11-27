@@ -1,27 +1,10 @@
+import { labels } from '../../i18n';
 import { daysBetween, today as todayFn } from '../dates';
 import { GROW_PHASES, type GrowPhase, type PhaseDates } from '../db/types';
 
-export const PHASE_LABEL: Record<GrowPhase, string> = {
-  germination: 'Keimung',
-  seedling: 'Sämling',
-  vegetative: 'Vegetative Phase',
-  flowering: 'Blüte',
-  harvest: 'Ernte',
-  drying: 'Trocknung',
-  curing: 'Aushärtung / Curing',
-  completed: 'Abgeschlossen',
-};
+export const PHASE_LABEL = labels('labels.phase', ['germination', 'seedling', 'vegetative', 'flowering', 'harvest', 'drying', 'curing', 'completed'] as GrowPhase[]);
 
-export const PHASE_SHORT: Record<GrowPhase, string> = {
-  germination: 'Keimung',
-  seedling: 'Sämling',
-  vegetative: 'Wachstum',
-  flowering: 'Blüte',
-  harvest: 'Ernte',
-  drying: 'Trocknung',
-  curing: 'Curing',
-  completed: 'Fertig',
-};
+export const PHASE_SHORT = labels('labels.phaseShort', ['germination', 'seedling', 'vegetative', 'flowering', 'harvest', 'drying', 'curing', 'completed'] as GrowPhase[]);
 
 /** Dezente, unterscheidbare Farbtöne pro Phase (für Chips & Diagramme). */
 export const PHASE_COLOR: Record<GrowPhase, string> = {

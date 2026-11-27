@@ -9,7 +9,9 @@ import { CommandPalette } from './CommandPalette';
 import { NotificationBell } from '../components/collab/Notifications';
 import { href, useRoute } from './router';
 import { PullToRefresh, useCaptureShortcut, useScrollRestoration } from './mobile';
+import { LanguageOptions } from './locale';
 import { InstallCard, OfflineChoiceCard, UpdateBanner } from './pwaUi';
+import { t } from '../i18n';
 
 function SideLink({ item, active, small }: { item: NavItem; active: boolean; small?: boolean }) {
   const Icon = item.icon;
@@ -59,19 +61,19 @@ export function QuickAddMenu({ align = 'right', full = true }: { align?: 'right'
   return (
     <div className="relative" ref={ref}>
       <button type="button" className={`btn-primary py-1.5 ${full ? 'w-full' : ''}`} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-        <Plus className="size-4" /> Neu
+        <Plus className="size-4" /> {t('shell.new')}
       </button>
       {open && (
         <div role="menu" className={`absolute z-40 mt-2 w-52 rounded-xl border border-white/[0.08] bg-ink-850 p-1 shadow-2xl animate-fade-up ${align === 'right' ? 'right-0' : 'left-0'}`}>
-          {item('Schnell-Log (Beobachtung, Messung)', () => quick({ kind: 'log' }))}
-          {item('Neuer Grow', () => quick({ kind: 'grow' }))}
-          {item('Pflanze hinzufügen', () => quick({ kind: 'plant' }))}
-          {item('Foto hochladen', () => quick({ kind: 'photo' }))}
-          {item('Journal-Eintrag', () => quick({ kind: 'journal' }))}
-          {item('Aufgabe / Erinnerung', () => quick({ kind: 'task' }))}
-          {item('Sammlungsnotiz', () => quick({ kind: 'collection' }))}
-          {item('Ausrüstungsnotiz', () => quick({ kind: 'equipment' }))}
-          {item('Laborbericht', () => quick({ kind: 'labReport' }))}
+          {item(t('shell.newMenu.log'), () => quick({ kind: 'log' }))}
+          {item(t('shell.newMenu.grow'), () => quick({ kind: 'grow' }))}
+          {item(t('shell.newMenu.plant'), () => quick({ kind: 'plant' }))}
+          {item(t('shell.newMenu.photo'), () => quick({ kind: 'photo' }))}
+          {item(t('shell.newMenu.journal'), () => quick({ kind: 'journal' }))}
+          {item(t('shell.newMenu.task'), () => quick({ kind: 'task' }))}
+          {item(t('shell.newMenu.collection'), () => quick({ kind: 'collection' }))}
+          {item(t('shell.newMenu.equipment'), () => quick({ kind: 'equipment' }))}
+          {item(t('shell.newMenu.labReport'), () => quick({ kind: 'labReport' }))}
         </div>
       )}
     </div>
@@ -124,7 +126,7 @@ export function Shell({ children }: { children: ReactNode }) {
     <div className="min-h-dvh lg:pl-60">
       {/* Desktop-Seitenleiste: Produktbereiche, darunter Einstellungen und Konto */}
       <aside className="no-print fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-white/[0.05] bg-ink-950 lg:flex">
-        <a href={href('')} className="flex items-center gap-2.5 px-5 pt-4 pb-3" aria-label="TERPGRID – Übersicht">
+        <a href={href('')} className="flex items-center gap-2.5 px-5 pt-4 pb-3" aria-label={t('shell.homeLabel')}>
           <LogoMark className="size-7 shrink-0" />
           <Wordmark withTagline={false} />
         </a>
@@ -136,13 +138,13 @@ export function Shell({ children }: { children: ReactNode }) {
               onClick={() => window.dispatchEvent(new Event('terpgrid:palette'))}
               className="flex min-w-0 flex-1 items-center gap-2 rounded-md border border-white/[0.06] px-2.5 py-1.5 text-[12.5px] text-ink-400 hover:border-white/[0.12] hover:text-ink-200"
             >
-              <Search className="size-3.5" /> Suchen …
+              <Search className="size-3.5" /> {t('shell.searchDots')}
               <kbd className="ml-auto rounded border border-white/10 px-1 text-[10px]">Strg K</kbd>
             </button>
             {server && <NotificationBell compact align="left" />}
           </div>
         </div>
-        <nav aria-label="Hauptnavigation" className="flex-1 space-y-3 overflow-y-auto px-3 pt-2 pb-3">
+        <nav aria-label={t('shell.mainNav')} className="flex-1 space-y-3 overflow-y-auto px-3 pt-2 pb-3">
           {groups.map((g) => (
             <div key={g.id} role="group" aria-labelledby={g.label ? `nav-${g.id}` : undefined}>
               {g.label && (
@@ -168,12 +170,12 @@ export function Shell({ children }: { children: ReactNode }) {
 
       {/* Mobile Kopfzeile */}
       <header className="no-print sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-white/[0.05] bg-ink-950/90 pt-[calc(0.6rem+env(safe-area-inset-top))] pr-[max(1rem,env(safe-area-inset-right))] pb-2.5 pl-[max(1rem,env(safe-area-inset-left))] backdrop-blur-xl lg:hidden">
-        <a href={href('')} className="flex min-w-0 items-center gap-2" aria-label="TERPGRID – Übersicht">
+        <a href={href('')} className="flex min-w-0 items-center gap-2" aria-label={t('shell.homeLabel')}>
           <LogoMark className="size-7 shrink-0" />
           <Wordmark withTagline={false} />
         </a>
         <div className="flex items-center gap-1.5">
-          <button type="button" className="btn-ghost p-1.5" aria-label="Suchen" onClick={() => window.dispatchEvent(new Event('terpgrid:palette'))}>
+          <button type="button" className="btn-ghost p-1.5" aria-label={t('shell.search')} onClick={() => window.dispatchEvent(new Event('terpgrid:palette'))}>
             <Search className="size-4" />
           </button>
           <NotificationBell compact />
@@ -192,7 +194,7 @@ export function Shell({ children }: { children: ReactNode }) {
 
       {/* Mobile untere Navigation: Übersicht · Grows · Erfassen · Entdecken · Mehr */}
       <nav
-        aria-label="Hauptnavigation"
+        aria-label={t('shell.mainNav')}
         className="no-print fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.06] bg-ink-950/95 pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] backdrop-blur-xl lg:hidden"
       >
         <ul className="mx-auto grid max-w-md grid-cols-5">
@@ -201,7 +203,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <li className="flex items-center justify-center">
             <button
               type="button"
-              aria-label="Schnell erfassen"
+              aria-label={t('shell.capture.title')}
               onClick={() => quick({ kind: 'capture' })}
               className="grid size-12 place-items-center rounded-2xl bg-leaf-500 text-ink-950 transition-transform active:scale-95"
             >
@@ -218,19 +220,19 @@ export function Shell({ children }: { children: ReactNode }) {
               className={`flex min-h-[3.5rem] w-full flex-col items-center justify-center gap-1 text-[10.5px] font-medium ${moreActive ? 'text-leaf-300' : 'text-ink-400'}`}
             >
               <MoreHorizontal className="size-5" />
-              Mehr
+              {t('shell.more')}
             </button>
           </li>
         </ul>
       </nav>
 
       {moreOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Alle Bereiche">
-          <button type="button" aria-label="Schließen" className="absolute inset-0 bg-black/60" onClick={() => setMoreOpen(false)} />
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label={t('shell.allAreas')}>
+          <button type="button" aria-label={t('common.close')} className="absolute inset-0 bg-black/60" onClick={() => setMoreOpen(false)} />
           <div className="sheet-scroll absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-y-auto rounded-t-2xl border-t border-white/[0.08] bg-ink-900 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] animate-fade-up">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-sm font-semibold text-ink-50">Alle Bereiche</span>
-              <button type="button" className="btn-ghost p-1.5" aria-label="Schließen" onClick={() => setMoreOpen(false)}>
+              <span className="text-sm font-semibold text-ink-50">{t('shell.allAreas')}</span>
+              <button type="button" className="btn-ghost p-1.5" aria-label={t('common.close')} onClick={() => setMoreOpen(false)}>
                 <X className="size-4" />
               </button>
             </div>
@@ -260,7 +262,11 @@ export function Shell({ children }: { children: ReactNode }) {
                 </section>
               ))}
             </div>
-            {state.kind === 'local' && <p className="hint mt-3 px-1">Lokalmodus: Daten nur auf diesem Gerät, keine Synchronisation.</p>}
+            <div className="mt-3 flex items-center justify-between gap-3 border-t border-white/[0.06] px-1 pt-3">
+              <span className="text-[13px] text-ink-300">{t('shell.language.label')}</span>
+              <LanguageOptions />
+            </div>
+            {state.kind === 'local' && <p className="hint mt-3 px-1">{t('shell.localMode')}</p>}
           </div>
         </div>
       )}

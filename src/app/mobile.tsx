@@ -7,6 +7,7 @@ import { type Action, useQuickActions } from './QuickActions';
 import { useAuth } from './auth';
 import { type Route, setQuery } from './router';
 import { isStandalone } from '../lib/pwa/pwa';
+import { t } from '../i18n';
 
 const CAPTURE_PARAM: Record<string, Action['kind']> = { log: 'log', photo: 'photo', journal: 'journal', task: 'task', capture: 'capture' };
 
@@ -112,7 +113,7 @@ export function PullToRefresh() {
     <div className="pointer-events-none fixed inset-x-0 top-[calc(3.75rem+env(safe-area-inset-top))] z-30 flex justify-center lg:hidden" role="status" aria-live="polite">
       <span className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-ink-850/95 px-3 py-1.5 text-[12px] text-ink-200 shadow-xl" style={{ transform: `translateY(${busy ? 8 : pull / 3}px)`, opacity: busy ? 1 : Math.min(1, pull / 64) }}>
         {busy ? <Loader2 className="size-3.5 animate-spin text-leaf-300" /> : <RefreshCw className="size-3.5 text-leaf-300" style={{ transform: `rotate(${pull * 3}deg)` }} />}
-        {busy ? 'Synchronisierung läuft' : pull >= 64 ? 'Loslassen zum Synchronisieren' : 'Zum Synchronisieren ziehen'}
+        {busy ? t('shell.pull.busy') : pull >= 64 ? t('shell.pull.release') : t('shell.pull.pull')}
       </span>
     </div>
   );

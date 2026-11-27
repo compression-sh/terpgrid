@@ -13,6 +13,7 @@ import { Toggle } from '../../components/ui/Toggle';
 import { type Identity, type NotificationCategory, collab } from '../../lib/collab/api';
 import { ACCENT_CLASS, CATEGORY_HINT, CATEGORY_LABEL, nameOf } from '../../lib/collab/labels';
 import { TogetherTabs } from './TogetherTabs';
+import { intlLocale } from '../../i18n';
 
 /** Profil eines Freundes bzw. Bereichsmitglieds – nur freigegebene Felder. */
 export function FriendProfilePage({ refId }: { refId: string }) {
@@ -42,7 +43,7 @@ export function FriendProfilePage({ refId }: { refId: string }) {
               <span className="font-mono">{p.socialId}</span>
               {f?.nickname && ` · dein Spitzname: ${f.nickname}`}
             </div>
-            {f && <div className="mt-1 text-[12px] text-ink-500">Befreundet seit {new Date(f.since).toLocaleDateString('de-DE')}</div>}
+            {f && <div className="mt-1 text-[12px] text-ink-500">Befreundet seit {new Date(f.since).toLocaleDateString(intlLocale())}</div>}
           </div>
           {p.bio && <p className="max-w-2xl whitespace-pre-wrap text-[13.5px] leading-relaxed text-ink-200">{p.bio}</p>}
           {lists

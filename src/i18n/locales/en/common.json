@@ -1,0 +1,27 @@
+{
+ "close": "Close",
+ "cancel": "Cancel",
+ "confirm": "Confirm",
+ "errors": {
+  "storageFull": "Local storage is full. Please export and delete photos.",
+  "unknown": "Unknown error"
+ },
+ "errorView": {
+  "title": "This view could not be displayed",
+  "text": "A record probably has an unexpected format. Your data has not been changed. You can reload the view or switch to another area."
+ },
+ "toOverview": "Go to overview",
+ "rel": {
+  "today": "today",
+  "yesterday": "yesterday",
+  "tomorrow": "tomorrow",
+  "ago": {
+   "one": "{count} day ago",
+   "other": "{count} days ago"
+  },
+  "in": {
+   "one": "in {count} day",
+   "other": "in {count} days"
+  }
+ }
+}

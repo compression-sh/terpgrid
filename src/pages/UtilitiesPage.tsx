@@ -21,6 +21,7 @@ import {
 } from '../lib/analytics';
 import { addDays, daysBetween, fmtDateLong, fmtDateTime, today } from '../lib/dates';
 import { fmt } from '../lib/format';
+import { intlLocale } from '../i18n';
 
 function Formula({ children }: { children: React.ReactNode }) {
   return <div className="mt-4 overflow-x-auto rounded-lg border border-white/[0.05] bg-ink-850 px-3 py-2 font-mono text-[11.5px] text-ink-300">{children}</div>;
@@ -29,8 +30,8 @@ function Formula({ children }: { children: React.ReactNode }) {
 type UnitKind = 'temp' | 'weight' | 'volume' | 'length';
 const UNITS: Record<UnitKind, { a: string; b: string; toB: (v: number) => number; toA: (v: number) => number; formula: string }> = {
   temp: { a: '°C', b: '°F', toB: celsiusToFahrenheit, toA: fahrenheitToCelsius, formula: '°F = °C × 9/5 + 32' },
-  weight: { a: 'g', b: 'oz', toB: (g) => g / GRAMS_PER_OUNCE, toA: (oz) => oz * GRAMS_PER_OUNCE, formula: `1 oz = ${GRAMS_PER_OUNCE.toLocaleString('de-DE', { maximumFractionDigits: 4 })} g` },
-  volume: { a: 'l', b: 'gal (US)', toB: (l) => l / LITERS_PER_GALLON, toA: (g) => g * LITERS_PER_GALLON, formula: `1 US-Gallone = ${LITERS_PER_GALLON.toLocaleString('de-DE', { maximumFractionDigits: 4 })} l` },
+  weight: { a: 'g', b: 'oz', toB: (g) => g / GRAMS_PER_OUNCE, toA: (oz) => oz * GRAMS_PER_OUNCE, formula: `1 oz = ${GRAMS_PER_OUNCE.toLocaleString(intlLocale(), { maximumFractionDigits: 4 })} g` },
+  volume: { a: 'l', b: 'gal (US)', toB: (l) => l / LITERS_PER_GALLON, toA: (g) => g * LITERS_PER_GALLON, formula: `1 US-Gallone = ${LITERS_PER_GALLON.toLocaleString(intlLocale(), { maximumFractionDigits: 4 })} l` },
   length: { a: 'cm', b: 'in', toB: (c) => c / CM_PER_INCH, toA: (i) => i * CM_PER_INCH, formula: '1 in = 2,54 cm' },
 };
 

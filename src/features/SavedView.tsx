@@ -5,6 +5,7 @@ import { Callout } from '../components/ui/Callout';
 import { Card } from '../components/ui/Card';
 import { downloadFile } from '../lib/exporters';
 import type { SavedCalculation } from '../lib/storage';
+import { intlLocale } from '../i18n';
 
 const KIND_LABEL: Record<SavedCalculation['kind'], string> = {
   edibles: 'Edibles',
@@ -102,7 +103,7 @@ export function SavedView({ items, onOpen, onDelete, onClear, onImport }: Props)
                     </span>
                     <span className="truncate text-[14px] font-medium text-ink-50">{it.name}</span>
                   </div>
-                  <div className="mt-1 text-xs text-ink-400">{new Date(it.createdAt).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })}</div>
+                  <div className="mt-1 text-xs text-ink-400">{new Date(it.createdAt).toLocaleString(intlLocale(), { dateStyle: 'medium', timeStyle: 'short' })}</div>
                   <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
                     {Object.entries(it.summary).map(([k, v]) => (
                       <div key={k} className="flex gap-1.5">

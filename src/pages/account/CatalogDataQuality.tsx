@@ -1,6 +1,7 @@
 import { AlertOctagon, AlertTriangle, Info, Library, Loader2, RefreshCw, ShieldCheck } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../lib/server/api';
+import { intlLocale } from '../../i18n';
 
 type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 interface Finding {
@@ -48,7 +49,7 @@ const PERM_CLS: Record<string, string> = {
   inaccessible: 'text-ink-400',
   unsuitable: 'text-rose-300',
 };
-const dt = (s: string | null) => (s ? new Date(s).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }) : '–');
+const dt = (s: string | null) => (s ? new Date(s).toLocaleString(intlLocale(), { dateStyle: 'short', timeStyle: 'short' }) : '–');
 
 /** Datenqualitätsprüfung und Quellenregister des Sortenkatalogs (nur Admins, nur lesend). */
 export function CatalogDataQuality() {
@@ -103,7 +104,7 @@ export function CatalogDataQuality() {
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="text-[13px] text-ink-100">
-                          <span className={`mr-1.5 font-mono tabular ${f.count ? 'text-ink-50' : 'text-ink-500'}`}>{f.count.toLocaleString('de-DE')}</span>
+                          <span className={`mr-1.5 font-mono tabular ${f.count ? 'text-ink-50' : 'text-ink-500'}`}>{f.count.toLocaleString(intlLocale())}</span>
                           {f.title}
                         </p>
                         {f.count > 0 && f.examples.length > 0 && (

@@ -1,11 +1,12 @@
 import type { Range } from './calc/potency';
+import { intlLocale } from '../i18n';
 
 const cache = new Map<string, Intl.NumberFormat>();
 function nf(min: number, max: number): Intl.NumberFormat {
-  const key = `${min}-${max}`;
+  const key = `${intlLocale()}-${min}-${max}`;
   let f = cache.get(key);
   if (!f) {
-    f = new Intl.NumberFormat('de-DE', { minimumFractionDigits: min, maximumFractionDigits: max });
+    f = new Intl.NumberFormat(intlLocale(), { minimumFractionDigits: min, maximumFractionDigits: max });
     cache.set(key, f);
   }
   return f;
@@ -30,6 +31,7 @@ export function fmtRange(r: Range, unit = ''): string {
   return `${fmt(r.low)}–${fmt(r.high)}${u}`;
 }
 
+/** Prozent nach Sprache: „12 %“ (de) bzw. „12%“ (en). */
 export function fmtPercent(fraction: number, digits = 0): string {
-  return `${nf(0, digits).format(fraction * 100)} %`;
+  return new Intl.NumberFormat(intlLocale(), { style: 'percent', minimumFractionDigits: 0, maximumFractionDigits: digits }).format(fraction);
 }

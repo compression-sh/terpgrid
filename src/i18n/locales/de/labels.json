@@ -1,0 +1,223 @@
+{
+ "activity": {
+  "observation": "Beobachtung",
+  "photo": "Foto",
+  "watering": "Gießen",
+  "feeding": "Düngen",
+  "repotting": "Umtopfen",
+  "environment": "Umgebung geändert",
+  "measurement": "Messung",
+  "issue": "Problem",
+  "custom": "Eigenes Ereignis"
+ },
+ "setting": {
+  "indoor": "Indoor",
+  "outdoor": "Outdoor",
+  "greenhouse": "Gewächshaus"
+ },
+ "growStatus": {
+  "active": "Aktiv",
+  "completed": "Abgeschlossen",
+  "archived": "Archiviert"
+ },
+ "plantType": {
+  "photoperiod": "Photoperiodisch",
+  "autoflower": "Autoflower",
+  "unknown": "Unbekannt"
+ },
+ "reminderCategory": {
+  "watering": "Gießen",
+  "feeding": "Düngen",
+  "check": "Kontrolle",
+  "environment": "Umgebung",
+  "harvest": "Ernte",
+  "maintenance": "Wartung",
+  "other": "Sonstiges"
+ },
+ "claimSource": {
+  "personal": "Eigene Angabe",
+  "reported": "Herstellerangabe",
+  "lab": "Laborwert"
+ },
+ "method": {
+  "joint": "Joint",
+  "vaporizer": "Vaporizer",
+  "pipe": "Pfeife",
+  "bong": "Bong",
+  "edible": "Edible",
+  "tincture": "Tinktur / Öl",
+  "other": "Sonstiges"
+ },
+ "inventoryCategory": {
+  "cannabis": "Cannabis",
+  "seeds": "Samen",
+  "accessory": "Zubehör",
+  "equipment": "Grow-Ausrüstung",
+  "space": "Grow-Bereich",
+  "nutrients": "Dünger & Zusätze",
+  "other": "Sonstiges"
+ },
+ "expenseCategory": {
+  "equipment": "Ausrüstung",
+  "seeds": "Samen",
+  "nutrients": "Dünger",
+  "medium": "Substrat",
+  "electricity": "Strom",
+  "water": "Wasser",
+  "other": "Sonstiges"
+ },
+ "spaceKind": {
+  "tent": "Zelt",
+  "room": "Raum",
+  "greenhouse": "Gewächshaus",
+  "outdoor": "Outdoor-Fläche",
+  "zone": "Zone"
+ },
+ "observation": {
+  "appearance": "Erscheinungsbild",
+  "leafColor": "Blattfarbe",
+  "change": "Sichtbare Veränderung",
+  "growth": "Wachstum",
+  "symptom": "Auffälligkeit",
+  "environment": "Umgebung",
+  "aroma": "Geruch",
+  "personal": "Persönliche Notiz"
+ },
+ "phase": {
+  "germination": "Keimung",
+  "seedling": "Sämling",
+  "vegetative": "Vegetative Phase",
+  "flowering": "Blüte",
+  "harvest": "Ernte",
+  "drying": "Trocknung",
+  "curing": "Aushärtung / Curing",
+  "completed": "Abgeschlossen"
+ },
+ "phaseShort": {
+  "germination": "Keimung",
+  "seedling": "Sämling",
+  "vegetative": "Wachstum",
+  "flowering": "Blüte",
+  "harvest": "Ernte",
+  "drying": "Trocknung",
+  "curing": "Curing",
+  "completed": "Fertig"
+ },
+ "measureContext": {
+  "water": "Gießwasser",
+  "nutrient": "Nährlösung",
+  "runoff": "Drainage (Runoff)",
+  "substrate": "Substrat",
+  "other": "Sonstiges"
+ },
+ "vpdBasis": {
+  "leaf": "mit gemessener Blatttemperatur",
+  "leaf-estimated": "mit geschätzter Blatttemperatur",
+  "air": "Blatttemperatur = Lufttemperatur angenommen"
+ },
+ "metricGroup": {
+  "plant": "Pflanze",
+  "climate": "Klima",
+  "water": "Wasser & Nährlösung",
+  "root": "Wurzelraum",
+  "light": "Licht"
+ },
+ "role": {
+  "owner": "Eigentümer",
+  "editor": "Bearbeiten",
+  "commenter": "Kommentieren",
+  "viewer": "Ansehen"
+ },
+ "roleHint": {
+  "owner": "Verwaltet Bereich, Mitglieder und Rechte.",
+  "editor": "Inhalte anlegen und bearbeiten, Fotos hochladen, kommentieren.",
+  "commenter": "Inhalte ansehen und kommentieren – keine Änderungen.",
+  "viewer": "Inhalte nur ansehen – keine Änderungen, keine Kommentare."
+ },
+ "access": {
+  "members": "Alle Mitglieder",
+  "editors": "Nur Bearbeitende",
+  "readonly": "Schreibgeschützt"
+ },
+ "accessHint": {
+  "members": "Alle Mitglieder sehen den Eintrag; Eigentümer und Bearbeitende ändern ihn.",
+  "editors": "Nur Eigentümer und Bearbeitende sehen den Eintrag samt Pflanzen, Fotos und Kommentaren.",
+  "readonly": "Alle sehen den Eintrag, aber nur der Eigentümer ändert ihn."
+ },
+ "spaceType": {
+  "project": "Grow-Projekt",
+  "collection": "Sammlung",
+  "general": "Allgemein"
+ },
+ "notifCategory": {
+  "friends": "Freunde",
+  "invites": "Einladungen",
+  "comments": "Kommentare",
+  "updates": "Änderungen in Bereichen",
+  "access": "Rechte & Zugriff"
+ },
+ "notifCategoryHint": {
+  "friends": "Freundschaftsanfragen und angenommene Anfragen",
+  "invites": "Einladungen in gemeinsame Bereiche",
+  "comments": "Neue Kommentare und Antworten",
+  "updates": "Neue oder geänderte Inhalte in deinen Bereichen (zusammengefasst)",
+  "access": "Rollenänderungen, Entfernung, Übertragung, Löschung – aus Sicherheitsgründen immer an"
+ },
+ "accent": {
+  "emerald": "Smaragd",
+  "teal": "Petrol",
+  "sky": "Himmel",
+  "violet": "Violett",
+  "amber": "Bernstein",
+  "rose": "Rosé",
+  "lime": "Limette"
+ },
+ "syncState": {
+  "synced": "Synchronisiert",
+  "pending": "Änderungen ausstehend",
+  "offline": "Offline",
+  "syncing": "Synchronisierung läuft",
+  "conflict": "Konflikt erkannt",
+  "failed": "Synchronisierung fehlgeschlagen",
+  "revoked": "Zugriff widerrufen"
+ },
+ "syncStore": {
+  "grows": "Grows",
+  "plants": "Pflanzen",
+  "activities": "Einträge",
+  "photos": "Fotos",
+  "photoData": "Fotodateien",
+  "reminders": "Erinnerungen",
+  "strains": "Sorten",
+  "journal": "Journal",
+  "inventory": "Sammlung",
+  "expenses": "Ausgaben",
+  "calculations": "Berechnungen",
+  "labReports": "Laborberichte",
+  "labDocs": "Labordokumente",
+  "settings": "Einstellungen"
+ },
+ "genetics": {
+  "Indica Dominant": "Indica-dominant",
+  "Sativa Dominant": "Sativa-dominant",
+  "Balanced Hybrid": "Ausgewogener Hybrid"
+ },
+ "matchTier": {
+  "exact": "Exakter Name",
+  "prefix": "Namensanfang / Alias",
+  "name": "Im Namen",
+  "related": "Breeder, Abstammung, Terpen oder Seedbank",
+  "similar": "Ähnliche Schreibweise"
+ },
+ "labOrigin": {
+  "document": "Aus Laborbericht übertragen",
+  "manual": "Manuell eingetragen",
+  "unverified": "Unbestätigte Angabe"
+ },
+ "explorerRange": {
+  "all": "Gesamter Zeitraum",
+  "30": "Letzte 30 Tage",
+  "90": "Letzte 90 Tage",
+  "365": "Letzte 12 Monate"
+ }
+}

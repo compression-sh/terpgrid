@@ -12,6 +12,7 @@ import { PageHeader } from '../../components/ui/PageHeader';
 import { type Friend, collab } from '../../lib/collab/api';
 import { nameOf } from '../../lib/collab/labels';
 import { TogetherTabs } from './TogetherTabs';
+import { intlLocale } from '../../i18n';
 
 export function FriendsPage() {
   const toast = useToast();
@@ -193,7 +194,7 @@ export function FriendsPage() {
                 identity={f}
                 nickname={f.nickname}
                 href={href(`together/friends/${f.ref}`)}
-                meta={f.profileHidden ? 'Profil vor dieser Person verborgen' : `seit ${new Date(f.since).toLocaleDateString('de-DE')}`}
+                meta={f.profileHidden ? 'Profil vor dieser Person verborgen' : `seit ${new Date(f.since).toLocaleDateString(intlLocale())}`}
                 actions={
                   <button type="button" className="btn-ghost p-1.5" aria-label={`Aktionen für ${nameOf(f, f.nickname)}`} onClick={() => setMenu(f)}>
                     <MoreHorizontal className="size-4" />
@@ -232,7 +233,7 @@ export function FriendsPage() {
             {d.blocks.map((b) => (
               <li key={b.ref} className="flex items-center justify-between gap-3 py-2 text-[13px]">
                 <span className="text-ink-200">
-                  {b.label} <span className="text-ink-500">· seit {new Date(b.since).toLocaleDateString('de-DE')}</span>
+                  {b.label} <span className="text-ink-500">· seit {new Date(b.since).toLocaleDateString(intlLocale())}</span>
                 </span>
                 <button type="button" className="inline-flex min-h-6 items-center gap-1 text-[12px] text-ink-400 hover:text-ink-100" onClick={() => act(() => collab.unblock(b.ref), 'Blockierung aufgehoben – eine Freundschaft entsteht dadurch nicht')}>
                   <ShieldOff className="size-3.5" /> Aufheben
@@ -257,7 +258,7 @@ export function FriendsPage() {
             >
               <Clipboard className="size-4" /> Link kopieren
             </button>
-            <p className="hint">Teile den Link nur mit der Person, die du einladen möchtest (z. B. persönlich oder per verschlüsseltem Messenger). Gültig bis {new Date(invite.expiresAt).toLocaleString('de-DE')}.</p>
+            <p className="hint">Teile den Link nur mit der Person, die du einladen möchtest (z. B. persönlich oder per verschlüsseltem Messenger). Gültig bis {new Date(invite.expiresAt).toLocaleString(intlLocale())}.</p>
           </div>
         </Modal>
       )}

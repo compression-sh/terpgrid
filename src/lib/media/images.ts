@@ -10,6 +10,7 @@
  */
 import { nowLocal } from '../dates';
 import { readExif } from './exif';
+import { intlLocale } from '../../i18n';
 
 export const MAX_EDGE = 2048;
 export const THUMB_EDGE = 480;
@@ -148,5 +149,5 @@ export function formatBytes(bytes?: number): string {
     v /= 1024;
     i++;
   }
-  return `${v.toLocaleString('de-DE', { maximumFractionDigits: v < 10 ? 1 : 0 })} ${units[i]}`;
+  return `${v.toLocaleString(intlLocale(), { maximumFractionDigits: v < 10 ? 1 : 0 })} ${units[i]}`;
 }

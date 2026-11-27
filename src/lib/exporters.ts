@@ -1,4 +1,5 @@
-/**
+
+import { intlLocale } from '../i18n';/**
  * Export von Ergebnissen als JSON, CSV oder Text – erzeugt lokal eine Datei
  * (Blob-Download). Keine Netzwerkanfrage.
  */
@@ -46,7 +47,7 @@ export function toText(payload: ExportPayload): string {
   const parts = [
     payload.title,
     '='.repeat(payload.title.length),
-    `Erstellt: ${new Date(payload.generatedAt).toLocaleString('de-DE')}`,
+    `Erstellt: ${new Date(payload.generatedAt).toLocaleString(intlLocale())}`,
     '',
     'Eingaben',
     ...payload.inputs.map(row),

@@ -1,3 +1,4 @@
+import { labels } from '../../i18n';
 import type {
   ActivityType,
   ClaimSource,
@@ -10,81 +11,23 @@ import type {
   ReminderCategory,
 } from '../db/types';
 
-export const ACTIVITY_LABEL: Record<ActivityType, string> = {
-  observation: 'Beobachtung',
-  photo: 'Foto',
-  watering: 'Gießen',
-  feeding: 'Düngen',
-  repotting: 'Umtopfen',
-  environment: 'Umgebung geändert',
-  measurement: 'Messung',
-  issue: 'Problem',
-  custom: 'Eigenes Ereignis',
-};
+export const ACTIVITY_LABEL = labels('labels.activity', ['observation', 'photo', 'watering', 'feeding', 'repotting', 'environment', 'measurement', 'issue', 'custom'] as ActivityType[]);
 
-export const SETTING_LABEL: Record<GrowSetting, string> = {
-  indoor: 'Indoor',
-  outdoor: 'Outdoor',
-  greenhouse: 'Gewächshaus',
-};
+export const SETTING_LABEL = labels('labels.setting', ['indoor', 'outdoor', 'greenhouse'] as GrowSetting[]);
 
-export const STATUS_LABEL: Record<GrowStatus, string> = {
-  active: 'Aktiv',
-  completed: 'Abgeschlossen',
-  archived: 'Archiviert',
-};
+export const STATUS_LABEL = labels('labels.growStatus', ['active', 'completed', 'archived'] as GrowStatus[]);
 
-export const PLANT_TYPE_LABEL: Record<PlantType, string> = {
-  photoperiod: 'Photoperiodisch',
-  autoflower: 'Autoflower',
-  unknown: 'Unbekannt',
-};
+export const PLANT_TYPE_LABEL = labels('labels.plantType', ['photoperiod', 'autoflower', 'unknown'] as PlantType[]);
 
-export const REMINDER_CATEGORY_LABEL: Record<ReminderCategory, string> = {
-  watering: 'Gießen',
-  feeding: 'Düngen',
-  check: 'Kontrolle',
-  environment: 'Umgebung',
-  harvest: 'Ernte',
-  maintenance: 'Wartung',
-  other: 'Sonstiges',
-};
+export const REMINDER_CATEGORY_LABEL = labels('labels.reminderCategory', ['watering', 'feeding', 'check', 'environment', 'harvest', 'maintenance', 'other'] as ReminderCategory[]);
 
-export const CLAIM_SOURCE_LABEL: Record<ClaimSource, string> = {
-  personal: 'Eigene Angabe',
-  reported: 'Herstellerangabe',
-  lab: 'Laborwert',
-};
+export const CLAIM_SOURCE_LABEL = labels('labels.claimSource', ['personal', 'reported', 'lab'] as ClaimSource[]);
 
-export const METHOD_LABEL: Record<ConsumptionMethod, string> = {
-  joint: 'Joint',
-  vaporizer: 'Vaporizer',
-  pipe: 'Pfeife',
-  bong: 'Bong',
-  edible: 'Edible',
-  tincture: 'Tinktur / Öl',
-  other: 'Sonstiges',
-};
+export const METHOD_LABEL = labels('labels.method', ['joint', 'vaporizer', 'pipe', 'bong', 'edible', 'tincture', 'other'] as ConsumptionMethod[]);
 
-export const INVENTORY_CATEGORY_LABEL: Record<InventoryCategory, string> = {
-  cannabis: 'Cannabis',
-  seeds: 'Samen',
-  accessory: 'Zubehör',
-  equipment: 'Grow-Ausrüstung',
-  space: 'Grow-Bereich',
-  nutrients: 'Dünger & Zusätze',
-  other: 'Sonstiges',
-};
+export const INVENTORY_CATEGORY_LABEL = labels('labels.inventoryCategory', ['cannabis', 'seeds', 'accessory', 'equipment', 'space', 'nutrients', 'other'] as InventoryCategory[]);
 
-export const EXPENSE_CATEGORY_LABEL: Record<ExpenseCategory, string> = {
-  equipment: 'Ausrüstung',
-  seeds: 'Samen',
-  nutrients: 'Dünger',
-  medium: 'Substrat',
-  electricity: 'Strom',
-  water: 'Wasser',
-  other: 'Sonstiges',
-};
+export const EXPENSE_CATEGORY_LABEL = labels('labels.expenseCategory', ['equipment', 'seeds', 'nutrients', 'medium', 'electricity', 'water', 'other'] as ExpenseCategory[]);
 
 /** Auswahl für Stimmungs-Deskriptoren im Journal (frei erweiterbar). */
 export const MOOD_OPTIONS = [
@@ -106,21 +49,6 @@ export const AROMA_OPTIONS = ['erdig', 'zitrus', 'süß', 'fruchtig', 'kiefer', 
 
 export const TERPENE_SUGGESTIONS = ['Myrcen', 'Limonen', 'Caryophyllen', 'Pinen', 'Linalool', 'Humulen', 'Terpinolen', 'Ocimen', 'Bisabolol'];
 
-export const SPACE_KIND_LABEL: Record<import('../db/types').SpaceKind, string> = {
-  tent: 'Zelt',
-  room: 'Raum',
-  greenhouse: 'Gewächshaus',
-  outdoor: 'Outdoor-Fläche',
-  zone: 'Zone',
-};
+export const SPACE_KIND_LABEL = labels('labels.spaceKind', ['tent', 'room', 'greenhouse', 'outdoor', 'zone'] as import('../db/types').SpaceKind[]);
 
-export const OBSERVATION_LABEL: Record<import('../db/types').ObservationKind, string> = {
-  appearance: 'Erscheinungsbild',
-  leafColor: 'Blattfarbe',
-  change: 'Sichtbare Veränderung',
-  growth: 'Wachstum',
-  symptom: 'Auffälligkeit',
-  environment: 'Umgebung',
-  aroma: 'Geruch',
-  personal: 'Persönliche Notiz',
-};
+export const OBSERVATION_LABEL = labels('labels.observation', ['appearance', 'leafColor', 'change', 'growth', 'symptom', 'environment', 'aroma', 'personal'] as import('../db/types').ObservationKind[]);

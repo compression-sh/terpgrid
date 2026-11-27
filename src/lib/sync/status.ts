@@ -1,18 +1,11 @@
+import { labels } from '../../i18n';
 /**
  * Einheitliche Synchronisationszustände (Phase 5.6) für private Daten und gemeinsame Bereiche.
  * Reine Funktion – gleiche Begriffe überall in der Oberfläche.
  */
 export type SyncState = 'synced' | 'pending' | 'offline' | 'syncing' | 'conflict' | 'failed' | 'revoked';
 
-export const SYNC_STATE_LABEL: Record<SyncState, string> = {
-  synced: 'Synchronisiert',
-  pending: 'Änderungen ausstehend',
-  offline: 'Offline',
-  syncing: 'Synchronisierung läuft',
-  conflict: 'Konflikt erkannt',
-  failed: 'Synchronisierung fehlgeschlagen',
-  revoked: 'Zugriff widerrufen',
-};
+export const SYNC_STATE_LABEL = labels('labels.syncState', ['synced', 'pending', 'offline', 'syncing', 'conflict', 'failed', 'revoked'] as SyncState[]);
 
 export interface SyncInput {
   phase: string;

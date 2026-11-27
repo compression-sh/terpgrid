@@ -1,4 +1,5 @@
-/**
+
+import { intlLocale } from '../../i18n';/**
  * Typische Wirkverläufe nach Health Canada ("Cannabis health effects" /
  * "Edible cannabis: Start low and go slow"):
  *
@@ -176,5 +177,5 @@ export function formatMinutes(min: number): string {
   if (min < 60) return `${Math.round(min)} Min.`;
   const h = min / 60;
   const rounded = Math.round(h * 2) / 2;
-  return `${rounded.toLocaleString('de-DE')} Std.`;
+  return `${rounded.toLocaleString(intlLocale())} Std.`;
 }

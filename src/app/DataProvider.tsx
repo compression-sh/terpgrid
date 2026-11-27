@@ -77,6 +77,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
+/** Wie useData, aber ohne Fehler außerhalb des Providers (z. B. Anmeldeseite). */
+export function useOptionalData(): DataState | null {
+  return useContext(Ctx);
+}
+
 export function useData(): DataState {
   const v = useContext(Ctx);
   if (!v) throw new Error('useData außerhalb von DataProvider');

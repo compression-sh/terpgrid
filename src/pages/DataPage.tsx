@@ -24,6 +24,7 @@ import {
 import { daysBetween, fmtDateTime, nowLocal, today } from '../lib/dates';
 import { requestPersistentStorage, storageEstimate } from '../lib/db/database';
 import { formatBytes } from '../lib/media/images';
+import { intlLocale } from '../i18n';
 
 const STORE_LABEL: Record<RecordStore, string> = {
   grows: 'Grows',
@@ -167,7 +168,7 @@ export function DataPage() {
                 <div className="h-full rounded-full bg-leaf-500" style={{ width: `${Math.max(1, usagePct)}%` }} />
               </div>
               <p className="hint mt-1">
-                {usagePct.toLocaleString('de-DE', { maximumFractionDigits: 2 })} % des vom Browser gemeldeten Kontingents ({formatBytes(estimate.quota)}). Der Wert ist eine Schätzung des Browsers.
+                {usagePct.toLocaleString(intlLocale(), { maximumFractionDigits: 2 })} % des vom Browser gemeldeten Kontingents ({formatBytes(estimate.quota)}). Der Wert ist eine Schätzung des Browsers.
               </p>
             </div>
           )}

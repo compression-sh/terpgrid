@@ -41,6 +41,7 @@ import { ACCENTS, ACCENT_CLASS, ACCENT_LABEL, KIND_LABEL, ROLE_LABEL, STORE_LABE
 import { type SpaceEntry, type SpaceSession, forgetSpaceSession } from '../../lib/collab/spaceSync';
 import { formatBytes } from '../../lib/media/images';
 import { EntryEditor } from './SharedResource';
+import { intlLocale } from '../../i18n';
 
 type Tab = 'content' | 'members' | 'activity' | 'settings';
 
@@ -384,7 +385,7 @@ function TaskList({ items, session, canEdit, spaceId }: { items: SpaceEntry[]; s
               <a href={href(`together/spaces/${spaceId}/tasks/${encodeURIComponent(t.id)}`)} className={`min-w-0 flex-1 truncate text-[13px] ${done ? 'text-ink-500 line-through' : 'text-ink-100'}`}>
                 {entryTitle('tasks', t.data)}
               </a>
-              {typeof t.data.date === 'string' && <span className="shrink-0 text-[12px] text-ink-400">{new Date(t.data.date).toLocaleDateString('de-DE')}</span>}
+              {typeof t.data.date === 'string' && <span className="shrink-0 text-[12px] text-ink-400">{new Date(t.data.date).toLocaleDateString(intlLocale())}</span>}
             </li>
           );
         })}
@@ -462,7 +463,7 @@ function MembersTab({ d, reload }: { d: SpaceDetail; reload: () => Promise<void>
             <PersonRow
               key={m.ref}
               identity={m}
-              meta={m.isMe ? 'du' : `seit ${new Date(m.since).toLocaleDateString('de-DE')}`}
+              meta={m.isMe ? 'du' : `seit ${new Date(m.since).toLocaleDateString(intlLocale())}`}
               actions={
                 <>
                   {owner && m.role !== 'owner' ? (
@@ -787,7 +788,7 @@ function SettingsTab({ d, reload }: { d: SpaceDetail; reload: () => Promise<void
         </section>
       )}
       <p className="flex items-center gap-1.5 text-[11.5px] text-ink-500">
-        <AlertTriangle className="size-3.5" /> Angelegt {new Date(d.space.createdAt).toLocaleDateString('de-DE')} · <RefreshCw className="size-3" /> Rechte werden bei jeder Aktion serverseitig geprüft.
+        <AlertTriangle className="size-3.5" /> Angelegt {new Date(d.space.createdAt).toLocaleDateString(intlLocale())} · <RefreshCw className="size-3" /> Rechte werden bei jeder Aktion serverseitig geprüft.
       </p>
     </div>
   );

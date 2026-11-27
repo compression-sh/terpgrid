@@ -1,5 +1,6 @@
 import { type ReactNode, createContext, useCallback, useContext, useRef, useState } from 'react';
 import { Modal } from '../components/ui/Modal';
+import { t } from '../i18n';
 
 interface ConfirmOptions {
   title: string;
@@ -38,7 +39,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         footer={
           <>
             <button type="button" className="btn-ghost" onClick={() => close(false)}>
-              {opts?.cancelLabel ?? 'Abbrechen'}
+              {opts?.cancelLabel ?? t('common.cancel')}
             </button>
             <button
               type="button"
@@ -46,7 +47,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
               className={opts?.tone === 'danger' ? 'btn bg-rose-500/90 text-white hover:bg-rose-500' : 'btn-primary'}
               onClick={() => close(true)}
             >
-              {opts?.confirmLabel ?? 'Bestätigen'}
+              {opts?.confirmLabel ?? t('common.confirm')}
             </button>
           </>
         }

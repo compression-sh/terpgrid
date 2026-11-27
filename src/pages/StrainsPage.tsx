@@ -22,6 +22,7 @@ import { CLAIM_SOURCE_LABEL, METHOD_LABEL } from '../lib/grow/labels';
 import { currentPhase } from '../lib/grow/phases';
 import { fmt } from '../lib/format';
 import { ShareButton } from '../components/collab/ShareDialog';
+import { intlLocale } from '../i18n';
 
 export function SourceBadge({ source }: { source: ClaimSource }) {
   if (source === 'lab')
@@ -318,7 +319,7 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
             <Card title="Quelle" icon={<Globe className="size-4" />}>
               <p className="text-[13px] text-ink-300">
                 Verknüpft mit dem Katalog ({PROVIDER_LABEL[strain.external.provider]})
-                {strain.external.linkedAt && !Number.isNaN(Date.parse(strain.external.linkedAt)) ? ` seit ${new Date(strain.external.linkedAt).toLocaleDateString('de-DE')}` : ''}. Übernommene Werte sind als „Herstellerangabe“ gekennzeichnet; eigene Notizen bleiben lokal.
+                {strain.external.linkedAt && !Number.isNaN(Date.parse(strain.external.linkedAt)) ? ` seit ${new Date(strain.external.linkedAt).toLocaleDateString(intlLocale())}` : ''}. Übernommene Werte sind als „Herstellerangabe“ gekennzeichnet; eigene Notizen bleiben lokal.
               </p>
             </Card>
           )}
@@ -461,7 +462,7 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
                       <a href={href(`lab-reports?report=${r.id}`)} className="text-ink-100 hover:text-leaf-200">
                         {r.title}
                       </a>
-                      <span className="text-[11px] text-ink-500">{r.testDate ? new Date(r.testDate).toLocaleDateString('de-DE') : ''}</span>
+                      <span className="text-[11px] text-ink-500">{r.testDate ? new Date(r.testDate).toLocaleDateString(intlLocale()) : ''}</span>
                     </li>
                   ))}
               </ul>

@@ -1,0 +1,103 @@
+{
+ "nav": {
+  "overview": "Overview",
+  "discover": "Discover",
+  "together": "Community",
+  "grows": "Grows",
+  "photos": "Photos",
+  "growTools": "Grow calculators",
+  "thcLab": "THC Lab",
+  "labReports": "Lab reports",
+  "journal": "Journal",
+  "collection": "Collection",
+  "strains": "My strains",
+  "calendar": "Calendar",
+  "analytics": "Analytics",
+  "timeline": "Activity",
+  "settings": "Settings",
+  "account": "Account & privacy",
+  "data": "Data & backup",
+  "breeders": "Breeder directory",
+  "genetics": "Genetics explorer",
+  "terpenes": "Terpene Atlas",
+  "academy": "Cannabis 101 (Academy)"
+ },
+ "navGroup": {
+  "grow": "Grow Studio",
+  "lab": "Laboratory",
+  "mine": "My workspace"
+ },
+ "capture": {
+  "log": {
+   "label": "Measurement / observation",
+   "hint": "pH, EC, climate, care, note"
+  },
+  "photo": {
+   "label": "Photo",
+   "hint": "Camera or library"
+  },
+  "journal": {
+   "label": "Journal",
+   "hint": "Record an experience"
+  },
+  "task": {
+   "label": "Task",
+   "hint": "Reminder with a date"
+  },
+  "collection": {
+   "label": "Collection note",
+   "hint": "Strain, seeds, supplies"
+  },
+  "equipment": {
+   "label": "Equipment note",
+   "hint": "Lamp, tent, meter"
+  },
+  "labReport": {
+   "label": "Lab report",
+   "hint": "Add values or a PDF"
+  },
+  "plant": {
+   "label": "Plant",
+   "hint": "Add to a grow"
+  },
+  "grow": {
+   "label": "New grow",
+   "hint": "Create a project"
+  },
+  "title": "Quick capture",
+  "serverHint": "Entries are saved on this device immediately and then synced with your server.",
+  "localHint": "Entries are saved in this browser."
+ },
+ "saved": {
+  "local": "Saved on this device – will be sent once a connection is available.",
+  "synced": "Synced with the server."
+ },
+ "newMenu": {
+  "log": "Quick log (observation, measurement)",
+  "grow": "New grow",
+  "plant": "Add plant",
+  "photo": "Upload photo",
+  "journal": "Journal entry",
+  "task": "Task / reminder",
+  "collection": "Collection note",
+  "equipment": "Equipment note",
+  "labReport": "Lab report"
+ },
+ "new": "New",
+ "homeLabel": "TERPGRID – Overview",
+ "searchDots": "Search …",
+ "search": "Search",
+ "mainNav": "Main navigation",
+ "more": "More",
+ "allAreas": "All areas",
+ "localMode": "Local mode: data stays on this device, no synchronisation.",
+ "pull": {
+  "busy": "Syncing",
+  "release": "Release to sync",
+  "pull": "Pull to sync"
+ },
+ "language": {
+  "label": "Language",
+  "hint": "Applies immediately and is saved on this device and – when signed in – with your account. Your own entries are never translated."
+ }
+}

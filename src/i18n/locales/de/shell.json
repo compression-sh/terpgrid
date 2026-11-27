@@ -1,0 +1,103 @@
+{
+ "nav": {
+  "overview": "Übersicht",
+  "discover": "Entdecken",
+  "together": "Gemeinsam",
+  "grows": "Grows",
+  "photos": "Fotos",
+  "growTools": "Grow-Rechner",
+  "thcLab": "THC Lab",
+  "labReports": "Laborberichte",
+  "journal": "Journal",
+  "collection": "Sammlung",
+  "strains": "Meine Sorten",
+  "calendar": "Kalender",
+  "analytics": "Auswertung",
+  "timeline": "Verlauf",
+  "settings": "Einstellungen",
+  "account": "Konto & Datenschutz",
+  "data": "Daten & Backup",
+  "breeders": "Breeder-Verzeichnis",
+  "genetics": "Genetik-Explorer",
+  "terpenes": "Terpen-Atlas",
+  "academy": "Cannabis 101 (Academy)"
+ },
+ "navGroup": {
+  "grow": "Grow Studio",
+  "lab": "Labor",
+  "mine": "Mein Bereich"
+ },
+ "capture": {
+  "log": {
+   "label": "Messung / Beobachtung",
+   "hint": "pH, EC, Klima, Pflege, Notiz"
+  },
+  "photo": {
+   "label": "Foto",
+   "hint": "Kamera oder Mediathek"
+  },
+  "journal": {
+   "label": "Journal",
+   "hint": "Erfahrung festhalten"
+  },
+  "task": {
+   "label": "Aufgabe",
+   "hint": "Erinnerung mit Datum"
+  },
+  "collection": {
+   "label": "Sammlungsnotiz",
+   "hint": "Sorte, Samen, Vorrat"
+  },
+  "equipment": {
+   "label": "Ausrüstungsnotiz",
+   "hint": "Lampe, Zelt, Messgerät"
+  },
+  "labReport": {
+   "label": "Laborbericht",
+   "hint": "Werte oder PDF hinterlegen"
+  },
+  "plant": {
+   "label": "Pflanze",
+   "hint": "Zu einem Grow hinzufügen"
+  },
+  "grow": {
+   "label": "Neuer Grow",
+   "hint": "Projekt anlegen"
+  },
+  "title": "Schnell erfassen",
+  "serverHint": "Einträge werden sofort auf diesem Gerät gespeichert und danach mit deinem Server synchronisiert.",
+  "localHint": "Einträge werden in diesem Browser gespeichert."
+ },
+ "saved": {
+  "local": "Auf diesem Gerät gespeichert – wird übertragen, sobald eine Verbindung besteht.",
+  "synced": "Mit dem Server synchronisiert."
+ },
+ "newMenu": {
+  "log": "Schnell-Log (Beobachtung, Messung)",
+  "grow": "Neuer Grow",
+  "plant": "Pflanze hinzufügen",
+  "photo": "Foto hochladen",
+  "journal": "Journal-Eintrag",
+  "task": "Aufgabe / Erinnerung",
+  "collection": "Sammlungsnotiz",
+  "equipment": "Ausrüstungsnotiz",
+  "labReport": "Laborbericht"
+ },
+ "new": "Neu",
+ "homeLabel": "TERPGRID – Übersicht",
+ "searchDots": "Suchen …",
+ "search": "Suchen",
+ "mainNav": "Hauptnavigation",
+ "more": "Mehr",
+ "allAreas": "Alle Bereiche",
+ "localMode": "Lokalmodus: Daten nur auf diesem Gerät, keine Synchronisation.",
+ "pull": {
+  "busy": "Synchronisierung läuft",
+  "release": "Loslassen zum Synchronisieren",
+  "pull": "Zum Synchronisieren ziehen"
+ },
+ "language": {
+  "label": "Sprache",
+  "hint": "Gilt sofort, wird auf diesem Gerät und – angemeldet – mit deinem Konto gespeichert. Eigene Einträge werden nie übersetzt."
+ }
+}

@@ -9,10 +9,11 @@ import { EXPENSE_CATEGORIES, type Expense, type ExpenseCategory } from '../../li
 import { EXPENSE_CATEGORY_LABEL } from '../../lib/grow/labels';
 import { ExpenseFormModal } from '../forms/GrowForms';
 import { EmptyState } from '../ui/EmptyState';
+import { intlLocale } from '../../i18n';
 
 export function money(value: number, currency: string): string {
   try {
-    return new Intl.NumberFormat('de-DE', { style: 'currency', currency }).format(value);
+    return new Intl.NumberFormat(intlLocale(), { style: 'currency', currency }).format(value);
   } catch {
     return `${value.toFixed(2)} ${currency}`;
   }

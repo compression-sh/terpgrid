@@ -1,3 +1,4 @@
+import { labels } from '../../i18n';
 /**
  * Client für den lokal indexierten Katalog der eigenen Instanz (CI-Strains-Pro in PostgreSQL).
  * Nur im Servermodus verfügbar; Suchanfragen gehen ausschließlich an den eigenen Server.
@@ -300,11 +301,7 @@ export function typeClassOf(geneticsType?: string): TypeClass {
   return 'unknown';
 }
 
-export const GENETICS_LABEL: Record<string, string> = {
-  'Indica Dominant': 'Indica-dominant',
-  'Sativa Dominant': 'Sativa-dominant',
-  'Balanced Hybrid': 'Ausgewogener Hybrid',
-};
+export const GENETICS_LABEL = labels('labels.genetics', ['Indica Dominant', 'Sativa Dominant', 'Balanced Hybrid'] as string[]);
 
 /** Abbildung auf das gemeinsame Katalogmodell (Karten, Favoriten, Vergleich). */
 export function toCatalogStrain(c: LibCultivar): CatalogStrain {
@@ -353,10 +350,4 @@ export function listingEvidence(detail: Pick<LibCultivarDetail, 'cultivar' | 'li
   return own.some((l) => keys.some((k) => has(l.values?.[k]))) ? 'breeder' : 'seedbank';
 }
 
-export const MATCH_LABEL: Record<MatchTier, string> = {
-  exact: 'Exakter Name',
-  prefix: 'Namensanfang / Alias',
-  name: 'Im Namen',
-  related: 'Breeder, Abstammung, Terpen oder Seedbank',
-  similar: 'Ähnliche Schreibweise',
-};
+export const MATCH_LABEL = labels('labels.matchTier', ['exact', 'prefix', 'name', 'related', 'similar'] as MatchTier[]);

@@ -1,5 +1,6 @@
 import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { t } from '../i18n';
 
 /**
  * Fängt Renderfehler einer einzelnen Ansicht ab, damit Navigation und übrige App bedienbar bleiben.
@@ -28,9 +29,9 @@ export class ErrorBoundary extends Component<{ children: ReactNode; resetKey?: s
         <div className="flex items-start gap-3">
           <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-300" aria-hidden />
           <div className="min-w-0">
-            <h1 className="page-title">Diese Ansicht konnte nicht angezeigt werden</h1>
+            <h1 className="page-title">{t('common.errorView.title')}</h1>
             <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-300">
-              Wahrscheinlich enthält ein Datensatz ein unerwartetes Format. Deine Daten wurden nicht verändert. Du kannst die Ansicht neu laden oder zu einem anderen Bereich wechseln.
+              {t('common.errorView.text')}
             </p>
             <p className="mt-2 break-words font-mono text-[11.5px] text-ink-500">{this.state.error.message}</p>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -38,7 +39,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode; resetKey?: s
                 <RotateCcw className="size-4" /> Erneut versuchen
               </button>
               <a href="#/" className="btn-ghost">
-                Zur Übersicht
+                {t('common.toOverview')}
               </a>
             </div>
           </div>

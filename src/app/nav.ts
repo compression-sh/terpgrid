@@ -22,6 +22,7 @@ import {
   Users,
   Wrench,
 } from 'lucide-react';
+import { t } from '../i18n';
 
 export interface NavItem {
   id: string;
@@ -50,57 +51,57 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     id: 'start',
     items: [
-      { id: 'dashboard', label: 'Übersicht', to: '', icon: LayoutDashboard, match: [''] },
+      { id: 'dashboard', get label() { return t('shell.nav.overview'); }, to: '', icon: LayoutDashboard, match: [''] },
       // Entdecken: Sortenlexikon, Breeder, Genetik, Terpen-Atlas und Academy – Unterbereiche als Reiter auf der Seite
-      { id: 'discover', label: 'Entdecken', to: 'discover', icon: Compass, match: ['discover'] },
+      { id: 'discover', get label() { return t('shell.nav.discover'); }, to: 'discover', icon: Compass, match: ['discover'] },
       // Gemeinschaft: Freunde, gemeinsame Bereiche, Einladungen
-      { id: 'together', label: 'Gemeinsam', to: 'together', icon: Users, match: ['together'], serverOnly: true },
+      { id: 'together', get label() { return t('shell.nav.together'); }, to: 'together', icon: Users, match: ['together'], serverOnly: true },
     ],
   },
   {
     id: 'grow',
-    label: 'Grow Studio',
+    get label() { return t('shell.navGroup.grow'); },
     items: [
-      { id: 'grows', label: 'Grows', to: 'grows', icon: Sprout, match: ['grows', 'labels'] },
-      { id: 'photos', label: 'Fotos', to: 'photos', icon: Images, match: ['photos'] },
-      { id: 'tools', label: 'Grow-Rechner', to: 'tools', icon: Wrench, match: ['tools'] },
+      { id: 'grows', get label() { return t('shell.nav.grows'); }, to: 'grows', icon: Sprout, match: ['grows', 'labels'] },
+      { id: 'photos', get label() { return t('shell.nav.photos'); }, to: 'photos', icon: Images, match: ['photos'] },
+      { id: 'tools', get label() { return t('shell.nav.growTools'); }, to: 'tools', icon: Wrench, match: ['tools'] },
     ],
   },
   {
     id: 'lab',
-    label: 'Labor',
+    get label() { return t('shell.navGroup.lab'); },
     items: [
-      { id: 'lab', label: 'THC Lab', to: 'lab/edibles', icon: FlaskConical, match: ['lab'] },
-      { id: 'labreports', label: 'Laborberichte', to: 'lab-reports', icon: FlaskRound, match: ['lab-reports'] },
+      { id: 'lab', get label() { return t('shell.nav.thcLab'); }, to: 'lab/edibles', icon: FlaskConical, match: ['lab'] },
+      { id: 'labreports', get label() { return t('shell.nav.labReports'); }, to: 'lab-reports', icon: FlaskRound, match: ['lab-reports'] },
     ],
   },
   {
     id: 'mine',
-    label: 'Mein Bereich',
+    get label() { return t('shell.navGroup.mine'); },
     items: [
-      { id: 'journal', label: 'Journal', to: 'journal', icon: BookOpenText, match: ['journal'] },
-      { id: 'collection', label: 'Sammlung', to: 'collection', icon: Package, match: ['collection'] },
-      { id: 'strains', label: 'Meine Sorten', to: 'strains', icon: Leaf, match: ['strains'] },
-      { id: 'calendar', label: 'Kalender', to: 'calendar', icon: CalendarDays, match: ['calendar'] },
-      { id: 'analytics', label: 'Auswertung', to: 'analytics', icon: BarChart3, match: ['analytics'] },
-      { id: 'timeline', label: 'Verlauf', to: 'timeline', icon: History, match: ['timeline'] },
+      { id: 'journal', get label() { return t('shell.nav.journal'); }, to: 'journal', icon: BookOpenText, match: ['journal'] },
+      { id: 'collection', get label() { return t('shell.nav.collection'); }, to: 'collection', icon: Package, match: ['collection'] },
+      { id: 'strains', get label() { return t('shell.nav.strains'); }, to: 'strains', icon: Leaf, match: ['strains'] },
+      { id: 'calendar', get label() { return t('shell.nav.calendar'); }, to: 'calendar', icon: CalendarDays, match: ['calendar'] },
+      { id: 'analytics', get label() { return t('shell.nav.analytics'); }, to: 'analytics', icon: BarChart3, match: ['analytics'] },
+      { id: 'timeline', get label() { return t('shell.nav.timeline'); }, to: 'timeline', icon: History, match: ['timeline'] },
     ],
   },
 ];
 
 /** Einstellungen & Konto: in der Seitenleiste unten, auf Mobilgeräten am Ende von „Mehr“. */
 export const SETTINGS_NAV: NavItem[] = [
-  { id: 'settings', label: 'Einstellungen', to: 'settings', icon: Settings, match: ['settings'] },
-  { id: 'account', label: 'Konto & Datenschutz', to: 'account', icon: UserRound, match: ['account'], serverOnly: true },
-  { id: 'data', label: 'Daten & Backup', to: 'data', icon: Database, match: ['data'] },
+  { id: 'settings', get label() { return t('shell.nav.settings'); }, to: 'settings', icon: Settings, match: ['settings'] },
+  { id: 'account', get label() { return t('shell.nav.account'); }, to: 'account', icon: UserRound, match: ['account'], serverOnly: true },
+  { id: 'data', get label() { return t('shell.nav.data'); }, to: 'data', icon: Database, match: ['data'] },
 ];
 
 /** Unterbereiche von „Entdecken“ – direkt erreichbar über die Suche (Strg K) und die Reiter in Entdecken. */
 export const DISCOVER_SECTIONS: NavItem[] = [
-  { id: 'disc-breeders', label: 'Breeder-Verzeichnis', to: 'discover/breeders', icon: Store, match: [] },
-  { id: 'disc-genetics', label: 'Genetik-Explorer', to: 'discover/genetics', icon: Dna, match: [] },
-  { id: 'disc-terpenes', label: 'Terpen-Atlas', to: 'discover/terpenes', icon: Droplets, match: [] },
-  { id: 'disc-learn', label: 'Cannabis 101 (Academy)', to: 'discover/learn', icon: GraduationCap, match: [] },
+  { id: 'disc-breeders', get label() { return t('shell.nav.breeders'); }, to: 'discover/breeders', icon: Store, match: [] },
+  { id: 'disc-genetics', get label() { return t('shell.nav.genetics'); }, to: 'discover/genetics', icon: Dna, match: [] },
+  { id: 'disc-terpenes', get label() { return t('shell.nav.terpenes'); }, to: 'discover/terpenes', icon: Droplets, match: [] },
+  { id: 'disc-learn', get label() { return t('shell.nav.academy'); }, to: 'discover/learn', icon: GraduationCap, match: [] },
 ];
 
 export const ALL_NAV: NavItem[] = [...NAV_GROUPS.flatMap((g) => g.items), ...SETTINGS_NAV];

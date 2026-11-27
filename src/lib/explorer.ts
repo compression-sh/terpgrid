@@ -1,3 +1,4 @@
+import { labels } from '../i18n';
 /**
  * Personal Data Explorer: Filter und Exporte über die eigenen Datensätze.
  * Rein beschreibend – keine Vorhersagen, keine Ursache-Wirkungs-Aussagen, keine ergänzten Werte.
@@ -8,7 +9,7 @@ import { METRICS } from './grow/series';
 import { matchTerpene } from './catalog/terpenes';
 
 export type ExplorerRange = 'all' | '30' | '90' | '365';
-export const RANGE_LABEL: Record<ExplorerRange, string> = { all: 'Gesamter Zeitraum', '30': 'Letzte 30 Tage', '90': 'Letzte 90 Tage', '365': 'Letzte 12 Monate' };
+export const RANGE_LABEL = labels('labels.explorerRange', ['all', '30', '90', '365'] as ExplorerRange[]);
 
 export interface ExplorerScope {
   range: ExplorerRange;

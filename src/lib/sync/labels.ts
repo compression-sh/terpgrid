@@ -1,19 +1,5 @@
-export const SYNC_STORE_LABEL: Record<string, string> = {
-  grows: 'Grows',
-  plants: 'Pflanzen',
-  activities: 'Einträge',
-  photos: 'Fotos',
-  photoData: 'Fotodateien',
-  reminders: 'Erinnerungen',
-  strains: 'Sorten',
-  journal: 'Journal',
-  inventory: 'Sammlung',
-  expenses: 'Ausgaben',
-  calculations: 'Berechnungen',
-  labReports: 'Laborberichte',
-  labDocs: 'Labordokumente',
-  settings: 'Einstellungen',
-};
+import { labels } from '../../i18n';
+export const SYNC_STORE_LABEL = labels('labels.syncStore', ['grows', 'plants', 'activities', 'photos', 'photoData', 'reminders', 'strains', 'journal', 'inventory', 'expenses', 'calculations', 'labReports', 'labDocs', 'settings'] as string[]);
 
 /** Kurzer, lesbarer Titel eines Datensatzes für Konfliktanzeigen. */
 export function recordTitle(data: unknown): string {

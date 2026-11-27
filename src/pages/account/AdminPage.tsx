@@ -12,6 +12,7 @@ import { CatalogDataQuality } from './CatalogDataQuality';
 import { CatalogAdmin } from './CatalogAdmin';
 import { formatBytes } from '../../lib/media/images';
 import { ApiError, api } from '../../lib/server/api';
+import { intlLocale } from '../../i18n';
 
 interface OverviewData {
   version: string;
@@ -65,7 +66,7 @@ interface Invite {
   used_by: string | null;
 }
 
-const dt = (s: string | null | undefined) => (s ? new Date(s).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }) : '–');
+const dt = (s: string | null | undefined) => (s ? new Date(s).toLocaleString(intlLocale(), { dateStyle: 'short', timeStyle: 'short' }) : '–');
 const errText = (e: unknown) => (e instanceof ApiError ? e.message : 'Unerwarteter Fehler.');
 const EVENT: Record<string, string> = {
   'login.failure': 'Fehlgeschlagene Anmeldungen',
@@ -183,7 +184,7 @@ export function AdminPage() {
               ['Speicher API (RSS)', formatBytes(sys.memory.rssBytes), false],
               ['Nutzerdateien gesamt', sys.storage.userFilesBytes !== undefined ? formatBytes(sys.storage.userFilesBytes) : '–', false],
               ['Datei-Papierkorb', `${sys.storage.trashBlobs} Blobs`, false],
-              ['Sortenkatalog', sys.catalog?.dataset ? `${sys.catalog.dataset.cultivars.toLocaleString('de-DE')} Sorten · ${dt(sys.catalog.dataset.importedAt)}` : 'nicht importiert', !sys.catalog?.dataset],
+              ['Sortenkatalog', sys.catalog?.dataset ? `${sys.catalog.dataset.cultivars.toLocaleString(intlLocale())} Sorten · ${dt(sys.catalog.dataset.importedAt)}` : 'nicht importiert', !sys.catalog?.dataset],
               [
                 'StrainAPI-Zwischenspeicher',
                 !sys.catalog || sys.catalog.status === 'unused'

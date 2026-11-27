@@ -15,6 +15,8 @@ import { CompareProvider, useCatalogOnlineSync } from './app/catalog';
 import { href, useRoute } from './app/router';
 import { EmptyState } from './components/ui/EmptyState';
 import { Dashboard } from './pages/Dashboard';
+import { useLocale } from './i18n';
+import { LocaleSync } from './app/locale';
 
 const ThcLab = lazy(() => import('./pages/ThcLab').then((m) => ({ default: m.ThcLab })));
 const GrowList = lazy(() => import('./pages/grows/GrowList').then((m) => ({ default: m.GrowList })));
@@ -211,6 +213,8 @@ function Gate({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
+  // Sprachwechsel: die Wurzel rendert neu, damit alle Texte die neue Sprache zeigen (ohne Neuladen, Eingaben bleiben).
+  useLocale();
   return (
     <ToastProvider>
       <ConfirmProvider>
@@ -246,6 +250,7 @@ function AuthGate() {
       <CompareProvider>
         <QuickActionsProvider>
           <CatalogSync />
+          <LocaleSync />
           <Shell>
             {state.kind === 'authenticated' && !isLab && route.path[0] !== 'account' && <LegacyBanner account={auth.lastAccount} />}
             {route.path.length === 0 && <SecurityNudge />}

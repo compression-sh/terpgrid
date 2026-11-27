@@ -2,6 +2,7 @@ import { Check, Database, Loader2, Play, RefreshCw, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '../../app/Toasts';
 import { ApiError, api } from '../../lib/server/api';
+import { intlLocale } from '../../i18n';
 
 interface FieldStat {
   field: string;
@@ -60,7 +61,7 @@ interface Match {
 }
 
 const pct = (n: number, t: number) => (t ? `${((n / t) * 100).toFixed(1).replace('.', ',')} %` : '–');
-const dt = (s: string | null) => (s ? new Date(s).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }) : '–');
+const dt = (s: string | null) => (s ? new Date(s).toLocaleString(intlLocale(), { dateStyle: 'short', timeStyle: 'short' }) : '–');
 const STATUS: Record<string, string> = { probable: 'Zu prüfen', ambiguous: 'Mehrdeutig', exact: 'Bestätigt', rejected: 'Abgelehnt' };
 const RUN: Record<string, string> = { running: 'läuft', done: 'fertig', failed: 'fehlgeschlagen', aborted: 'abgebrochen' };
 
@@ -119,7 +120,7 @@ export function CatalogAdmin() {
             <Database className="size-4" /> Sortenkatalog – Vollständigkeit & Anreicherung
           </h2>
           <p className="hint mt-0.5">
-            {q ? `${q.cultivars.toLocaleString('de-DE')} Sorten · ${q.breeders.toLocaleString('de-DE')} Breeder · ${q.listings.toLocaleString('de-DE')} Angebote` : 'Wird berechnet …'}
+            {q ? `${q.cultivars.toLocaleString(intlLocale())} Sorten · ${q.breeders.toLocaleString(intlLocale())} Breeder · ${q.listings.toLocaleString(intlLocale())} Angebote` : 'Wird berechnet …'}
             {q?.dataset && ` · Datensatz ${q.dataset.version} (Parser v${q.dataset.parser ?? '1'})`}
           </p>
         </div>
@@ -161,14 +162,14 @@ export function CatalogAdmin() {
                       <span className="tabular text-ink-300">{pct(f.present, f.total)}</span>
                     </span>
                   </td>
-                  <td className="py-1.5 pr-3 text-right tabular text-ink-200">{f.present.toLocaleString('de-DE')}</td>
-                  <td className="py-1.5 pr-3 text-right tabular text-ink-400">{f.missing.toLocaleString('de-DE')}</td>
-                  <td className="py-1.5 pr-3 text-right tabular text-ink-300">{f.evidence.breeder.toLocaleString('de-DE')}</td>
-                  <td className="py-1.5 pr-3 text-right tabular text-ink-300">{f.evidence.seedbank.toLocaleString('de-DE')}</td>
-                  <td className="py-1.5 pr-3 text-right tabular text-ink-300">{f.evidence.database.toLocaleString('de-DE')}</td>
-                  <td className="py-1.5 pr-3 text-right tabular text-ink-300">{f.evidence.lab.toLocaleString('de-DE')}</td>
-                  <td className="py-1.5 pr-3 text-right tabular text-ink-300">{(f.evidence.science ?? 0).toLocaleString('de-DE')}</td>
-                  <td className="py-1.5 text-right tabular text-ink-400">{f.conflicting === null ? '–' : f.conflicting.toLocaleString('de-DE')}</td>
+                  <td className="py-1.5 pr-3 text-right tabular text-ink-200">{f.present.toLocaleString(intlLocale())}</td>
+                  <td className="py-1.5 pr-3 text-right tabular text-ink-400">{f.missing.toLocaleString(intlLocale())}</td>
+                  <td className="py-1.5 pr-3 text-right tabular text-ink-300">{f.evidence.breeder.toLocaleString(intlLocale())}</td>
+                  <td className="py-1.5 pr-3 text-right tabular text-ink-300">{f.evidence.seedbank.toLocaleString(intlLocale())}</td>
+                  <td className="py-1.5 pr-3 text-right tabular text-ink-300">{f.evidence.database.toLocaleString(intlLocale())}</td>
+                  <td className="py-1.5 pr-3 text-right tabular text-ink-300">{f.evidence.lab.toLocaleString(intlLocale())}</td>
+                  <td className="py-1.5 pr-3 text-right tabular text-ink-300">{(f.evidence.science ?? 0).toLocaleString(intlLocale())}</td>
+                  <td className="py-1.5 text-right tabular text-ink-400">{f.conflicting === null ? '–' : f.conflicting.toLocaleString(intlLocale())}</td>
                 </tr>
               ))}
             </tbody>
@@ -178,10 +179,10 @@ export function CatalogAdmin() {
           </p>
           {q.samples && (
             <p className="hint mt-1">
-              Öffentliche Laborproben ({q.samples.source}, Stand {q.samples.version.slice(0, 7)}): {q.samples.samples.toLocaleString('de-DE')} Proben, davon{' '}
-              {q.samples.terpeneSamples.toLocaleString('de-DE')} mit Terpenen, {q.samples.names.toLocaleString('de-DE')} Produktnamen. Im Katalog gleichnamig:{' '}
-              {q.samples.linkedNames.toLocaleString('de-DE')} Namen → {q.samples.linkedCultivars.toLocaleString('de-DE')} Sorten ({q.samples.linkedSamples.toLocaleString('de-DE')} Proben);{' '}
-              {q.samples.ambiguousNames.toLocaleString('de-DE')} Namen tragen mehrere Breeder. Zuordnung nur über den Namen – keine Identitätsbestätigung.
+              Öffentliche Laborproben ({q.samples.source}, Stand {q.samples.version.slice(0, 7)}): {q.samples.samples.toLocaleString(intlLocale())} Proben, davon{' '}
+              {q.samples.terpeneSamples.toLocaleString(intlLocale())} mit Terpenen, {q.samples.names.toLocaleString(intlLocale())} Produktnamen. Im Katalog gleichnamig:{' '}
+              {q.samples.linkedNames.toLocaleString(intlLocale())} Namen → {q.samples.linkedCultivars.toLocaleString(intlLocale())} Sorten ({q.samples.linkedSamples.toLocaleString(intlLocale())} Proben);{' '}
+              {q.samples.ambiguousNames.toLocaleString(intlLocale())} Namen tragen mehrere Breeder. Zuordnung nur über den Namen – keine Identitätsbestätigung.
             </p>
           )}
         </div>

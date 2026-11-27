@@ -2,6 +2,7 @@ import { Copy, Eye, EyeOff, Lock, MessageSquare, Pencil, Shield, Users } from 'l
 import type { ReactNode } from 'react';
 import type { Access, Accent, Identity, Role } from '../../lib/collab/api';
 import { ACCENT_CLASS, ACCESS_HINT, ACCESS_LABEL, ROLE_HINT, ROLE_LABEL, initialsOf, nameOf } from '../../lib/collab/labels';
+import { intlLocale } from '../../i18n';
 
 const SIZES = { xs: 'size-6 text-[10px]', sm: 'size-8 text-[11px]', md: 'size-10 text-[13px]', lg: 'size-16 text-lg', xl: 'size-24 text-2xl' } as const;
 
@@ -129,5 +130,5 @@ export function relTime(iso: string): string {
   if (s < 3600) return `vor ${Math.round(s / 60)} Min.`;
   if (s < 86400) return `vor ${Math.round(s / 3600)} Std.`;
   if (s < 7 * 86400) return `vor ${Math.round(s / 86400)} T.`;
-  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return new Date(iso).toLocaleDateString(intlLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
 }

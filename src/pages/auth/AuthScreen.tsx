@@ -1,3 +1,4 @@
+import { LanguageMenu } from '../../app/locale';
 import { ArrowLeft, Fingerprint, KeyRound, Loader2, LogIn, ShieldCheck, Sparkles, UserPlus, UserRound, WifiOff } from 'lucide-react';
 import { type FormEvent, type ReactNode, useEffect, useId, useState } from 'react';
 import { useAuth } from '../../app/auth';
@@ -34,6 +35,9 @@ function Shell({ children, title, subtitle, back }: { children: ReactNode; title
           className="absolute inset-0 opacity-[0.35]"
           style={{ backgroundImage: 'radial-gradient(rgb(95 227 154 / 0.08) 1px, transparent 1px)', backgroundSize: '22px 22px', maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 75%)' }}
         />
+      </div>
+      <div className="absolute top-[max(1rem,env(safe-area-inset-top))] right-4">
+        <LanguageMenu compact align="right" />
       </div>
       <div className="relative w-full max-w-md animate-fade-up">
         <div className="mb-7 flex items-center justify-center gap-3">

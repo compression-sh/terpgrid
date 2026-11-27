@@ -247,6 +247,7 @@ export function normalizeSettings(raw: unknown): AppSettings {
           .slice(0, 12)
           .map((x) => ({ id: x.id.slice(0, 260), name: x.name.slice(0, 120), breeder: x.breeder.slice(0, 120) }))
       : [],
+    locale: s.locale === 'de' || s.locale === 'en' ? s.locale : undefined,
   };
 }
 

@@ -1,23 +1,15 @@
+import { labels } from '../../i18n';
 /**
  * Deutsche Texte für Zusammenarbeit. Benachrichtigungs- und Verlaufstexte enthalten nie
  * Inhalte (Notizen, Kommentartexte, Messwerte) – nur, wer was in welchem Bereich getan hat.
  */
 import type { Access, Accent, ActivityView, Identity, NotificationCategory, NotificationView, Role, SpaceKind, SpaceStore } from './api';
 
-export const ROLE_LABEL: Record<Role, string> = { owner: 'Eigentümer', editor: 'Bearbeiten', commenter: 'Kommentieren', viewer: 'Ansehen' };
-export const ROLE_HINT: Record<Role, string> = {
-  owner: 'Verwaltet Bereich, Mitglieder und Rechte.',
-  editor: 'Inhalte anlegen und bearbeiten, Fotos hochladen, kommentieren.',
-  commenter: 'Inhalte ansehen und kommentieren – keine Änderungen.',
-  viewer: 'Inhalte nur ansehen – keine Änderungen, keine Kommentare.',
-};
-export const ACCESS_LABEL: Record<Access, string> = { members: 'Alle Mitglieder', editors: 'Nur Bearbeitende', readonly: 'Schreibgeschützt' };
-export const ACCESS_HINT: Record<Access, string> = {
-  members: 'Alle Mitglieder sehen den Eintrag; Eigentümer und Bearbeitende ändern ihn.',
-  editors: 'Nur Eigentümer und Bearbeitende sehen den Eintrag samt Pflanzen, Fotos und Kommentaren.',
-  readonly: 'Alle sehen den Eintrag, aber nur der Eigentümer ändert ihn.',
-};
-export const KIND_LABEL: Record<SpaceKind, string> = { project: 'Grow-Projekt', collection: 'Sammlung', general: 'Allgemein' };
+export const ROLE_LABEL = labels('labels.role', ['owner', 'editor', 'commenter', 'viewer'] as Role[]);
+export const ROLE_HINT = labels('labels.roleHint', ['owner', 'editor', 'commenter', 'viewer'] as Role[]);
+export const ACCESS_LABEL = labels('labels.access', ['members', 'editors', 'readonly'] as Access[]);
+export const ACCESS_HINT = labels('labels.accessHint', ['members', 'editors', 'readonly'] as Access[]);
+export const KIND_LABEL = labels('labels.spaceType', ['project', 'collection', 'general'] as SpaceKind[]);
 export const STORE_LABEL: Record<SpaceStore, string> = {
   grows: 'Grows',
   plants: 'Pflanzen',
@@ -42,20 +34,8 @@ export const STORE_SINGULAR: Record<SpaceStore, string> = {
   notes: 'Notiz',
   tasks: 'Aufgabe',
 };
-export const CATEGORY_LABEL: Record<NotificationCategory, string> = {
-  friends: 'Freunde',
-  invites: 'Einladungen',
-  comments: 'Kommentare',
-  updates: 'Änderungen in Bereichen',
-  access: 'Rechte & Zugriff',
-};
-export const CATEGORY_HINT: Record<NotificationCategory, string> = {
-  friends: 'Freundschaftsanfragen und angenommene Anfragen',
-  invites: 'Einladungen in gemeinsame Bereiche',
-  comments: 'Neue Kommentare und Antworten',
-  updates: 'Neue oder geänderte Inhalte in deinen Bereichen (zusammengefasst)',
-  access: 'Rollenänderungen, Entfernung, Übertragung, Löschung – aus Sicherheitsgründen immer an',
-};
+export const CATEGORY_LABEL = labels('labels.notifCategory', ['friends', 'invites', 'comments', 'updates', 'access'] as NotificationCategory[]);
+export const CATEGORY_HINT = labels('labels.notifCategoryHint', ['friends', 'invites', 'comments', 'updates', 'access'] as NotificationCategory[]);
 
 /** Akzentfarben (Tailwind-Klassen statisch, damit sie im Build erhalten bleiben). */
 export const ACCENT_CLASS: Record<Accent, { dot: string; ring: string; soft: string; text: string }> = {
@@ -68,7 +48,7 @@ export const ACCENT_CLASS: Record<Accent, { dot: string; ring: string; soft: str
   lime: { dot: 'bg-lime-400', ring: 'ring-lime-400/40', soft: 'bg-lime-500/12', text: 'text-lime-300' },
 };
 export const ACCENTS: Accent[] = ['emerald', 'teal', 'sky', 'violet', 'amber', 'rose', 'lime'];
-export const ACCENT_LABEL: Record<Accent, string> = { emerald: 'Smaragd', teal: 'Petrol', sky: 'Himmel', violet: 'Violett', amber: 'Bernstein', rose: 'Rosé', lime: 'Limette' };
+export const ACCENT_LABEL = labels('labels.accent', ['emerald', 'teal', 'sky', 'violet', 'amber', 'rose', 'lime'] as Accent[]);
 
 /** Anzeigename einer Identität (privater Spitzname hat Vorrang) – nie der Anmeldename. */
 export function nameOf(i: Identity | null | undefined, nickname?: string | null): string {

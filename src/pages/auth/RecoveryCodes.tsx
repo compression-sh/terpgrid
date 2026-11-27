@@ -1,5 +1,6 @@
 import { Check, Copy, Download, ShieldAlert } from 'lucide-react';
 import { useState } from 'react';
+import { intlLocale } from '../../i18n';
 
 export function downloadText(name: string, text: string) {
   const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
@@ -14,7 +15,7 @@ export function downloadText(name: string, text: string) {
 export function RecoveryCodesPanel({ codes, loginName, onDone, doneLabel = 'Weiter zu TERPGRID' }: { codes: string[]; loginName: string; onDone: () => void; doneLabel?: string }) {
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
-  const text = `TERPGRID – Wiederherstellungscodes\nKennung: ${loginName}\nErstellt: ${new Date().toLocaleString('de-DE')}\n\nJeder Code funktioniert genau einmal.\n\n${codes.join('\n')}\n`;
+  const text = `TERPGRID – Wiederherstellungscodes\nKennung: ${loginName}\nErstellt: ${new Date().toLocaleString(intlLocale())}\n\nJeder Code funktioniert genau einmal.\n\n${codes.join('\n')}\n`;
   return (
     <div className="space-y-5">
       <div className="flex gap-3 rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3.5 text-[13px] leading-relaxed text-amber-100">

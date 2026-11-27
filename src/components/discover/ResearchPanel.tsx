@@ -9,6 +9,7 @@ import { fmt } from '../../lib/format';
 import { Callout } from '../ui/Callout';
 import { rangeText } from './Badges';
 import { TerpeneChips } from './TerpeneChips';
+import { intlLocale } from '../../i18n';
 
 type Phase = 'idle' | 'searching' | 'choose' | 'loading' | 'done' | 'error';
 
@@ -191,7 +192,7 @@ function ResearchProfileView({ profile }: { profile: ResearchProfile }) {
         <a href="https://cannalib.org/" target="_blank" rel="noopener noreferrer nofollow" referrerPolicy="no-referrer" className="hover:text-ink-300">
           CannaLib
         </a>{' '}
-        · abgerufen {new Date(profile.fetchedAt).toLocaleString('de-DE')} · Bilder aus CannaLib werden nicht angezeigt (Rechte laut Quelle ungeprüft).
+        · abgerufen {new Date(profile.fetchedAt).toLocaleString(intlLocale())} · Bilder aus CannaLib werden nicht angezeigt (Rechte laut Quelle ungeprüft).
       </p>
     </div>
   );

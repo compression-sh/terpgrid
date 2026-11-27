@@ -37,6 +37,7 @@ import { ApiError, type ServerUser, api } from '../../lib/server/api';
 import { type PasskeyInfo, passkeyErrorText, passkeysSupported, registerPasskey, suggestPasskeyName } from '../../lib/server/passkeys';
 import { FormError, PasswordField, PasswordStrength, passwordHints } from '../auth/fields';
 import { RecoveryCodesPanel } from '../auth/RecoveryCodes';
+import { intlLocale } from '../../i18n';
 
 interface Overview {
   createdAt: string;
@@ -83,7 +84,7 @@ const EVENT_LABEL: Record<string, string> = {
   logout: 'Abgemeldet',
 };
 
-const dt = (s: string | null | undefined) => (s ? new Date(s).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' }) : '–');
+const dt = (s: string | null | undefined) => (s ? new Date(s).toLocaleString(intlLocale(), { dateStyle: 'medium', timeStyle: 'short' }) : '–');
 const errText = (e: unknown) => (e instanceof ApiError ? e.message : 'Unerwarteter Fehler.');
 
 function describeUa(ua: string | null): { label: string; mobile: boolean } {

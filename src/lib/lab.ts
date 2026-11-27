@@ -1,3 +1,4 @@
+import { labels } from '../i18n';
 /**
  * Laborberichte (Lab Insights): Umrechnungen für Cannabinoid-Gesamtgehalte.
  *
@@ -77,8 +78,4 @@ export function plausibilityIssues(r: Pick<LabReport, 'unit' | 'thc' | 'thca' | 
   return issues;
 }
 
-export const LAB_ORIGIN_LABEL = {
-  document: 'Aus Laborbericht übertragen',
-  manual: 'Manuell eingetragen',
-  unverified: 'Unbestätigte Angabe',
-} as const;
+export const LAB_ORIGIN_LABEL = labels('labels.labOrigin', ['document', 'manual', 'unverified'] as const);

@@ -393,6 +393,8 @@ export interface AppSettings {
   favoriteBreeders: string[];
   /** Zuletzt angesehene Katalogsorten (neueste zuerst, max. 12) */
   recentCultivars: { id: string; name: string; breeder: string }[];
+  /** Oberflächensprache (6.1), mit dem Konto synchronisiert; fehlt sie, gilt die Gerätewahl bzw. Browsersprache */
+  locale?: 'de' | 'en';
 }
 
 /* ───────────── Laborberichte ───────────── */

@@ -1,0 +1,27 @@
+{
+ "close": "Schließen",
+ "cancel": "Abbrechen",
+ "confirm": "Bestätigen",
+ "errors": {
+  "storageFull": "Der lokale Speicher ist voll. Bitte Fotos exportieren und löschen.",
+  "unknown": "Unbekannter Fehler"
+ },
+ "errorView": {
+  "title": "Diese Ansicht konnte nicht angezeigt werden",
+  "text": "Wahrscheinlich enthält ein Datensatz ein unerwartetes Format. Deine Daten wurden nicht verändert. Du kannst die Ansicht neu laden oder zu einem anderen Bereich wechseln."
+ },
+ "toOverview": "Zur Übersicht",
+ "rel": {
+  "today": "heute",
+  "yesterday": "gestern",
+  "tomorrow": "morgen",
+  "ago": {
+   "one": "vor {count} Tag",
+   "other": "vor {count} Tagen"
+  },
+  "in": {
+   "one": "in {count} Tag",
+   "other": "in {count} Tagen"
+  }
+ }
+}

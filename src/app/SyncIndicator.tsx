@@ -1,3 +1,4 @@
+import { LanguageMenu } from './locale';
 import { AlertTriangle, CheckCircle2, CloudOff, HardDrive, Loader2, LogOut, RefreshCw, ShieldCheck, UserRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { type LastAccount, pendingChanges, useAuth } from './auth';
@@ -41,7 +42,8 @@ export function AccountFooter() {
     return (
       <div className="flex items-start gap-2 border-t border-white/[0.05] px-5 py-4 text-[11px] leading-snug text-ink-500">
         <HardDrive className="mt-0.5 size-3 shrink-0 text-amber-400" />
-        <span>Lokalmodus: Daten nur auf diesem Gerät · keine Synchronisation · Online-Sortendaten von externen Quellen</span>
+        <span className="min-w-0 flex-1">Lokalmodus: Daten nur auf diesem Gerät · keine Synchronisation · Online-Sortendaten von externen Quellen</span>
+        <LanguageMenu />
       </div>
     );
   if (state.kind !== 'authenticated') return null;
@@ -62,7 +64,10 @@ export function AccountFooter() {
           <LogOut className="size-4" />
         </button>
       </div>
-      <SyncPill />
+      <div className="flex items-center justify-between gap-2">
+        <SyncPill />
+        <LanguageMenu />
+      </div>
     </div>
   );
 }

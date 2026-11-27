@@ -1,3 +1,4 @@
+import { labels } from '../../i18n';
 /**
  * Umrechnungen und abgeleitete Größen für Messwerte – alle Formeln offen gelegt.
  * Abgeleitete Werte (VPD, DLI) werden nie gespeichert, sondern aus den erfassten
@@ -5,13 +6,7 @@
  */
 import type { EcUnit, MeasureContext, Measurements } from '../db/types';
 
-export const CONTEXT_LABEL: Record<MeasureContext, string> = {
-  water: 'Gießwasser',
-  nutrient: 'Nährlösung',
-  runoff: 'Drainage (Runoff)',
-  substrate: 'Substrat',
-  other: 'Sonstiges',
-};
+export const CONTEXT_LABEL = labels('labels.measureContext', ['water', 'nutrient', 'runoff', 'substrate', 'other'] as MeasureContext[]);
 
 export const EC_UNITS: { id: EcUnit; label: string; hint: string }[] = [
   { id: 'mS/cm', label: 'mS/cm', hint: 'Millisiemens pro Zentimeter (Speicherformat)' },
@@ -73,8 +68,4 @@ export function dli(m: Pick<Measurements, 'ppfd' | 'photoperiodH'>): number | un
   return Math.round(((m.ppfd * m.photoperiodH * 3600) / 1e6) * 10) / 10;
 }
 
-export const VPD_BASIS_LABEL: Record<VpdResult['basis'], string> = {
-  leaf: 'mit gemessener Blatttemperatur',
-  'leaf-estimated': 'mit geschätzter Blatttemperatur',
-  air: 'Blatttemperatur = Lufttemperatur angenommen',
-};
+export const VPD_BASIS_LABEL = labels('labels.vpdBasis', ['leaf', 'leaf-estimated', 'air'] as VpdResult['basis'][]);

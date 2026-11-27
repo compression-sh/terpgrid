@@ -26,6 +26,7 @@ import {
 import { fmtDate } from '../../lib/dates';
 import { fmt } from '../../lib/format';
 import { toPercent } from '../../lib/lab';
+import { intlLocale } from '../../i18n';
 
 const ext = { target: '_blank', rel: 'noopener noreferrer nofollow', referrerPolicy: 'no-referrer' } as const;
 const isPubchem = (url: string) => url.includes('pubchem.ncbi.nlm.nih.gov');
@@ -138,7 +139,7 @@ function CatalogMentions({ id, label }: { id: string; label: string }) {
     <div className="space-y-3">
       {measured && <MeasuredSamples m={measured} label={label} />}
       <p className="text-[13px] text-ink-300">
-        <span className="font-mono text-ink-50">{d.total.toLocaleString('de-DE')}</span> Sorten nennen {label} in Seedbank-Texten oder Datenbank-Angaben. Nennungen sind keine Mengen und gelten für die
+        <span className="font-mono text-ink-50">{d.total.toLocaleString(intlLocale())}</span> Sorten nennen {label} in Seedbank-Texten oder Datenbank-Angaben. Nennungen sind keine Mengen und gelten für die
         jeweilige Quelle, nicht für jede Charge.
       </p>
       <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -184,11 +185,11 @@ function MeasuredSamples({ m, label }: { m: LibMeasuredTerpene; label: string })
         {m.isomerSum && <span className="rounded-full border border-amber-400/25 px-1.5 py-px text-[10.5px] text-amber-200">{m.isomerSum}</span>}
       </div>
       <p className="text-[13px] text-ink-300">
-        In <span className="font-mono text-ink-50">{m.samples.toLocaleString('de-DE')}</span> US-Blütenproben gemessen, nachgewiesen in{' '}
+        In <span className="font-mono text-ink-50">{m.samples.toLocaleString(intlLocale())}</span> US-Blütenproben gemessen, nachgewiesen in{' '}
         <span className="font-mono text-ink-50">{Math.round((m.detected / m.samples) * 100)} %</span>
         {m.median !== null && (
           <>
-            ; Median über alle Proben <span className="font-mono text-ink-50">{m.median.toLocaleString('de-DE', { maximumFractionDigits: 3 })} %</span>
+            ; Median über alle Proben <span className="font-mono text-ink-50">{m.median.toLocaleString(intlLocale(), { maximumFractionDigits: 3 })} %</span>
           </>
         )}
         .
@@ -206,7 +207,7 @@ function MeasuredSamples({ m, label }: { m: LibMeasuredTerpene; label: string })
                   <span className="block h-full rounded-full bg-teal-400/70" style={{ width: `${(n.median / max) * 100}%` }} />
                 </span>
                 <span className="whitespace-nowrap font-mono text-[11px] tabular text-ink-300">
-                  {n.median.toLocaleString('de-DE', { maximumFractionDigits: 3 })} % · n={n.samples}
+                  {n.median.toLocaleString(intlLocale(), { maximumFractionDigits: 3 })} % · n={n.samples}
                 </span>
               </li>
             ))}
@@ -282,7 +283,7 @@ function TerpeneDetail({ t }: { t: TerpeneInfo }) {
             {chem ? (
               <dl className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
                 <Fact k="Summenformel" v={t.formula} />
-                <Fact k="Molare Masse" v={`${t.molarMass.toLocaleString('de-DE')} g/mol`} />
+                <Fact k="Molare Masse" v={`${t.molarMass.toLocaleString(intlLocale())} g/mol`} />
                 <Fact k="PubChem CID" v={String(chem.cid)} />
                 <Fact k="CAS-Nr." v={chem.cas ?? '–'} note={chem.casListed > 1 ? `Erste von ${chem.casListed} bei PubChem gelisteten Nummern (Isomere/Gemische)` : undefined} />
                 <Fact className="col-span-2" k="PubChem-Eintrag" v={chem.title} mono={false} note="Der Titel zeigt, ob eine bestimmte Stereoform gemeint ist." />
@@ -614,7 +615,7 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
                       </p>
                       <p className="mt-0.5 text-[10.5px] text-ink-500">
                         {cannabisSources(t).length ? 'In Cannabis belegt' : 'In Cannabis nicht belegt'}
-                        {n ? ` · ${(n.cisp + n.database).toLocaleString('de-DE')} Katalog-Nennungen` : ''}
+                        {n ? ` · ${(n.cisp + n.database).toLocaleString(intlLocale())} Katalog-Nennungen` : ''}
                       </p>
                     </div>
                   </a>
@@ -709,11 +710,11 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
                     [
                       ['Klasse', (t: TerpeneInfo) => t.className],
                       ['Formel', (t: TerpeneInfo) => t.formula],
-                      ['Molare Masse', (t: TerpeneInfo) => `${t.molarMass.toLocaleString('de-DE')} g/mol`],
+                      ['Molare Masse', (t: TerpeneInfo) => `${t.molarMass.toLocaleString(intlLocale())} g/mol`],
                       ['CAS-Nr.', (t: TerpeneInfo) => t.cas || '–'],
                       ['Geruch', (t: TerpeneInfo) => t.aroma.join(', ') || 'nicht belegt'],
                       ['Cannabis', (t: TerpeneInfo) => (cannabisSources(t).length ? 'belegt' : 'nicht belegt')],
-                      ['Katalog', (t: TerpeneInfo) => (counts.get(t.id) ? `${(counts.get(t.id)!.cisp + counts.get(t.id)!.database).toLocaleString('de-DE')} Nennungen` : '–')],
+                      ['Katalog', (t: TerpeneInfo) => (counts.get(t.id) ? `${(counts.get(t.id)!.cisp + counts.get(t.id)!.database).toLocaleString(intlLocale())} Nennungen` : '–')],
                     ] as const
                   ).map(([label, get]) => (
                     <tr key={label} className="border-t border-white/[0.05] align-top">
@@ -755,13 +756,13 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
                       <span className="h-2 rounded-full bg-ink-700" aria-hidden>
                         <span className="block h-full rounded-full" style={{ width: `${(total / maxCount) * 100}%`, background: t?.color ?? '#6b7a75', opacity: t ? 0.85 : 0.5 }} />
                       </span>
-                      <span className="text-right font-mono tabular text-ink-300">{total.toLocaleString('de-DE')}</span>
+                      <span className="text-right font-mono tabular text-ink-300">{total.toLocaleString(intlLocale())}</span>
                     </li>
                   );
                 })}
               </ul>
               <p className="hint mt-3">
-                Basis: {index.data.cultivarsWithTerpenes.toLocaleString('de-DE')} Sorten mit Terpen-Nennung in Seedbank-Texten (CI-Strains-Pro) plus freigegebene Datenbank-Angaben. Sammelnamen wie „Pinen“
+                Basis: {index.data.cultivarsWithTerpenes.toLocaleString(intlLocale())} Sorten mit Terpen-Nennung in Seedbank-Texten (CI-Strains-Pro) plus freigegebene Datenbank-Angaben. Sammelnamen wie „Pinen“
                 werden nicht auf ein Isomer verteilt.
               </p>
             </>

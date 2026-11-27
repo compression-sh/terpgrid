@@ -17,6 +17,7 @@ import type { Activity, ActivityType } from '../../lib/db/types';
 import { ACTIVITY_TYPES } from '../../lib/db/types';
 import { ACTIVITY_LABEL, INVENTORY_CATEGORY_LABEL, SETTING_LABEL } from '../../lib/grow/labels';
 import { processImage } from '../../lib/media/images';
+import { intlLocale } from '../../i18n';
 
 /* ───────────── Fotos (autorisiert, nur im Arbeitsspeicher) ───────────── */
 
@@ -434,7 +435,7 @@ export function SharedResourcePage({ spaceId, store, id }: { spaceId: string; st
                         <li key={a.id} className="rounded-xl border border-white/[0.05] bg-white/[0.015] px-3 py-2">
                           <div className="flex flex-wrap items-baseline justify-between gap-2">
                             <span className="text-[13px] font-medium text-ink-100">{act.title || ACTIVITY_LABEL[act.type] || 'Eintrag'}</span>
-                            <span className="text-[11.5px] text-ink-500">{new Date(act.date).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                            <span className="text-[11.5px] text-ink-500">{new Date(act.date).toLocaleString(intlLocale(), { dateStyle: 'medium', timeStyle: 'short' })}</span>
                           </div>
                           {act.notes && <p className="mt-0.5 whitespace-pre-wrap text-[12.5px] text-ink-300">{act.notes}</p>}
                           {meas && (
@@ -541,7 +542,7 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 
 function Details({ store, data, spaceId }: { store: SpaceStore; data: Record<string, unknown>; spaceId: string }) {
   const s = (k: string) => (typeof data[k] === 'string' && data[k] ? (data[k] as string) : null);
-  const date = (k: string) => (s(k) ? new Date(s(k)!).toLocaleDateString('de-DE') : null);
+  const date = (k: string) => (s(k) ? new Date(s(k)!).toLocaleDateString(intlLocale()) : null);
   if (store === 'photos')
     return (
       <div className="space-y-3">

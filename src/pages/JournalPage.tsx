@@ -24,9 +24,10 @@ import { CONSUMPTION_METHODS, type JournalEntry } from '../lib/db/types';
 import { METHOD_LABEL, MOOD_OPTIONS } from '../lib/grow/labels';
 import { fmt } from '../lib/format';
 import { SharePicker } from '../components/collab/ShareDialog';
+import { intlLocale } from '../i18n';
 
 /** Rein beschreibende Zusammenfassung der erfassten Einträge (keine Wertung, keine Prognose). */
-const MONTH_FMT = new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+const monthFmt = () => new Intl.DateTimeFormat(intlLocale(), { month: 'long', year: 'numeric', timeZone: 'UTC' });
 /** Einträge nach Monat gruppieren (Reihenfolge der Eingabe bleibt erhalten). */
 export function byMonth<T extends { date: string }>(entries: T[]): [string, string, T[]][] {
   const out = new Map<string, T[]>();
@@ -34,7 +35,7 @@ export function byMonth<T extends { date: string }>(entries: T[]): [string, stri
     const k = e.date.slice(0, 7);
     out.set(k, [...(out.get(k) ?? []), e]);
   }
-  return [...out.entries()].map(([k, v]) => [k, /^\d{4}-\d{2}$/.test(k) ? MONTH_FMT.format(new Date(`${k}-01T00:00:00Z`)) : 'Ohne Datum', v]);
+  return [...out.entries()].map(([k, v]) => [k, /^\d{4}-\d{2}$/.test(k) ? monthFmt().format(new Date(`${k}-01T00:00:00Z`)) : 'Ohne Datum', v]);
 }
 
 export function journalSummary(entries: JournalEntry[], ref: string) {
@@ -229,7 +230,7 @@ export function JournalPage() {
         subtitle="Optional und privat – deine eigenen Notizen zu Erfahrungen."
         actions={
           <>
-            <SharePicker store="journal" items={data.journal.map((j) => ({ id: j.id, title: j.strainName || 'Journal-Eintrag', sub: new Date(j.date).toLocaleDateString('de-DE') }))} label="Einträge teilen …" />
+            <SharePicker store="journal" items={data.journal.map((j) => ({ id: j.id, title: j.strainName || 'Journal-Eintrag', sub: new Date(j.date).toLocaleDateString(intlLocale()) }))} label="Einträge teilen …" />
             <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
               <Plus className="size-4" /> Eintrag
             </button>

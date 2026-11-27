@@ -1,3 +1,4 @@
+import { labels } from '../../i18n';
 import type { Activity, MeasureContext } from '../db/types';
 import { dli, vpd } from './measure';
 
@@ -16,7 +17,7 @@ export type MetricKey =
   | 'photoperiodH';
 
 export type MetricGroup = 'plant' | 'climate' | 'water' | 'root' | 'light';
-export const GROUP_LABEL: Record<MetricGroup, string> = { plant: 'Pflanze', climate: 'Klima', water: 'Wasser & Nährlösung', root: 'Wurzelraum', light: 'Licht' };
+export const GROUP_LABEL = labels('labels.metricGroup', ['plant', 'climate', 'water', 'root', 'light'] as MetricGroup[]);
 
 export interface MetricDef {
   key: MetricKey;

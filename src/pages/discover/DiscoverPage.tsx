@@ -14,6 +14,7 @@ import type { CatalogStrain, TypeClass } from '../../lib/catalog/types';
 import { fmtDateTime, nowLocal } from '../../lib/dates';
 import { parseLocaleNumber } from '../../lib/calc/validation';
 import { type RankedStrain, rankStrains, relevanceCounts } from '../../lib/catalog/rank';
+import { intlLocale } from '../../i18n';
 
 type SortKey = 'relevance' | 'source' | 'name' | 'thc' | 'cbd' | 'breeder';
 const SORTS: { id: SortKey; label: string }[] = [
@@ -262,7 +263,7 @@ export function DiscoverPage() {
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-ink-500">
           <span className="flex items-center gap-1.5">
             <Database className="size-3.5" />
-            {search.total ? `${search.total.toLocaleString('de-DE')} ${q.get('q') ? 'Treffer' : 'Sorten'}` : '–'}
+            {search.total ? `${search.total.toLocaleString(intlLocale())} ${q.get('q') ? 'Treffer' : 'Sorten'}` : '–'}
           </span>
           <a href="https://www.strainapi.com/" target="_blank" rel="noopener noreferrer nofollow" referrerPolicy="no-referrer" className="hover:text-ink-300">
             Data provided by StrainAPI ↗
@@ -320,7 +321,7 @@ export function DiscoverPage() {
           <span title="Die Volltextsuche der Quelle findet den Begriff auch in Feldern, die nicht ausgeliefert werden.">
             <span className="font-mono text-ink-100">{counts.fulltext}</span> weitere Volltexttreffer der Quelle
           </span>
-          {!search.complete && <span className="text-amber-200/80">· sortiert über die ersten {search.items.length} von {search.total.toLocaleString('de-DE')}</span>}
+          {!search.complete && <span className="text-amber-200/80">· sortiert über die ersten {search.items.length} von {search.total.toLocaleString(intlLocale())}</span>}
           <label className="ml-auto inline-flex items-center gap-1.5 text-ink-300">
             <input type="checkbox" className="size-3.5 accent-leaf-500" checked={nameOnly} onChange={(e) => {
                 setNameOnlyPending(e.target.checked);
@@ -335,11 +336,11 @@ export function DiscoverPage() {
         <div className="flex flex-wrap items-center gap-2 text-[12px] text-ink-400">
           {localOnly ? (
             <span>
-              <span className="font-mono text-ink-100">{results.length}</span> von {search.items.length} geladenen {search.complete ? '(vollständig)' : `– insgesamt ${search.total.toLocaleString('de-DE')}`}
+              <span className="font-mono text-ink-100">{results.length}</span> von {search.items.length} geladenen {search.complete ? '(vollständig)' : `– insgesamt ${search.total.toLocaleString(intlLocale())}`}
             </span>
           ) : (
             <span>
-              <span className="font-mono text-ink-100">{search.items.length}</span> von {search.total.toLocaleString('de-DE')} angezeigt
+              <span className="font-mono text-ink-100">{search.items.length}</span> von {search.total.toLocaleString(intlLocale())} angezeigt
             </span>
           )}
           {(activeFilters > 0 || q.get('q') || sort !== 'source') && (
@@ -365,7 +366,7 @@ export function DiscoverPage() {
           <Callout tone="warn" title="Filter und Sortierung gelten nur für bereits geladene Sorten">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <span>
-                Die Quelle unterstützt diese Filter nicht serverseitig. Für ein vollständiges Ergebnis alle {search.total.toLocaleString('de-DE')} {q.get('q') ? 'Treffer' : 'Sorten'} laden ({requestsForAll}{' '}
+                Die Quelle unterstützt diese Filter nicht serverseitig. Für ein vollständiges Ergebnis alle {search.total.toLocaleString(intlLocale())} {q.get('q') ? 'Treffer' : 'Sorten'} laden ({requestsForAll}{' '}
                 {requestsForAll === 1 ? 'Anfrage' : 'Anfragen'}, werden zwischengespeichert).
               </span>
               <button type="button" className="btn-ghost shrink-0" onClick={search.loadAll} disabled={search.loadingMore}>
