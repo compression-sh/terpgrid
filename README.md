@@ -2,7 +2,7 @@
 
 **Your personal cannabis space.** Persönliches Dashboard für Growlogs, Fotos, einen Online-Sortenkatalog (Discover), ein persönliches Journal, die eigene Sammlung, Laborberichte und den THC-Rechner (THC Lab).
 
-**Self-hosted · Private Daten geschützt · Kein Tracking.** · Version 6.0.0 · Release-Notizen: [docs/RELEASE-NOTES-6.0.md](docs/RELEASE-NOTES-6.0.md) · Änderungen: [CHANGELOG.md](CHANGELOG.md)
+**Self-hosted · Private Daten geschützt · Kein Tracking.** · Version 6.0.1 · Release-Notizen: [docs/RELEASE-NOTES-6.0.md](docs/RELEASE-NOTES-6.0.md) · Oberfläche 6.0.1: [docs/UI-POLISH-6.0.1-REPORT.md](docs/UI-POLISH-6.0.1-REPORT.md) · Änderungen: [CHANGELOG.md](CHANGELOG.md)
 
 TERPGRID läuft in zwei Modi:
 
