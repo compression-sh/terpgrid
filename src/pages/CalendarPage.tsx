@@ -21,14 +21,15 @@ import { REMINDER_CATEGORIES, type Reminder } from '../lib/db/types';
 import { downloadFile } from '../lib/exporters';
 import { ACTIVITY_LABEL, METHOD_LABEL, REMINDER_CATEGORY_LABEL } from '../lib/grow/labels';
 import { PHASE_COLOR, PHASE_LABEL } from '../lib/grow/phases';
+import { t } from '../i18n';
 
 type Kind = 'reminder' | 'activity' | 'photo' | 'milestone' | 'journal';
 const KIND_META: Record<Kind, { label: string; color: string }> = {
-  reminder: { label: 'Erinnerungen', color: '#fb923c' },
-  activity: { label: 'Grow-Einträge', color: '#5fe39a' },
-  photo: { label: 'Fotos', color: '#dfe7e3' },
-  milestone: { label: 'Meilensteine', color: '#c084fc' },
-  journal: { label: 'Journal', color: '#38bdf8' },
+  reminder: { get label() { return t('mine.cal.kReminder'); }, color: '#fb923c' },
+  activity: { get label() { return t('mine.cal.kActivity'); }, color: '#5fe39a' },
+  photo: { get label() { return t('mine.cal.kPhoto'); }, color: '#dfe7e3' },
+  milestone: { get label() { return t('mine.cal.kMilestone'); }, color: '#c084fc' },
+  journal: { get label() { return t('mine.cal.kJournal'); }, color: '#38bdf8' },
 };
 
 interface CalEvent {
@@ -45,10 +46,10 @@ interface CalEvent {
 
 function repeatText(r: Reminder): string {
   const base = repeatLabel(r.repeat);
-  if (!base) return 'einmalig';
+  if (!base) return t('mine.cal.once');
   const rep = safeRepeat(r.repeat);
   const until = rep.kind === 'none' ? undefined : rep.until;
-  return until ? `${base} bis ${fmtDateShort(until)}` : base;
+  return until ? t('mine.cal.until', { base, date: fmtDateShort(until) }) : base;
 }
 
 /** Listenansicht: Zeitraum ab dem gewählten Tag */
@@ -125,7 +126,7 @@ export function CalendarPage() {
         const d = p.takenAt.slice(0, 10);
         if (inRange(d) && growOk(p.growId) && (!plantId || p.plantId === plantId)) byDay.set(d, (byDay.get(d) ?? 0) + 1);
       }
-      for (const [d, n] of byDay) out.push({ key: `p-${d}`, kind: 'photo', date: d, title: n === 1 ? '1 Foto' : `${n} Fotos`, to: `photos?from=${d}&to=${d}${growId ? `&grow=${growId}` : ''}`, color: KIND_META.photo.color });
+      for (const [d, n] of byDay) out.push({ key: `p-${d}`, kind: 'photo', date: d, title: t('mine.cal.photos', { count: n }), to: `photos?from=${d}&to=${d}${growId ? `&grow=${growId}` : ''}`, color: KIND_META.photo.color });
     }
     if (kinds.has('milestone')) {
       for (const g of data.grows) {
@@ -138,7 +139,7 @@ export function CalendarPage() {
     if (kinds.has('journal') && !growId) {
       for (const j of data.journal) {
         const d = j.date.slice(0, 10);
-        if (inRange(d)) out.push({ key: `j-${j.id}`, kind: 'journal', date: d, time: j.date.slice(11, 16), title: `Journal · ${METHOD_LABEL[j.method]}`, sub: (j.strainId && lookup.strain.get(j.strainId)?.name) || j.strainName, to: 'journal', color: KIND_META.journal.color });
+        if (inRange(d)) out.push({ key: `j-${j.id}`, kind: 'journal', date: d, time: j.date.slice(11, 16), title: t('mine.cal.journalTitle', { m: METHOD_LABEL[j.method] }), sub: (j.strainId && lookup.strain.get(j.strainId)?.name) || j.strainName, to: 'journal', color: KIND_META.journal.color });
       }
     }
     return out.sort((a, b) => (a.date + (a.time ?? '')).localeCompare(b.date + (b.time ?? '')));
@@ -157,10 +158,10 @@ export function CalendarPage() {
     }
   }
   async function removeReminder(r: Reminder) {
-    if (!(await confirm({ title: 'Erinnerung löschen?', message: `„${r.title}“ (${repeatText(r)}) wird inkl. aller Wiederholungen entfernt.`, confirmLabel: 'Löschen', tone: 'danger' }))) return;
+    if (!(await confirm({ title: t('mine.cal.deleteTitle'), message: t('mine.cal.deleteMsg', { title: r.title, repeat: repeatText(r) }), confirmLabel: t('common.delete'), tone: 'danger' }))) return;
     try {
       await deleteSimple('reminders', r.id);
-      toast('Erinnerung gelöscht');
+      toast(t('mine.cal.deleted'));
     } catch (e) {
       toast(errorText(e), { tone: 'error' });
     }
@@ -168,7 +169,7 @@ export function CalendarPage() {
   function exportIcs() {
     const list = data.reminders.filter((r) => !growId || r.growId === growId);
     downloadFile(`terpgrid-erinnerungen-${todayStr}.ics`, remindersToIcs(list), 'text/calendar');
-    toast(`${list.length} ${list.length === 1 ? 'Erinnerung' : 'Erinnerungen'} als ICS exportiert`);
+    toast(t('mine.cal.exported', { count: list.length }));
   }
 
   const toggleKind = (k: Kind) =>
@@ -188,7 +189,7 @@ export function CalendarPage() {
           <button
             type="button"
             onClick={() => toggle(e.occurrence!)}
-            aria-label={e.occurrence.done ? 'Als offen markieren' : 'Als erledigt markieren'}
+            aria-label={e.occurrence.done ? t('mine.cal.markOpen') : t('mine.cal.markDone')}
             aria-pressed={e.occurrence.done}
             className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-md border ${e.occurrence.done ? 'border-leaf-500 bg-leaf-500 text-ink-950' : 'border-white/25 text-transparent hover:border-leaf-400 hover:text-leaf-400'}`}
           >
@@ -220,10 +221,10 @@ export function CalendarPage() {
         </div>
         {r && (
           <div className="flex shrink-0 gap-0.5">
-            <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5" aria-label="Bearbeiten" onClick={() => setForm({ reminder: r })}>
+            <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5" aria-label={t('common.edit')} onClick={() => setForm({ reminder: r })}>
               <Pencil className="size-3.5" />
             </button>
-            <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5 hover:text-rose-300" aria-label="Löschen" onClick={() => removeReminder(r)}>
+            <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5 hover:text-rose-300" aria-label={t('common.delete')} onClick={() => removeReminder(r)}>
               <Trash2 className="size-3.5" />
             </button>
           </div>
@@ -235,22 +236,22 @@ export function CalendarPage() {
   return (
     <div>
       <PageHeader
-        title="Kalender"
-        subtitle="Dokumentierte Aktivitäten, Meilensteine und eigene Erinnerungen."
+        title={t('mine.cal.title')}
+        subtitle={t('mine.cal.subtitle')}
         actions={
           <>
             <button type="button" className="btn-ghost" onClick={exportIcs} disabled={data.reminders.length === 0}>
-              <Download className="size-4" /> ICS-Export
+              <Download className="size-4" /> {t('mine.cal.ics')}
             </button>
             <button type="button" className="btn-primary" onClick={() => setForm({ date: selected >= todayStr ? selected : todayStr })}>
-              <Plus className="size-4" /> Erinnerung
+              <Plus className="size-4" /> {t('mine.cal.reminder')}
             </button>
           </>
         }
       />
 
       <div className="card mb-5 flex flex-col gap-3 p-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Ereignistypen">
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('mine.cal.types')}>
           {(Object.keys(KIND_META) as Kind[]).map((k) => (
             <button
               key={k}
@@ -265,11 +266,11 @@ export function CalendarPage() {
           ))}
         </div>
         <div className={`grid gap-3 sm:grid-cols-2 ${growPlants.length ? 'lg:w-[40rem] lg:grid-cols-3' : 'lg:w-[28rem]'}`}>
-          <SelectField label="Grow" value={growId} onChange={setGrowId} placeholder="Alle Grows" options={data.grows.map((g) => ({ value: g.id, label: g.name }))} />
-          {growPlants.length > 0 && <SelectField label="Pflanze" value={plantId} onChange={setPlantId} placeholder="Alle Pflanzen" options={growPlants.map((p) => ({ value: p.id, label: p.name }))} />}
+          <SelectField label={t('mine.cal.grow')} value={growId} onChange={setGrowId} placeholder={t('mine.cal.allGrows')} options={data.grows.map((g) => ({ value: g.id, label: g.name }))} />
+          {growPlants.length > 0 && <SelectField label={t('mine.cal.plant')} value={plantId} onChange={setPlantId} placeholder={t('mine.cal.allPlants')} options={growPlants.map((p) => ({ value: p.id, label: p.name }))} />}
           <div className="space-y-1.5">
-            <span className="label">Ansicht</span>
-            <Segmented size="sm" value={view} onChange={setView} options={[{ value: 'month', label: 'Monat' }, { value: 'week', label: 'Woche' }, { value: 'list', label: 'Liste' }]} />
+            <span className="label">{t('mine.cal.view')}</span>
+            <Segmented size="sm" value={view} onChange={setView} options={[{ value: 'month', label: t('mine.cal.month') }, { value: 'week', label: t('mine.cal.week') }, { value: 'list', label: t('mine.cal.list') }]} />
           </div>
         </div>
       </div>
@@ -283,13 +284,13 @@ export function CalendarPage() {
           ) : (
             <div>
               <div className="mb-3 flex items-center justify-between">
-                <button type="button" className="btn-ghost p-1.5" aria-label="Vorherige Woche" onClick={() => setCursor(addDays(startOfWeek(cursor), -7))}>
+                <button type="button" className="btn-ghost p-1.5" aria-label={t('mine.cal.prevWeek')} onClick={() => setCursor(addDays(startOfWeek(cursor), -7))}>
                   <ChevronLeft className="size-4" />
                 </button>
                 <span className="text-[14px] font-semibold text-ink-50">
                   {fmtDateShort(range.from)} – {fmtDateShort(range.to)}
                 </span>
-                <button type="button" className="btn-ghost p-1.5" aria-label="Nächste Woche" onClick={() => setCursor(addDays(startOfWeek(cursor), 7))}>
+                <button type="button" className="btn-ghost p-1.5" aria-label={t('mine.cal.nextWeek')} onClick={() => setCursor(addDays(startOfWeek(cursor), 7))}>
                   <ChevronRight className="size-4" />
                 </button>
               </div>
@@ -329,17 +330,17 @@ export function CalendarPage() {
         <div className="space-y-5">
           <Card
             title={fmtDateLong(selected)}
-            subtitle={selected === todayStr ? 'Heute' : undefined}
+            subtitle={selected === todayStr ? t('mine.cal.today') : undefined}
             actions={
               <button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setForm({ date: selected })}>
-                <Plus className="size-3.5" /> Erinnerung
+                <Plus className="size-3.5" /> {t('mine.cal.reminder')}
               </button>
             }
           >
-            {dayEvents.length === 0 ? <EmptyState compact icon={<CalendarDays />} title="Keine Ereignisse" /> : <ul className="space-y-2">{dayEvents.map((e) => <EventRow key={e.key} e={e} />)}</ul>}
+            {dayEvents.length === 0 ? <EmptyState compact icon={<CalendarDays />} title={t('mine.cal.noEvents')} /> : <ul className="space-y-2">{dayEvents.map((e) => <EventRow key={e.key} e={e} />)}</ul>}
           </Card>
           {late.length > 0 && (
-            <Card title="Überfällig" subtitle="Nicht erledigte Erinnerungen der letzten 30 Tage">
+            <Card title={t('mine.cal.overdue')} subtitle={t('mine.cal.overdueSub')}>
               <ul className="space-y-2">
                 {late.map((o) => (
                   <EventRow
@@ -350,9 +351,9 @@ export function CalendarPage() {
               </ul>
             </Card>
           )}
-          <Card title="Alle Erinnerungen" subtitle={`${data.reminders.length} angelegt`}>
+          <Card title={t('mine.cal.all')} subtitle={t('mine.cal.created', { n: data.reminders.length })}>
             {data.reminders.length === 0 ? (
-              <p className="hint">Noch keine Erinnerungen. Kategorien: {REMINDER_CATEGORIES.map((c) => REMINDER_CATEGORY_LABEL[c]).join(', ')}.</p>
+              <p className="hint">{t('mine.cal.noneYet', { list: REMINDER_CATEGORIES.map((c) => REMINDER_CATEGORY_LABEL[c]).join(', ') })}</p>
             ) : (
               <ul className="divide-y divide-white/[0.05]">
                 {[...data.reminders]
@@ -367,7 +368,7 @@ export function CalendarPage() {
                       </div>
                       <div className="flex shrink-0 items-center gap-1">
                         <Chip>{REMINDER_CATEGORY_LABEL[r.category]}</Chip>
-                        <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5" aria-label="Bearbeiten" onClick={() => setForm({ reminder: r })}>
+                        <button type="button" className="btn-ghost border-transparent bg-transparent p-1.5" aria-label={t('common.edit')} onClick={() => setForm({ reminder: r })}>
                           <Pencil className="size-3.5" />
                         </button>
                       </div>
@@ -376,11 +377,10 @@ export function CalendarPage() {
               </ul>
             )}
           </Card>
-          <Callout tone="info" title="Keine Push-Benachrichtigungen">
+          <Callout tone="info" title={t('mine.cal.noPush')}>
             <span className="inline-flex items-start gap-1.5">
               <BellOff className="mt-0.5 size-3.5 shrink-0" />
-              Erinnerungen werden nur angezeigt, wenn TERPGRID geöffnet ist. Für Benachrichtigungen auf dem Gerät die Erinnerungen per ICS-Export in eine Kalender-App
-              übernehmen.
+              {t('mine.cal.noPushText')}
             </span>
           </Callout>
         </div>
@@ -396,7 +396,7 @@ function AgendaList({ from, to, today: todayStr, events, onShift, onToday, rende
   return (
     <div>
       <div className="mb-3 flex items-center justify-between gap-2">
-        <button type="button" className="btn-ghost p-1.5" aria-label={`${LIST_DAYS} Tage zurück`} onClick={() => onShift(-LIST_DAYS)}>
+        <button type="button" className="btn-ghost p-1.5" aria-label={t('mine.cal.back', { n: LIST_DAYS })} onClick={() => onShift(-LIST_DAYS)}>
           <ChevronLeft className="size-4" />
         </button>
         <div className="flex min-w-0 items-center gap-2">
@@ -405,23 +405,23 @@ function AgendaList({ from, to, today: todayStr, events, onShift, onToday, rende
           </span>
           {from !== todayStr && (
             <button type="button" className="btn-ghost py-1 text-xs" onClick={onToday}>
-              Heute
+              {t('mine.cal.today')}
             </button>
           )}
         </div>
-        <button type="button" className="btn-ghost p-1.5" aria-label={`${LIST_DAYS} Tage weiter`} onClick={() => onShift(LIST_DAYS)}>
+        <button type="button" className="btn-ghost p-1.5" aria-label={t('mine.cal.fwd', { n: LIST_DAYS })} onClick={() => onShift(LIST_DAYS)}>
           <ChevronRight className="size-4" />
         </button>
       </div>
       {days.length === 0 ? (
-        <EmptyState compact icon={<CalendarDays />} title="Keine Ereignisse in diesem Zeitraum" text="Filter oben anpassen oder eine Erinnerung anlegen." />
+        <EmptyState compact icon={<CalendarDays />} title={t('mine.cal.noneInRange')} text={t('mine.cal.noneInRangeText')} />
       ) : (
         <ol className="space-y-4">
           {days.map((d) => (
             <li key={d}>
               <h3 className={`mb-1.5 text-[12px] font-semibold uppercase tracking-[0.08em] ${d === todayStr ? 'text-leaf-300' : 'text-ink-400'}`}>
                 {fmtDateLong(d)}
-                {d === todayStr && ' · Heute'}
+                {d === todayStr && ` ${t('mine.cal.todaySuffix')}`}
               </h3>
               <ul className="space-y-1.5">{events.filter((e) => e.date === d).map(render)}</ul>
             </li>

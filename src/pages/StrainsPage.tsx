@@ -22,18 +22,18 @@ import { CLAIM_SOURCE_LABEL, METHOD_LABEL } from '../lib/grow/labels';
 import { currentPhase } from '../lib/grow/phases';
 import { fmt } from '../lib/format';
 import { ShareButton } from '../components/collab/ShareDialog';
-import { intlLocale } from '../i18n';
+import { t, intlLocale } from '../i18n';
 
 export function SourceBadge({ source }: { source: ClaimSource }) {
   if (source === 'lab')
     return (
-      <span className="inline-flex items-center gap-1 rounded-full border border-leaf-500/30 bg-leaf-500/10 px-1.5 py-px text-[10px] font-medium text-leaf-300" title="Vom Benutzer als Laborwert gekennzeichnet">
-        <BadgeCheck className="size-3" /> Labor
+      <span className="inline-flex items-center gap-1 rounded-full border border-leaf-500/30 bg-leaf-500/10 px-1.5 py-px text-[10px] font-medium text-leaf-300" title={t('mine.sp.labTitle')}>
+        <BadgeCheck className="size-3" /> {t('mine.sp.lab')}
       </span>
     );
   return (
     <span className="rounded-full border border-white/[0.1] px-1.5 py-px text-[10px] text-ink-400" title={CLAIM_SOURCE_LABEL[source]}>
-      {source === 'personal' ? 'eigene Angabe' : 'Angabe'}
+      {source === 'personal' ? t('mine.sp.personal') : t('mine.sp.stated')}
     </span>
   );
 }
@@ -69,9 +69,9 @@ function StrainCard({ strain }: { strain: Strain }) {
           <div className="absolute bottom-2 left-3 right-10">
             <h3 className="flex items-center gap-1.5 truncate text-[15px] font-semibold text-white">
               {strain.name}
-              {strain.external && <Globe className="size-3.5 shrink-0 text-leaf-300" aria-label="Mit Online-Katalog verknüpft" />}
+              {strain.external && <Globe className="size-3.5 shrink-0 text-leaf-300" aria-label={t('mine.sp.linked')} />}
             </h3>
-            <div className="truncate text-[11px] text-ink-300">{strain.breeder || 'Breeder unbekannt'}</div>
+            <div className="truncate text-[11px] text-ink-300">{strain.breeder || t('mine.sp.noBreeder')}</div>
           </div>
         </div>
         <div className="space-y-3 p-3">
@@ -99,7 +99,7 @@ function StrainCard({ strain }: { strain: Strain }) {
       <button
         type="button"
         aria-pressed={strain.favorite}
-        aria-label={strain.favorite ? 'Aus Favoriten entfernen' : 'Als Favorit markieren'}
+        aria-label={strain.favorite ? t('mine.sp.unfav') : t('mine.sp.fav')}
         onClick={() => updateRecord('strains', strain.id, { favorite: !strain.favorite }).catch((e) => toast(errorText(e), { tone: 'error' }))}
         className="absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-black/50 backdrop-blur hover:bg-black/70"
       >
@@ -121,10 +121,10 @@ export function StrainsPage(_props: { strainId?: string }) {
     const needle = q.trim().toLowerCase();
     const grown = new Set(data.plants.map((p) => p.strainId).filter(Boolean));
     return data.strains
-      .filter((s) => !needle || [s.name, s.breeder, s.genetics, s.flavorNotes, s.observations, ...s.aromas, ...s.terpenes.map((t) => t.name)].some((x) => x?.toLowerCase().includes(needle)))
+      .filter((s) => !needle || [s.name, s.breeder, s.genetics, s.flavorNotes, s.observations, ...s.aromas, ...s.terpenes.map((tp) => tp.name)].some((x) => x?.toLowerCase().includes(needle)))
       .filter((s) => !type || s.reportedType === type)
       .filter((s) =>
-        filter === 'favorite' ? s.favorite : filter === 'lab' ? s.thc?.source === 'lab' || s.cbd?.source === 'lab' || s.terpenes.some((t) => t.source === 'lab') : filter === 'rated' ? !!s.rating : filter === 'grown' ? grown.has(s.id) : true,
+        filter === 'favorite' ? s.favorite : filter === 'lab' ? s.thc?.source === 'lab' || s.cbd?.source === 'lab' || s.terpenes.some((tp) => tp.source === 'lab') : filter === 'rated' ? !!s.rating : filter === 'grown' ? grown.has(s.id) : true,
       )
       .sort((a, b) => (sort === 'name' ? a.name.localeCompare(b.name, 'de') : sort === 'rating' ? (b.rating ?? 0) - (a.rating ?? 0) : b.updatedAt.localeCompare(a.updatedAt)));
   }, [data.strains, data.plants, q, type, filter, sort]);
@@ -132,15 +132,15 @@ export function StrainsPage(_props: { strainId?: string }) {
   return (
     <div>
       <PageHeader
-        title="Meine Sorten"
-        subtitle="Persönliche Favoriten, Notizen und Verknüpfungen. Öffentliche Sorten entdeckst du in Discover."
+        title={t('mine.sp.title')}
+        subtitle={t('mine.sp.subtitle')}
         actions={
           <>
             <a href={href('discover')} className="btn-ghost">
               <Compass className="size-4" /> Discover
             </a>
             <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
-              <Plus className="size-4" /> Eigene Sorte
+              <Plus className="size-4" /> {t('mine.sp.own')}
             </button>
           </>
         }
@@ -149,11 +149,11 @@ export function StrainsPage(_props: { strainId?: string }) {
         <div className="card">
           <EmptyState
             icon={<Leaf />}
-            title="Bibliothek ist leer"
-            text="Lege Sorten mit Breeder, THC/CBD (mit Herkunftsangabe), Terpenen, Aroma und eigener Bewertung an. TERPGRID ergänzt keine Daten automatisch."
+            title={t('mine.sp.emptyTitle')}
+            text={t('mine.sp.emptyText')}
             action={
               <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
-                <Plus className="size-4" /> Erste Sorte anlegen
+                <Plus className="size-4" /> {t('mine.sp.first')}
               </button>
             }
           />
@@ -162,48 +162,48 @@ export function StrainsPage(_props: { strainId?: string }) {
         <>
           <div className="card mb-5 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
             <label className="relative block space-y-1.5 sm:col-span-2 lg:col-span-1">
-              <span className="label">Suche</span>
+              <span className="label">{t('mine.sp.search')}</span>
               <Search className="pointer-events-none absolute left-3 top-[2.35rem] size-4 text-ink-500" />
-              <input className="input-base pl-9" placeholder="Name, Breeder, Terpen …" value={q} onChange={(e) => setQ(e.target.value)} />
+              <input className="input-base pl-9" placeholder={t('mine.sp.searchPh')} value={q} onChange={(e) => setQ(e.target.value)} />
             </label>
             <SelectField
-              label="Filter"
+              label={t('mine.sp.filter')}
               value={filter}
               onChange={setFilter}
-              placeholder="Alle Sorten"
+              placeholder={t('mine.sp.all')}
               options={[
-                { value: 'favorite', label: 'Favoriten' },
-                { value: 'lab', label: 'Mit Laborwerten' },
-                { value: 'rated', label: 'Bewertet' },
-                { value: 'grown', label: 'Selbst angebaut' },
+                { value: 'favorite', label: t('mine.sp.favs') },
+                { value: 'lab', label: t('mine.sp.withLab') },
+                { value: 'rated', label: t('mine.sp.rated') },
+                { value: 'grown', label: t('mine.sp.grown') },
               ]}
             />
             <SelectField
-              label="Typ laut Quelle"
+              label={t('mine.sp.type')}
               value={type}
               onChange={setType}
-              placeholder="Alle"
+              placeholder={t('mine.sp.allShort')}
               options={[
                 { value: 'indica', label: 'Indica' },
                 { value: 'sativa', label: 'Sativa' },
                 { value: 'hybrid', label: 'Hybrid' },
-                { value: 'unknown', label: 'Unbekannt' },
+                { value: 'unknown', label: t('mine.sp.unknown') },
               ]}
             />
             <SelectField
-              label="Sortierung"
+              label={t('mine.sp.sort')}
               value={sort}
               onChange={(v) => setSort((v || 'updated') as typeof sort)}
               options={[
-                { value: 'updated', label: 'Zuletzt bearbeitet' },
-                { value: 'name', label: 'Name' },
-                { value: 'rating', label: 'Bewertung' },
+                { value: 'updated', label: t('mine.sp.recent') },
+                { value: 'name', label: t('mine.sp.name') },
+                { value: 'rating', label: t('mine.sp.rating') },
               ]}
             />
           </div>
           {strains.length === 0 ? (
             <div className="card">
-              <EmptyState compact title="Keine Treffer" />
+              <EmptyState compact title={t('mine.sp.noHits')} />
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -212,7 +212,7 @@ export function StrainsPage(_props: { strainId?: string }) {
               ))}
             </div>
           )}
-          <p className="hint mt-5">„Labor“ kennzeichnet Werte, die du selbst als Laborwert markiert hast (z. B. aus einem Analysezertifikat). Alle anderen Angaben sind Hersteller- oder eigene Angaben.</p>
+          <p className="hint mt-5">{t('mine.sp.labNote')}</p>
         </>
       )}
       {creating && <StrainFormModal open onClose={() => setCreating(false)} onSaved={(s) => navigate(`strains/${s.id}`)} />}
@@ -228,28 +228,28 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
   const compare = useCompare();
   const strain = data.strains.find((s) => s.id === strainId);
   const photos = useMemo(() => data.photos.filter((p) => p.strainId === strainId), [data.photos, strainId]);
-  if (!strain) return <EmptyState title="Sorte nicht gefunden" action={<a href={href('strains')} className="btn-primary">Zur Bibliothek</a>} />;
+  if (!strain) return <EmptyState title={t('mine.sp.notFound')} action={<a href={href('strains')} className="btn-primary">{t('mine.sp.toLib')}</a>} />;
 
   const plants = data.plants.filter((p) => p.strainId === strain.id);
   const grows = data.grows.filter((g) => plants.some((p) => p.growId === g.id));
   const journal = data.journal.filter((j) => j.strainId === strain.id).sort((a, b) => b.date.localeCompare(a.date));
   const inventory = data.inventory.filter((i) => i.strainId === strain.id);
   const cover = strain.coverPhotoId ?? [...photos].sort((a, b) => b.takenAt.localeCompare(a.takenAt))[0]?.id;
-  const maxTerp = Math.max(0, ...strain.terpenes.map((t) => t.percent ?? 0));
+  const maxTerp = Math.max(0, ...strain.terpenes.map((tp) => tp.percent ?? 0));
   const ratedJournal = journal.filter((j) => j.rating);
   const avgJournal = ratedJournal.length ? ratedJournal.reduce((s, j) => s + j.rating!, 0) / ratedJournal.length : undefined;
 
   async function remove() {
     const ok = await confirm({
-      title: `„${strain!.name}“ löschen?`,
-      message: 'Die Sorte wird aus der Bibliothek entfernt. Verknüpfte Pflanzen und Journal-Einträge behalten den Namen als Text. Fotos, die nur dieser Sorte zugeordnet sind, werden gelöscht.',
-      confirmLabel: 'Löschen',
+      title: t('mine.sp.deleteTitle', { name: strain!.name }),
+      message: t('mine.sp.deleteMsg'),
+      confirmLabel: t('common.delete'),
       tone: 'danger',
     });
     if (!ok) return;
     try {
       await deleteStrain(strain!.id);
-      toast('Sorte gelöscht');
+      toast(t('mine.sp.deleted'));
       navigate('strains', { replace: true });
     } catch (e) {
       toast(errorText(e), { tone: 'error' });
@@ -259,13 +259,13 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
   return (
     <div>
       <PageHeader
-        crumbs={[{ label: 'Meine Sorten', to: 'strains' }, { label: strain.name }]}
+        crumbs={[{ label: t('mine.sp.title'), to: 'strains' }, { label: strain.name }]}
         title={strain.name}
-        subtitle={[strain.breeder, strain.genetics].filter(Boolean).join(' · ') || 'Keine Herkunftsangaben'}
+        subtitle={[strain.breeder, strain.genetics].filter(Boolean).join(' · ') || t('mine.sp.noSource')}
         meta={
           <>
             {strain.reportedType && strain.reportedType !== 'unknown' && <Chip>{strain.reportedType} (laut Quelle)</Chip>}
-            {strain.favorite && <Chip tone="rose">Favorit</Chip>}
+            {strain.favorite && <Chip tone="rose">{t('mine.sp.favorite')}</Chip>}
             <Stars value={strain.rating} />
           </>
         }
@@ -273,12 +273,12 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
           <>
             {strain.external && externalLink(strain.external.provider, strain.external.id) && (
               <a href={href(externalLink(strain.external.provider, strain.external.id)!)} className="btn-ghost">
-                <Globe className="size-4" /> Katalogprofil
+                <Globe className="size-4" /> {t('mine.sp.catalog')}
               </a>
             )}
             {strain.external?.provider === 'strainapi' && (
               <a href={href(`discover/genetics/${strain.external.id}`)} className="btn-ghost">
-                <Dna className="size-4" /> Genetik
+                <Dna className="size-4" /> {t('mine.sp.genetics')}
               </a>
             )}
             {(() => {
@@ -286,18 +286,18 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
               const on = compare.has(key);
               return (
                 <button type="button" className={`btn-ghost ${on ? 'border-sky-400/30 text-sky-200' : ''}`} aria-pressed={on} onClick={() => compare.toggle(key)}>
-                  <GitCompare className="size-4" /> {on ? 'Im Vergleich' : 'Vergleichen'}
+                  <GitCompare className="size-4" /> {on ? t('mine.sp.inCompare') : t('mine.sp.compare')}
                 </button>
               );
             })()}
             <button type="button" className="btn-ghost" onClick={() => setModal('photo')}>
-              <Camera className="size-4" /> Foto
+              <Camera className="size-4" /> {t('mine.sp.photo')}
             </button>
             <button type="button" className="btn-ghost" onClick={() => setModal('edit')}>
-              <Pencil className="size-4" /> Bearbeiten
+              <Pencil className="size-4" /> {t('common.edit')}
             </button>
             <ShareButton store="strains" ids={[strain.id]} />
-            <button type="button" className="btn-ghost text-rose-300/90" onClick={remove} aria-label="Sorte löschen">
+            <button type="button" className="btn-ghost text-rose-300/90" onClick={remove} aria-label={t('mine.sp.deleteStrain')}>
               <Trash2 className="size-4" />
             </button>
           </>
@@ -308,37 +308,37 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
           <div className="card overflow-hidden">
             <PhotoImg photoId={cover} variant="full" alt={strain.name} className="aspect-[4/3] w-full" />
           </div>
-          <Card title="Cannabinoide" subtitle="Mit Herkunft der Angabe">
+          <Card title={t('mine.sp.cann')} subtitle={t('mine.sp.cannSub')}>
             <div className="grid grid-cols-2 gap-4">
               <Cannabinoid label="THC" v={strain.thc} />
               <Cannabinoid label="CBD" v={strain.cbd} />
             </div>
-            <p className="hint mt-3">Angaben auf Verpackungen weichen in Untersuchungen häufig vom tatsächlichen Gehalt ab.</p>
+            <p className="hint mt-3">{t('mine.sp.labelNote')}</p>
           </Card>
           {strain.external && (
-            <Card title="Quelle" icon={<Globe className="size-4" />}>
+            <Card title={t('mine.sp.source')} icon={<Globe className="size-4" />}>
               <p className="text-[13px] text-ink-300">
-                Verknüpft mit dem Katalog ({PROVIDER_LABEL[strain.external.provider]})
-                {strain.external.linkedAt && !Number.isNaN(Date.parse(strain.external.linkedAt)) ? ` seit ${new Date(strain.external.linkedAt).toLocaleDateString(intlLocale())}` : ''}. Übernommene Werte sind als „Herstellerangabe“ gekennzeichnet; eigene Notizen bleiben lokal.
+                {t('mine.sp.linkedTo', { provider: PROVIDER_LABEL[strain.external.provider] })}
+                {strain.external.linkedAt && !Number.isNaN(Date.parse(strain.external.linkedAt)) ? t('mine.sp.since', { date: new Date(strain.external.linkedAt).toLocaleDateString(intlLocale()) }) : ''}. {t('mine.sp.adopted')}
               </p>
             </Card>
           )}
-          <Card title="Terpene">
+          <Card title={t('mine.sp.terpenes')}>
             {strain.terpenes.length === 0 ? (
-              <p className="hint">Keine Terpene erfasst.</p>
+              <p className="hint">{t('mine.sp.noTerp')}</p>
             ) : (
               <ul className="space-y-2.5">
-                {strain.terpenes.map((t) => (
-                  <li key={t.name}>
+                {strain.terpenes.map((tp) => (
+                  <li key={tp.name}>
                     <div className="flex items-center justify-between gap-2 text-[13px]">
                       <span className="flex items-center gap-2 text-ink-100">
-                        {t.name} <SourceBadge source={t.source} />
+                        {tp.name} <SourceBadge source={tp.source} />
                       </span>
-                      <span className="font-mono text-ink-300">{t.percent !== undefined ? `${fmt(t.percent)} %` : '–'}</span>
+                      <span className="font-mono text-ink-300">{tp.percent !== undefined ? `${fmt(tp.percent)} %` : '–'}</span>
                     </div>
-                    {t.percent !== undefined && maxTerp > 0 && (
+                    {tp.percent !== undefined && maxTerp > 0 && (
                       <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-ink-700">
-                        <div className="h-full rounded-full bg-leaf-500/70" style={{ width: `${(t.percent / maxTerp) * 100}%` }} />
+                        <div className="h-full rounded-full bg-leaf-500/70" style={{ width: `${(tp.percent / maxTerp) * 100}%` }} />
                       </div>
                     )}
                   </li>
@@ -348,7 +348,7 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
           </Card>
         </div>
         <div className="space-y-5">
-          <Card title="Aroma & Notizen">
+          <Card title={t('mine.sp.aroma')}>
             {strain.aromas.length > 0 && (
               <div className="mb-3 flex flex-wrap gap-1.5">
                 {strain.aromas.map((a) => (
@@ -361,15 +361,15 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
             {strain.flavorNotes && <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-ink-200">{strain.flavorNotes}</p>}
             {strain.observations && (
               <>
-                <h4 className="mt-4 text-xs font-semibold uppercase tracking-wider text-ink-500">Beobachtungen</h4>
+                <h4 className="mt-4 text-xs font-semibold uppercase tracking-wider text-ink-500">{t('mine.sp.observations')}</h4>
                 <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-ink-300">{strain.observations}</p>
               </>
             )}
-            {!strain.flavorNotes && !strain.observations && strain.aromas.length === 0 && <p className="hint">Noch keine Notizen.</p>}
+            {!strain.flavorNotes && !strain.observations && strain.aromas.length === 0 && <p className="hint">{t('mine.sp.noNotes')}</p>}
           </Card>
-          <Card title="Grows mit dieser Sorte" icon={<Sprout className="size-4" />}>
+          <Card title={t('mine.sp.grows')} icon={<Sprout className="size-4" />}>
             {plants.length === 0 ? (
-              <p className="hint">Keine Pflanze ist mit dieser Sorte verknüpft. Beim Anlegen einer Pflanze die Sorte aus der Bibliothek wählen.</p>
+              <p className="hint">{t('mine.sp.noGrows')}</p>
             ) : (
               <ul className="divide-y divide-white/[0.05]">
                 {plants.map((p) => {
@@ -392,17 +392,17 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
             )}
           </Card>
           <Card
-            title="Journal"
+            title={t('mine.sp.journal')}
             icon={<BookOpenText className="size-4" />}
-            subtitle={avgJournal ? `Ø ${fmt(avgJournal)} / 5 aus ${ratedJournal.length} Bewertungen` : undefined}
+            subtitle={avgJournal ? t('mine.sp.avg', { avg: fmt(avgJournal), count: ratedJournal.length }) : undefined}
             actions={
               <button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setModal('journal')}>
-                <Plus className="size-3.5" /> Eintrag
+                <Plus className="size-3.5" /> {t('mine.sp.entry')}
               </button>
             }
           >
             {journal.length === 0 ? (
-              <p className="hint">Keine Journal-Einträge zu dieser Sorte.</p>
+              <p className="hint">{t('mine.sp.noJournal')}</p>
             ) : (
               <ul className="divide-y divide-white/[0.05]">
                 {journal.slice(0, 6).map((j) => (
@@ -419,16 +419,16 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
             )}
           </Card>
           <Card
-            title="In der Sammlung"
+            title={t('mine.sp.inCollection')}
             icon={<Package className="size-4" />}
             actions={
               <button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setModal('inventory')}>
-                <Plus className="size-3.5" /> Hinzufügen
+                <Plus className="size-3.5" /> {t('mine.sp.add')}
               </button>
             }
           >
             {inventory.length === 0 ? (
-              <p className="hint">Nicht in der Sammlung.</p>
+              <p className="hint">{t('mine.sp.notInCollection')}</p>
             ) : (
               <ul className="space-y-1.5 text-[13px]">
                 {inventory.map((i) => (
@@ -443,16 +443,16 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
             )}
           </Card>
           <Card
-            title="Laborberichte"
+            title={t('mine.sp.labReports')}
             icon={<FlaskRound className="size-4" />}
             actions={
               <a href={href(`lab-reports?strain=${strain.id}`)} className="btn-ghost py-1.5 text-xs">
-                <Plus className="size-3.5" /> Bericht
+                <Plus className="size-3.5" /> {t('mine.sp.report')}
               </a>
             }
           >
             {data.labReports.filter((r) => r.strainId === strain.id).length === 0 ? (
-              <p className="hint">Keine Laborberichte verknüpft.</p>
+              <p className="hint">{t('mine.sp.noReports')}</p>
             ) : (
               <ul className="space-y-1.5 text-[13px]">
                 {data.labReports
@@ -468,8 +468,8 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
               </ul>
             )}
           </Card>
-          <Card title="Fotos" actions={<button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setModal('photo')}><Camera className="size-3.5" /> Hochladen</button>}>
-            {photos.length === 0 ? <p className="hint">Keine Fotos dieser Sorte.</p> : <PhotoGrid photos={photos} group={false} />}
+          <Card title={t('mine.sp.photos')} actions={<button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setModal('photo')}><Camera className="size-3.5" /> {t('mine.sp.upload')}</button>}>
+            {photos.length === 0 ? <p className="hint">{t('mine.sp.noPhotos')}</p> : <PhotoGrid photos={photos} group={false} />}
           </Card>
         </div>
       </div>
