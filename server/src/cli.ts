@@ -14,11 +14,13 @@ import { purgeTrash } from './files.js';
 import { purgeRetiredKeys, rotateUserKey } from './rotation.js';
 import { migrate, schemaStatus } from './migrate.js';
 import { readFileSync } from 'node:fs';
+import { statfs } from 'node:fs/promises';
 import { CISP, cispUrl, parseDataset } from './catalog/cisp.js';
 import { importDataset } from './catalog/importer.js';
 import { SMITH2022, importSamples, parseSmith2022, sampleUrl } from './catalog/samples.js';
 import { catalogAudit } from './catalog/audit.js';
 import { catalogQuality } from './catalog/quality.js';
+import { catalogHealth } from './routes/admin.js';
 import { MAX_BATCH, PROVIDERS, type Provider, enrichBatch, enrichFromStrainApiIndex, purgeExpiredClaims, refreshStrainApi } from './catalog/enrich.js';
 import pg from 'pg';
 
@@ -55,6 +57,9 @@ function help(): never {
   enrich-catalog --provider strainapi --refresh [--within-days 7] [--force]
                               Gedrosselte Aktualisierung (für einen täglichen Timer): ruft nur ab, wenn Angaben
                               in N Tagen ablaufen und der letzte Abruf mindestens 20 h zurückliegt.
+  status [--verify]           Betriebsdiagnose (nur lesend, ohne Konten- und Schlüsseldaten): Version, Datenbank,
+                              Schema, Speicher, Backup-Status, Katalog, Laborproben, Schlüsselstand.
+                              --verify: zusätzlich alle Daten testweise entschlüsseln (nur Anzahlen ausgeben)
   schema-status               Schemastand prüfen (Exit 0 = passend, 3 = DB neuer als Programm, 4 = Migration ausstehend)`);
   process.exit(cmd ? 1 : 0);
 }
@@ -286,6 +291,10 @@ async function main() {
         if (r.errors.length) process.exitCode = 2;
         return;
       }
+      case 'status': {
+        await printStatus(db, c, args.includes('--verify'));
+        return;
+      }
       case 'schema-status': {
         const st = await schemaStatus(db);
         console.log(`Angewendet: ${st.applied.join(', ') || '–'}\nDiese Version kennt: ${st.known.join(', ')}`);
@@ -338,6 +347,64 @@ async function main() {
   } finally {
     await db.end();
   }
+}
+
+/** Betriebsdiagnose: nur Kennzahlen – keine Anmeldenamen, Inhalte oder Schlüssel. Exit 0 = ok, 2 = Problem. */
+async function printStatus(db: pg.Pool, c: ReturnType<typeof loadConfig>, verify: boolean) {
+  let problems = 0;
+  const line = (ok: boolean | null, text: string) => {
+    if (ok === false) problems++;
+    console.log(`${ok === null ? '•' : ok ? '✓' : '✗'} ${text}`);
+  };
+  const mib = (b: number) => `${(b / 1024 / 1024).toFixed(1)} MiB`;
+  console.log(`TERPGRID-Status – ${new Date().toISOString()}`);
+  line(null, `Programmversion ${c.version} · Node ${process.version}`);
+  const t0 = performance.now();
+  const dbi = (await db.query<{ size: string; v: string }>("SELECT pg_database_size(current_database())::text AS size, current_setting('server_version') AS v")).rows[0]!;
+  line(true, `Datenbank erreichbar (${Math.round(performance.now() - t0)} ms) · PostgreSQL ${dbi.v} · Größe ${mib(Number(dbi.size))}`);
+  const st = await schemaStatus(db);
+  if (st.unknown.length) line(false, `Schema neuer als dieses Programm (unbekannt: ${st.unknown.join(', ')})`);
+  else if (st.pending.length) line(false, `Migrationen ausstehend: ${st.pending.join(', ')}`);
+  else line(true, `Schema aktuell (${st.applied.length} Migrationen, zuletzt ${st.applied.at(-1) ?? '–'})`);
+  const u = (await db.query<{ n: number; active: number; storage: string }>("SELECT count(*)::int AS n, count(*) FILTER (WHERE status = 'active')::int AS active, coalesce(sum(storage_bytes), 0)::text AS storage FROM users")).rows[0]!;
+  line(null, `Konten ${u.n} (aktiv ${u.active}) · Nutzerdateien ${mib(Number(u.storage))}`);
+  try {
+    const fs = await statfs(c.fileDir);
+    const free = fs.bavail * fs.bsize;
+    const total = fs.blocks * fs.bsize;
+    line(free / total > 0.1, `Dateispeicher ${c.fileDir}: frei ${mib(free)} von ${mib(total)} (${Math.round((free / total) * 100)} %)`);
+  } catch {
+    line(false, `Dateispeicher ${c.fileDir} nicht lesbar`);
+  }
+  const trash = (await db.query<{ n: number }>('SELECT count(*)::int AS n FROM file_trash')).rows[0]!;
+  line(null, `Datei-Papierkorb ${trash.n} Blobs (Leerung mit „cleanup“)`);
+  if (c.backupStatusFile) {
+    try {
+      const raw = JSON.parse(readFileSync(c.backupStatusFile, 'utf8')) as { ok?: boolean; lastSuccess?: string | null; lastCheck?: string | null };
+      const ageH = raw.lastSuccess ? (Date.now() - Date.parse(raw.lastSuccess)) / 3600e3 : Infinity;
+      line(raw.ok === true && ageH < 36, `Backup: ${raw.ok ? 'zuletzt erfolgreich' : 'letzter Lauf FEHLGESCHLAGEN'} · letzter Erfolg ${raw.lastSuccess ?? 'nie'} (${Number.isFinite(ageH) ? `${Math.round(ageH)} h her` : '–'})`);
+    } catch {
+      line(false, 'Backup-Status nicht lesbar (noch nie gelaufen?)');
+    }
+  } else line(null, 'Backup-Status: BACKUP_STATUS_FILE nicht gesetzt');
+  const cat = await catalogHealth(db);
+  const br = (await db.query<{ n: number }>('SELECT count(*)::int AS n FROM catalog_breeders')).rows[0]!;
+  line(cat.dataset !== null, cat.dataset ? `Katalog ${cat.dataset.version}: ${cat.dataset.cultivars} Sorten, ${br.n} Breeder (importiert ${new Date(cat.dataset.importedAt).toISOString().slice(0, 10)})` : 'Kein Sortenkatalog importiert (deploy/import-catalog.sh)');
+  line(null, `Anreicherung: ${cat.claims.active} aktive Angaben, ${cat.claims.expired} abgelaufen · Status ${cat.status}`);
+  const smp = (await db.query<{ n: number; matched: number }>('SELECT count(*)::int AS n, count(*) FILTER (WHERE name_key IS NOT NULL)::int AS matched FROM catalog_samples')).rows[0]!;
+  line(null, `Laborproben ${smp.n} (mit Namensschlüssel ${smp.matched}) – Namensabgleich, keine Breeder-Messwerte`);
+  const keys = (await db.query<{ kek: number; n: number }>("SELECT kek_version AS kek, count(*)::int AS n FROM user_keys WHERE state <> 'retired' GROUP BY kek_version ORDER BY kek_version")).rows;
+  const ring = new KeyRing(c.masterKeys, c.masterKeyCurrent);
+  const missing = keys.filter((k) => !c.masterKeys.has(k.kek));
+  line(missing.length === 0, `Schlüsselring: aktuelle Master-Key-Version ${ring.current} · Datenschlüssel je Version: ${keys.map((k) => `v${k.kek}=${k.n}`).join(', ') || '–'}${missing.length ? ` · FEHLENDE Versionen im Ring: ${missing.map((k) => k.kek).join(', ')}` : ''}`);
+  const rot = (await db.query<{ n: number }>("SELECT count(DISTINCT user_id)::int AS n FROM user_keys WHERE state = 'retiring'")).rows[0]!;
+  line(rot.n === 0 ? true : null, `Laufende Schlüsselrotationen: ${rot.n}`);
+  if (verify) {
+    const r = await verifyData(db, ring, c.fileDir);
+    line(r.errors.length === 0, `Entschlüsselungsprüfung: ${r.records} Datensätze, ${r.files} Dateien, ${r.spaceRecords} Bereichsdatensätze, ${r.spaceFiles} Bereichsdateien · Fehler ${r.errors.length}${r.errors.length ? ' (Details: verify-data)' : ''}`);
+  } else line(null, 'Entschlüsselungsprüfung übersprungen (status --verify oder verify-data)');
+  console.log(problems ? `\n✗ ${problems} Problem(e)` : '\n✓ Keine Probleme gefunden');
+  if (problems) process.exitCode = 2;
 }
 
 main().catch((e) => {

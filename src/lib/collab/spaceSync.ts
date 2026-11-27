@@ -59,6 +59,8 @@ export interface SpaceSyncState {
   orphaned: OutboxItem[];
   message?: string;
   revision: number;
+  /** Nach Entzug: In dieser Sitzung bestand vorher Zugriff (sonst war das Konto nie Mitglied). */
+  hadAccess?: boolean;
 }
 
 const k = (store: string, id: string) => `${store}:${id}`;
@@ -216,12 +218,13 @@ export class SpaceSession {
   /** Zugriff entzogen: alles verwerfen, eigene unbestätigte Änderungen nur zum Herunterladen behalten. */
   private revoke() {
     const orphaned = [...this.outbox.values()];
+    const hadAccess = this.state.role !== null || this.records.size > 0 || orphaned.length > 0;
     this.records.clear();
     this.base.clear();
     this.outbox.clear();
     this.cursor = '0';
     this.persistOutbox();
-    this.emit({ phase: 'revoked', role: null, conflicts: [], orphaned, message: 'Du hast keinen Zugriff (mehr) auf diesen Bereich.' });
+    this.emit({ phase: 'revoked', role: null, conflicts: [], orphaned, hadAccess, message: 'Du hast keinen Zugriff (mehr) auf diesen Bereich.' });
   }
 
   private async pull(): Promise<void> {

@@ -277,7 +277,10 @@ export class SyncEngine {
     }
     // Binärdaten erst nach dem ersten Rendern laden (Leerlauf): sonst konkurrieren Foto-Downloads
     // beim Start mit den Anfragen der gerade geöffneten Seite um die Bandbreite.
-    whenIdle(() => void this.fetchMissingFiles(needPhotos, needDocs));
+    // Nach dem Abmelden (stop) nicht mehr starten – sonst würde eine gerade gelöschte Arbeitskopie erneut geöffnet
+    whenIdle(() => {
+      if (!this.stopped) this.fetchMissingFiles(needPhotos, needDocs).catch(() => {});
+    });
   }
 
   private async applyRemote(changes: RemoteChange[], cursor: string, needPhotos: Set<string>, needDocs: Set<string>): Promise<void> {
@@ -340,7 +343,7 @@ export class SyncEngine {
     for (const id of photoIds) tasks.push(() => this.downloadPhoto(id));
     for (const id of docIds) tasks.push(() => this.downloadDoc(id));
     const workers = Array.from({ length: 3 }, async () => {
-      for (let t = tasks.shift(); t; t = tasks.shift()) await t().catch(() => {});
+      for (let t = tasks.shift(); t && !this.stopped; t = tasks.shift()) await t().catch(() => {});
     });
     await Promise.all(workers);
   }

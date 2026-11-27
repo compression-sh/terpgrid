@@ -132,6 +132,15 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     catalogEnabled: bool(env, 'CATALOG_PROXY_ENABLED', true),
     backupStatusFile: env.BACKUP_STATUS_FILE || undefined,
     webauthnRpId: env.WEBAUTHN_RP_ID || undefined,
-    version: env.APP_VERSION ?? '5.1.0-rc.1',
+    version: env.APP_VERSION || packageVersion(),
   };
+}
+
+/** Version aus package.json (Quelle und Container: eine Ebene über src/ bzw. dist/) – Rückfall, wenn APP_VERSION fehlt. */
+function packageVersion(): string {
+  try {
+    return (JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version?: string }).version ?? 'unbekannt';
+  } catch {
+    return 'unbekannt';
+  }
 }

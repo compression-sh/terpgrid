@@ -269,8 +269,8 @@ export function GrowDetail({ growId }: { growId: string }) {
       </section>
 
       {/* Aktionen */}
-      <div className="mb-5 flex items-center gap-2 sm:flex-wrap">
-        <button type="button" className="btn-primary" onClick={() => quick({ kind: 'log', growId })}>
+      <div className="mb-5 flex flex-wrap items-center gap-2">
+        <button type="button" className="btn-primary whitespace-nowrap" onClick={() => quick({ kind: 'log', growId })}>
           <NotebookPen className="size-4" /> Schnell-Log
         </button>
         <button type="button" className="btn-ghost" onClick={() => setModal('activity')}>

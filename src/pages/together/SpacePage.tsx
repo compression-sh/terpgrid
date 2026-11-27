@@ -63,8 +63,12 @@ export function SpacePage({ spaceId }: { spaceId: string }) {
       <div className="space-y-4">
         <EmptyState
           icon={<CloudOff />}
-          title={st?.phase === 'revoked' ? 'Zugriff widerrufen' : 'Kein Zugriff'}
-          text="Dieser Bereich existiert nicht (mehr) oder du bist kein Mitglied mehr. Zwischengespeicherte Inhalte wurden aus diesem Browser entfernt."
+          title={st?.phase === 'revoked' && st.hadAccess ? 'Zugriff widerrufen' : 'Kein Zugriff'}
+          text={
+            st?.phase === 'revoked' && st.hadAccess
+              ? 'Du bist kein Mitglied dieses Bereichs mehr. Zwischengespeicherte Inhalte wurden aus diesem Browser entfernt.'
+              : 'Dieser Bereich existiert nicht oder du bist kein Mitglied.'
+          }
           action={
             <a className="btn-primary" href={href('together')}>
               Zur Übersicht
