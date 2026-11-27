@@ -3,6 +3,9 @@
 #   Preflight → Backup → Code aktualisieren → neue Images (neuer Tag, alter bleibt) →
 #   Migrationen → Start → Health-Prüfung → bei Fehler geführtes Rollback.
 # Überschreibt nie .env oder Secrets (nur TERPGRID_VERSION wird angepasst).
+# Das gesamte Skript steht in { … }: Bash liest es so vollständig ein, bevor es läuft. Das ist nötig, weil
+# „git pull“ weiter unten diese Datei selbst aktualisieren kann (sonst würde ab der alten Position im neuen Text weitergelesen).
+{
 set -euo pipefail
 cd "$(dirname "$0")"
 # shellcheck source=deploy/lib.sh
@@ -55,3 +58,5 @@ fail "Version $new ist nicht gesund gestartet."
 echo "Rollback auf $prev: ./rollback.sh $prev"
 echo "Hinweis: Wurden Migrationen angewendet: backup/restore.sh --version $prev <Snapshot von eben>."
 exit 1
+exit
+}
