@@ -300,6 +300,8 @@ export interface JournalEntry extends BaseRecord {
   moods: string[];
   durationNote: string;
   rating?: number;
+  /** Eigene Schlagwörter (klein, ohne #) zum Ordnen und Filtern */
+  tags?: string[];
 }
 
 /* ───────────────────────── Sammlung ───────────────────────── */

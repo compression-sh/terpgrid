@@ -317,7 +317,8 @@ export function StrainDetail({ strainId }: { strainId?: string }) {
           {strain.external && (
             <Card title="Quelle" icon={<Globe className="size-4" />}>
               <p className="text-[13px] text-ink-300">
-                Verknüpft mit dem Katalog ({PROVIDER_LABEL[strain.external.provider]}) seit {new Date(strain.external.linkedAt).toLocaleDateString('de-DE')}. Übernommene Werte sind als „Herstellerangabe“ gekennzeichnet; eigene Notizen bleiben lokal.
+                Verknüpft mit dem Katalog ({PROVIDER_LABEL[strain.external.provider]})
+                {strain.external.linkedAt && !Number.isNaN(Date.parse(strain.external.linkedAt)) ? ` seit ${new Date(strain.external.linkedAt).toLocaleDateString('de-DE')}` : ''}. Übernommene Werte sind als „Herstellerangabe“ gekennzeichnet; eigene Notizen bleiben lokal.
               </p>
             </Card>
           )}

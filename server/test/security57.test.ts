@@ -374,3 +374,17 @@ describe.skipIf(!hasDb)('Phase 5.7 Rotation unter Last', () => {
     }
   });
 });
+
+describe.skipIf(!hasDb)('Phase 5.8 Profil-Erstanlage', () => {
+  it('P1 Parallele Erstaufrufe legen das Profil genau einmal an (vorher 500 durch Wettlauf)', async () => {
+    const env = await setup();
+    try {
+      const c = new Client(env.app);
+      await c.register('sec_race');
+      const res = await Promise.all([c.get('/api/social/overview'), c.get('/api/spaces'), c.get('/api/social/profile'), c.get('/api/social/overview'), c.get('/api/spaces')]);
+      for (const r of res) expect(r.status).toBe(200);
+    } finally {
+      await env.close();
+    }
+  });
+});

@@ -141,7 +141,7 @@ export function DataPage() {
         subtitle={server ? 'Deine Daten liegen auf deinem Server und als Arbeitskopie in diesem Browser. Hier sicherst, überträgst und löschst du sie.' : 'Alles liegt lokal in diesem Browser. Hier sicherst, überträgst und löschst du deine Daten.'}
       />
 
-      {(lastBackupDays === undefined || lastBackupDays > 30) && data.grows.length + data.photos.length + data.journal.length > 0 && (
+      {!server && (lastBackupDays === undefined || lastBackupDays > 30) && data.grows.length + data.photos.length + data.journal.length > 0 && (
         <div className="mb-5">
           <Callout tone="warn" title={lastBackupDays === undefined ? 'Noch kein Backup erstellt' : `Letztes Backup vor ${lastBackupDays} Tagen`}>
             Browser-Daten können verloren gehen (Browserdaten löschen, Speicherplatzmangel, Geräteverlust). Ein Backup als ZIP-Datei schützt deine Einträge und Fotos.

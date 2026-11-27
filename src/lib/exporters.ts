@@ -19,6 +19,11 @@ function csvCell(value: string): string {
   return needsQuote ? `"${escaped}"` : escaped;
 }
 
+/** Tabelle als CSV (Semikolon, CRLF) – z. B. gefilterte Journal-Einträge. */
+export function toCSVTable(headers: string[], rows: (string | number | undefined | null)[][]): string {
+  return [headers, ...rows].map((r) => r.map((v) => csvCell(v === undefined || v === null ? '' : String(v))).join(';')).join('\r\n');
+}
+
 /** CSV mit Semikolon (Excel-freundlich für deutsche Gebietsschemata). */
 export function toCSV(payload: ExportPayload): string {
   const lines: string[] = ['Bereich;Bezeichnung;Wert'];

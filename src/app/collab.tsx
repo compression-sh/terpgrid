@@ -36,14 +36,21 @@ const unreadListeners = new Set<() => void>();
 let unreadTimer: ReturnType<typeof setInterval> | undefined;
 let unreadUsers = 0;
 
-export async function refreshUnread(): Promise<void> {
-  try {
-    const r = await collab.unread();
-    unread = { count: r.count, byCategory: r.byCategory as Record<string, number> };
-    for (const l of unreadListeners) l();
-  } catch {
-    /* offline oder abgemeldet – Zähler bleibt */
-  }
+let unreadInflight: Promise<void> | null = null;
+/** Ungelesene Benachrichtigungen neu laden – gleichzeitige Aufrufe teilen sich eine Anfrage. */
+export function refreshUnread(): Promise<void> {
+  unreadInflight ??= (async () => {
+    try {
+      const r = await collab.unread();
+      unread = { count: r.count, byCategory: r.byCategory as Record<string, number> };
+      for (const l of unreadListeners) l();
+    } catch {
+      /* offline oder abgemeldet – Zähler bleibt */
+    } finally {
+      unreadInflight = null;
+    }
+  })();
+  return unreadInflight;
 }
 
 export function useUnread(enabled: boolean): Unread & { refresh: () => Promise<void> } {

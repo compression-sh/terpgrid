@@ -1,5 +1,21 @@
 # Änderungsprotokoll
 
+## 5.8.0-rc.1 – 26.11.2026 (Release-Kandidat, nicht veröffentlicht)
+
+Phase 5.8 „Feature-Vervollständigung, Produktfeinschliff und Performance“. Keine Migration; Rollback auf 5.7 ohne
+Wiederherstellung möglich. Bericht: `docs/PHASE5-8-PRODUCT-REPORT.md`.
+
+### Behoben
+- „Gemeinsam“: Beim ersten Öffnen konnte durch parallele Anfragen ein „Interner Fehler“ (500) entstehen.
+- Meine Sorten: kein „Invalid Date“ bei fehlendem Verknüpfungsdatum.
+- Daten & Backup: keine Lokalmodus-Warnung im Servermodus.
+
+### Neu und verbessert
+- Journal: Tags, Tag- und Zeitraumfilter, Suche über Tags, „Filter zurücksetzen“, CSV-Export der gefilterten Einträge.
+- Genetik: Ausgangspunkte (meistgelistete Katalogsorten mit dokumentierter Abstammung).
+- Kartenköpfe brechen auf schmalen Bildschirmen um; Sicherheitsübersicht im Konto entzerrt.
+- Leistung: Ungelesen-Zähler mit einer gemeinsamen Anfrage; Foto-Downloads der Synchronisation im Leerlauf.
+
 ## 5.7.0-rc.1 – 26.11.2026 (Release-Kandidat, nicht veröffentlicht)
 
 Phase 5.7 „Sicherheit, Datenschutz, Verschlüsselung und Infrastruktur“. Migration 009 ist rein additiv
