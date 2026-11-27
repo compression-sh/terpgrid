@@ -49,7 +49,8 @@ export function TimelinePage() {
   const { data } = useData();
   const route = useRoute();
   const [days, setDays] = useState(30);
-  const kinds = (route.query.get('k') ?? '').split(',').filter((x): x is TimelineKind => x in KIND);
+  const kindsParam = route.query.get('k') ?? '';
+  const kinds = useMemo(() => kindsParam.split(',').filter((x): x is TimelineKind => x in KIND), [kindsParam]);
   const growFilter = route.query.get('grow') ?? '';
   const now = today();
   const all = useMemo(() => buildTimeline(data, { today: now }), [data, now]);
@@ -58,7 +59,7 @@ export function TimelinePage() {
     for (const e of all) c[e.kind]++;
     return c;
   }, [all]);
-  const filtered = useMemo(() => all.filter((e) => (!kinds.length || kinds.includes(e.kind)) && (!growFilter || e.growId === growFilter)), [all, kinds.join(','), growFilter]);
+  const filtered = useMemo(() => all.filter((e) => (!kinds.length || kinds.includes(e.kind)) && (!growFilter || e.growId === growFilter)), [all, kinds, growFilter]);
   const groups = useMemo(() => groupByDay(filtered), [filtered]);
   const toggle = (k: TimelineKind) => {
     const next = kinds.includes(k) ? kinds.filter((x) => x !== k) : [...kinds, k];

@@ -13,9 +13,12 @@ command -v openssl >/dev/null || die "openssl fehlt."
 if [[ ! -f .env ]]; then
   read -rp "Domain für TERPGRID (z. B. terpgrid.example.org): " domain
   [[ "$domain" =~ ^[A-Za-z0-9.-]+$ ]] || die "Ungültige Domain."
-  sed "s/^TERPGRID_DOMAIN=.*/TERPGRID_DOMAIN=${domain}/" .env.example > .env
+  # Image-Tag = Programmversion (wie upgrade.sh), sonst trügen neu gebaute Images einen veralteten Tag
+  version="$(sed -nE 's/.*"version": *"([^"]+)".*/\1/p' ../server/package.json | head -1)"
+  [[ -n "$version" ]] || die "Version aus server/package.json nicht lesbar."
+  sed -e "s/^TERPGRID_DOMAIN=.*/TERPGRID_DOMAIN=${domain}/" -e "s/^TERPGRID_VERSION=.*/TERPGRID_VERSION=${version}/" .env.example > .env
   chmod 600 .env
-  echo "✓ .env angelegt (Domain: ${domain})"
+  echo "✓ .env angelegt (Domain: ${domain}, Version: ${version})"
 fi
 
 umask 077

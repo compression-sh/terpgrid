@@ -97,7 +97,6 @@ export function can(role: Role | null | undefined, action: Action, ctx: Ctx = {}
   return true;
 }
 
-export const isRole = (r: unknown): r is Role => typeof r === 'string' && (ROLES as readonly string[]).includes(r);
 export const isAccess = (a: unknown): a is Access => typeof a === 'string' && (ACCESS as readonly string[]).includes(a);
 /** Rollen, die ein Eigentümer vergeben kann (Eigentum nur per Übertragung). */
 export const ASSIGNABLE: readonly Role[] = ['editor', 'commenter', 'viewer'];

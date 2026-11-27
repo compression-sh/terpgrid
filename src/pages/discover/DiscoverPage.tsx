@@ -86,6 +86,21 @@ export function sortStrains(items: CatalogStrain[], sort: SortKey): CatalogStrai
   return copy;
 }
 
+/** Filter aus den URL-Parametern (verlinkbarer Zustand). */
+function filtersFrom(q: URLSearchParams): DiscoverFilters {
+  return {
+    type: (['indica', 'sativa', 'hybrid', 'unknown'].includes(q.get('type') ?? '') ? q.get('type') : '') as TypeClass | '',
+    breeder: q.get('breeder') ?? '',
+    genetics: q.get('genetics') ?? '',
+    terp: q.get('terp') ?? '',
+    thcMin: num(q.get('thcMin')),
+    thcMax: num(q.get('thcMax')),
+    cbdMin: num(q.get('cbdMin')),
+    cbdMax: num(q.get('cbdMax')),
+    fav: q.get('fav') === '1',
+  };
+}
+
 function FilterFields({ f, set, breeders }: { f: DiscoverFilters; set: (p: Record<string, string | undefined>) => void; breeders: string[] }) {
   const field = 'input-base py-1.5 text-[13px]';
   return (
@@ -154,30 +169,25 @@ export function DiscoverPage() {
   const [drawer, setDrawer] = useState(false);
   const sentinel = useRef<HTMLDivElement>(null);
 
-  // URL ↔ Suchfeld (Suchzustand ist verlinkbar)
+  // URL ↔ Suchfeld (Suchzustand ist verlinkbar). Die Effekte reagieren bewusst nur auf die jeweils eigene
+  // Quelle (Eingabe bzw. URL); die Gegenseite wird über Refs gelesen, damit sie sich nicht gegenseitig zurücksetzen.
+  const urlQuery = q.get('q') ?? '';
+  const latest = useRef({ route, urlQuery, text });
+  latest.current = { route, urlQuery, text };
   useEffect(() => {
     const t = window.setTimeout(() => {
-      if ((q.get('q') ?? '') !== text.trim()) setQuery(route, { q: text.trim() || undefined });
+      const { route: r, urlQuery: u } = latest.current;
+      if (u !== text.trim()) setQuery(r, { q: text.trim() || undefined });
     }, 350);
     return () => window.clearTimeout(t);
   }, [text]);
   useEffect(() => {
-    const urlQ = q.get('q') ?? '';
-    if (urlQ !== text.trim()) setText(urlQ);
-  }, [q.get('q')]);
+    if (urlQuery !== latest.current.text.trim()) setText(urlQuery);
+  }, [urlQuery]);
 
-  const search = useStrainSearch(q.get('q') ?? '', 0);
-  const f: DiscoverFilters = {
-    type: (['indica', 'sativa', 'hybrid', 'unknown'].includes(q.get('type') ?? '') ? q.get('type') : '') as TypeClass | '',
-    breeder: q.get('breeder') ?? '',
-    genetics: q.get('genetics') ?? '',
-    terp: q.get('terp') ?? '',
-    thcMin: num(q.get('thcMin')),
-    thcMax: num(q.get('thcMax')),
-    cbdMin: num(q.get('cbdMin')),
-    cbdMax: num(q.get('cbdMax')),
-    fav: q.get('fav') === '1',
-  };
+  const search = useStrainSearch(urlQuery, 0);
+  const queryString = q.toString();
+  const f = useMemo(() => filtersFrom(new URLSearchParams(queryString)), [queryString]);
   const query = q.get('q') ?? '';
   // Bei einer Suche ist Relevanz Standard (die Quelle sortiert nicht nach Relevanz)
   const sort = (SORTS.some((s) => s.id === q.get('sort')) ? q.get('sort') : query ? 'relevance' : 'source') as SortKey;
@@ -203,19 +213,20 @@ export function DiscoverPage() {
     const ranked = query && (sort === 'relevance' || nameOnly) ? rankStrains(query, filtered) : filtered;
     const scoped = nameOnly ? (ranked as RankedStrain[]).filter((s) => s.relevanceGroup === 'name') : ranked;
     return sort === 'relevance' || sort === 'source' ? scoped : sortStrains(scoped, sort);
-  }, [search.items, JSON.stringify(f), favKeys, sort, query, nameOnly]);
-  useEffect(() => setVisible(48), [query, sort, nameOnly, JSON.stringify(f)]);
+  }, [search.items, f, favKeys, sort, query, nameOnly]);
+  useEffect(() => setVisible(48), [query, sort, nameOnly, f]);
   const localOnly = activeFilters > 0 || nameOnly || (sort !== 'source' && sort !== 'relevance');
   const requestsForAll = Math.ceil(search.total / 100);
 
   // Endloses Nachladen nur ohne lokale Filter (sonst wäre die Trefferzahl irreführend)
+  const { complete: searchComplete, loading: searchLoading, error: searchError, loadMore } = search;
   useEffect(() => {
     const el = sentinel.current;
-    if (!el || localOnly || search.complete || search.loading || search.error) return;
-    const io = new IntersectionObserver(([e]) => e?.isIntersecting && search.loadMore(), { rootMargin: '600px' });
+    if (!el || localOnly || searchComplete || searchLoading || searchError) return;
+    const io = new IntersectionObserver(([e]) => e?.isIntersecting && loadMore(), { rootMargin: '600px' });
     io.observe(el);
     return () => io.disconnect();
-  }, [localOnly, search.complete, search.loading, search.error, search.loadMore]);
+  }, [localOnly, searchComplete, searchLoading, searchError, loadMore]);
 
   return (
     <div>
