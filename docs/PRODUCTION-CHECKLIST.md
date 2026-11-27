@@ -23,7 +23,8 @@
 - [ ] Admin-Konto: 2FA oder Passkey einrichten
 - [ ] Optional: `./import-catalog.sh --dry-run`, dann `./import-catalog.sh` (Sortenkatalog, CC BY 4.0); Discover zeigt danach „16.710 Sorten von 494 Breedern“
 - [ ] Optional, nur wenn StrainAPI-Anreicherung genutzt wird: `terpgrid-catalog-refresh.timer` aktivieren (prüft täglich, ruft nur bei Bedarf ab; siehe docs/CATALOG.md)
-- [ ] `backup/backup.sh` erfolgreich, dann `backup/restore-test.sh` erfolgreich
+- [ ] `backup/backup.sh` erfolgreich, dann `backup/restore-test.sh` erfolgreich (vierteljährlich `--full-check`)
+- [ ] `./status.sh --verify` ohne Probleme
 - [ ] systemd-Timer aktivieren: `terpgrid-backup.timer`, `terpgrid-restore-test.timer`, `OnFailure`-Benachrichtigung testen
 - [ ] Admin → System Health: DB ok, Schema aktuell, keine Fehler; Admin → Übersicht: Backup „OK“
 - [ ] Öffentliche Registrierung bleibt aus; Einladungen nur über vertrauliche Kanäle
