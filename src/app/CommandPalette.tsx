@@ -5,7 +5,7 @@
  * - Katalog/Breeder (nur Servermodus mit importiertem Katalog): Anfrage an die EIGENE
  *   Instanz, nie an Dritte; persönliche Daten werden dabei nicht gesendet.
  */
-import { BookOpen, BookOpenText, CornerDownLeft, Dna, FlaskConical, FlaskRound, Leaf, Loader2, LogOut, NotebookPen, Package, Plus, RefreshCw, Search, ShieldCheck, Sprout, Bell, UserRound, Users } from 'lucide-react';
+import { BookOpen, BookOpenText, CornerDownLeft, Dna, FlaskConical, FlaskRound, Leaf, Loader2, LogOut, NotebookPen, Package, Plus, RefreshCw, Search, ShieldCheck, Sprout, Bell, Users } from 'lucide-react';
 import type { GlossaryTerm } from '../lib/academy/glossary';
 import type { KbArticle } from '../lib/knowledge';
 import { type LibBreeder, type LibCultivar, library } from '../lib/catalog/library';
@@ -15,7 +15,7 @@ import { searchRecords, type SearchHit, normalize } from '../lib/search';
 import { useAuth } from './auth';
 import { useConfirm } from './Confirm';
 import { useData } from './DataProvider';
-import { PRIMARY_NAV, SECONDARY_NAV } from './nav';
+import { ALL_NAV, DISCOVER_SECTIONS } from './nav';
 import { useQuickActions } from './QuickActions';
 import { navigate } from './router';
 import { logoutFlow } from './SyncIndicator';
@@ -107,12 +107,13 @@ export function CommandPalette() {
       setOpen(false);
       fn();
     };
-    const nav: Item[] = [...PRIMARY_NAV, ...SECONDARY_NAV].map((n) => {
-      const Icon = n.icon;
-      return { id: `nav-${n.id}`, group: 'Navigation', label: n.label, icon: <Icon className="size-4" />, run: close(() => navigate(n.to)) };
-    });
+    const nav: Item[] = [...ALL_NAV, ...DISCOVER_SECTIONS]
+      .filter((n) => !n.serverOnly || server)
+      .map((n) => {
+        const Icon = n.icon;
+        return { id: `nav-${n.id}`, group: 'Navigation', label: n.label, icon: <Icon className="size-4" />, run: close(() => navigate(n.to)) };
+      });
     if (server) {
-      nav.push({ id: 'nav-account', group: 'Navigation', label: 'Konto & Sicherheit', icon: <UserRound className="size-4" />, run: close(() => navigate('account')) });
       nav.push({ id: 'nav-privacy', group: 'Navigation', label: 'Datenschutz-Center', icon: <ShieldCheck className="size-4" />, run: close(() => { navigate('account'); setTimeout(() => document.getElementById('datenschutz')?.scrollIntoView(), 300); }) });
       nav.push({ id: 'nav-sync', group: 'Navigation', label: 'Synchronisation', icon: <RefreshCw className="size-4" />, run: close(() => navigate('account/sync')) });
       if (admin) nav.push({ id: 'nav-admin', group: 'Navigation', label: 'Administration', icon: <Users className="size-4" />, run: close(() => navigate('admin')) });

@@ -238,8 +238,7 @@ export function DiscoverPage() {
             <path key={i} transform={`translate(100 120) rotate(${-60 + i * 20})`} d="M0 0 C 14 -25, 8 -60, 0 -80 C -8 -60, -14 -25, 0 0 Z M0 0 L0 -76" />
           ))}
         </svg>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-leaf-400/90">Online-Sortenkatalog</p>
-        <h1 className="mt-2 max-w-2xl text-3xl font-semibold tracking-tight text-ink-50 sm:text-[40px] sm:leading-[1.1]">Sorten entdecken.</h1>
+        <h1 className="page-title max-w-2xl">Live-Katalog</h1>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-400">Dokumentierte Sorten mit Genetik, Cannabinoid-Spannen und Terpenen – jede Angabe mit Quelle und Evidenzstatus.</p>
         <div className="relative mt-6 max-w-2xl">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-ink-500" />

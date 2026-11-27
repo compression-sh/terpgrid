@@ -241,7 +241,7 @@ export function GrowDetail({ growId }: { growId: string }) {
           </nav>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">
-              <h1 className="truncate text-2xl font-semibold tracking-tight text-white sm:text-3xl">{grow.name}</h1>
+              <h1 className="page-title truncate">{grow.name}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 <PhaseChip phase={phase} />
                 <Chip tone={grow.status === 'active' ? 'green' : grow.status === 'completed' ? 'sky' : 'neutral'}>{STATUS_LABEL[grow.status]}</Chip>
@@ -282,14 +282,15 @@ export function GrowDetail({ growId }: { growId: string }) {
         <button type="button" className="btn-ghost hidden sm:inline-flex" onClick={() => quick({ kind: 'plant', growId })}>
           <Sprout className="size-4" /> Pflanze
         </button>
-        <button type="button" className="btn-ghost hidden sm:inline-flex" onClick={() => setModal('edit')}>
+        {/* Seltener genutzt: ab sehr breiten Ansichten sichtbar, sonst im Menü „…“ (6.0.1) */}
+        <button type="button" className="btn-ghost hidden xl:inline-flex" onClick={() => setModal('edit')}>
           <Pencil className="size-4" /> Bearbeiten
         </button>
-        <a href={href(`grows/${growId}/report`)} className="btn-ghost hidden sm:inline-flex">
+        <a href={href(`grows/${growId}/report`)} className="btn-ghost hidden xl:inline-flex">
           <FileText className="size-4" /> Bericht
         </a>
         <ShareButton store="grows" ids={[growId]} />
-        <a href={href(`grows/${growId}/experiments`)} className="btn-ghost hidden sm:inline-flex">
+        <a href={href(`grows/${growId}/experiments`)} className="btn-ghost hidden xl:inline-flex">
           <FlaskConical className="size-4" /> Experimente
         </a>
         <div className="ml-auto">

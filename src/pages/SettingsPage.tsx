@@ -2,7 +2,7 @@ import { useAuth, useIsServerMode } from '../app/auth';
 import { InstallInstructions } from '../app/pwaUi';
 import { applyUpdate, checkForUpdate, promptInstall, swVersion, usePwa } from '../lib/pwa/pwa';
 import { reduceMotionPref, setReduceMotionPref } from '../lib/pwa/prefs';
-import { ArrowDown, ArrowUp, Bell, Download, Eye, EyeOff, Globe, Info, LayoutDashboard, Lock, RefreshCw, Settings, Smartphone, Trash2 } from 'lucide-react';
+import { Bell, Download, Globe, Info, Lock, RefreshCw, Settings, Smartphone, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { catalog } from '../lib/catalog/service';
 import { fmtDateTime, nowLocal } from '../lib/dates';
@@ -15,20 +15,6 @@ import { Card } from '../components/ui/Card';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Toggle } from '../components/ui/Toggle';
 import { DB_VERSION } from '../lib/db/database';
-import type { DashboardWidget } from '../lib/db/types';
-
-const WIDGET_LABEL: Record<DashboardWidget, string> = {
-  stats: 'Kennzahlen',
-  grows: 'Aktive Grows',
-  reminders: 'Erinnerungen',
-  photos: 'Neueste Fotos',
-  activity: 'Letzte Aktivitäten',
-  measurements: 'Letzte Messwerte',
-  journal: 'Journal',
-  calculations: 'Gespeicherte Berechnungen',
-  strains: 'Zuletzt bearbeitete Sorten',
-  favorites: 'Favoriten',
-};
 
 const CURRENCIES = ['EUR', 'CHF', 'USD', 'GBP', 'CAD'];
 
@@ -36,55 +22,28 @@ export function SettingsPage() {
   const server = useIsServerMode();
   const { settings, updateSettings } = useData();
   const toast = useToast();
-  const order = settings.dashboardOrder;
-  const hidden = new Set(settings.dashboardHidden);
-
-  const move = (i: number, d: -1 | 1) => {
-    const j = i + d;
-    if (j < 0 || j >= order.length) return;
-    const next = [...order];
-    [next[i], next[j]] = [next[j]!, next[i]!];
-    updateSettings({ dashboardOrder: next });
-  };
-  const toggle = (w: DashboardWidget) => {
-    const s = new Set(hidden);
-    if (s.has(w)) s.delete(w);
-    else s.add(w);
-    updateSettings({ dashboardHidden: [...s] });
-  };
-
   return (
     <div>
       <PageHeader title="Einstellungen" subtitle={server ? 'Anzeige und Verhalten von TERPGRID – mit deinem Konto synchronisiert.' : 'Anzeige und Verhalten von TERPGRID – gespeichert in diesem Browser.'} />
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <Card title="Übersicht anpassen" subtitle="Reihenfolge und Sichtbarkeit der Dashboard-Karten" icon={<LayoutDashboard className="size-4" />}>
-          <ol className="space-y-1.5">
-            {order.map((w, i) => (
-              <li key={w} className={`flex items-center justify-between gap-2 rounded-lg border border-white/[0.06] px-3 py-2 ${hidden.has(w) ? 'opacity-50' : ''}`}>
-                <span className="text-[13px] text-ink-100">{WIDGET_LABEL[w]}</span>
-                <span className="flex gap-1">
-                  <button type="button" className="btn-ghost p-1" aria-label={`${WIDGET_LABEL[w]} nach oben`} disabled={i === 0} onClick={() => move(i, -1)}>
-                    <ArrowUp className="size-3.5" />
-                  </button>
-                  <button type="button" className="btn-ghost p-1" aria-label={`${WIDGET_LABEL[w]} nach unten`} disabled={i === order.length - 1} onClick={() => move(i, 1)}>
-                    <ArrowDown className="size-3.5" />
-                  </button>
-                  <button type="button" className="btn-ghost p-1" aria-pressed={!hidden.has(w)} aria-label={hidden.has(w) ? `${WIDGET_LABEL[w]} einblenden` : `${WIDGET_LABEL[w]} ausblenden`} onClick={() => toggle(w)}>
-                    {hidden.has(w) ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
-                  </button>
-                </span>
-              </li>
-            ))}
-          </ol>
-          <button type="button" className="btn-ghost mt-3 py-1.5 text-xs" onClick={() => updateSettings({ dashboardOrder: [], dashboardHidden: [] }).then(() => toast('Standard wiederhergestellt'))}>
-            Standard wiederherstellen
-          </button>
-        </Card>
-
+      <div className="max-w-3xl">
         <div className="space-y-5">
           <Card title="Allgemein" icon={<Settings className="size-4" />}>
             <div className="space-y-5">
               <SelectField label="Währung" value={settings.currency} onChange={(v) => v && updateSettings({ currency: v })} options={CURRENCIES.map((c) => ({ value: c, label: c }))} hint="Für Ausgaben, Sammlung und Rechner. Beträge werden nicht umgerechnet." />
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="label">Übersicht</div>
+                  <p className="hint">Reihenfolge und Sichtbarkeit der Bereiche stellst du direkt auf der Übersicht über „Anpassen“ ein.</p>
+                </div>
+                <div className="flex gap-2">
+                  <a href={href('')} className="btn-ghost py-1.5 text-xs">
+                    Zur Übersicht
+                  </a>
+                  <button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => updateSettings({ dashboardOrder: [], dashboardHidden: [] }).then(() => toast('Standard wiederhergestellt'))}>
+                    Standard wiederherstellen
+                  </button>
+                </div>
+              </div>
               <Toggle
                 label="Hinweise zur Risikominderung"
                 checked={settings.showHarmReduction}

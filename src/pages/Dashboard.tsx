@@ -1,156 +1,101 @@
-import { ActiveGrowRow } from '../components/grow/ActiveGrowPanel';
-import { fmt } from '../lib/format';
-import { METRICS, metricSeries } from '../lib/grow/series';
-import { CONTEXT_LABEL } from '../lib/grow/measure';
-import { useIsServerMode } from '../app/auth';
-import { type TimelineKind, buildTimeline } from '../lib/timeline';
+/**
+ * Übersicht 3.0 (6.0.1): ein ruhiger Blick auf die ganze Plattform statt einer Sammlung von Grow-Karten.
+ *
+ * - Nur Daten dieses Kontos (lokale Arbeitskopie) und der bereits vorhandene Zähler ungelesener
+ *   Benachrichtigungen – keine zusätzlichen Serveranfragen, keine fremden Inhalte, keine erfundenen Zahlen.
+ * - Adaptiv nach einfachen, festen Regeln: Bereiche ohne Daten werden nicht als leere Karten gezeigt.
+ * - Reihenfolge und Sichtbarkeit bleiben über „Anpassen“ einstellbar (dashboardOrder/dashboardHidden).
+ */
 import {
   ArrowDown,
   ArrowRight,
   ArrowUp,
+  Bell,
+  BookOpen,
   BookOpenText,
   Bookmark,
   Calculator,
-  CalendarClock,
+  CalendarDays,
   Camera,
   Check,
+  Compass,
+  Dna,
+  Droplets,
   Eye,
   EyeOff,
-  History,
-  Images,
+  Flag,
+  FlaskRound,
+  Gauge,
   Leaf,
   type LucideIcon,
-  Plus,
+  Package,
+  Search,
   Settings2,
   ShieldCheck,
   Sprout,
-  Bell,
-  Flag,
-  FlaskRound,
-  Gauge, NotebookPen, Ruler } from 'lucide-react';
-import { type ReactNode, useMemo, useState } from 'react';
+  Store,
+  Users,
+} from 'lucide-react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { useData, useLookup } from '../app/DataProvider';
 import { useQuickActions } from '../app/QuickActions';
 import { errorText, useToast } from '../app/Toasts';
+import { useIsServerMode } from '../app/auth';
+import { useCollabAvailable, useUnread } from '../app/collab';
 import { href } from '../app/router';
-import { Stars } from '../components/forms/Fields';
+import { ActiveGrowRow } from '../components/grow/ActiveGrowPanel';
 import { PhotoGrid } from '../components/photos/PhotoGrid';
-import { PhotoImg } from '../components/photos/PhotoImg';
 import { Card } from '../components/ui/Card';
-import { Chip, PhaseChip } from '../components/ui/Chip';
-import { EmptyState } from '../components/ui/EmptyState';
 import { nextPerReminder, repeatLabel } from '../lib/calendar';
 import { fmtDateLong, fmtDateShort, fmtDateTime, relativeDay, today } from '../lib/dates';
 import { toggleReminderCompletion } from '../lib/db/repo';
-import { DASHBOARD_WIDGETS, type DashboardWidget, type GrowProject } from '../lib/db/types';
-import { METHOD_LABEL, REMINDER_CATEGORY_LABEL } from '../lib/grow/labels';
-import { PHASE_COLOR, currentPhase, growDay, phaseSpans } from '../lib/grow/phases';
+import { DASHBOARD_WIDGETS, type DashboardWidget } from '../lib/db/types';
+import { REMINDER_CATEGORY_LABEL } from '../lib/grow/labels';
+import { type TimelineKind, buildTimeline } from '../lib/timeline';
 
 const WIDGET_META: Record<DashboardWidget, { label: string; span: string }> = {
   stats: { label: 'Kennzahlen', span: 'lg:col-span-3' },
-  grows: { label: 'Aktive Grows', span: 'lg:col-span-3' },
-  reminders: { label: 'Anstehende Erinnerungen', span: 'lg:col-span-1' },
+  reminders: { label: 'Heute & demnächst', span: 'lg:col-span-1' },
+  grows: { label: 'Aktive Grows', span: 'lg:col-span-2' },
+  activity: { label: 'Letzte Aktivitäten', span: 'lg:col-span-2' },
+  areas: { label: 'Deine Bereiche', span: 'lg:col-span-1' },
+  discover: { label: 'Weiter entdecken', span: 'lg:col-span-1' },
   photos: { label: 'Neueste Fotos', span: 'lg:col-span-2' },
-  activity: { label: 'Letzte Aktivitäten', span: 'lg:col-span-1' },
-  measurements: { label: 'Letzte Messwerte', span: 'lg:col-span-1' },
-  journal: { label: 'Journal', span: 'lg:col-span-1' },
-  calculations: { label: 'Gespeicherte Berechnungen', span: 'lg:col-span-1' },
-  strains: { label: 'Zuletzt bearbeitete Sorten', span: 'lg:col-span-1' },
-  favorites: { label: 'Favoriten', span: 'lg:col-span-1' },
 };
 
-function QuickAction({ icon: Icon, label, onClick, to, disabled, hint, primary }: { icon: LucideIcon; label: string; onClick?: () => void; to?: string; disabled?: boolean; hint?: string; primary?: boolean }) {
-  const cls = `inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border px-3.5 text-[13px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${
-    primary ? 'border-leaf-500/40 bg-leaf-500 text-ink-950 hover:bg-leaf-400' : 'border-white/[0.07] bg-ink-900/70 text-ink-100 hover:border-white/[0.16] hover:bg-ink-850'
-  }`;
-  const inner = (
-    <>
-      <Icon className={`size-4 ${primary ? '' : 'text-leaf-400'}`} />
-      {label}
-    </>
-  );
-  return to ? (
-    <a href={href(to)} className={cls}>
-      {inner}
-    </a>
-  ) : (
-    <button type="button" className={cls} onClick={onClick} disabled={disabled} title={disabled ? hint : undefined}>
-      {inner}
-    </button>
-  );
-}
+const KIND_ICON: Record<TimelineKind, LucideIcon> = { milestone: Flag, activity: Sprout, measurement: Gauge, photo: Camera, journal: BookOpenText, strain: Leaf, collection: Package, lab: FlaskRound, reminder: Bell };
 
-function greeting(now = new Date()): string {
-  const h = now.getHours();
-  return h < 5 ? 'Gute Nacht' : h < 11 ? 'Guten Morgen' : h < 18 ? 'Hallo' : 'Guten Abend';
-}
-
-function StatTile({ label, value, to, sub }: { label: string; value: number | string; to: string; sub?: string }) {
+function Metric({ label, value, to, sub }: { label: string; value: number; to: string; sub?: string }) {
   return (
-    <a href={href(to)} className="flex items-baseline justify-between gap-2 rounded-xl border border-white/[0.06] bg-white/[0.015] px-3.5 py-2.5 transition-colors hover:border-white/[0.12]">
-      <span className="min-w-0">
-        <span className="block truncate text-[12px] text-ink-400">{label}</span>
-        {sub && <span className="block truncate text-[11px] text-ink-500">{sub}</span>}
-      </span>
-      <span className="font-mono text-xl font-semibold tabular text-ink-50">{value}</span>
+    <a href={href(to)} className="group min-w-0 px-4 py-3 transition-colors hover:bg-white/[0.02] sm:px-5">
+      <div className="font-mono text-[22px] font-semibold leading-none tabular text-ink-50">{value}</div>
+      <div className="mt-1.5 truncate text-[12px] text-ink-400 group-hover:text-ink-200">{label}</div>
+      {sub && <div className="truncate text-[11px] text-ink-500">{sub}</div>}
     </a>
   );
 }
 
-export function GrowCard({ grow, compact }: { grow: GrowProject; compact?: boolean }) {
-  const { data } = useData();
-  const plants = data.plants.filter((p) => p.growId === grow.id);
-  const photos = data.photos.filter((p) => p.growId === grow.id);
-  const t = today();
-  const day = growDay(grow.startDate, t, grow.completedDate);
-  const phase = currentPhase(grow.phaseDates, t);
-  const spans = phaseSpans(grow.phaseDates, t, grow.completedDate);
-  const total = spans.reduce((s, x) => s + Math.max(1, x.days), 0);
-  const cover = grow.coverPhotoId ?? [...photos].sort((a, b) => b.takenAt.localeCompare(a.takenAt))[0]?.id;
+function AreaRow({ icon: Icon, label, to, count, detail }: { icon: LucideIcon; label: string; to: string; count?: number; detail?: string }) {
   return (
-    <a href={href(`grows/${grow.id}`)} className="group block overflow-hidden rounded-xl border border-white/[0.06] bg-ink-900/60 transition-all hover:border-white/[0.12]">
-      <div className={`relative ${compact ? 'h-24' : 'h-32'} overflow-hidden bg-ink-850`}>
-        <PhotoImg photoId={cover} alt={`Titelbild ${grow.name}`} className="h-full w-full transition-transform duration-500 group-hover:scale-[1.03]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink-950/90 via-ink-950/20 to-transparent" />
-        <div className="absolute bottom-2.5 left-3 right-3 flex items-end justify-between gap-2">
-          <div className="min-w-0">
-            <div className="truncate text-[14px] font-semibold text-ink-50">{grow.name}</div>
-            <div className="text-[11px] text-ink-300">
-              seit {fmtDateShort(grow.startDate)} · {plants.length} {plants.length === 1 ? 'Pflanze' : 'Pflanzen'}
-            </div>
-          </div>
-          {day !== undefined ? (
-            <div className="shrink-0 rounded-lg border border-white/10 bg-black/50 px-2 py-1 text-right backdrop-blur">
-              <div className="text-[9px] uppercase tracking-wider text-ink-400">Tag</div>
-              <div className="font-mono text-base font-semibold leading-none text-ink-50">{day}</div>
-            </div>
-          ) : (
-            <Chip tone="sky">startet {relativeDay(grow.startDate)}</Chip>
-          )}
-        </div>
-      </div>
-      <div className="space-y-2.5 px-3 py-3">
-        <div className="flex items-center justify-between gap-2">
-          <PhaseChip phase={phase} />
-          <span className="text-[11px] text-ink-500">{photos.length} Fotos</span>
-        </div>
-        {spans.length > 0 ? (
-          <div className="flex h-1.5 overflow-hidden rounded-full bg-ink-700" aria-label="Erfasste Phasen">
-            {spans.map((s) => (
-              <div key={s.phase} title={`${s.phase}: ${s.days} Tage`} style={{ width: `${(Math.max(1, s.days) / total) * 100}%`, background: PHASE_COLOR[s.phase], opacity: s.ongoing ? 1 : 0.6 }} />
-            ))}
-          </div>
-        ) : (
-          <div className="h-1.5 rounded-full bg-ink-700" title="Noch keine Meilensteine erfasst" />
-        )}
-      </div>
-    </a>
+    <li>
+      <a href={href(to)} className="flex items-center gap-3 py-2 text-[13px] hover:text-ink-50">
+        <Icon className="size-4 shrink-0 text-ink-500" />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-medium text-ink-100">{label}</span>
+          {detail && <span className="block truncate text-[11px] text-ink-500">{detail}</span>}
+        </span>
+        {count !== undefined && <span className="font-mono text-[12px] tabular text-ink-400">{count}</span>}
+      </a>
+    </li>
   );
 }
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 export function Dashboard() {
-  const activeGrowCount = useData().data.grows.filter((g) => g.status === 'active').length;
   const server = useIsServerMode();
+  const collabOn = useCollabAvailable();
+  const unread = useUnread(collabOn);
   const { data, settings, updateSettings, ready } = useData();
   const lookup = useLookup();
   const quick = useQuickActions();
@@ -158,25 +103,32 @@ export function Dashboard() {
   const [customize, setCustomize] = useState(false);
   const t = today();
 
-  const activeGrows = data.grows.filter((g) => g.status === 'active').sort((a, b) => b.startDate.localeCompare(a.startDate));
+  const activeGrows = useMemo(() => data.grows.filter((g) => g.status === 'active').sort((a, b) => b.startDate.localeCompare(a.startDate)), [data.grows]);
   const activeIds = new Set(activeGrows.map((g) => g.id));
   const trackedPlants = data.plants.filter((p) => activeIds.has(p.growId));
   const latestPhotos = useMemo(() => [...data.photos].sort((a, b) => b.takenAt.localeCompare(a.takenAt)).slice(0, 12), [data.photos]);
-  const nextRem = useMemo(() => nextPerReminder(data.reminders, t, 14), [data.reminders, t]);
-  const recentJournal = [...data.journal].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
-  const recentCalcs = [...data.calculations].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 4);
-  const favorites = data.strains.filter((x) => x.favorite).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 5);
-  const recentStrains = [...data.strains].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 4);
+  const upcoming = useMemo(() => nextPerReminder(data.reminders, t, 7), [data.reminders, t]);
+  const late = upcoming.filter((o) => o.late).length;
+  const favorites = useMemo(() => data.strains.filter((x) => x.favorite).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 4), [data.strains]);
+  const lastOf = <T extends { updatedAt: string }>(xs: T[]) => (xs.length ? xs.reduce((a, b) => (a.updatedAt > b.updatedAt ? a : b)).updatedAt : undefined);
 
-  // Aktivitätsverlauf: dieselbe Ableitung wie die Seite „Verlauf“ (keine doppelte Logik)
-  const timeline = useMemo(() => {
-    const icon: Record<TimelineKind, LucideIcon> = { milestone: Flag, activity: Sprout, measurement: Gauge, photo: Camera, journal: BookOpenText, strain: Leaf, lab: FlaskRound, reminder: Bell };
-    return buildTimeline(data, { today: t })
-      .slice(0, 8)
-      .map((e) => ({ id: e.id, at: e.at, icon: icon[e.kind], text: e.title, sub: e.subtitle, to: e.to }));
-  }, [data, t]);
+  // Ein gemeinsamer Verlauf über alle Module (dieselbe Ableitung wie die Seite „Verlauf“)
+  const timeline = useMemo(() => buildTimeline(data, { today: t }).slice(0, 7), [data, t]);
 
-  const isEmpty = ready && data.grows.length === 0 && data.journal.length === 0 && data.strains.length === 0 && data.calculations.length === 0 && data.photos.length === 0;
+  // Academy: begonnene, nicht abgeschlossene Artikel – Titel werden nur bei Bedarf nachgeladen
+  const reading = useMemo(() => Object.entries(settings.kbProgress).filter(([, p]) => p > 0 && p < 1), [settings.kbProgress]);
+  const readCount = Object.values(settings.kbProgress).filter((p) => p >= 1).length;
+  const [kbTitles, setKbTitles] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (reading.length === 0) return;
+    let live = true;
+    void import('../lib/knowledge').then((m) => live && setKbTitles(Object.fromEntries(m.KB_ARTICLES.map((a) => [a.id, a.title]))));
+    return () => {
+      live = false;
+    };
+  }, [reading.length]);
+
+  const isEmpty = ready && data.grows.length === 0 && data.journal.length === 0 && data.strains.length === 0 && data.calculations.length === 0 && data.photos.length === 0 && data.inventory.length === 0 && data.labReports.length === 0;
 
   const order = settings.dashboardOrder.length ? settings.dashboardOrder : [...DASHBOARD_WIDGETS];
   const hidden = new Set(settings.dashboardHidden);
@@ -196,66 +148,83 @@ export function Dashboard() {
     await updateSettings({ dashboardHidden: [...set] });
   }
 
-  const activeActs = data.activities.filter((a) => activeIds.has(a.growId));
-  const latestMeasures = METRICS.map((m) => {
-    const p = metricSeries(activeActs, m.key).at(-1);
-    const ctxKey = m.contextKey;
-    const c = p && ctxKey ? activeActs.find((a) => a.id === p.activityId)?.measurements?.[ctxKey] : undefined;
-    return p ? { m, p, ctx: c ? CONTEXT_LABEL[c] : undefined } : null;
-  })
-    .filter((x): x is NonNullable<typeof x> => !!x)
-    .slice(0, 6);
+  // Kennzahlen: nur, was für dieses Konto Aussagekraft hat (keine Nullen)
+  const metrics = [
+    activeGrows.length > 0 && { label: 'Aktive Grows', value: activeGrows.length, to: 'grows', sub: plural(trackedPlants.length, 'Pflanze', 'Pflanzen') },
+    upcoming.length > 0 && { label: 'Aufgaben in 7 Tagen', value: upcoming.length, to: 'calendar', sub: late ? `${late} überfällig` : undefined },
+    data.journal.length > 0 && { label: 'Journal-Einträge', value: data.journal.length, to: 'journal' },
+    data.inventory.length > 0 && { label: 'In der Sammlung', value: data.inventory.length, to: 'collection' },
+    data.strains.length > 0 && { label: 'Eigene Sorten', value: data.strains.length, to: 'strains' },
+    data.photos.length > 0 && { label: 'Fotos', value: data.photos.length, to: 'photos' },
+  ]
+    .filter((m): m is { label: string; value: number; to: string; sub?: string } => !!m)
+    .slice(0, 4);
+
+  const friendNews = (unread.byCategory.friends ?? 0) + (unread.byCategory.invites ?? 0);
+  const spaceNews = (unread.byCategory.comments ?? 0) + (unread.byCategory.updates ?? 0) + (unread.byCategory.access ?? 0);
+
+  // Bereiche mit Daten; ohne Daten erscheinen sie nur in einer kurzen Zeile zum Anlegen
+  const areas: { icon: LucideIcon; label: string; to: string; count: number; detail?: string }[] = [
+    { icon: BookOpenText, label: 'Journal', to: 'journal', count: data.journal.length, detail: lastOf(data.journal) && `zuletzt ${relativeDay(lastOf(data.journal)!.slice(0, 10), t)}` },
+    { icon: Package, label: 'Sammlung', to: 'collection', count: data.inventory.length },
+    { icon: Leaf, label: 'Meine Sorten', to: 'strains', count: data.strains.length, detail: favorites.length ? `${plural(data.strains.filter((s) => s.favorite).length, 'Favorit', 'Favoriten')}` : undefined },
+    { icon: FlaskRound, label: 'Laborberichte', to: 'lab-reports', count: data.labReports.length },
+    { icon: Calculator, label: 'Gespeicherte Berechnungen', to: 'lab/saved', count: data.calculations.length },
+    { icon: CalendarDays, label: 'Kalender', to: 'calendar', count: data.reminders.length, detail: upcoming.length ? `${upcoming.length} in den nächsten 7 Tagen` : undefined },
+  ];
+  const filledAreas = areas.filter((a) => a.count > 0);
+  const emptyAreas = areas.filter((a) => a.count === 0);
+
+  /** Adaptiv: Bereiche ohne Inhalt entfallen (außer im Anpassen-Modus, damit sie einstellbar bleiben). */
+  const hasContent: Record<DashboardWidget, boolean> = {
+    stats: metrics.length > 0,
+    reminders: upcoming.length > 0 || friendNews > 0 || spaceNews > 0,
+    grows: activeGrows.length > 0,
+    activity: timeline.length > 0,
+    areas: true,
+    discover: true,
+    photos: latestPhotos.length > 0,
+  };
+
+  const linkBtn = (to: string, label: string) => (
+    <a href={href(to)} className="inline-flex items-center gap-1 text-[12px] text-ink-400 hover:text-ink-100">
+      {label} <ArrowRight className="size-3.5" />
+    </a>
+  );
+
   const widgets: Record<DashboardWidget, ReactNode> = {
     stats: (
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <StatTile label="Aktive Grows" value={activeGrows.length} to="grows" sub={`${data.grows.length} insgesamt`} />
-        <StatTile label="Pflanzen (aktiv)" value={trackedPlants.length} to="grows" sub={`${data.plants.length} insgesamt`} />
-        <StatTile label="Fotos" value={data.photos.length} to="photos" />
-        <StatTile label="Journal-Einträge" value={data.journal.length} to="journal" />
-      </div>
-    ),
-    grows: (
-      <Card
-        title="Aktive Grows"
-        icon={<Sprout className="size-4" />}
-        actions={
-          <a href={href('grows')} className="btn-ghost py-1.5 text-xs">
-            Alle <ArrowRight className="size-3.5" />
-          </a>
-        }
-      >
-        {activeGrows.length === 0 ? (
-          <EmptyState compact icon={<Sprout />} title="Kein aktiver Grow" text="Lege ein Projekt an, um Pflanzen, Fotos und Messwerte zu dokumentieren." action={<button type="button" className="btn-primary" onClick={() => quick({ kind: 'grow' })}><Plus className="size-4" /> Neuer Grow</button>} />
-        ) : (
-          <ul className={`grid gap-2.5 ${activeGrows.length > 1 ? 'xl:grid-cols-2' : ''}`}>
-            {activeGrows.slice(0, 4).map((g) => (
-              <ActiveGrowRow key={g.id} grow={g} />
-            ))}
-          </ul>
-        )}
-      </Card>
+      <section aria-label="Kennzahlen" className="card grid grid-cols-2 divide-white/[0.05] overflow-hidden sm:grid-cols-4 sm:divide-x [&>*:nth-child(n+3)]:border-t [&>*:nth-child(n+3)]:border-white/[0.05] sm:[&>*:nth-child(n+3)]:border-t-0">
+        {metrics.map((m) => (
+          <Metric key={m.label} {...m} />
+        ))}
+      </section>
     ),
     reminders: (
-      <Card
-        title="Erinnerungen"
-        subtitle="Nächste 14 Tage"
-        icon={<CalendarClock className="size-4" />}
-        actions={
-          <a href={href('calendar')} className="btn-ghost py-1.5 text-xs">
-            Kalender
+      <Card title="Heute & demnächst" icon={<CalendarDays />} actions={linkBtn('calendar', 'Kalender')}>
+        {friendNews + spaceNews > 0 && (
+          <a href={href('together/notifications')} className="mb-2 flex items-center gap-2.5 rounded-lg bg-leaf-500/[0.07] px-3 py-2 text-[13px] text-leaf-100 hover:bg-leaf-500/[0.12]">
+            <Users className="size-4 shrink-0 text-leaf-300" />
+            <span className="min-w-0 flex-1 truncate">
+              {[friendNews > 0 && `${friendNews} Anfrage${friendNews === 1 ? '' : 'n'} oder Einladung${friendNews === 1 ? '' : 'en'}`, spaceNews > 0 && `${spaceNews} Neuigkeit${spaceNews === 1 ? '' : 'en'} in Bereichen`].filter(Boolean).join(' · ')}
+            </span>
+            <ArrowRight className="size-3.5 shrink-0" />
           </a>
-        }
-      >
-        {nextRem.length === 0 ? (
-          <EmptyState compact title="Nichts geplant" text="Eigene Erinnerungen erscheinen hier und im Kalender." action={<a href={href('calendar?new=1')} className="btn-ghost"><Plus className="size-4" /> Erinnerung</a>} />
+        )}
+        {upcoming.length === 0 ? (
+          <p className="hint">Keine Aufgaben in den nächsten 7 Tagen.</p>
         ) : (
-          <ul className="space-y-1.5">
-            {nextRem.slice(0, 6).map((o) => (
-              <li key={`${o.reminder.id}-${o.date}`} className="flex items-center gap-3 rounded-lg px-1 py-1.5">
+          <ul className="list-rows">
+            {upcoming.slice(0, 6).map((o) => (
+              <li key={`${o.reminder.id}-${o.date}`} className="flex items-center gap-3 py-2">
                 <button
                   type="button"
                   aria-label={`${o.reminder.title} als erledigt markieren`}
-                  onClick={() => toggleReminderCompletion(o.reminder, o.date).then(() => toast('Erledigt', { action: { label: 'Rückgängig', run: () => toggleReminderCompletion({ ...o.reminder, completedDates: [...o.reminder.completedDates, o.date] }, o.date) } })).catch((e) => toast(errorText(e), { tone: 'error' }))}
+                  onClick={() =>
+                    toggleReminderCompletion(o.reminder, o.date)
+                      .then(() => toast('Erledigt', { action: { label: 'Rückgängig', run: () => toggleReminderCompletion({ ...o.reminder, completedDates: [...o.reminder.completedDates, o.date] }, o.date) } }))
+                      .catch((e) => toast(errorText(e), { tone: 'error' }))
+                  }
                   className="grid size-5 shrink-0 place-items-center rounded-md border border-white/20 text-transparent transition-colors hover:border-leaf-400 hover:text-leaf-400"
                 >
                   <Check className="size-3.5" />
@@ -266,7 +235,6 @@ export function Dashboard() {
                     {REMINDER_CATEGORY_LABEL[o.reminder.category] ?? 'Sonstiges'}
                     {repeatLabel(o.reminder.repeat) && ` · ${repeatLabel(o.reminder.repeat)}`}
                     {o.reminder.growId && ` · ${lookup.grow.get(o.reminder.growId)?.name ?? ''}`}
-                    {o.more > 0 && ` · +${o.more} weitere in 14 Tagen`}
                   </div>
                 </div>
                 <span className={`shrink-0 text-[11px] ${o.late ? 'text-amber-300' : o.date === t ? 'text-leaf-300' : 'text-ink-400'}`}>{o.late ? `überfällig · ${fmtDateShort(o.date)}` : relativeDay(o.date, t)}</span>
@@ -276,202 +244,146 @@ export function Dashboard() {
         )}
       </Card>
     ),
-    photos: (
-      <Card
-        title="Neueste Fotos"
-        icon={<Images className="size-4" />}
-        actions={
-          <>
-            <button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => quick({ kind: 'photo' })}>
-              <Camera className="size-3.5" /> Hochladen
-            </button>
-            <a href={href('photos')} className="btn-ghost py-1.5 text-xs">
-              Alle
-            </a>
-          </>
-        }
-      >
-        {latestPhotos.length === 0 ? (
-          <EmptyState compact icon={<Camera />} title="Noch keine Fotos" text={server ? 'Fotos werden verschlüsselt auf deinem TERPGRID-Server gespeichert und synchronisiert. Standortdaten (GPS) werden beim Import entfernt.' : 'Fotos bleiben in diesem Browser. Standortdaten (GPS) werden beim Import entfernt.'} />
-        ) : (
-          <PhotoGrid photos={latestPhotos} group={false} dense />
-        )}
+    grows: (
+      <Card title="Aktive Grows" icon={<Sprout />} actions={linkBtn('grows', 'Alle Grows')}>
+        <ul className={`grid gap-2.5 ${activeGrows.length > 1 ? 'xl:grid-cols-2' : ''}`}>
+          {activeGrows.slice(0, 4).map((g) => (
+            <ActiveGrowRow key={g.id} grow={g} />
+          ))}
+        </ul>
       </Card>
     ),
     activity: (
-      <Card
-        title="Letzte Aktivitäten"
-        icon={<History className="size-4" />}
-        actions={
-          <a href={href('timeline')} className="text-[12px] text-leaf-300 hover:underline">
-            Ganzer Verlauf
-          </a>
-        }
-      >
-        {timeline.length === 0 ? (
-          <EmptyState compact title="Noch keine Aktivitäten" />
-        ) : (
-          <ol className="relative space-y-3 before:absolute before:inset-y-1 before:left-[11px] before:w-px before:bg-white/[0.06]">
-            {timeline.map((i) => {
-              const Icon = i.icon;
-              const body = (
-                <>
-                  <span className="relative z-10 grid size-6 shrink-0 place-items-center rounded-full border border-white/[0.08] bg-ink-850 text-ink-400">
-                    <Icon className="size-3" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-[13px] text-ink-100">{i.text}</span>
-                    <span className="block truncate text-[11px] text-ink-500">
-                      {fmtDateTime(i.at)}
-                      {i.sub && ` · ${i.sub}`}
-                    </span>
-                  </span>
-                </>
-              );
-              return (
-                <li key={i.id}>
-                  {i.to ? (
-                    <a href={href(i.to)} className="flex items-start gap-3 rounded-md hover:bg-white/[0.02]">
-                      {body}
-                    </a>
-                  ) : (
-                    <div className="flex items-start gap-3">{body}</div>
-                  )}
-                </li>
-              );
-            })}
-          </ol>
-        )}
-      </Card>
-    ),
-    journal: (
-      <Card title="Journal" icon={<BookOpenText className="size-4" />} actions={<a href={href('journal')} className="btn-ghost py-1.5 text-xs">Alle</a>}>
-        {recentJournal.length === 0 ? (
-          <EmptyState compact title="Keine Einträge" text="Das Journal ist optional und privat." action={<button type="button" className="btn-ghost" onClick={() => quick({ kind: 'journal' })}><Plus className="size-4" /> Eintrag</button>} />
-        ) : (
-          <ul className="divide-y divide-white/[0.05]">
-            {recentJournal.map((j) => (
-              <li key={j.id} className="py-2.5 first:pt-0 last:pb-0">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-[13px] font-medium text-ink-100">{(j.strainId && lookup.strain.get(j.strainId)?.name) || j.strainName || METHOD_LABEL[j.method]}</span>
-                  <Stars value={j.rating} size="xs" />
-                </div>
-                <div className="text-[11px] text-ink-500">
-                  {fmtDateTime(j.date)} · {METHOD_LABEL[j.method]}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
-    ),
-    calculations: (
-      <Card title="Berechnungen" icon={<Bookmark className="size-4" />} actions={<a href={href('lab/saved')} className="btn-ghost py-1.5 text-xs">Alle</a>}>
-        {recentCalcs.length === 0 ? (
-          <EmptyState compact title="Nichts gespeichert" text="Ergebnisse aus dem THC Lab lassen sich lokal speichern." action={<a href={href('lab/edibles')} className="btn-ghost"><Calculator className="size-4" /> THC Lab</a>} />
-        ) : (
-          <ul className="divide-y divide-white/[0.05]">
-            {recentCalcs.map((c) => (
-              <li key={c.id} className="py-2.5 first:pt-0 last:pb-0">
-                <div className="truncate text-[13px] font-medium text-ink-100">{c.name}</div>
-                <div className="truncate font-mono text-[11px] text-ink-400">{Object.values(c.summary)[1] ?? Object.values(c.summary)[0]}</div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
-    ),
-    measurements: (
-      <Card title="Letzte Messwerte" subtitle="Aktive Grows – jeweils der jüngste erfasste Wert" icon={<Ruler className="size-4" />}>
-        {latestMeasures.length === 0 ? (
-          <EmptyState compact title="Noch keine Messwerte" text="pH, EC, Klima oder Höhe per Schnell-Log erfassen." action={activeGrows.length > 0 ? <button type="button" className="btn-ghost" onClick={() => quick({ kind: 'log' })}><NotebookPen className="size-4" /> Schnell-Log</button> : undefined} />
-        ) : (
-          <dl className="grid grid-cols-2 gap-2">
-            {latestMeasures.map(({ m, p, ctx }) => (
-              <div key={m.key} className="rounded-lg border border-white/[0.05] bg-white/[0.015] px-2.5 py-2">
-                <dt className="truncate text-[11px] text-ink-400">{m.label}{ctx ? ` · ${ctx}` : ''}</dt>
-                <dd className="font-mono text-[15px] tabular text-ink-50">
-                  {fmt(p.value)} <span className="text-[11px] text-ink-400">{m.unit}</span>
-                </dd>
-                <dd className="text-[10px] text-ink-500">{relativeDay(p.date.slice(0, 10), t)}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
-      </Card>
-    ),
-    strains: (
-      <Card title="Sorten" icon={<Leaf className="size-4" />} actions={<a href={href('strains')} className="btn-ghost py-1.5 text-xs">Bibliothek</a>}>
-        {recentStrains.length === 0 ? (
-          <EmptyState compact title="Bibliothek leer" text="Eigene Sorten mit Notizen, Terpenen und Bewertung." />
-        ) : (
-          <ul className="space-y-2">
-            {recentStrains.map((s) => (
-              <li key={s.id}>
-                <a href={href(`strains/${s.id}`)} className="flex items-center gap-3 rounded-lg p-1 hover:bg-white/[0.03]">
-                  <PhotoImg photoId={s.coverPhotoId} alt="" className="size-10 shrink-0 rounded-lg" />
+      <Card title="Letzte Aktivitäten" icon={<BookOpen />} actions={linkBtn('timeline', 'Ganzer Verlauf')}>
+        <ol className="list-rows">
+          {timeline.map((e) => {
+            const Icon = KIND_ICON[e.kind];
+            return (
+              <li key={e.id}>
+                <a href={href(e.to)} className="flex items-center gap-3 py-2 hover:text-ink-50">
+                  <Icon className="size-4 shrink-0 text-ink-500" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] font-medium text-ink-100">{s.name}</span>
-                    <span className="block text-[11px] text-ink-500">bearbeitet {relativeDay(s.updatedAt.slice(0, 10), t)}</span>
+                    <span className="block truncate text-[13px] text-ink-100">{e.title}</span>
+                    {e.subtitle && <span className="block truncate text-[11px] text-ink-500">{e.subtitle}</span>}
                   </span>
-                  <Stars value={s.rating} size="xs" />
+                  <time className="shrink-0 text-[11px] text-ink-500" dateTime={e.at}>
+                    {e.at.length > 10 ? fmtDateTime(e.at) : fmtDateShort(e.at)}
+                  </time>
+                </a>
+              </li>
+            );
+          })}
+        </ol>
+      </Card>
+    ),
+    areas: (
+      <Card title="Deine Bereiche" icon={<Package />}>
+        {filledAreas.length > 0 && (
+          <ul className="list-rows">
+            {filledAreas.map((a) => (
+              <AreaRow key={a.label} {...a} />
+            ))}
+          </ul>
+        )}
+        {emptyAreas.length > 0 && (
+          <p className={`hint ${filledAreas.length ? 'mt-2 border-t border-white/[0.05] pt-2.5' : ''}`}>
+            Noch leer:{' '}
+            {emptyAreas.map((a, i) => (
+              <span key={a.label}>
+                {i > 0 && ', '}
+                <a href={href(a.to)} className="text-ink-300 underline-offset-2 hover:text-ink-100 hover:underline">
+                  {a.label}
+                </a>
+              </span>
+            ))}
+          </p>
+        )}
+      </Card>
+    ),
+    discover: (
+      <Card title="Weiter entdecken" icon={<Compass />} actions={linkBtn('discover', 'Entdecken')}>
+        {(favorites.length > 0 || settings.recentCultivars.length > 0 || reading.length > 0) && (
+          <ul className="list-rows mb-2">
+            {reading.slice(0, 2).map(([id, p]) => (
+              <li key={id}>
+                <a href={href(`discover/learn/${id}`)} className="flex items-center gap-3 py-2 text-[13px]">
+                  <BookOpen className="size-4 shrink-0 text-ink-500" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-ink-100">{kbTitles[id] ?? 'Artikel weiterlesen'}</span>
+                    <span className="block text-[11px] text-ink-500">Cannabis 101 · {Math.round(p * 100)} % gelesen</span>
+                  </span>
                 </a>
               </li>
             ))}
-          </ul>
-        )}
-      </Card>
-    ),
-    favorites: (
-      <Card title="Favoriten" icon={<Bookmark className="size-4" />} actions={<a href={href('strains')} className="btn-ghost py-1.5 text-xs">Meine Sorten</a>}>
-        {favorites.length === 0 ? (
-          <EmptyState compact title="Noch keine Favoriten" text="Sorten in „Meine Sorten“ oder im Katalog merken." action={<a href={href('discover')} className="btn-ghost">Katalog öffnen</a>} />
-        ) : (
-          <ul className="space-y-1.5">
             {favorites.map((s) => (
               <li key={s.id}>
-                <a href={href(`strains/${s.id}`)} className="flex items-center gap-3 rounded-lg p-1 hover:bg-white/[0.03]">
-                  <PhotoImg photoId={s.coverPhotoId} alt="" className="size-9 shrink-0 rounded-lg" />
+                <a href={href(`strains/${s.id}`)} className="flex items-center gap-3 py-2 text-[13px]">
+                  <Bookmark className="size-4 shrink-0 text-ink-500" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] font-medium text-ink-100">{s.name}</span>
-                    <span className="block truncate text-[11px] text-ink-500">{s.breeder || 'Breeder: keine Angabe'}{s.external ? ' · Katalog' : ''}</span>
+                    <span className="block truncate text-ink-100">{s.name}</span>
+                    <span className="block truncate text-[11px] text-ink-500">Favorit{s.breeder ? ` · ${s.breeder}` : ''}</span>
+                  </span>
+                </a>
+              </li>
+            ))}
+            {settings.recentCultivars.slice(0, 3).map((c) => (
+              <li key={c.id}>
+                <a href={href(`discover/cultivar/${c.id}`)} className="flex items-center gap-3 py-2 text-[13px]">
+                  <Search className="size-4 shrink-0 text-ink-500" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-ink-100">{c.name}</span>
+                    <span className="block truncate text-[11px] text-ink-500">Zuletzt angesehen{c.breeder ? ` · ${c.breeder}` : ''}</span>
                   </span>
                 </a>
               </li>
             ))}
           </ul>
         )}
+        <div className="flex flex-wrap gap-1.5">
+          {[
+            { to: 'discover/breeders', label: 'Breeder', icon: Store },
+            { to: 'discover/genetics', label: 'Genetik', icon: Dna },
+            { to: 'discover/terpenes', label: 'Terpen-Atlas', icon: Droplets },
+            { to: 'discover/learn', label: readCount ? `Academy · ${readCount} gelesen` : 'Academy', icon: BookOpen },
+          ].map(({ to, label, icon: Icon }) => (
+            <a key={to} href={href(to)} className="inline-flex items-center gap-1.5 rounded-md border border-white/[0.07] px-2.5 py-1.5 text-[12px] text-ink-300 hover:border-white/[0.14] hover:text-ink-100">
+              <Icon className="size-3.5 text-ink-500" /> {label}
+            </a>
+          ))}
+        </div>
+      </Card>
+    ),
+    photos: (
+      <Card title="Neueste Fotos" icon={<Camera />} actions={linkBtn('photos', 'Alle Fotos')}>
+        <PhotoGrid photos={latestPhotos} group={false} dense />
       </Card>
     ),
   };
 
+  const summary = [
+    activeGrows.length > 0 && plural(activeGrows.length, 'aktiver Grow', 'aktive Grows'),
+    upcoming.length > 0 && `${plural(upcoming.length, 'Aufgabe', 'Aufgaben')} in 7 Tagen${late ? `, ${late} überfällig` : ''}`,
+    friendNews + spaceNews > 0 && plural(friendNews + spaceNews, 'Neuigkeit', 'Neuigkeiten'),
+  ].filter(Boolean);
+
+  const shown = order.filter((w) => customize || (!hidden.has(w) && hasContent[w]));
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between animate-fade-up">
-        <div>
-          <div className="text-xs text-ink-400">{fmtDateLong(t)}</div>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink-50 sm:text-[28px]">{greeting()}</h1>
-          <p className="mt-0.5 text-[13px] text-ink-400">
-            {activeGrows.length ? `${activeGrows.length} aktive${activeGrows.length === 1 ? 'r Grow' : ' Grows'} · ${trackedPlants.length} ${trackedPlants.length === 1 ? 'Pflanze' : 'Pflanzen'}` : 'Deine Übersicht'}
-            {nextRem.length > 0 && ` · ${nextRem.length} Erinnerung${nextRem.length === 1 ? '' : 'en'} in 14 Tagen`}
-            {nextRem.some((o) => o.late) && `, ${nextRem.filter((o) => o.late).length} überfällig`}
-          </p>
+    <div className="space-y-5">
+      <header className="flex flex-wrap items-end justify-between gap-3 animate-fade-up">
+        <div className="min-w-0">
+          <p className="text-[12px] text-ink-500">{fmtDateLong(t)}</p>
+          <h1 className="page-title mt-0.5">Übersicht</h1>
+          <p className="mt-0.5 text-[13px] text-ink-400">{summary.length ? summary.join(' · ') : 'Deine Übersicht'}</p>
         </div>
         {!isEmpty && (
-          <button type="button" className={`btn-ghost py-1.5 ${customize ? 'border-leaf-500/30 text-leaf-200' : ''}`} onClick={() => setCustomize((c) => !c)} aria-pressed={customize}>
-            <Settings2 className="size-4" /> {customize ? 'Fertig' : 'Anpassen'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button type="button" className={`btn-ghost py-1.5 ${customize ? 'border-leaf-500/30 text-leaf-200' : ''}`} onClick={() => setCustomize((c) => !c)} aria-pressed={customize}>
+              <Settings2 className="size-4" /> {customize ? 'Fertig' : 'Anpassen'}
+            </button>
+          </div>
         )}
-      </div>
-
-      <nav aria-label="Schnellaktionen" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 [&::-webkit-scrollbar]:hidden">
-        {activeGrowCount > 0 && <QuickAction icon={NotebookPen} label="Schnell-Log" onClick={() => quick({ kind: 'log' })} primary />}
-        <QuickAction icon={Sprout} label="Neuer Grow" onClick={() => quick({ kind: 'grow' })} />
-        <QuickAction icon={Plus} label="Pflanze" onClick={() => quick({ kind: 'plant' })} disabled={data.grows.length === 0} hint={data.grows.length === 0 ? 'Erst einen Grow anlegen' : undefined} />
-        <QuickAction icon={Camera} label="Foto" onClick={() => quick({ kind: 'photo' })} />
-        <QuickAction icon={BookOpenText} label="Journal" onClick={() => quick({ kind: 'journal' })} />
-        <QuickAction icon={Calculator} label="THC berechnen" to="lab/edibles" />
-      </nav>
+      </header>
 
       {isEmpty ? (
         <Card className="overflow-hidden" bodyClassName="p-0">
@@ -479,35 +391,23 @@ export function Dashboard() {
             <div className="p-6 sm:p-8">
               <h2 className="text-xl font-semibold tracking-tight text-ink-50">Willkommen bei TERPGRID</h2>
               <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink-400">
-                Dein persönlicher, privater Bereich für Growlogs, Fotos, Sorten-Notizen und den THC-Rechner. Noch ist alles leer – hier erscheinen ausschließlich deine
-                eigenen Einträge.
+                Dein persönlicher, privater Bereich für Grows, Fotos, Sorten-Notizen, Journal und das THC Lab. Noch ist alles leer – hier erscheinen ausschließlich deine eigenen Einträge.
               </p>
-              <ol className="mt-6 space-y-3">
-                {[
-                  ['Grow anlegen', 'Startdatum, Ort und Meilensteine erfassen.'],
-                  ['Pflanzen & Fotos hinzufügen', 'Jede Pflanze mit eigener Zeitleiste und Messwerten.'],
-                  ['Regelmäßig sichern', 'Backups unter „Daten & Backup“ exportieren.'],
-                ].map(([title, text], i) => (
-                  <li key={title} className="flex gap-3">
-                    <span className="grid size-6 shrink-0 place-items-center rounded-full border border-leaf-500/30 bg-leaf-500/10 font-mono text-[11px] text-leaf-300">{i + 1}</span>
-                    <span>
-                      <span className="block text-[13px] font-medium text-ink-100">{title}</span>
-                      <span className="block text-xs text-ink-500">{text}</span>
-                    </span>
-                  </li>
-                ))}
-              </ol>
               <div className="mt-6 flex flex-wrap gap-2">
                 <button type="button" className="btn-primary" onClick={() => quick({ kind: 'grow' })}>
                   <Sprout className="size-4" /> Ersten Grow anlegen
                 </button>
+                <a href={href('discover')} className="btn-ghost">
+                  <Compass className="size-4" /> Sorten entdecken
+                </a>
                 <a href={href('lab/edibles')} className="btn-ghost">
                   Zum THC Lab
                 </a>
               </div>
+              <p className="hint mt-5">Regelmäßig sichern: Backups unter „Daten & Backup“ exportieren.</p>
             </div>
-            <div className="border-t border-white/[0.05] bg-[radial-gradient(500px_300px_at_80%_0%,rgb(52_199_123/0.08),transparent)] p-6 sm:p-8 lg:border-l lg:border-t-0">
-              <ShieldCheck className="size-6 text-leaf-400" />
+            <div className="border-t border-white/[0.05] p-6 sm:p-8 lg:border-l lg:border-t-0">
+              <ShieldCheck className="size-5 text-leaf-400" />
               <h3 className="mt-3 text-[14px] font-semibold text-ink-100">Privat by Design</h3>
               <ul className="mt-3 space-y-2 text-[13px] text-ink-400">
                 {server ? (
@@ -524,7 +424,6 @@ export function Dashboard() {
                 )}
                 <li>• Standortdaten werden aus Fotos entfernt</li>
                 <li>• Vollständiger Export jederzeit möglich</li>
-                <li>• Online-Sortendaten (Discover) kommen von externen Quellen</li>
               </ul>
               <p className="hint mt-4">
                 {server ? 'Eine Kopie liegt zusätzlich unverschlüsselt in diesem Browser – auf gemeinsam genutzten Geräten beim Abmelden löschen.' : 'Browser-Daten sind gerätegebunden und können beim Löschen der Browserdaten verloren gehen.'}
@@ -533,30 +432,31 @@ export function Dashboard() {
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-5 lg:grid-flow-row-dense lg:grid-cols-3">
-          {order
-            .filter((w) => customize || !hidden.has(w))
-            .map((w, i, arr) => (
-              <div key={w} className={`${WIDGET_META[w].span} ${hidden.has(w) ? 'opacity-40' : ''} relative`}>
-                {customize && (
-                  <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-dashed border-white/[0.12] bg-ink-900 px-3 py-1.5">
-                    <span className="text-xs font-medium text-ink-300">{WIDGET_META[w].label}</span>
-                    <div className="flex items-center gap-1">
-                      <button type="button" className="btn-ghost p-1" aria-label={`${WIDGET_META[w].label} nach oben`} disabled={i === 0} onClick={() => move(w, -1)}>
-                        <ArrowUp className="size-3.5" />
-                      </button>
-                      <button type="button" className="btn-ghost p-1" aria-label={`${WIDGET_META[w].label} nach unten`} disabled={i === arr.length - 1} onClick={() => move(w, 1)}>
-                        <ArrowDown className="size-3.5" />
-                      </button>
-                      <button type="button" className="btn-ghost p-1" aria-label={hidden.has(w) ? `${WIDGET_META[w].label} einblenden` : `${WIDGET_META[w].label} ausblenden`} onClick={() => toggleHidden(w)}>
-                        {hidden.has(w) ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
-                      </button>
-                    </div>
+        <div className="grid grid-cols-1 gap-4 lg:grid-flow-row-dense lg:grid-cols-3">
+          {shown.map((w, i, arr) => (
+            <div key={w} className={`${WIDGET_META[w].span} ${customize && (hidden.has(w) || !hasContent[w]) ? 'opacity-50' : ''} min-w-0`}>
+              {customize && (
+                <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-dashed border-white/[0.12] px-3 py-1.5">
+                  <span className="text-xs font-medium text-ink-300">
+                    {WIDGET_META[w].label}
+                    {!hasContent[w] && <span className="text-ink-500"> · derzeit ohne Inhalt</span>}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button type="button" className="btn-ghost p-1" aria-label={`${WIDGET_META[w].label} nach oben`} disabled={i === 0} onClick={() => move(w, -1)}>
+                      <ArrowUp className="size-3.5" />
+                    </button>
+                    <button type="button" className="btn-ghost p-1" aria-label={`${WIDGET_META[w].label} nach unten`} disabled={i === arr.length - 1} onClick={() => move(w, 1)}>
+                      <ArrowDown className="size-3.5" />
+                    </button>
+                    <button type="button" className="btn-ghost p-1" aria-label={hidden.has(w) ? `${WIDGET_META[w].label} einblenden` : `${WIDGET_META[w].label} ausblenden`} onClick={() => toggleHidden(w)}>
+                      {hidden.has(w) ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                    </button>
                   </div>
-                )}
-                {widgets[w]}
-              </div>
-            ))}
+                </div>
+              )}
+              {hasContent[w] ? widgets[w] : customize ? <div className="card px-5 py-4 text-[12px] text-ink-500">Erscheint, sobald es Inhalte gibt.</div> : null}
+            </div>
+          ))}
         </div>
       )}
     </div>

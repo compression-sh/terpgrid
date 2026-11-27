@@ -55,7 +55,7 @@ function StrainPicker() {
   return (
     <div className="card mx-auto max-w-2xl p-6">
       <Dna className="size-7 text-leaf-400" />
-      <h1 className="mt-3 text-2xl font-semibold tracking-tight text-ink-50">Genetics Explorer</h1>
+      <h1 className="page-title mt-3">Genetik-Explorer</h1>
       <p className="mt-1 text-sm text-ink-400">Dokumentierte Abstammungen als interaktiver Graph. Nur belegte Beziehungen – Unklares wird gekennzeichnet.</p>
       <div className="relative mt-5">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-500" />
@@ -408,8 +408,8 @@ export function GeneticsExplorer({ slug }: { slug?: string }) {
       <DiscoverNav />
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-leaf-400/90">Genetics Explorer</div>
-          <h1 className="mt-1 truncate text-2xl font-semibold tracking-tight text-ink-50 sm:text-3xl">{strain?.name ?? (loading ? 'Lade …' : 'Unbekannt')}</h1>
+          <div className="section-label">Genetik-Explorer</div>
+          <h1 className="page-title mt-1 truncate">{strain?.name ?? (loading ? 'Lade …' : 'Unbekannt')}</h1>
           {strain?.genetics && <p className="mt-1 text-sm text-ink-400">{strain.genetics}</p>}
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -541,7 +541,7 @@ function CatalogPicker() {
   return (
     <div className="card mx-auto max-w-2xl p-6">
       <Dna className="size-7 text-leaf-400" />
-      <h1 className="mt-3 text-2xl font-semibold tracking-tight text-ink-50">Genetics Explorer</h1>
+      <h1 className="page-title mt-3">Genetik-Explorer</h1>
       <p className="mt-1 text-sm text-ink-400">Abstammung aus dem lokalen Katalog als interaktiver Graph. Nur dokumentierte Elternangaben; gleichnamige Sorten verschiedener Breeder werden nicht gleichgesetzt.</p>
       <div className="relative mt-5">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-500" />
@@ -618,8 +618,8 @@ export function CatalogGenetics({ id }: { id?: string }) {
       <DiscoverNav />
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <p className="eyebrow">Genetics Explorer · Katalog</p>
-          <h1 className="mt-1 truncate text-2xl font-semibold tracking-tight text-ink-50 sm:text-3xl">{root?.label ?? (res.loading ? 'Lade …' : 'Unbekannt')}</h1>
+          <p className="section-label">Genetik-Explorer · Katalog</p>
+          <h1 className="page-title mt-1 truncate">{root?.label ?? (res.loading ? 'Lade …' : 'Unbekannt')}</h1>
           {root?.strain && (
             <p className="mt-1 text-sm text-ink-400">
               {root.strain.breeder} · {root.strain.genetics || 'keine Abstammung dokumentiert'}

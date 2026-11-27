@@ -65,9 +65,8 @@
     @apply bg-ink-950 text-ink-100 font-sans antialiased;
     font-feature-settings: 'cv11', 'ss01', 'ss03';
     min-height: 100dvh;
-    background-image:
-      radial-gradient(1200px 600px at 10% -10%, rgb(52 199 123 / 0.09), transparent 60%),
-      radial-gradient(900px 500px at 110% 10%, rgb(52 199 123 / 0.05), transparent 60%);
+    /* 6.0.1: ein einziger, sehr dezenter Akzent statt zweier Farbverläufe */
+    background-image: radial-gradient(1100px 520px at 0% -12%, rgb(52 199 123 / 0.05), transparent 62%);
     background-attachment: fixed;
   }
   ::selection {
@@ -83,11 +82,23 @@
 @utility tabular {
   font-variant-numeric: tabular-nums;
 }
+/* 6.0.1: ruhigere Fläche – kleinerer Radius, kein Weichzeichner, kein Schlagschatten.
+   Hierarchie entsteht über Abstand und Typografie, nicht über Rahmen und Schatten. */
 @utility card {
-  @apply relative rounded-2xl border border-white/[0.06] bg-ink-900/80 backdrop-blur-sm;
-  box-shadow:
-    0 1px 0 0 rgb(255 255 255 / 0.03) inset,
-    0 20px 40px -24px rgb(0 0 0 / 0.6);
+  @apply relative rounded-xl border border-white/[0.06] bg-ink-900/70;
+  box-shadow: 0 1px 0 0 rgb(255 255 255 / 0.025) inset;
+}
+/* Einheitlicher Seitentitel (6.0.1) – eine Größe für alle Seiten statt 28–44 px */
+@utility page-title {
+  @apply text-[22px] leading-tight font-semibold tracking-tight text-ink-50 sm:text-[26px];
+}
+/* Gruppierte Liste ohne eigene Karte je Zeile */
+@utility list-rows {
+  @apply divide-y divide-white/[0.05];
+}
+/* Kleine Abschnittsüberschrift (z. B. Navigation, Übersicht) */
+@utility section-label {
+  @apply text-[11px] font-medium text-ink-500;
 }
 @utility input-base {
   @apply w-full rounded-lg border border-white/[0.08] bg-ink-850 px-3 py-2 text-sm text-ink-50 tabular-nums

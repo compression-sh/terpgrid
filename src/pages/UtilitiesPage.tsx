@@ -238,8 +238,8 @@ export function UtilitiesPage() {
   return (
     <div>
       <PageHeader
-        title="Werkzeuge"
-        subtitle="Kleine Rechner mit transparenten Formeln und Einheiten."
+        title="Grow-Rechner"
+        subtitle="Einheiten, Strom- und Grow-Kosten, Datum und Foto-Vergleich – mit transparenten Formeln."
         actions={
           <a href={href('lab/tools')} className="btn-ghost">
             <FlaskConical className="size-4" /> THC-Werkzeuge

@@ -47,7 +47,7 @@ export function AccountFooter() {
   if (state.kind !== 'authenticated') return null;
   const u = state.user;
   return (
-    <div className="space-y-2.5 border-t border-white/[0.05] px-4 py-3">
+    <div className="space-y-2 border-t border-white/[0.05] px-3 py-3">
       <div className="flex items-center gap-2.5">
         <a href={href('account')} className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-1 py-1 hover:bg-white/[0.03]">
           <span className="grid size-8 shrink-0 place-items-center rounded-full bg-leaf-500/15 text-leaf-300">
@@ -63,9 +63,6 @@ export function AccountFooter() {
         </button>
       </div>
       <SyncPill />
-      <p className="flex items-start gap-1.5 text-[10.5px] leading-snug text-ink-500 [@media(max-height:820px)]:hidden">
-        <ShieldCheck className="mt-0.5 size-3 shrink-0 text-leaf-500" /> Self-hosted · Private Daten geschützt · Online-Sortendaten über deinen Server
-      </p>
     </div>
   );
 }

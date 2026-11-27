@@ -61,7 +61,7 @@ export function LabelsPage() {
         </a>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-ink-50">Pflanzen-Etiketten</h1>
+            <h1 className="page-title">Pflanzen-Etiketten</h1>
             <p className="mt-1 max-w-2xl text-sm text-ink-400">
               {plants.length} {plants.length === 1 ? 'Etikett' : 'Etiketten'} zum Ausdrucken. Der QR-Code enthält nur den Link zur Pflanzenseite in TERPGRID – kein Passwort, keine Daten. Ohne Anmeldung mit deinem Konto öffnet er nichts.
             </p>

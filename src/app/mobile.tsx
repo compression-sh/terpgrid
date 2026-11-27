@@ -1,28 +1,12 @@
 /**
- * Mobile Bausteine der App-Hülle (Phase 5.6): Plus-Knopf (Schnellerfassung),
- * Scroll-Wiederherstellung beim Zurückgehen, App-Verknüpfungen und Ziehen zum Aktualisieren.
+ * Mobile Bausteine der App-Hülle (Phase 5.6): Scroll-Wiederherstellung beim Zurückgehen, App-Verknüpfungen und Ziehen zum Aktualisieren.
  */
-import { Loader2, Plus, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { type Action, useQuickActions } from './QuickActions';
 import { useAuth } from './auth';
 import { type Route, setQuery } from './router';
 import { isStandalone } from '../lib/pwa/pwa';
-
-/** Schwebender Plus-Knopf über der unteren Navigation (nur mobil). */
-export function CaptureFab() {
-  const quick = useQuickActions();
-  return (
-    <button
-      type="button"
-      aria-label="Schnell erfassen"
-      onClick={() => quick({ kind: 'capture' })}
-      className="no-print fixed right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 grid size-14 place-items-center rounded-2xl bg-leaf-500 text-ink-950 shadow-[0_12px_32px_-8px_rgb(52_199_123/0.55)] transition-transform active:scale-95 lg:hidden"
-    >
-      <Plus className="size-6" strokeWidth={2.4} />
-    </button>
-  );
-}
 
 const CAPTURE_PARAM: Record<string, Action['kind']> = { log: 'log', photo: 'photo', journal: 'journal', task: 'task', capture: 'capture' };
 
