@@ -11,6 +11,7 @@ import { strFromU8, strToU8, unzipSync, zipSync, type Zippable } from 'fflate';
 import { DB_VERSION, RECORD_STORES, type StoreMap, getAll, getOne, writeBatch } from './db/database';
 import { normalizeSettings } from './db/repo';
 import type { AppSettings, LabDocument, PhotoData } from './db/types';
+import { t } from '../i18n';
 
 export const BACKUP_APP = 'TERPGRID';
 /** Format 2: zusätzlich Laborberichte inkl. Originaldokumente (Format 1 bleibt importierbar). */
@@ -89,16 +90,16 @@ export function zipBackup(manifest: BackupManifest, photoData: PhotoData[], docs
     const d = docById.get(f.id);
     if (d) files[f.path] = [toU8(d.data), { level: 6 }];
   }
-  files['LIESMICH.txt'] = strToU8(
+  files[t('data.bk.readmeName')] = strToU8(
     [
-      'TERPGRID – lokale Datensicherung',
-      `Erstellt: ${manifest.exportedAt}`,
+      t('data.bk.readmeTitle'),
+      t('data.bk.readmeCreated', { date: manifest.exportedAt }),
       `Format ${manifest.format}, Schema ${manifest.schemaVersion}`,
       '',
-      'manifest.json enthält alle Datensätze (Grows, Pflanzen, Aktivitäten, Sorten, Journal, Sammlung, …).',
-      'Der Ordner photos/ enthält die Fotos ohne Metadaten.',
+      t('data.bk.readme1'),
+      t('data.bk.readme2'),
       'Wiederherstellen: TERPGRID → Daten → Backup importieren.',
-      'Diese Datei ist NICHT verschlüsselt. Bitte sicher aufbewahren.',
+      t('data.bk.readme3'),
     ].join('\n'),
   );
   return zipSync(files, { level: 6 });
@@ -173,24 +174,24 @@ export function checkIntegrity(data: BackupData, photoIdsWithData?: Set<string>)
   const inventory = set(data.inventory);
   const photos = set(data.photos);
 
-  for (const p of data.plants) if (!grows.has(p.growId)) issues.push(`Pflanze „${p.name}“ verweist auf einen fehlenden Grow.`);
+  for (const p of data.plants) if (!grows.has(p.growId)) issues.push(t('data.bk.plantGrow', { name: p.name }));
   for (const a of data.activities) {
-    if (!grows.has(a.growId)) issues.push(`Aktivität vom ${a.date.slice(0, 10)} verweist auf einen fehlenden Grow.`);
-    if (a.plantId && !plants.has(a.plantId)) issues.push(`Aktivität vom ${a.date.slice(0, 10)} verweist auf eine fehlende Pflanze.`);
+    if (!grows.has(a.growId)) issues.push(t('data.bk.actGrow', { date: a.date.slice(0, 10) }));
+    if (a.plantId && !plants.has(a.plantId)) issues.push(t('data.bk.actPlant', { date: a.date.slice(0, 10) }));
   }
   for (const p of data.photos) {
-    if (p.growId && !grows.has(p.growId)) issues.push('Ein Foto verweist auf einen fehlenden Grow.');
-    if (p.plantId && !plants.has(p.plantId)) issues.push('Ein Foto verweist auf eine fehlende Pflanze.');
-    if (p.strainId && !strains.has(p.strainId)) issues.push('Ein Foto verweist auf eine fehlende Sorte.');
-    if (p.journalId && !journal.has(p.journalId)) issues.push('Ein Foto verweist auf einen fehlenden Journal-Eintrag.');
-    if (p.inventoryId && !inventory.has(p.inventoryId)) issues.push('Ein Foto verweist auf einen fehlenden Sammlungs-Eintrag.');
-    if (photoIdsWithData && !photoIdsWithData.has(p.id)) issues.push(`Für ein Foto vom ${p.takenAt.slice(0, 10)} fehlen die Bilddaten.`);
+    if (p.growId && !grows.has(p.growId)) issues.push(t('data.bk.photoGrow'));
+    if (p.plantId && !plants.has(p.plantId)) issues.push(t('data.bk.photoPlant'));
+    if (p.strainId && !strains.has(p.strainId)) issues.push(t('data.bk.photoStrain'));
+    if (p.journalId && !journal.has(p.journalId)) issues.push(t('data.bk.photoJournal'));
+    if (p.inventoryId && !inventory.has(p.inventoryId)) issues.push(t('data.bk.photoInv'));
+    if (photoIdsWithData && !photoIdsWithData.has(p.id)) issues.push(t('data.bk.photoData', { date: p.takenAt.slice(0, 10) }));
   }
-  for (const j of data.journal) if (j.strainId && !strains.has(j.strainId)) issues.push(`Journal-Eintrag vom ${j.date.slice(0, 10)} verweist auf eine fehlende Sorte.`);
-  for (const p of data.plants) if (p.strainId && !strains.has(p.strainId)) issues.push(`Pflanze „${p.name}“ verweist auf eine fehlende Sorte.`);
-  for (const l of data.labReports ?? []) if (l.strainId && !strains.has(l.strainId)) issues.push(`Laborbericht „${l.title}“ verweist auf eine fehlende Sorte.`);
-  for (const r of data.reminders) if (r.growId && !grows.has(r.growId)) issues.push(`Erinnerung „${r.title}“ verweist auf einen fehlenden Grow.`);
-  for (const e of data.expenses) if (e.growId && !grows.has(e.growId)) issues.push('Eine Ausgabe verweist auf einen fehlenden Grow.');
+  for (const j of data.journal) if (j.strainId && !strains.has(j.strainId)) issues.push(t('data.bk.journalStrain', { date: j.date.slice(0, 10) }));
+  for (const p of data.plants) if (p.strainId && !strains.has(p.strainId)) issues.push(t('data.bk.plantStrain', { name: p.name }));
+  for (const l of data.labReports ?? []) if (l.strainId && !strains.has(l.strainId)) issues.push(t('data.bk.labStrain', { name: l.title }));
+  for (const r of data.reminders) if (r.growId && !grows.has(r.growId)) issues.push(t('data.bk.remGrow', { name: r.title }));
+  for (const e of data.expenses) if (e.growId && !grows.has(e.growId)) issues.push(t('data.bk.expGrow'));
   const covers: { label: string; rows: { coverPhotoId?: string }[] }[] = [
     { label: 'Grow', rows: data.grows },
     { label: 'Pflanze', rows: data.plants },
@@ -260,13 +261,13 @@ export function sanitizeData(data: BackupData, photoIdsWithData?: Set<string>): 
 export function validateManifest(raw: unknown): { manifest?: BackupManifest; errors: string[]; issues: string[] } {
   const errors: string[] = [];
   const issues: string[] = [];
-  if (!isObj(raw)) return { errors: ['Die Datei enthält kein gültiges Manifest.'], issues };
-  if (raw.app !== BACKUP_APP) errors.push('Dies ist keine TERPGRID-Sicherung.');
+  if (!isObj(raw)) return { errors: [t('data.bk.noManifest')], issues };
+  if (raw.app !== BACKUP_APP) errors.push(t('data.bk.notOurs'));
   if (typeof raw.format !== 'number' || raw.format > BACKUP_FORMAT)
-    errors.push(`Das Backup-Format (${String(raw.format)}) wird von dieser Version nicht unterstützt. Bitte TERPGRID aktualisieren.`);
+    errors.push(t('data.bk.format', { f: String(raw.format) }));
   if (typeof raw.schemaVersion === 'number' && raw.schemaVersion > DB_VERSION)
     errors.push('Die Sicherung stammt aus einer neueren TERPGRID-Version.');
-  if (!isObj(raw.data)) errors.push('Die Sicherung enthält keine Daten.');
+  if (!isObj(raw.data)) errors.push(t('data.bk.empty'));
   if (errors.length) return { errors, issues };
 
   const data = emptyData();
@@ -275,7 +276,7 @@ export function validateManifest(raw: unknown): { manifest?: BackupManifest; err
     const rows = rawData[store];
     if (rows === undefined) continue;
     if (!Array.isArray(rows)) {
-      errors.push(`„${store}“ ist kein gültiger Datenblock.`);
+      errors.push(t('data.bk.block', { store }));
       continue;
     }
     let skipped = 0;
@@ -288,7 +289,7 @@ export function validateManifest(raw: unknown): { manifest?: BackupManifest; err
       seen.add(row.id);
       (data[store] as unknown[]).push(row);
     }
-    if (skipped) issues.push(`${skipped} ungültige Einträge in „${store}“ werden übersprungen.`);
+    if (skipped) issues.push(t('data.bk.skipped', { n: skipped, store }));
   }
   const photoFiles = Array.isArray(raw.photoFiles)
     ? (raw.photoFiles as unknown[]).filter(
@@ -319,15 +320,15 @@ export function parseBackupZip(bytes: Uint8Array): ParsedBackup {
   try {
     files = unzipSync(bytes);
   } catch {
-    return { manifest: undefined as never, photoData: new Map(), docData: new Map(), issues: [], errors: ['Die Datei ist kein gültiges ZIP-Archiv.'] };
+    return { manifest: undefined as never, photoData: new Map(), docData: new Map(), issues: [], errors: [t('data.bk.noZip')] };
   }
   const manifestFile = files['manifest.json'];
-  if (!manifestFile) return { manifest: undefined as never, photoData: new Map(), docData: new Map(), issues: [], errors: ['manifest.json fehlt im Archiv.'] };
+  if (!manifestFile) return { manifest: undefined as never, photoData: new Map(), docData: new Map(), issues: [], errors: [t('data.bk.noManifestFile')] };
   let raw: unknown;
   try {
     raw = JSON.parse(strFromU8(manifestFile));
   } catch {
-    return { manifest: undefined as never, photoData: new Map(), docData: new Map(), issues: [], errors: ['manifest.json ist beschädigt.'] };
+    return { manifest: undefined as never, photoData: new Map(), docData: new Map(), issues: [], errors: [t('data.bk.broken')] };
   }
   const { manifest, errors, issues } = validateManifest(raw);
   const photoData = new Map<string, PhotoData>();
@@ -357,7 +358,7 @@ export type RestoreMode = 'replace' | 'merge';
  * - merge:   Datensätze werden ergänzt; gleiche IDs werden überschrieben
  */
 export async function restoreBackup(parsed: ParsedBackup, mode: RestoreMode): Promise<Record<RecordStore, number>> {
-  if (parsed.errors.length || !parsed.manifest) throw new Error('Die Sicherung ist ungültig und kann nicht importiert werden.');
+  if (parsed.errors.length || !parsed.manifest) throw new Error(t('data.bk.invalid'));
   let data = parsed.manifest.data;
   if (mode === 'merge') {
     // Beim Zusammenführen gelten bestehende Datensätze als Referenzziele.

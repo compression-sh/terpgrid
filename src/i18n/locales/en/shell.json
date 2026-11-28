@@ -130,7 +130,10 @@
   "keys": "↑↓ select · ↵ open"
  },
  "sync": {
-  "title": "Synchronisation"
+  "title": "Synchronisation",
+  "offlinePending": "Offline · {n} pending",
+  "conflictsN": "{n} conflicts detected",
+  "failed": "Sync failed"
  },
  "localModeFooter": "Local mode: data only on this device · no synchronisation · online strain data from external sources",
  "logout": {

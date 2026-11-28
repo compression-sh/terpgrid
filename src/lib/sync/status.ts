@@ -1,4 +1,4 @@
-import { labels } from '../../i18n';
+import { t, labels } from '../../i18n';
 /**
  * Einheitliche Synchronisationszustände (Phase 5.6) für private Daten und gemeinsame Bereiche.
  * Reine Funktion – gleiche Begriffe überall in der Oberfläche.
@@ -29,8 +29,8 @@ export function deriveSyncState(s: SyncInput): SyncState {
 /** Anzeigetext inkl. Anzahl, wo hilfreich. */
 export function syncStateText(s: SyncInput): string {
   const st = deriveSyncState(s);
-  if (st === 'offline' && s.pending > 0) return `Offline · ${s.pending} ausstehend`;
+  if (st === 'offline' && s.pending > 0) return t('shell.sync.offlinePending', { n: s.pending });
   if (st === 'pending') return `${SYNC_STATE_LABEL.pending} (${s.pending})`;
-  if (st === 'conflict' && s.conflicts > 1) return `${s.conflicts} Konflikte erkannt`;
+  if (st === 'conflict' && s.conflicts > 1) return t('shell.sync.conflictsN', { n: s.conflicts });
   return SYNC_STATE_LABEL[st];
 }

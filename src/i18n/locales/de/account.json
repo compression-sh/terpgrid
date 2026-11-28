@@ -386,5 +386,12 @@
   "https": "Passkeys funktionieren nur über HTTPS mit der richtigen Domain.",
   "failed": "Passkey konnte nicht verwendet werden.",
   "device": "Gerät"
+ },
+ "lg": {
+  "unreadable": "Alte Datenbank nicht lesbar",
+  "records": "Datensätze",
+  "mismatch": "{what}: {have} auf dem Server, {want} erwartet",
+  "photos": "Fotos",
+  "docs": "Dokumente"
  }
 }

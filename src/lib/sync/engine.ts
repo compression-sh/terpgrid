@@ -25,6 +25,7 @@ import {
 import type { LabDocument, LabReport, Photo, PhotoData } from '../db/types';
 import { ApiError, type ChangeResult, type RemoteChange, api } from '../server/api';
 import { merge3 } from './merge';
+import { t } from '../../i18n';
 
 export type SyncPhase = 'idle' | 'syncing' | 'offline' | 'error' | 'stopped';
 /** Im Leerlauf ausführen (spätestens nach 3 s); ohne requestIdleCallback (Safari) nach 1,5 s. */
@@ -133,7 +134,7 @@ export class SyncEngine {
     } catch (e) {
       await this.refreshCounts().catch(() => {});
       if (e instanceof ApiError && e.status === 0) this.set({ phase: 'offline', message: e.message });
-      else this.set({ phase: 'error', message: e instanceof Error ? e.message : 'Synchronisation fehlgeschlagen' });
+      else this.set({ phase: 'error', message: e instanceof Error ? e.message : t('shell.sync.failed') });
       // Erneuter Versuch mit wachsendem Abstand (5 s, 10 s, 20 s … max. 5 Min.); Outbox bleibt erhalten
       this.failures++;
       if (!(e instanceof ApiError && e.status === 401)) this.schedule(Math.min(300_000, 5000 * 2 ** (this.failures - 1)));

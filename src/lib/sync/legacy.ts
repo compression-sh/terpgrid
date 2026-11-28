@@ -14,6 +14,7 @@ import { buildManifest, checkIntegrity, zipBackup, type BackupData } from '../ba
 import { DB_NAME, RECORD_STORES, type StoreName, type SyncConflict, transact } from '../db/database';
 import type { AppSettings, LabDocument, PhotoData, SettingRow } from '../db/types';
 import { type ChangeResult, api } from '../server/api';
+import { t } from '../../i18n';
 
 const MARK_KEY = 'terpgrid.legacyImport';
 
@@ -91,7 +92,7 @@ function openLegacy(): Promise<IDBDatabase> {
     const req = indexedDB.open(DB_NAME);
     req.onupgradeneeded = () => req.transaction?.abort();
     req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error ?? new Error('Alte Datenbank nicht lesbar'));
+    req.onerror = () => reject(req.error ?? new Error(t('account.lg.unreadable')));
   });
 }
 
@@ -163,7 +164,7 @@ export async function importLegacy(s: LegacySnapshot, target: { accountKey: stri
       }
     });
     done += batch.length;
-    onProgress(done, total, 'Datensätze');
+    onProgress(done, total, t('account.lg.records'));
   }
 
   for (const p of s.photoData) {
@@ -193,14 +194,14 @@ export async function importLegacy(s: LegacySnapshot, target: { accountKey: stri
   for (const [store, n] of Object.entries(s.counts)) {
     const rejected = report.rejected.filter((r) => r.store === store).length;
     const have = summary.records[store] ?? 0;
-    if (have < n - rejected) report.mismatches.push(`${store}: ${have} auf dem Server, ${n - rejected} erwartet`);
+    if (have < n - rejected) report.mismatches.push(t('account.lg.mismatch', { what: store, have, want: n - rejected }));
   }
   const photos = summary.files.find((f) => f.kind === 'photo' && f.variant === 'full')?.n ?? 0;
   const docs = summary.files.find((f) => f.kind === 'labdoc')?.n ?? 0;
   const expPhotos = s.photoData.length - report.fileErrors.filter((e) => e.startsWith('Foto')).length;
   const expDocs = s.labDocs.length - report.fileErrors.filter((e) => e.startsWith('Dokument')).length;
-  if (photos < expPhotos) report.mismatches.push(`Fotos: ${photos} auf dem Server, ${expPhotos} erwartet`);
-  if (docs < expDocs) report.mismatches.push(`Dokumente: ${docs} auf dem Server, ${expDocs} erwartet`);
+  if (photos < expPhotos) report.mismatches.push(t('account.lg.mismatch', { what: t('account.lg.photos'), have: photos, want: expPhotos }));
+  if (docs < expDocs) report.mismatches.push(t('account.lg.mismatch', { what: t('account.lg.docs'), have: docs, want: expDocs }));
   report.verified = report.mismatches.length === 0 && report.rejected.length === 0 && report.fileErrors.length === 0;
   writeImportMark({ accountKey: target.accountKey, loginName: target.loginName, at: new Date().toISOString(), verified: report.verified });
   return report;

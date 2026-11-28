@@ -130,7 +130,10 @@
   "keys": "↑↓ wählen · ↵ öffnen"
  },
  "sync": {
-  "title": "Synchronisation"
+  "title": "Synchronisation",
+  "offlinePending": "Offline · {n} ausstehend",
+  "conflictsN": "{n} Konflikte erkannt",
+  "failed": "Synchronisation fehlgeschlagen"
  },
  "localModeFooter": "Lokalmodus: Daten nur auf diesem Gerät · keine Synchronisation · Online-Sortendaten von externen Quellen",
  "logout": {
