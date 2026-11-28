@@ -1,4 +1,4 @@
-import { labels } from '../i18n';
+import { t, labels } from '../i18n';
 /**
  * Personal Data Explorer: Filter und Exporte über die eigenen Datensätze.
  * Rein beschreibend – keine Vorhersagen, keine Ursache-Wirkungs-Aussagen, keine ergänzten Werte.
@@ -143,19 +143,19 @@ export function measurementCsv(activities: Activity[], grows: GrowProject[], pla
       a.measurements!.phContext ?? '',
       a.measurements!.ecContext ?? '',
     ]);
-  return toTableCsv(['Datum', 'Grow', 'Pflanze', ...METRICS.map((m) => (m.unit ? `${m.label} (${m.unit})` : m.label)), 'pH-Kontext', 'EC-Kontext'], rows);
+  return toTableCsv([...t('mine.csv.meas').split('|'), ...METRICS.map((m) => (m.unit ? `${m.label} (${m.unit})` : m.label)), ...t('mine.csv.measCtx').split('|')], rows);
 }
 
 export function expenseCsv(expenses: Expense[], grows: GrowProject[], categoryLabel: Record<string, string>): string {
   return toTableCsv(
-    ['Datum', 'Kategorie', 'Beschreibung', 'Betrag', 'Grow'],
+    t('mine.csv.expenses').split('|'),
     [...expenses].sort((a, b) => a.date.localeCompare(b.date)).map((e) => [e.date, categoryLabel[e.category] ?? e.category, e.description, e.amount, grows.find((g) => g.id === e.growId)?.name ?? '']),
   );
 }
 
 export function journalCsv(entries: JournalEntry[], strains: Strain[]): string {
   return toTableCsv(
-    ['Datum', 'Sorte', 'Konsumform', 'Menge', 'Einheit', 'THC % (eigene Angabe)', 'Bewertung', 'Stimmungen', 'Notiz'],
+    t('mine.csv.journal').split('|'),
     [...entries]
       .sort((a, b) => a.date.localeCompare(b.date))
       .map((j) => [j.date.replace('T', ' ').slice(0, 16), j.strainId ? (strains.find((s) => s.id === j.strainId)?.name ?? '') : (j.strainName ?? ''), j.method, j.amount?.value, j.amount?.unit ?? '', j.thcPercent, j.rating, j.moods.join(', '), j.notes]),
@@ -165,18 +165,18 @@ export function journalCsv(entries: JournalEntry[], strains: Strain[]): string {
 export function labCsv(cmp: ReturnType<typeof labComparison>): string {
   const terps = cmp.terpenes;
   return toTableCsv(
-    ['Probe', 'Sorte', 'Labor', 'Datum', 'Originaleinheit', 'THC %', 'THCA %', 'CBD %', ...terps.map((t) => `${t.label} %`), 'Terpene gesamt %'],
+    [...t('mine.csv.lab').split('|'), ...terps.map((tp) => `${tp.label} %`), t('mine.csv.labTotal')],
     cmp.rows.map((r) => [r.title, r.strain ?? '', r.labName ?? '', r.testDate ?? '', r.unit, r.thc, r.thca, r.cbd, ...terps.map((t) => r.terpenes[t.id]), r.terpeneTotal]),
   );
 }
 
 /** Grow-Vergleich: Kennzahlen als Tabelle (eine Spalte je Grow, Werte wie angezeigt). */
 export function compareSummaryCsv(names: string[], rows: { label: string; values: string[] }[]): string {
-  return toTableCsv(['Kennzahl', ...names], rows.map((r) => [r.label, ...r.values]));
+  return toTableCsv([t('mine.csv.figure'), ...names], rows.map((r) => [r.label, ...r.values]));
 }
 
 /** Grow-Vergleich: gemessene Punkte im Langformat – nur Messungen, keine interpolierten Werte. */
 export function compareSeriesCsv(valueHeader: string, context: string, series: { name: string; pts: { day: number; date: string; value: number }[] }[]): string {
   const rows = series.flatMap((s) => s.pts.map((p) => [s.name, p.day, p.date.replace('T', ' ').slice(0, 16), p.value, context]));
-  return toTableCsv(['Grow', 'Grow-Tag', 'Datum', valueHeader, 'Messkontext'], rows);
+  return toTableCsv([...t('mine.csv.series').split('|'), valueHeader, t('mine.csv.ctx')], rows);
 }

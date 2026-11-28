@@ -211,5 +211,14 @@
   "text": "Aus Sicherheitsgründen bitte erneut mit deinem Passwort bestätigen.",
   "password": "Passwort",
   "code": "2FA-Code"
+ },
+ "sr": {
+  "grow": "Grow",
+  "plant": "Pflanze",
+  "strain": "Sorte",
+  "journalEntry": "Journal-Eintrag",
+  "collection": "Sammlung",
+  "lab": "Laborbericht",
+  "reminder": "Erinnerung"
  }
 }

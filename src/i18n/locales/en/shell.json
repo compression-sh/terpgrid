@@ -211,5 +211,14 @@
   "text": "For security reasons, please confirm again with your password.",
   "password": "Password",
   "code": "2FA code"
+ },
+ "sr": {
+  "grow": "Grow",
+  "plant": "Plant",
+  "strain": "Strain",
+  "journalEntry": "Journal entry",
+  "collection": "Collection",
+  "lab": "Lab report",
+  "reminder": "Reminder"
  }
 }

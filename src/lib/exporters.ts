@@ -1,4 +1,5 @@
 
+import { t } from '../i18n';
 import { intlLocale } from '../i18n';/**
  * Export von Ergebnissen als JSON, CSV oder Text – erzeugt lokal eine Datei
  * (Blob-Download). Keine Netzwerkanfrage.
@@ -30,10 +31,10 @@ export function toCSVTable(headers: string[], rows: (string | number | undefined
 
 /** CSV mit Semikolon (Excel-freundlich für deutsche Gebietsschemata). */
 export function toCSV(payload: ExportPayload): string {
-  const lines: string[] = ['Bereich;Bezeichnung;Wert'];
-  for (const r of payload.inputs) lines.push(['Eingabe', r.label, r.value].map(csvCell).join(';'));
-  for (const r of payload.results) lines.push(['Ergebnis', r.label, r.value].map(csvCell).join(';'));
-  for (const n of payload.notes ?? []) lines.push(['Hinweis', '', n].map(csvCell).join(';'));
+  const lines: string[] = [t('common.exp.head')];
+  for (const r of payload.inputs) lines.push([t('common.exp.input'), r.label, r.value].map(csvCell).join(';'));
+  for (const r of payload.results) lines.push([t('common.exp.result'), r.label, r.value].map(csvCell).join(';'));
+  for (const n of payload.notes ?? []) lines.push([t('common.exp.note'), '', n].map(csvCell).join(';'));
   return lines.join('\r\n');
 }
 
@@ -47,19 +48,19 @@ export function toText(payload: ExportPayload): string {
   const parts = [
     payload.title,
     '='.repeat(payload.title.length),
-    `Erstellt: ${new Date(payload.generatedAt).toLocaleString(intlLocale())}`,
+    t('common.exp.created', { date: new Date(payload.generatedAt).toLocaleString(intlLocale()) }),
     '',
-    'Eingaben',
+    t('common.exp.inputs'),
     ...payload.inputs.map(row),
     '',
-    'Ergebnisse (Schätzwerte mit Unsicherheit)',
+    t('common.exp.results'),
     ...payload.results.map(row),
   ];
-  if (payload.notes?.length) parts.push('', 'Hinweise', ...payload.notes.map((n) => `  • ${n}`));
+  if (payload.notes?.length) parts.push('', t('common.exp.notes'), ...payload.notes.map((n) => `  • ${n}`));
   parts.push(
     '',
-    'Alle Werte sind rechnerische Schätzungen und keine Dosierungsempfehlung.',
-    'Berechnet lokal im Browser – es wurden keine Daten übertragen.',
+    t('common.exp.disclaimer'),
+    t('common.exp.local'),
   );
   return parts.join('\n');
 }

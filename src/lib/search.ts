@@ -3,6 +3,7 @@
  * Läuft ausschließlich im Browser auf bereits geladenen Daten – nichts wird gesendet.
  */
 import type { GrowProject, InventoryItem, JournalEntry, LabReport, Plant, Reminder, Strain } from './db/types';
+import { t } from '../i18n';
 
 export interface SearchData {
   grows: GrowProject[];
@@ -55,16 +56,16 @@ export function searchRecords(d: SearchData, query: string, limit = 20): SearchH
     const sc = score(q, h.title, `${h.subtitle} ${extra}`);
     if (sc > 0) hits.push({ ...h, score: sc });
   };
-  for (const g of d.grows) add({ kind: 'grow', id: g.id, title: g.name, subtitle: 'Grow', to: `grows/${g.id}` }, g.notes ?? '');
+  for (const g of d.grows) add({ kind: 'grow', id: g.id, title: g.name, subtitle: t('shell.sr.grow'), to: `grows/${g.id}` }, g.notes ?? '');
   for (const p of d.plants)
-    add({ kind: 'plant', id: p.id, title: p.name, subtitle: `Pflanze · ${grow.get(p.growId) ?? 'Grow'}${p.strainId && strain.get(p.strainId) ? ` · ${strain.get(p.strainId)}` : ''}`, to: `grows/${p.growId}/plants/${p.id}` }, p.notes ?? '');
-  for (const s of d.strains) add({ kind: 'strain', id: s.id, title: s.name, subtitle: 'Sorte', to: `strains/${s.id}` }, '');
+    add({ kind: 'plant', id: p.id, title: p.name, subtitle: `${t('shell.sr.plant')} · ${grow.get(p.growId) ?? t('shell.sr.grow')}${p.strainId && strain.get(p.strainId) ? ` · ${strain.get(p.strainId)}` : ''}`, to: `grows/${p.growId}/plants/${p.id}` }, p.notes ?? '');
+  for (const s of d.strains) add({ kind: 'strain', id: s.id, title: s.name, subtitle: t('shell.sr.strain'), to: `strains/${s.id}` }, '');
   for (const j of d.journal) {
-    const name = (j.strainId && strain.get(j.strainId)) || 'Journal-Eintrag';
+    const name = (j.strainId && strain.get(j.strainId)) || t('shell.sr.journalEntry');
     add({ kind: 'journal', id: j.id, title: name, subtitle: `Journal · ${j.date.slice(0, 10)}`, to: `journal?entry=${encodeURIComponent(j.id)}` }, j.notes ?? '');
   }
-  for (const i of d.inventory) add({ kind: 'inventory', id: i.id, title: i.name, subtitle: 'Sammlung', to: `collection?item=${encodeURIComponent(i.id)}` }, i.notes ?? '');
-  for (const l of d.labReports) add({ kind: 'labReport', id: l.id, title: l.title, subtitle: `Laborbericht${l.labName ? ` · ${l.labName}` : ''}`, to: `lab-reports?report=${encodeURIComponent(l.id)}` }, l.notes ?? '');
-  for (const r of d.reminders) add({ kind: 'reminder', id: r.id, title: r.title, subtitle: `Erinnerung · ${r.date}`, to: 'calendar?view=list' }, r.notes ?? '');
+  for (const i of d.inventory) add({ kind: 'inventory', id: i.id, title: i.name, subtitle: t('shell.sr.collection'), to: `collection?item=${encodeURIComponent(i.id)}` }, i.notes ?? '');
+  for (const l of d.labReports) add({ kind: 'labReport', id: l.id, title: l.title, subtitle: `${t('shell.sr.lab')}${l.labName ? ` · ${l.labName}` : ''}`, to: `lab-reports?report=${encodeURIComponent(l.id)}` }, l.notes ?? '');
+  for (const r of d.reminders) add({ kind: 'reminder', id: r.id, title: r.title, subtitle: `${t('shell.sr.reminder')} · ${r.date}`, to: 'calendar?view=list' }, r.notes ?? '');
   return hits.sort((a, b) => b.score - a.score || a.title.localeCompare(b.title, 'de')).slice(0, limit);
 }

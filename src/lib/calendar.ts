@@ -1,5 +1,6 @@
 import { addDays, daysBetween } from './dates';
 import type { Reminder } from './db/types';
+import { t } from '../i18n';
 
 export interface Occurrence {
   reminder: Reminder;
@@ -90,8 +91,8 @@ export function nextPerReminder(reminders: Reminder[], todayStr: string, days = 
 export function repeatLabel(repeat: unknown): string | undefined {
   const r = safeRepeat(repeat);
   if (r.kind === 'none') return undefined;
-  if (r.kind === 'daily') return r.interval === 1 ? 'täglich' : `alle ${r.interval} Tage`;
-  return r.interval === 1 ? 'wöchentlich' : `alle ${r.interval} Wochen`;
+  if (r.kind === 'daily') return r.interval === 1 ? t('mine.rep.daily') : t('mine.rep.everyDays', { n: r.interval });
+  return r.interval === 1 ? t('mine.rep.weekly') : t('mine.rep.everyWeeks', { n: r.interval });
 }
 
 /** Überfällige, nicht erledigte Vorkommen der letzten `days` Tage. */

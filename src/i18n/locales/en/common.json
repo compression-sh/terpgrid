@@ -106,5 +106,17 @@
   "min": "{label} must be at least {min}{unit}.",
   "max": "{label} may be at most {max}{unit}.",
   "positive": "{label} must be greater than 0."
+ },
+ "exp": {
+  "head": "Section;Label;Value",
+  "input": "Input",
+  "result": "Result",
+  "note": "Note",
+  "created": "Created: {date}",
+  "inputs": "Inputs",
+  "results": "Results (estimates with uncertainty)",
+  "notes": "Notes",
+  "disclaimer": "All values are calculated estimates and not dosing advice.",
+  "local": "Calculated locally in the browser – no data was transmitted."
  }
 }

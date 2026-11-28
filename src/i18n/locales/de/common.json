@@ -106,5 +106,17 @@
   "min": "{label} muss mindestens {min}{unit} betragen.",
   "max": "{label} darf höchstens {max}{unit} betragen.",
   "positive": "{label} muss größer als 0 sein."
+ },
+ "exp": {
+  "head": "Bereich;Bezeichnung;Wert",
+  "input": "Eingabe",
+  "result": "Ergebnis",
+  "note": "Hinweis",
+  "created": "Erstellt: {date}",
+  "inputs": "Eingaben",
+  "results": "Ergebnisse (Schätzwerte mit Unsicherheit)",
+  "notes": "Hinweise",
+  "disclaimer": "Alle Werte sind rechnerische Schätzungen und keine Dosierungsempfehlung.",
+  "local": "Berechnet lokal im Browser – es wurden keine Daten übertragen."
  }
 }

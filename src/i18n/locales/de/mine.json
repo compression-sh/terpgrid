@@ -473,5 +473,22 @@
   "journalEntry": "Journal-Eintrag",
   "strainCreated": "Sorte angelegt: {name}",
   "fromDiscover": "aus Discover"
+ },
+ "csv": {
+  "meas": "Datum|Grow|Pflanze",
+  "measCtx": "pH-Kontext|EC-Kontext",
+  "expenses": "Datum|Kategorie|Beschreibung|Betrag|Grow",
+  "journal": "Datum|Sorte|Konsumform|Menge|Einheit|THC % (eigene Angabe)|Bewertung|Stimmungen|Notiz",
+  "lab": "Probe|Sorte|Labor|Datum|Originaleinheit|THC %|THCA %|CBD %",
+  "labTotal": "Terpene gesamt %",
+  "figure": "Kennzahl",
+  "series": "Grow|Grow-Tag|Datum",
+  "ctx": "Messkontext"
+ },
+ "rep": {
+  "daily": "täglich",
+  "everyDays": "alle {n} Tage",
+  "weekly": "wöchentlich",
+  "everyWeeks": "alle {n} Wochen"
  }
 }
