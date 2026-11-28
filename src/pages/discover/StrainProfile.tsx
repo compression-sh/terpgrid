@@ -19,6 +19,7 @@ import type { CatalogStrain, EvidenceState } from '../../lib/catalog/types';
 import { fmtDate, fmtDateTime, nowLocal } from '../../lib/dates';
 import { ensureStrainForExternal, externalKey } from '../../lib/db/repo';
 import { fmt } from '../../lib/format';
+import { t } from '../../i18n';
 
 function Section({ title, evidence, children }: { title: string; evidence?: EvidenceState; children: React.ReactNode }) {
   return (
@@ -35,12 +36,12 @@ function Section({ title, evidence, children }: { title: string; evidence?: Evid
 function Facts({ s }: { s: CatalogStrain }) {
   const d = s.detail;
   const rows: { label: string; value?: string; ev?: EvidenceState }[] = [
-    { label: 'Samentyp', value: s.seedType, ev: s.evidence.seed_type },
-    { label: 'Indica/Sativa-Anteil', value: s.indicaPercent !== undefined || s.sativaPercent !== undefined ? `${s.indicaPercent ?? '?'} % / ${s.sativaPercent ?? '?'} %` : undefined, ev: s.evidence.indica_sativa_ratio },
-    { label: 'Blütezeit', value: s.flowering && (s.flowering.minDays || s.flowering.maxDays) ? `${s.flowering.minDays ?? '?'}–${s.flowering.maxDays ?? '?'} Tage` : undefined, ev: s.evidence.flowering_time },
-    { label: 'Wuchs', value: d?.plantStructure, ev: s.evidence.plant_structure },
-    { label: 'Ertrag', value: d?.yield, ev: s.evidence.yield },
-    { label: 'Ernte im Freien', value: d?.outdoorHarvest, ev: s.evidence.outdoor_harvest },
+    { get label() { return t('discover.sp.seed'); }, value: s.seedType, ev: s.evidence.seed_type },
+    { get label() { return t('discover.sp.ratio'); }, value: s.indicaPercent !== undefined || s.sativaPercent !== undefined ? `${s.indicaPercent ?? '?'} % / ${s.sativaPercent ?? '?'} %` : undefined, ev: s.evidence.indica_sativa_ratio },
+    { get label() { return t('discover.sp.flowering'); }, value: s.flowering && (s.flowering.minDays || s.flowering.maxDays) ? t('discover.sp.days', { range: `${s.flowering.minDays ?? '?'}–${s.flowering.maxDays ?? '?'}` }) : undefined, ev: s.evidence.flowering_time },
+    { get label() { return t('discover.sp.structure'); }, value: d?.plantStructure, ev: s.evidence.plant_structure },
+    { get label() { return t('discover.sp.yield'); }, value: d?.yield, ev: s.evidence.yield },
+    { get label() { return t('discover.sp.outdoor'); }, value: d?.outdoorHarvest, ev: s.evidence.outdoor_harvest },
   ];
   return (
     <dl className="divide-y divide-white/[0.05]">
@@ -90,17 +91,17 @@ export function StrainProfile({ slug }: { slug: string }) {
         <div className="card">
           <EmptyState
             icon={<CloudOff />}
-            title={errorKind === 'not_found' ? 'Sorte nicht gefunden' : 'Profil konnte nicht geladen werden'}
+            title={errorKind === 'not_found' ? t('discover.sp.notFound') : t('discover.sp.loadFail')}
             text={error}
             action={
               <>
                 {errorKind !== 'not_found' && (
                   <button type="button" className="btn-primary" onClick={retry}>
-                    <RefreshCw className="size-4" /> Erneut versuchen
+                    <RefreshCw className="size-4" /> {t('discover.sp.retry')}
                   </button>
                 )}
                 <a href={href('discover')} className="btn-ghost">
-                  Zur Übersicht
+                  {t('discover.sp.toOverview')}
                 </a>
               </>
             }
@@ -134,7 +135,7 @@ export function StrainProfile({ slug }: { slug: string }) {
     <div>
       <DiscoverNav />
       <a href={href('discover')} className="mb-4 inline-flex items-center gap-1.5 text-[12px] text-ink-400 hover:text-ink-100">
-        <ArrowLeft className="size-3.5" /> Entdecken
+        <ArrowLeft className="size-3.5" /> {t('discover.sp.discover')}
       </a>
 
       {/* Hero */}
@@ -160,25 +161,25 @@ export function StrainProfile({ slug }: { slug: string }) {
           <h1 className="page-title mt-3">{s.name}</h1>
           {research.profile && research.profile.aliases.length > 1 && <p className="mt-1.5 text-[13px] text-ink-500">auch: {research.profile.aliases.filter((a) => a.toLowerCase() !== s.name.toLowerCase()).slice(0, 4).join(', ')}</p>}
           <p className="mt-2 flex flex-wrap items-center gap-2 text-[15px] text-ink-300">
-            {s.breeder ?? <span className="text-ink-500">Breeder: keine Angabe</span>}
+            {s.breeder ?? <span className="text-ink-500">{t('discover.sp.noBreeder')}</span>}
             {s.breeder && <EvidenceBadge state={s.evidence.breeder} />}
           </p>
           {s.excerpt && <p className="mt-4 max-w-2xl text-[14px] leading-relaxed text-ink-300">{s.excerpt}</p>}
           <div className="mt-5 flex flex-wrap gap-2">
             <button type="button" onClick={() => toggleFav(s)} aria-pressed={fav} className={fav ? 'btn border border-leaf-500/30 bg-leaf-500/10 text-leaf-200' : 'btn-primary'}>
-              <Bookmark className={`size-4 ${fav ? 'fill-current' : ''}`} /> {fav ? 'Favorit' : 'Merken'}
+              <Bookmark className={`size-4 ${fav ? 'fill-current' : ''}`} /> {fav ? t('discover.sp.fav') : t('discover.sp.remember')}
             </button>
             <button type="button" className={`btn-ghost ${inCompare ? 'border-sky-400/30 text-sky-200' : ''}`} aria-pressed={inCompare} onClick={() => compare.toggle(s.key)}>
-              <GitCompare className="size-4" /> {inCompare ? 'Im Vergleich' : 'Vergleichen'}
+              <GitCompare className="size-4" /> {inCompare ? t('discover.sp.inCompare') : t('discover.sp.compare')}
             </button>
             <a href={href(`discover/genetics/${s.id}`)} className="btn-ghost">
-              <Dna className="size-4" /> Genetik
+              <Dna className="size-4" /> {t('discover.sp.genetics')}
             </a>
             <button type="button" className="btn-ghost" onClick={() => setConnect('plant')}>
-              <Link2 className="size-4" /> Mit Pflanze verknüpfen
+              <Link2 className="size-4" /> {t('discover.sp.link')}
             </button>
             <button type="button" className="btn-ghost" onClick={openJournal}>
-              <BookOpenText className="size-4" /> Journal
+              <BookOpenText className="size-4" /> {t('discover.sp.journal')}
             </button>
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-ink-500">
@@ -193,7 +194,7 @@ export function StrainProfile({ slug }: { slug: string }) {
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
         <div className="min-w-0 space-y-5">
-          <Card title="Cannabinoide" subtitle="Spannen laut Quelle – keine Messung deiner Probe">
+          <Card title={t('discover.sp.cann')} subtitle={t('discover.sp.cannSub')}>
             <div className="grid gap-5 sm:grid-cols-2">
               {(['thc', 'cbd'] as const).map((k) => {
                 const r = s[k];
@@ -214,41 +215,41 @@ export function StrainProfile({ slug }: { slug: string }) {
               })}
             </div>
             <div className="mt-5 border-t border-white/[0.05] pt-4">
-              <Section title="Weitere Cannabinoide">
-                {research.profile ? <p className="text-[13px] text-ink-400">CannaLib liefert hier nur THC/CBD-Statistiken – weitere Cannabinoide: keine Daten verfügbar.</p> : <NoData />}
+              <Section title={t('discover.sp.moreCann')}>
+                {research.profile ? <p className="text-[13px] text-ink-400">{t('discover.sp.moreCannText')}</p> : <NoData />}
               </Section>
             </div>
           </Card>
 
-          <Card title="Terpene" subtitle={latestLab ? 'Mengen aus deinem verknüpften Laborbericht' : 'Dominante Terpene laut Quelle – ohne Mengenangaben'}>
+          <Card title={t('discover.sp.terps')} subtitle={latestLab ? t('discover.sp.terpsLab') : t('discover.sp.terpsSource')}>
             {latestLab ? (
               <div>
-                <div className="h-56" role="img" aria-label="Terpenkonzentrationen aus Laborbericht">
+                <div className="h-56" role="img" aria-label={t('discover.sp.terpConc')}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={[...latestLab.terpenes].sort((a, b) => b.value - a.value).map((t) => ({ name: terpeneLabel(t.name), value: t.value, color: matchTerpene(t.name)?.color ?? '#8c9a95' }))} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 8 }}>
+                    <BarChart data={[...latestLab.terpenes].sort((a, b) => b.value - a.value).map((tv) => ({ name: terpeneLabel(tv.name), value: tv.value, color: matchTerpene(tv.name)?.color ?? '#8c9a95' }))} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 8 }}>
                       <CartesianGrid horizontal={false} />
                       <XAxis type="number" tickLine={false} axisLine={false} unit={` ${latestLab.unit}`} />
                       <YAxis type="category" dataKey="name" width={96} tickLine={false} axisLine={false} />
-                      <Tooltip cursor={{ fill: 'rgba(255,255,255,0.03)' }} contentStyle={{ background: '#0e1211', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, fontSize: 12 }} formatter={(v: number) => [`${fmt(v)} ${latestLab.unit}`, 'Gehalt']} />
+                      <Tooltip cursor={{ fill: 'rgba(255,255,255,0.03)' }} contentStyle={{ background: '#0e1211', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, fontSize: 12 }} formatter={(v: number) => [`${fmt(v)} ${latestLab.unit}`, t('discover.sp.content')]} />
                       <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={18} isAnimationActive={false}>
-                        {latestLab.terpenes.map((t) => (
-                          <Cell key={t.name} fill={matchTerpene(t.name)?.color ?? '#8c9a95'} />
+                        {latestLab.terpenes.map((tv) => (
+                          <Cell key={tv.name} fill={matchTerpene(tv.name)?.color ?? '#8c9a95'} />
                         ))}
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
                 <p className="hint mt-2">
-                  Aus Laborbericht „{latestLab.title}“{latestLab.testDate && ` vom ${fmtDate(latestLab.testDate)}`} ({latestLab.origin === 'document' ? 'aus Dokument übertragen' : latestLab.origin === 'manual' ? 'manuell eingetragen' : 'unbestätigt'}).{' '}
-                  <a href={href('lab-reports')} className="underline">Laborberichte</a>
+                  {t('discover.sp.fromReport', { title: latestLab.title })}{latestLab.testDate && t('discover.sp.ofDate', { date: fmtDate(latestLab.testDate) })} ({latestLab.origin === 'document' ? t('discover.sp.oDoc') : latestLab.origin === 'manual' ? t('discover.sp.oManual') : t('discover.sp.oUnverified')}).{' '}
+                  <a href={href('lab-reports')} className="underline">{t('discover.sp.labReports')}</a>
                 </p>
               </div>
             ) : s.terpenes.length > 0 ? (
               <ol className="space-y-2">
-                {s.terpenes.map((t, i) => {
-                  const info = matchTerpene(t);
+                {s.terpenes.map((tv, i) => {
+                  const info = matchTerpene(tv);
                   return (
-                    <li key={t} className="flex items-center gap-3">
+                    <li key={tv} className="flex items-center gap-3">
                       <span className="w-5 font-mono text-[11px] text-ink-600">{i + 1}.</span>
                       <span className="size-2.5 rounded-full" style={{ background: info?.color ?? '#5f6d68' }} />
                       {info ? (
@@ -256,7 +257,7 @@ export function StrainProfile({ slug }: { slug: string }) {
                           {info.name}
                         </a>
                       ) : (
-                        <span className="text-[13px] text-ink-200">{terpeneLabel(t)}</span>
+                        <span className="text-[13px] text-ink-200">{terpeneLabel(tv)}</span>
                       )}
                       {info && <span className="truncate text-[11px] text-ink-500">{info.aroma.slice(0, 2).join(', ')}</span>}
                     </li>
@@ -268,20 +269,20 @@ export function StrainProfile({ slug }: { slug: string }) {
             )}
             <div className="mt-3 flex items-center gap-2">
               <EvidenceBadge state={s.evidence.terpenes} />
-              <span className="text-[11px] text-ink-500">Reihenfolge laut Quelle. Ohne Laborwerte keine Prozentangaben.</span>
+              <span className="text-[11px] text-ink-500">{t('discover.sp.order')}</span>
             </div>
           </Card>
 
           <Card
-            title="Genetik"
-            subtitle="Abstammung laut Quelle"
+            title={t('discover.sp.genetics')}
+            subtitle={t('discover.sp.lineage')}
             actions={
               <a href={href(`discover/genetics/${s.id}`)} className="btn-ghost py-1.5 text-xs">
-                <Dna className="size-3.5" /> Explorer
+                <Dna className="size-3.5" /> {t('discover.sp.explorer')}
               </a>
             }
           >
-            <Section title="Kreuzung" evidence={s.evidence.genetics}>
+            <Section title={t('discover.sp.cross')} evidence={s.evidence.genetics}>
               {s.genetics ? <p className="text-[14px] text-ink-100">{s.genetics}</p> : <NoData />}
             </Section>
             {genetics && genetics.parents.length > 0 && (
@@ -293,12 +294,12 @@ export function StrainProfile({ slug }: { slug: string }) {
                 ))}
               </div>
             )}
-            {genetics?.flags.includes('disputed') && <p className="mt-3 text-[12px] text-amber-300/90">Abstammung umstritten – die Quelle nennt alternative Angaben.</p>}
-            {genetics?.flags.includes('unparsed') && s.genetics && <p className="mt-3 text-[12px] text-ink-500">Keine eindeutigen Elternsorten ableitbar – Angabe wird unverändert angezeigt.</p>}
+            {genetics?.flags.includes('disputed') && <p className="mt-3 text-[12px] text-amber-300/90">{t('discover.sp.disputed')}</p>}
+            {genetics?.flags.includes('unparsed') && s.genetics && <p className="mt-3 text-[12px] text-ink-500">{t('discover.sp.noParents')}</p>}
           </Card>
 
           {(descriptionBlocks.length > 0 || derived) && (
-            <Card title="Veröffentlichte Beschreibung" subtitle="Text der Quelle (Englisch), ohne Formatierung übernommen">
+            <Card title={t('discover.sp.desc')} subtitle={t('discover.sp.descSub')}>
               <div className="max-h-[32rem] space-y-3 overflow-y-auto pr-1 text-[13px] leading-relaxed text-ink-300">
                 {derived ? (
                   <p>{s.detail!.description}</p>
@@ -325,9 +326,9 @@ export function StrainProfile({ slug }: { slug: string }) {
         </div>
 
         <div className="min-w-0 space-y-5">
-          <Card title="Aroma & Geschmack">
+          <Card title={t('discover.sp.aromaTaste')}>
             <div className="space-y-4">
-              <Section title="Aroma" evidence={s.evidence.aroma}>
+              <Section title={t('discover.sp.aroma')} evidence={s.evidence.aroma}>
                 {s.aroma.length ? (
                   <div className="flex flex-wrap gap-1.5">
                     {s.aroma.map((a) => (
@@ -340,7 +341,7 @@ export function StrainProfile({ slug }: { slug: string }) {
                   <NoData />
                 )}
               </Section>
-              <Section title="Geschmack" evidence={s.evidence.flavor}>
+              <Section title={t('discover.sp.taste')} evidence={s.evidence.flavor}>
                 {s.flavor.length ? (
                   <div className="flex flex-wrap gap-1.5">
                     {s.flavor.map((a) => (
@@ -356,16 +357,16 @@ export function StrainProfile({ slug }: { slug: string }) {
             </div>
           </Card>
 
-          <Card title="Botanik & Anbau" subtitle="Dokumentierte Merkmale">
+          <Card title={t('discover.sp.botany')} subtitle={t('discover.sp.botanySub')}>
             <Facts s={s} />
           </Card>
 
-          <Card title="Berichtete Erfahrungen" subtitle="Subjektive Angaben laut Quelle – keine Wirkungsgarantie">
+          <Card title={t('discover.sp.reported')} subtitle={t('discover.sp.reportedSub')}>
             {s.detail?.effects ? (
               <div className="space-y-3">
                 {(['mental', 'body'] as const).map((k) =>
                   s.detail!.effects![k].length ? (
-                    <Section key={k} title={k === 'mental' ? 'Mental (berichtet)' : 'Körperlich (berichtet)'} evidence={s.evidence[`${k}_effects`]}>
+                    <Section key={k} title={k === 'mental' ? t('discover.sp.mental') : t('discover.sp.physical')} evidence={s.evidence[`${k}_effects`]}>
                       <div className="flex flex-wrap gap-1.5">
                         {s.detail!.effects![k].map((e) => (
                           <span key={e} className="rounded-full border border-dashed border-white/[0.1] px-2.5 py-1 text-[12px] text-ink-300">
@@ -376,19 +377,19 @@ export function StrainProfile({ slug }: { slug: string }) {
                     </Section>
                   ) : null,
                 )}
-                <p className="hint">Erfahrungen sind individuell verschieden und hängen von Dosis, Toleranz, Konsumform und Umständen ab. Keine medizinische Aussage.</p>
+                <p className="hint">{t('discover.sp.individual')}</p>
               </div>
             ) : (
               <NoData />
             )}
           </Card>
 
-          <Card title="Persönlich" icon={<Sprout className="size-4" />}>
+          <Card title={t('discover.sp.personal')} icon={<Sprout className="size-4" />}>
             {mine ? (
               <div className="space-y-3 text-[13px]">
                 <a href={href(`strains/${mine.id}`)} className="flex items-center justify-between rounded-lg border border-white/[0.06] px-3 py-2 hover:border-white/[0.14]">
-                  <span className="text-ink-100">In „Meine Sorten“ öffnen</span>
-                  <span className="text-[11px] text-ink-500">{fav ? 'Favorit' : 'gespeichert'}</span>
+                  <span className="text-ink-100">{t('discover.sp.openMine')}</span>
+                  <span className="text-[11px] text-ink-500">{fav ? t('discover.sp.fav') : 'gespeichert'}</span>
                 </a>
                 {plants.length > 0 ? (
                   <ul className="space-y-1">
@@ -402,21 +403,21 @@ export function StrainProfile({ slug }: { slug: string }) {
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-ink-500">Keine verknüpften Pflanzen.</p>
+                  <p className="text-ink-500">{t('discover.sp.noPlants')}</p>
                 )}
-                {journal.length > 0 && <p className="text-ink-400">{journal.length} Journal-Einträge</p>}
+                {journal.length > 0 && <p className="text-ink-400">{t('discover.sp.journalN', { count: journal.length })}</p>}
               </div>
             ) : (
-              <p className="text-[13px] text-ink-500">Noch nicht in deinen Sorten. Merken oder verknüpfen legt genau einen Eintrag an.</p>
+              <p className="text-[13px] text-ink-500">{t('discover.sp.notMine')}</p>
             )}
             <div className="mt-3 flex flex-wrap gap-2">
               <button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => setConnect('grow')}>
-                <Sprout className="size-3.5" /> Einem Grow zuordnen
+                <Sprout className="size-3.5" /> {t('discover.sp.assign')}
               </button>
             </div>
           </Card>
 
-          <Card title="Forschungsdaten" subtitle="Optional über CannaLib" icon={<Microscope className="size-4" />}>
+          <Card title={t('discover.sp.research')} subtitle={t('discover.sp.researchSub')} icon={<Microscope className="size-4" />}>
             <ResearchPanel name={s.name} research={research} />
           </Card>
         </div>
@@ -424,7 +425,7 @@ export function StrainProfile({ slug }: { slug: string }) {
 
       {connect && <ConnectDialog strain={s} initialMode={connect} onClose={() => setConnect(null)} />}
       {journalFor && <JournalFormModal open onClose={() => setJournalFor(null)} strainId={journalFor} />}
-      {loading && <Loader2 className="fixed bottom-24 right-6 size-5 animate-spin text-leaf-400" aria-label="Aktualisiere" />}
+      {loading && <Loader2 className="fixed bottom-24 right-6 size-5 animate-spin text-leaf-400" aria-label={t('discover.sp.refreshing')} />}
     </div>
   );
 }
