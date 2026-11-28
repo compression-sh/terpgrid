@@ -16,6 +16,7 @@ import { geneticsLink, strainLink } from '../../lib/catalog/links';
 import { type LibLineage, library, toCatalogStrain } from '../../lib/catalog/library';
 import { useAsync, useLibraryStatus } from '../../app/library';
 import type { CatalogStrain } from '../../lib/catalog/types';
+import { t } from '../../i18n';
 
 const NODE_W = 184;
 const NODE_H = 54;
@@ -40,7 +41,7 @@ function StrainPicker() {
     }
     const c = new AbortController();
     setLoading(true);
-    const t = window.setTimeout(() => {
+    const tv = window.setTimeout(() => {
       catalog
         .search(q, 1, 12, c.signal)
         .then((p) => setItems(p.items.filter((i) => i.genetics)))
@@ -48,18 +49,18 @@ function StrainPicker() {
         .finally(() => setLoading(false));
     }, 300);
     return () => {
-      window.clearTimeout(t);
+      window.clearTimeout(tv);
       c.abort();
     };
   }, [q]);
   return (
     <div className="card mx-auto max-w-2xl p-6">
       <Dna className="size-7 text-leaf-400" />
-      <h1 className="page-title mt-3">Genetik-Explorer</h1>
-      <p className="mt-1 text-sm text-ink-400">Dokumentierte Abstammungen als interaktiver Graph. Nur belegte Beziehungen – Unklares wird gekennzeichnet.</p>
+      <h1 className="page-title mt-3">{t('discover.ge.title')}</h1>
+      <p className="mt-1 text-sm text-ink-400">{t('discover.ge.subtitle')}</p>
       <div className="relative mt-5">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-500" />
-        <input className="input-base h-11 pl-10" placeholder="Sorte suchen, z. B. Gelato" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Sorte für Genetik suchen" autoFocus />
+        <input className="input-base h-11 pl-10" placeholder={t('discover.ge.searchPh')} value={q} onChange={(e) => setQ(e.target.value)} aria-label={t('discover.ge.searchAria')} autoFocus />
         {loading && <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-leaf-400" />}
       </div>
       {items.length > 0 && (
@@ -77,7 +78,7 @@ function StrainPicker() {
           ))}
         </ul>
       )}
-      {q && !loading && items.length === 0 && <p className="hint mt-3">Keine Treffer mit dokumentierter Genetik.</p>}
+      {q && !loading && items.length === 0 && <p className="hint mt-3">{t('discover.ge.noHits')}</p>}
     </div>
   );
 }
@@ -172,7 +173,7 @@ function Graph({ graph, selected, onSelect }: { graph: LineageGraph; selected?: 
 
   const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
   return (
-    <div className={full ? 'fixed inset-0 z-[70] bg-ink-950 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:p-5' : 'relative'} role={full ? 'dialog' : undefined} aria-modal={full || undefined} aria-label={full ? 'Abstammungsgraph im Vollbild' : undefined}>
+    <div className={full ? 'fixed inset-0 z-[70] bg-ink-950 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:p-5' : 'relative'} role={full ? 'dialog' : undefined} aria-modal={full || undefined} aria-label={full ? t('discover.ge.fullAria') : undefined}>
       <div
         ref={box}
         className={`relative w-full ${full ? 'h-full' : 'h-[60vh] min-h-[420px]'} touch-none select-none overflow-hidden rounded-2xl border border-white/[0.06] bg-[radial-gradient(circle_at_1px_1px,rgb(255_255_255/0.05)_1px,transparent_0)] bg-[length:22px_22px] cursor-grab active:cursor-grabbing`}
@@ -181,7 +182,7 @@ function Graph({ graph, selected, onSelect }: { graph: LineageGraph; selected?: 
         onPointerUp={up}
         onPointerCancel={up}
         role="application"
-        aria-label="Abstammungsgraph – ziehen zum Verschieben, Mausrad oder Zwei-Finger-Geste zum Zoomen"
+        aria-label={t('discover.ge.graphAria')}
       >
         <svg className="absolute inset-0 h-full w-full">
           <defs>
@@ -219,18 +220,18 @@ function Graph({ graph, selected, onSelect }: { graph: LineageGraph; selected?: 
               const sel = selected === n.id;
               const sub =
                 n.kind === 'root' || n.kind === 'strain'
-                  ? (n.strain?.breeder ?? 'Breeder unbekannt')
+                  ? (n.strain?.breeder ?? t('discover.ge.noBreeder'))
                   : n.kind === 'ambiguous'
-                    ? `${n.candidates?.length} gleichnamige Sorten`
+                    ? t('discover.ge.sameName', { n: n.candidates?.length ?? 0 })
                     : n.kind === 'cross'
-                      ? 'Zwischenkreuzung'
+                      ? t('discover.ge.intermediate')
                       : n.flags.includes('research')
-                        ? 'CannaLib-Angabe'
+                        ? t('discover.ge.cannalib')
                         : n.flags.includes('not-looked-up')
-                          ? 'nicht abgefragt'
+                          ? t('discover.ge.notQueried')
                           : n.kind === 'unknown'
                             ? 'unbekannt'
-                            : 'nicht im Katalog';
+                            : t('discover.ge.notInCat');
               return (
                 <g
                   key={n.id}
@@ -266,24 +267,24 @@ function Graph({ graph, selected, onSelect }: { graph: LineageGraph; selected?: 
           </g>
         </svg>
         {graph.nodes.length === 1 && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-6 text-center text-[13px] text-ink-400">Für diese Sorte ist keine Abstammung dokumentiert.</div>
+          <div className="pointer-events-none absolute inset-x-0 bottom-6 text-center text-[13px] text-ink-400">{t('discover.ge.noLineage')}</div>
         )}
       </div>
       <div className={`absolute flex flex-col gap-1 ${full ? 'right-4 top-4 sm:right-8 sm:top-8' : 'right-3 top-3'}`}>
-        <button type="button" className="btn-ghost bg-ink-900/90 p-2" aria-label={full ? 'Vollbild beenden (Esc)' : 'Vollbild'} aria-pressed={full} onClick={() => setFull((f) => !f)}>
+        <button type="button" className="btn-ghost bg-ink-900/90 p-2" aria-label={full ? t('discover.ge.exitFull') : t('discover.ge.full')} aria-pressed={full} onClick={() => setFull((f) => !f)}>
           {full ? <Shrink className="size-4" /> : <Expand className="size-4" />}
         </button>
-        <button type="button" className="btn-ghost bg-ink-900/90 p-2" aria-label="Vergrößern" onClick={() => zoomAt(1.25)}>
+        <button type="button" className="btn-ghost bg-ink-900/90 p-2" aria-label={t('discover.ge.zoomIn')} onClick={() => zoomAt(1.25)}>
           <Plus className="size-4" />
         </button>
-        <button type="button" className="btn-ghost bg-ink-900/90 p-2" aria-label="Verkleinern" onClick={() => zoomAt(0.8)}>
+        <button type="button" className="btn-ghost bg-ink-900/90 p-2" aria-label={t('discover.ge.zoomOut')} onClick={() => zoomAt(0.8)}>
           <Minus className="size-4" />
         </button>
-        <button type="button" className="btn-ghost bg-ink-900/90 p-2" aria-label="Einpassen" onClick={fit}>
+        <button type="button" className="btn-ghost bg-ink-900/90 p-2" aria-label={t('discover.ge.fit')} onClick={fit}>
           <Maximize2 className="size-4" />
         </button>
       </div>
-      <span className="sr-only">{[...nodeById.keys()].length} Knoten</span>
+      <span className="sr-only">{t('discover.ge.nodes', { n: [...nodeById.keys()].length })}</span>
     </div>
   );
 }
@@ -293,9 +294,9 @@ function NodePanel({ node, onClose }: { node: GNode; onClose: () => void }) {
   return (
     <Card
       title={node.label}
-      subtitle={node.kind === 'root' ? 'Ausgangssorte' : node.kind === 'strain' ? 'Im Katalog gefunden (eindeutiger Name)' : undefined}
+      subtitle={node.kind === 'root' ? t('discover.ge.root') : node.kind === 'strain' ? t('discover.ge.found') : undefined}
       actions={
-        <button type="button" className="btn-ghost p-1.5" aria-label="Vorschau schließen" onClick={onClose}>
+        <button type="button" className="btn-ghost p-1.5" aria-label={t('discover.ge.closePreview')} onClick={onClose}>
           <X className="size-4" />
         </button>
       }
@@ -307,36 +308,36 @@ function NodePanel({ node, onClose }: { node: GNode; onClose: () => void }) {
             <TypeBadge type={s.typeClass} label={s.type} />
             {s.thc && <span className="rounded-full border border-white/[0.08] px-2 py-0.5 font-mono text-[11px] text-ink-300">THC {rangeText(s.thc)}</span>}
           </div>
-          <div className="text-[13px] text-ink-300">{s.breeder ?? 'Breeder unbekannt'}</div>
+          <div className="text-[13px] text-ink-300">{s.breeder ?? t('discover.ge.noBreeder')}</div>
           <div className="text-[12px] text-ink-400">
-            Genetik: <span className="text-ink-200">{s.genetics ?? 'keine Angabe'}</span> <EvidenceBadge state={s.evidence.genetics} />
+            Genetik: <span className="text-ink-200">{s.genetics ?? t('discover.ge.noValue')}</span> <EvidenceBadge state={s.evidence.genetics} />
           </div>
-          {node.flags.includes('conflict') && <p className="text-[12px] text-amber-300/90">Seedbanks nennen unterschiedliche Eltern – abweichende Angaben sind als orange gestrichelte Kanten eingezeichnet.</p>}
-          {s.provider === 'cisp' && <p className="text-[11px] text-ink-500">Quelle: Seedbank-Angaben (CI-Strains-Pro, CC BY 4.0) – nicht unabhängig bestätigt.</p>}
+          {node.flags.includes('conflict') && <p className="text-[12px] text-amber-300/90">{t('discover.ge.diffParents')}</p>}
+          {s.provider === 'cisp' && <p className="text-[11px] text-ink-500">{t('discover.ge.sourceNote')}</p>}
           <div className="flex flex-wrap gap-2">
             <a href={href(strainLink(s))} className="btn-primary py-1.5 text-xs">
-              Profil öffnen
+              {t('discover.ge.openProfile')}
             </a>
             {node.kind !== 'root' && geneticsLink(s.provider, s.id) && (
               <button type="button" className="btn-ghost py-1.5 text-xs" onClick={() => navigate(geneticsLink(s.provider, s.id)!)}>
-                <Dna className="size-3.5" /> Als Zentrum
+                <Dna className="size-3.5" /> {t('discover.ge.center')}
               </button>
             )}
           </div>
         </div>
       ) : node.kind === 'ambiguous' ? (
         <div className="space-y-2">
-          <p className="text-[13px] text-amber-200/90">Mehrere Sorten tragen diesen Namen. Ohne Breeder-Angabe in der Abstammung ist nicht belegt, welche gemeint ist – sie werden nicht zusammengeführt.</p>
-          {node.flags.includes('same-breeder-candidate') && <p className="text-[12px] text-ink-400">Eine der Kandidatinnen stammt vom selben Breeder wie die Nachkommensorte – ein Hinweis, aber kein Beleg.</p>}
+          <p className="text-[13px] text-amber-200/90">{t('discover.ge.multi')}</p>
+          {node.flags.includes('same-breeder-candidate') && <p className="text-[12px] text-ink-400">{t('discover.ge.sameBreeder')}</p>}
           <ul className="space-y-1.5">
             {node.candidates?.map((c) => (
               <li key={c.key} className="flex items-stretch gap-1">
                 <a href={href(strainLink(c))} className="flex min-h-10 min-w-0 flex-1 items-center justify-between gap-2 rounded-lg border border-white/[0.06] px-3 py-2 text-[12px] hover:border-white/[0.14]">
                   <span className="truncate text-ink-100">{c.name}</span>
-                  <span className="truncate text-ink-400">{c.breeder ?? 'Breeder unbekannt'}</span>
+                  <span className="truncate text-ink-400">{c.breeder ?? t('discover.ge.noBreeder')}</span>
                 </a>
                 {geneticsLink(c.provider, c.id) && (
-                  <a href={href(geneticsLink(c.provider, c.id)!)} className="grid w-10 place-items-center rounded-lg border border-white/[0.06] text-ink-400 hover:border-white/[0.14] hover:text-ink-100" aria-label={`Abstammung von ${c.name} (${c.breeder ?? 'Breeder unbekannt'}) als Zentrum`} title="Diese Linie als Zentrum">
+                  <a href={href(geneticsLink(c.provider, c.id)!)} className="grid w-10 place-items-center rounded-lg border border-white/[0.06] text-ink-400 hover:border-white/[0.14] hover:text-ink-100" aria-label={t('discover.ge.asCenter', { name: c.name, breeder: c.breeder ?? t('discover.ge.noBreeder') })} title={t('discover.ge.lineCenter')}>
                     <Dna className="size-3.5" />
                   </a>
                 )}
@@ -346,18 +347,18 @@ function NodePanel({ node, onClose }: { node: GNode; onClose: () => void }) {
         </div>
       ) : (
         <div className="space-y-2 text-[13px] text-ink-400">
-          {node.kind === 'cross' && <p>Zwischenkreuzung aus den verbundenen Elternsorten (laut Genetikangabe in Klammern).</p>}
+          {node.kind === 'cross' && <p>{t('discover.ge.interText')}</p>}
           {node.flags.includes('research') && (
             <p>
-              Elternangabe aus CannaLib{node.confidence !== undefined && ` (Konfidenz ${Math.round(node.confidence * 100)} %)`}. Nicht im Katalog aufgelöst.
+              {t('discover.ge.fromCannalib')}{node.confidence !== undefined && t('discover.ge.confidence', { n: Math.round(node.confidence * 100) })}. {t('discover.ge.notResolved')}
             </p>
           )}
-          {node.flags.includes('not-in-catalog') && <p>Kein exakt gleichnamiger Eintrag im Katalog. Weitere Abstammung: keine Daten verfügbar.</p>}
-          {node.flags.includes('not-looked-up') && <p>Wegen des Anfragebudgets nicht abgefragt. Ausgehend von einer anderen Sorte erneut erkunden.</p>}
-          {node.kind === 'unknown' && <p>Die Quelle nennt diese Abstammung als unbekannt.</p>}
+          {node.flags.includes('not-in-catalog') && <p>{t('discover.ge.noExact')}</p>}
+          {node.flags.includes('not-looked-up') && <p>{t('discover.ge.budget')}</p>}
+          {node.kind === 'unknown' && <p>{t('discover.ge.unknownSrc')}</p>}
           {node.kind !== 'cross' && (
             <a href={href(`discover?q=${encodeURIComponent(node.label)}`)} className="btn-ghost py-1.5 text-xs">
-              <Search className="size-3.5" /> Im Katalog suchen
+              <Search className="size-3.5" /> {t('discover.ge.searchCat')}
             </a>
           )}
         </div>
@@ -408,13 +409,13 @@ export function GeneticsExplorer({ slug }: { slug?: string }) {
       <DiscoverNav />
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <div className="section-label">Genetik-Explorer</div>
-          <h1 className="page-title mt-1 truncate">{strain?.name ?? (loading ? 'Lade …' : 'Unbekannt')}</h1>
+          <div className="section-label">{t('discover.ge.title')}</div>
+          <h1 className="page-title mt-1 truncate">{strain?.name ?? (loading ? t('discover.ge.loading') : t('discover.ge.unknown'))}</h1>
           {strain?.genetics && <p className="mt-1 text-sm text-ink-400">{strain.genetics}</p>}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <label className="flex items-center gap-2 text-[12px] text-ink-400">
-            Generationen
+            {t('discover.ge.generations')}
             <select className="input-base w-auto py-1.5 text-[12px]" value={depth} onChange={(e) => setDepth(Number(e.target.value))}>
               {[1, 2, 3, 4].map((d) => (
                 <option key={d} value={d}>
@@ -424,14 +425,14 @@ export function GeneticsExplorer({ slug }: { slug?: string }) {
             </select>
           </label>
           <a href={href('discover/genetics')} className="btn-ghost py-1.5 text-xs">
-            <Search className="size-3.5" /> Andere Sorte
+            <Search className="size-3.5" /> {t('discover.ge.other')}
           </a>
         </div>
       </div>
 
       {error && !strain ? (
         <div className="card">
-          <EmptyState title="Sorte konnte nicht geladen werden" text={error} />
+          <EmptyState title={t('discover.ge.loadFail')} text={error} />
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
@@ -439,7 +440,7 @@ export function GeneticsExplorer({ slug }: { slug?: string }) {
             {(loading || building) && !graph ? (
               <div className="grid h-[60vh] min-h-[420px] place-items-center rounded-2xl border border-white/[0.06]">
                 <div className="flex items-center gap-2 text-sm text-ink-400">
-                  <Loader2 className="size-4 animate-spin text-leaf-400" /> Abstammung wird aufgelöst …
+                  <Loader2 className="size-4 animate-spin text-leaf-400" /> {t('discover.ge.resolving')}
                 </div>
               </div>
             ) : graph ? (
@@ -453,30 +454,30 @@ export function GeneticsExplorer({ slug }: { slug?: string }) {
                 <svg width="26" height="6">
                   <line x1="0" y1="3" x2="26" y2="3" stroke="rgb(255 255 255 / 0.4)" strokeWidth="1.5" />
                 </svg>
-                Genetikangabe (StrainAPI)
+                {t('discover.ge.lgGenetics')}
               </span>
               <span className="flex items-center gap-1.5">
                 <svg width="26" height="6">
                   <line x1="0" y1="3" x2="26" y2="3" stroke="#fb923c" strokeWidth="1.5" strokeDasharray="6 4" />
                 </svg>
-                alternativ berichtet / umstritten
+                {t('discover.ge.lgAlt')}
               </span>
               <span className="flex items-center gap-1.5">
                 <svg width="26" height="6">
                   <line x1="0" y1="3" x2="26" y2="3" stroke="#fbbf24" strokeWidth="1.5" strokeDasharray="2 4" />
                 </svg>
-                CannaLib (Konfidenz)
+                {t('discover.ge.lgCannalib')}
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="h-3 w-5 rounded border border-dashed border-white/20" /> nicht eindeutig im Katalog
+                <span className="h-3 w-5 rounded border border-dashed border-white/20" /> {t('discover.ge.lgNotUnique')}
               </span>
               <span className="flex items-center gap-1.5">
-                <CircleHelp className="size-3.5 text-amber-300" /> mehrdeutig (gleichnamig)
+                <CircleHelp className="size-3.5 text-amber-300" /> {t('discover.ge.lgAmb')}
               </span>
             </div>
             {graph && (
               <p className="text-[11px] text-ink-600">
-                {graph.requests} Katalog-Anfragen{graph.truncated && ' · Darstellung gekürzt (Anfragebudget/Generationen)'} · Elternnamen werden nur bei eindeutigem, exaktem Treffer aufgelöst.
+                {t('discover.ge.requests', { n: graph.requests })}{graph.truncated && t('discover.ge.truncated')} · {t('discover.ge.exactOnly')}
               </p>
             )}
           </div>
@@ -484,17 +485,17 @@ export function GeneticsExplorer({ slug }: { slug?: string }) {
             {sel ? (
               <NodePanel node={sel} onClose={() => setSelected(undefined)} />
             ) : (
-              <Card title="Knoten auswählen">
-                <p className="text-[13px] text-ink-400">Einen Knoten antippen, um Details zu sehen und zu verwandten Sorten zu navigieren.</p>
+              <Card title={t('discover.ge.pickNode')}>
+                <p className="text-[13px] text-ink-400">{t('discover.ge.pickNodeText')}</p>
               </Card>
             )}
             {strain && settings.cannalibEnabled && settings.onlineCatalog && (
-              <Card title="CannaLib-Abstammung" subtitle="Optional, mit Konfidenzangaben" icon={<Microscope className="size-4" />}>
+              <Card title={t('discover.ge.cannalibLineage')} subtitle={t('discover.ge.cannalibSub')} icon={<Microscope className="size-4" />}>
                 <ResearchPanel name={strain.name} research={research} />
                 {research.profile && research.profile.parents.length > 0 && (
                   <label className="mt-3 flex cursor-pointer items-center gap-2 text-[13px] text-ink-200">
                     <input type="checkbox" className="accent-leaf-500" checked={withResearch} onChange={(e) => setWithResearch(e.target.checked)} />
-                    Im Graphen anzeigen
+                    {t('discover.ge.showInGraph')}
                   </label>
                 )}
               </Card>
@@ -541,16 +542,16 @@ function CatalogPicker() {
   return (
     <div className="card mx-auto max-w-2xl p-6">
       <Dna className="size-7 text-leaf-400" />
-      <h1 className="page-title mt-3">Genetik-Explorer</h1>
-      <p className="mt-1 text-sm text-ink-400">Abstammung aus dem lokalen Katalog als interaktiver Graph. Nur dokumentierte Elternangaben; gleichnamige Sorten verschiedener Breeder werden nicht gleichgesetzt.</p>
+      <h1 className="page-title mt-3">{t('discover.ge.title')}</h1>
+      <p className="mt-1 text-sm text-ink-400">{t('discover.ge.catSubtitle')}</p>
       <div className="relative mt-5">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-500" />
-        <input className="input-base h-11 pl-10" placeholder="Sorte suchen, z. B. Gelato" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Sorte für Genetik suchen" autoFocus />
+        <input className="input-base h-11 pl-10" placeholder={t('discover.ge.searchPh')} value={q} onChange={(e) => setQ(e.target.value)} aria-label={t('discover.ge.searchAria')} autoFocus />
         {res.loading && q.trim().length >= 2 && <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-leaf-400" />}
       </div>
       {res.data && res.data.items.length > 0 && (
         <>
-          <p className="mt-3 text-[11px] text-ink-500">{res.data.total} Sorten mit dokumentierter Abstammung</p>
+          <p className="mt-3 text-[11px] text-ink-500">{t('discover.ge.withLineage', { n: res.data.total })}</p>
           <ul className="mt-1.5 divide-y divide-white/[0.05] rounded-xl border border-white/[0.06]">
             {res.data.items.map((i) => (
               <li key={i.id}>
@@ -570,10 +571,10 @@ function CatalogPicker() {
           </ul>
         </>
       )}
-      {res.data && res.data.items.length === 0 && <p className="hint mt-3">Keine Sorte mit dokumentierter Abstammung gefunden.</p>}
+      {res.data && res.data.items.length === 0 && <p className="hint mt-3">{t('discover.ge.noneDoc')}</p>}
       {q.trim().length < 2 && starts.data && starts.data.items.length > 0 && (
-        <section className="mt-5" aria-label="Ausgangspunkte">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-500">Ausgangspunkte · meistgelistet mit dokumentierter Abstammung</p>
+        <section className="mt-5" aria-label={t('discover.ge.starts')}>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-500">{t('discover.ge.startsSub')}</p>
           <ul className="mt-2 flex flex-wrap gap-1.5">
             {starts.data.items.map((i) => (
               <li key={i.id}>
@@ -588,11 +589,11 @@ function CatalogPicker() {
               </li>
             ))}
           </ul>
-          <p className="hint mt-2">Reihenfolge nach Anzahl der Seedbank-Angebote im Katalog – keine Qualitäts- oder Beliebtheitswertung.</p>
+          <p className="hint mt-2">{t('discover.ge.order')}</p>
         </section>
       )}
       <a href={href('discover/genetics/live')} className="mt-4 inline-flex text-[12px] text-ink-400 hover:text-ink-100">
-        Stattdessen Live-Katalog (StrainAPI) verwenden
+        {t('discover.ge.useLive')}
       </a>
     </div>
   );
@@ -618,17 +619,17 @@ export function CatalogGenetics({ id }: { id?: string }) {
       <DiscoverNav />
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <p className="section-label">Genetik-Explorer · Katalog</p>
-          <h1 className="page-title mt-1 truncate">{root?.label ?? (res.loading ? 'Lade …' : 'Unbekannt')}</h1>
+          <p className="section-label">{t('discover.ge.catTitle')}</p>
+          <h1 className="page-title mt-1 truncate">{root?.label ?? (res.loading ? t('discover.ge.loading') : t('discover.ge.unknown'))}</h1>
           {root?.strain && (
             <p className="mt-1 text-sm text-ink-400">
-              {root.strain.breeder} · {root.strain.genetics || 'keine Abstammung dokumentiert'}
+              {root.strain.breeder} · {root.strain.genetics || t('discover.ge.noneDocShort')}
             </p>
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <label className="flex items-center gap-2 text-[12px] text-ink-400">
-            Generationen
+            {t('discover.ge.generations')}
             <select className="input-base w-auto py-1.5 text-[12px]" value={depth} onChange={(e) => setDepth(Number(e.target.value))}>
               {[1, 2, 3, 4].map((d) => (
                 <option key={d} value={d}>
@@ -639,17 +640,17 @@ export function CatalogGenetics({ id }: { id?: string }) {
           </label>
           {root?.strain && (
             <a href={href(strainLink(root.strain))} className="btn-ghost py-1.5 text-xs">
-              Sortenprofil
+              {t('discover.ge.profile')}
             </a>
           )}
           <a href={href('discover/genetics')} className="btn-ghost py-1.5 text-xs">
-            <Search className="size-3.5" /> Andere Sorte
+            <Search className="size-3.5" /> {t('discover.ge.other')}
           </a>
         </div>
       </div>
       {res.error && !graph ? (
         <div className="card">
-          <EmptyState title={res.notFound ? 'Sorte nicht im Katalog' : 'Abstammung konnte nicht geladen werden'} text={res.notFound ? undefined : res.error} action={<a href={href('discover/genetics')} className="btn-ghost">Andere Sorte</a>} />
+          <EmptyState title={res.notFound ? t('discover.ge.notInCatT') : t('discover.ge.lineageFail')} text={res.notFound ? undefined : res.error} action={<a href={href('discover/genetics')} className="btn-ghost">{t('discover.ge.other')}</a>} />
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
@@ -657,7 +658,7 @@ export function CatalogGenetics({ id }: { id?: string }) {
             {!graph ? (
               <div className="grid h-[60vh] min-h-[420px] place-items-center rounded-2xl border border-white/[0.06]" aria-busy="true">
                 <div className="flex items-center gap-2 text-sm text-ink-400">
-                  <Loader2 className="size-4 animate-spin text-leaf-400" /> Abstammung wird geladen …
+                  <Loader2 className="size-4 animate-spin text-leaf-400" /> {t('discover.ge.loadingLineage')}
                 </div>
               </div>
             ) : (
@@ -670,30 +671,30 @@ export function CatalogGenetics({ id }: { id?: string }) {
                 <svg width="26" height="6" aria-hidden>
                   <line x1="0" y1="3" x2="26" y2="3" stroke="rgb(255 255 255 / 0.4)" strokeWidth="1.5" />
                 </svg>
-                Elternangabe (Seedbank)
+                {t('discover.ge.lgParent')}
               </span>
               <span className="flex items-center gap-1.5">
                 <svg width="26" height="6" aria-hidden>
                   <line x1="0" y1="3" x2="26" y2="3" stroke="#fb923c" strokeWidth="1.5" strokeDasharray="6 4" />
                 </svg>
-                abweichende Angabe einer anderen Seedbank
+                {t('discover.ge.lgOther')}
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="h-3 w-5 rounded border border-dashed border-white/20" aria-hidden /> nicht im Katalog / unbekannt
+                <span className="h-3 w-5 rounded border border-dashed border-white/20" aria-hidden /> {t('discover.ge.lgNotInCat')}
               </span>
               <span className="flex items-center gap-1.5">
-                <CircleHelp className="size-3.5 text-amber-300" aria-hidden /> mehrdeutig (gleichnamig)
+                <CircleHelp className="size-3.5 text-amber-300" aria-hidden /> {t('discover.ge.lgAmb')}
               </span>
             </div>
             {graph && counts && (
               <p className="text-[11px] text-ink-500">
-                {counts.strain} eindeutig aufgelöst · {counts.ambiguous} mehrdeutig · {counts.unresolved} nicht im Katalog · {counts.unknown} unbekannt · {counts.alt} abweichende Kanten
-                {graph.truncated && ' · gekürzt (Generationen/Knotenlimit)'}
+                {t('discover.ge.counts', { a: counts.strain, b: counts.ambiguous, c: counts.unresolved, d: counts.unknown, e: counts.alt })}
+                {graph.truncated && t('discover.ge.truncated2')}
               </p>
             )}
             {graph && (
               <details className="rounded-xl border border-white/[0.06] p-3 text-[12px] text-ink-300">
-                <summary className="cursor-pointer text-ink-200">Abstammung als Liste (Textalternative)</summary>
+                <summary className="cursor-pointer text-ink-200">{t('discover.ge.listAlt')}</summary>
                 <ul className="mt-2 space-y-1">
                   {graph.edges.map((e, i) => {
                     const a = graph.nodes.find((n) => n.id === e.from);
@@ -701,8 +702,8 @@ export function CatalogGenetics({ id }: { id?: string }) {
                     return (
                       <li key={i}>
                         {b?.label} ← {a?.label}
-                        {a?.kind === 'ambiguous' ? ' (mehrdeutig)' : a?.kind === 'unresolved' ? ' (nicht im Katalog)' : a?.kind === 'unknown' ? ' (unbekannt)' : ''}
-                        {e.kind === 'alternative' ? ' – abweichende Angabe' : ''}
+                        {a?.kind === 'ambiguous' ? t('discover.ge.pAmb') : a?.kind === 'unresolved' ? t('discover.ge.pUnres') : a?.kind === 'unknown' ? t('discover.ge.pUnknown') : ''}
+                        {e.kind === 'alternative' ? t('discover.ge.altSuffix') : ''}
                       </li>
                     );
                   })}
@@ -714,8 +715,8 @@ export function CatalogGenetics({ id }: { id?: string }) {
             {sel ? (
               <NodePanel node={sel} onClose={() => setSelected(undefined)} />
             ) : (
-              <Card title="Knoten auswählen">
-                <p className="text-[13px] text-ink-400">Einen Knoten antippen oder per Tab-Taste fokussieren und Enter drücken, um Details zu sehen und zu verwandten Sorten zu navigieren.</p>
+              <Card title={t('discover.ge.pickNode')}>
+                <p className="text-[13px] text-ink-400">{t('discover.ge.pickNodeText2')}</p>
               </Card>
             )}
             {res.data && (
