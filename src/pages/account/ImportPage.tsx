@@ -8,7 +8,7 @@ import { Callout } from '../../components/ui/Callout';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { SYNC_STORE_LABEL } from '../../lib/sync/labels';
 import { type ImportReport, type LegacySnapshot, deleteLegacy, dismissLegacy, importLegacy, legacyBackupZip, legacyExists, readImportMark, readLegacy } from '../../lib/sync/legacy';
-import { intlLocale } from '../../i18n';
+import { t, intlLocale } from '../../i18n';
 
 type Step = 'loading' | 'none' | 'preview' | 'running' | 'done';
 
@@ -55,14 +55,13 @@ export function ImportPage() {
   const run = async () => {
     if (!snap) return;
     const ok = await confirm({
-      title: 'Daten in dieses Konto übernehmen?',
+      title: t('account.im.confirmTitle'),
       message: (
         <>
-          Die lokal gespeicherten Daten dieses Browsers werden in das Konto <strong className="text-ink-50">{who}</strong> übertragen und auf deinem Server verschlüsselt gespeichert.
-          Vorhandene Serverdaten werden nicht überschrieben; Abweichungen erscheinen als Konflikte. Die alte lokale Datenbank bleibt erhalten.
+          {t('account.im.confirmA')} <strong className="text-ink-50">{who}</strong> {t('account.im.confirmB')}
         </>
       ),
-      confirmLabel: 'In dieses Konto übernehmen',
+      confirmLabel: t('account.im.confirm'),
     });
     if (!ok) return;
     setStep('running');
@@ -72,53 +71,53 @@ export function ImportPage() {
       setReport(r);
       setStep('done');
     } catch (e) {
-      setError(`${(e as Error).message} – Bereits übertragene Daten bleiben erhalten; ein erneuter Start überspringt sie.`);
+      setError(t('account.im.partial', { msg: (e as Error).message }));
       setStep('preview');
     }
   };
 
   const cleanup = async () => {
     const ok = await confirm({
-      title: 'Alte lokale Datenbank löschen?',
-      message: 'Die Übernahme wurde vom Server bestätigt. Die alte, unverschlüsselte Kopie in diesem Browser wird endgültig gelöscht. Deine Daten bleiben im Konto erhalten.',
-      confirmLabel: 'Endgültig löschen',
+      title: t('account.im.deleteTitle'),
+      message: t('account.im.deleteMsg'),
+      confirmLabel: t('account.im.deleteFinal'),
       tone: 'danger',
     });
     if (!ok) return;
     await deleteLegacy();
-    toast('Alte lokale Datenbank gelöscht.', { tone: 'ok' });
+    toast(t('account.im.deleted'), { tone: 'ok' });
     setStep('none');
   };
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <PageHeader title="Lokale Daten übernehmen" subtitle="Bisher nur in diesem Browser gespeicherte Daten in dein Konto übertragen." crumbs={[{ label: 'Konto', to: 'account' }, { label: 'Datenübernahme' }]} />
+      <PageHeader title={t('account.im.title')} subtitle={t('account.im.subtitle')} crumbs={[{ label: t('account.im.account'), to: 'account' }, { label: t('account.im.crumb') }]} />
 
       {error && <Callout tone="danger">{error}</Callout>}
 
       {step === 'loading' && (
         <div className="flex items-center gap-2 text-sm text-ink-400">
-          <Loader2 className="size-4 animate-spin" /> Suche nach lokalen Daten …
+          <Loader2 className="size-4 animate-spin" /> {t('account.im.searching')}
         </div>
       )}
 
       {step === 'none' && (
-        <Callout tone="ok" title="Keine lokalen Altdaten gefunden">
-          In diesem Browser gibt es keine Daten aus der bisherigen Einzelnutzer-Version (mehr). <a className="underline" href={href('')}>Zur Übersicht</a>
+        <Callout tone="ok" title={t('account.im.none')}>
+          In diesem Browser gibt es keine Daten aus der bisherigen Einzelnutzer-Version (mehr). <a className="underline" href={href('')}>{t('account.im.toOverview')}</a>
         </Callout>
       )}
 
       {(step === 'preview' || step === 'running') && snap && (
         <>
           {mark && (
-            <Callout tone={mark.accountKey === user.accountKey ? 'info' : 'warn'} title="Bereits übernommen">
-              Diese Daten wurden am {new Date(mark.at).toLocaleString(intlLocale())} in das Konto <strong>{mark.loginName}</strong> übernommen
-              {mark.accountKey === user.accountKey ? '. Ein erneuter Durchlauf legt nichts doppelt an.' : '. Du bist jetzt mit einem anderen Konto angemeldet – bitte prüfe, ob du wirklich auch hierhin übertragen möchtest.'}
+            <Callout tone={mark.accountKey === user.accountKey ? 'info' : 'warn'} title={t('account.im.already')}>
+              {t('account.im.doneA', { date: new Date(mark.at).toLocaleString(intlLocale()) })} <strong>{mark.loginName}</strong> {t('account.im.doneB')}
+              {mark.accountKey === user.accountKey ? t('account.im.same') : t('account.im.other')}
             </Callout>
           )}
           <div className="card p-5">
             <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-ink-50">
-              <Database className="size-4 text-leaf-400" /> Gefunden in diesem Browser
+              <Database className="size-4 text-leaf-400" /> {t('account.im.found')}
             </div>
             <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3">
               {Object.entries(snap.counts)
@@ -130,19 +129,19 @@ export function ImportPage() {
                   </div>
                 ))}
               <div className="flex items-baseline justify-between gap-2 border-b border-white/[0.04] pb-1.5">
-                <dt className="text-[13px] text-ink-400">Fotodateien</dt>
+                <dt className="text-[13px] text-ink-400">{t('account.im.photoFiles')}</dt>
                 <dd className="tabular font-medium text-ink-100">{snap.photoData.length}</dd>
               </div>
               {snap.labDocs.length > 0 && (
                 <div className="flex items-baseline justify-between gap-2 border-b border-white/[0.04] pb-1.5">
-                  <dt className="text-[13px] text-ink-400">Labordokumente</dt>
+                  <dt className="text-[13px] text-ink-400">{t('account.im.labDocs')}</dt>
                   <dd className="tabular font-medium text-ink-100">{snap.labDocs.length}</dd>
                 </div>
               )}
             </dl>
             {snap.issues.length > 0 && (
               <div className="mt-4">
-                <Callout tone="warn" title="Hinweise zur Prüfung der Verknüpfungen">
+                <Callout tone="warn" title={t('account.im.linkHints')}>
                   <ul className="list-disc pl-4">
                     {snap.issues.slice(0, 6).map((i) => (
                       <li key={i}>{i}</li>
@@ -158,8 +157,8 @@ export function ImportPage() {
             <div className="flex items-start gap-3">
               <span className="grid size-7 shrink-0 place-items-center rounded-full bg-white/[0.05] text-[12px] text-ink-300">1</span>
               <div className="flex-1">
-                <div className="font-medium text-ink-100">Sicherung herunterladen (empfohlen)</div>
-                <p className="mt-0.5 text-[13px] text-ink-400">ZIP im gewohnten TERPGRID-Backup-Format – lässt sich jederzeit wieder importieren.</p>
+                <div className="font-medium text-ink-100">{t('account.im.backup')}</div>
+                <p className="mt-0.5 text-[13px] text-ink-400">{t('account.im.backupHint')}</p>
                 <button
                   type="button"
                   className="btn-ghost mt-2"
@@ -168,14 +167,14 @@ export function ImportPage() {
                     setBackedUp(true);
                   }}
                 >
-                  {backedUp ? <CheckCircle2 className="size-4 text-leaf-300" /> : <Download className="size-4" />} Sicherung speichern
+                  {backedUp ? <CheckCircle2 className="size-4 text-leaf-300" /> : <Download className="size-4" />} {t('account.im.saveBackup')}
                 </button>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <span className="grid size-7 shrink-0 place-items-center rounded-full bg-white/[0.05] text-[12px] text-ink-300">2</span>
               <div className="flex-1">
-                <div className="font-medium text-ink-100">Zielkonto prüfen</div>
+                <div className="font-medium text-ink-100">{t('account.im.target')}</div>
                 <p className="mt-1 inline-flex items-center gap-2 rounded-lg border border-leaf-500/25 bg-leaf-500/[0.07] px-3 py-1.5 text-[13px] text-leaf-100">
                   <UserRound className="size-4" /> {who}
                 </p>
@@ -184,7 +183,7 @@ export function ImportPage() {
             <div className="flex items-start gap-3">
               <span className="grid size-7 shrink-0 place-items-center rounded-full bg-white/[0.05] text-[12px] text-ink-300">3</span>
               <div className="flex-1">
-                <div className="font-medium text-ink-100">Übernehmen</div>
+                <div className="font-medium text-ink-100">{t('account.im.transfer')}</div>
                 {step === 'running' ? (
                   <div className="mt-2 space-y-1.5" role="status" aria-live="polite">
                     <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
@@ -197,7 +196,7 @@ export function ImportPage() {
                 ) : (
                   <div className="mt-2 flex flex-wrap gap-2">
                     <button type="button" className="btn-primary" onClick={run} disabled={offline}>
-                      <HardDriveDownload className="size-4" /> In mein Konto übernehmen <ArrowRight className="size-4" />
+                      <HardDriveDownload className="size-4" /> {t('account.im.toMine')} <ArrowRight className="size-4" />
                     </button>
                     <button
                       type="button"
@@ -207,11 +206,11 @@ export function ImportPage() {
                         location.hash = '#/';
                       }}
                     >
-                      Später / nicht übernehmen
+                      {t('account.im.later')}
                     </button>
                   </div>
                 )}
-                {offline && <p className="mt-2 text-[12px] text-amber-200">Für die Übernahme muss der Server erreichbar sein.</p>}
+                {offline && <p className="mt-2 text-[12px] text-amber-200">{t('account.im.needServer')}</p>}
               </div>
             </div>
           </div>
@@ -220,31 +219,31 @@ export function ImportPage() {
 
       {step === 'done' && report && (
         <div className="space-y-4">
-          <Callout tone={report.verified ? 'ok' : 'warn'} title={report.verified ? 'Übernahme abgeschlossen und vom Server bestätigt' : 'Übernahme mit Hinweisen abgeschlossen'}>
-            {report.created} neu angelegt · {report.unchanged} bereits vorhanden · {report.files} Dateien übertragen
-            {report.conflicts > 0 && <> · {report.conflicts} Konflikte (unter <a className="underline" href={href('account/sync')}>Synchronisation</a> auflösen)</>}
+          <Callout tone={report.verified ? 'ok' : 'warn'} title={report.verified ? t('account.im.done') : t('account.im.doneHints')}>
+            {t('account.im.report', { a: report.created, b: report.unchanged, c: report.files })}
+            {report.conflicts > 0 && <> · {t('account.im.conflictsA', { n: report.conflicts })} <a className="underline" href={href('account/sync')}>{t('account.sy.title')}</a>{t('account.im.conflictsB')}</>}
           </Callout>
           {(report.rejected.length > 0 || report.fileErrors.length > 0 || report.mismatches.length > 0) && (
             <div className="card space-y-2 p-4 text-[13px] text-ink-300">
-              {[...report.rejected.map((r) => `${SYNC_STORE_LABEL[r.store] ?? r.store} ${r.id}: ${r.error}`), ...report.fileErrors, ...report.mismatches].slice(0, 20).map((t) => (
-                <p key={t}>• {t}</p>
+              {[...report.rejected.map((r) => `${SYNC_STORE_LABEL[r.store] ?? r.store} ${r.id}: ${r.error}`), ...report.fileErrors, ...report.mismatches].slice(0, 20).map((msg) => (
+                <p key={msg}>• {msg}</p>
               ))}
             </div>
           )}
           <div className="card space-y-3 p-5">
             <div className="flex items-center gap-2 font-medium text-ink-100">
-              <ShieldCheck className="size-4 text-leaf-400" /> Alte lokale Kopie aufräumen
+              <ShieldCheck className="size-4 text-leaf-400" /> {t('account.im.cleanup')}
             </div>
             <p className="text-[13px] text-ink-400">
-              Die bisherige Datenbank liegt unverschlüsselt in diesem Browser. Du kannst sie jetzt löschen – oder behalten, bis du alles geprüft hast.
-              {!report.verified && ' Da nicht alles bestätigt wurde, ist das Löschen erst nach einem vollständig erfolgreichen Durchlauf möglich.'}
+              {t('account.im.cleanupText')}
+              {!report.verified && ` ${t('account.im.cleanupLater')}`}
             </p>
             <div className="flex flex-wrap gap-2">
               <button type="button" className="btn-ghost text-rose-200" disabled={!report.verified} onClick={cleanup}>
-                <Trash2 className="size-4" /> Alte lokale Datenbank löschen
+                <Trash2 className="size-4" /> {t('account.im.deleteOld')}
               </button>
               <a className="btn-primary" href={href('')}>
-                Zur Übersicht
+                {t('account.im.toOverview')}
               </a>
             </div>
           </div>

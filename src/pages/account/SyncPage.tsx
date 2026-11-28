@@ -7,6 +7,7 @@ import { PageHeader } from '../../components/ui/PageHeader';
 import { type SyncConflict, getAll, subscribe } from '../../lib/db/database';
 import { fmtDateTime } from '../../lib/dates';
 import { SYNC_STORE_LABEL, recordTitle } from '../../lib/sync/labels';
+import { t } from '../../i18n';
 
 function useConflicts() {
   const [list, setList] = useState<SyncConflict[]>([]);
@@ -37,18 +38,18 @@ export function SyncPage() {
   const offline = state.kind === 'authenticated' && state.offline;
 
   const statusLine = () => {
-    if (offline) return { icon: <CloudOff className="size-5 text-amber-300" />, text: 'Offline-Modus', sub: 'Änderungen werden auf diesem Gerät gesammelt und nach der nächsten Anmeldung übertragen.' };
-    if (sync.phase === 'syncing') return { icon: <Loader2 className="size-5 animate-spin text-leaf-300" />, text: 'Synchronisierung läuft', sub: 'Änderungen werden übertragen.' };
-    if (sync.phase === 'offline') return { icon: <CloudOff className="size-5 text-amber-300" />, text: 'Server nicht erreichbar', sub: sync.message };
-    if (sync.phase === 'error') return { icon: <AlertTriangle className="size-5 text-rose-300" />, text: 'Synchronisation fehlgeschlagen', sub: sync.message };
-    if (sync.pending > 0) return { icon: <RefreshCw className="size-5 text-amber-300" />, text: `${sync.pending} Änderung${sync.pending === 1 ? '' : 'en'} ausstehend`, sub: 'Noch nicht vom Server bestätigt.' };
-    return { icon: <CheckCircle2 className="size-5 text-leaf-300" />, text: 'Alles synchronisiert', sub: sync.lastSyncAt ? `Zuletzt vom Server bestätigt: ${fmtDateTime(new Date(sync.lastSyncAt).toISOString())}` : undefined };
+    if (offline) return { icon: <CloudOff className="size-5 text-amber-300" />, text: t('account.sy.offline'), sub: t('account.sy.offlineSub') };
+    if (sync.phase === 'syncing') return { icon: <Loader2 className="size-5 animate-spin text-leaf-300" />, text: t('account.sy.syncing'), sub: t('account.sy.syncingSub') };
+    if (sync.phase === 'offline') return { icon: <CloudOff className="size-5 text-amber-300" />, text: t('account.sy.unreachable'), sub: sync.message };
+    if (sync.phase === 'error') return { icon: <AlertTriangle className="size-5 text-rose-300" />, text: t('account.sy.failed'), sub: sync.message };
+    if (sync.pending > 0) return { icon: <RefreshCw className="size-5 text-amber-300" />, text: t('account.sy.pending', { count: sync.pending }), sub: t('account.sy.notConfirmed') };
+    return { icon: <CheckCircle2 className="size-5 text-leaf-300" />, text: t('account.sy.allSynced'), sub: sync.lastSyncAt ? t('account.sy.lastConfirmed', { date: fmtDateTime(new Date(sync.lastSyncAt).toISOString()) }) : undefined };
   };
   const st = statusLine();
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Synchronisation" subtitle="Deine Daten auf diesem Gerät und auf deinem TERPGRID-Server." crumbs={[{ label: 'Konto', to: 'account' }, { label: 'Synchronisation' }]} />
+      <PageHeader title={t('account.sy.title')} subtitle={t('account.sy.subtitle')} crumbs={[{ label: t('account.sy.account'), to: 'account' }, { label: t('account.sy.title') }]} />
       <div className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
           {st.icon}
@@ -58,31 +59,30 @@ export function SyncPage() {
           </div>
         </div>
         <button type="button" className="btn-ghost" disabled={!engine || sync.phase === 'syncing' || offline} onClick={() => engine?.schedule(0)}>
-          <RefreshCw className="size-4" /> Jetzt synchronisieren
+          <RefreshCw className="size-4" /> {t('account.sy.now')}
         </button>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="card p-4">
-          <div className="text-[11px] uppercase tracking-[0.14em] text-ink-500">Ausstehend</div>
+          <div className="text-[11px] uppercase tracking-[0.14em] text-ink-500">{t('account.sy.pendingL')}</div>
           <div className="mt-1 text-2xl font-semibold tabular text-ink-50">{sync.pending}</div>
         </div>
         <div className="card p-4">
-          <div className="text-[11px] uppercase tracking-[0.14em] text-ink-500">Konflikte</div>
+          <div className="text-[11px] uppercase tracking-[0.14em] text-ink-500">{t('account.sy.conflicts')}</div>
           <div className={`mt-1 text-2xl font-semibold tabular ${sync.conflicts ? 'text-amber-200' : 'text-ink-50'}`}>{sync.conflicts}</div>
         </div>
         <div className="card p-4">
-          <div className="text-[11px] uppercase tracking-[0.14em] text-ink-500">Datensätze lokal</div>
+          <div className="text-[11px] uppercase tracking-[0.14em] text-ink-500">{t('account.sy.localRecords')}</div>
           <div className="mt-1 text-2xl font-semibold tabular text-ink-50">{Object.values(data).reduce((n, l) => n + l.length, 0)}</div>
         </div>
       </div>
 
       {conflicts.length > 0 ? (
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold text-ink-100">Konflikte auflösen</h2>
+          <h2 className="text-sm font-semibold text-ink-100">{t('account.sy.resolve')}</h2>
           <p className="text-[13px] text-ink-400">
-            Diese Einträge wurden auf einem anderen Gerät am selben Feld geändert (hervorgehoben). Änderungen an verschiedenen Feldern führt TERPGRID automatisch zusammen; hier
-            wird nichts automatisch überschrieben – entscheide, welche Version gilt.
+            {t('account.sy.conflictText')}
           </p>
           {conflicts.map((c) => {
             const d = c.kind === 'conflict' ? diff(c.local, c.server?.data) : [];
@@ -96,24 +96,24 @@ export function SyncPage() {
                   <span className="text-[11px] text-ink-500">{fmtDateTime(new Date(c.detectedAt).toISOString())}</span>
                 </div>
                 {c.kind === 'rejected' ? (
-                  <Callout tone="warn">Der Server hat diese Änderung abgelehnt: {c.error}. Die Daten bleiben auf diesem Gerät erhalten.</Callout>
+                  <Callout tone="warn">{t('account.sy.rejected')} {c.error}. Die Daten bleiben auf diesem Gerät erhalten.</Callout>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-[12.5px]">
                       <thead className="text-[11px] text-ink-500">
                         <tr>
-                          <th className="py-1 pr-3 font-medium">Feld</th>
+                          <th className="py-1 pr-3 font-medium">{t('account.sy.field')}</th>
                           <th className="py-1 pr-3 font-medium">
-                            <Smartphone className="mr-1 inline size-3" /> Dieses Gerät
+                            <Smartphone className="mr-1 inline size-3" /> {t('account.sy.thisDevice')}
                           </th>
                           <th className="py-1 font-medium">
-                            <Server className="mr-1 inline size-3" /> Server
+                            <Server className="mr-1 inline size-3" /> {t('account.sy.server')}
                           </th>
                         </tr>
                       </thead>
                       <tbody>
-                        {c.local === null && <tr><td colSpan={3} className="py-1 text-ink-400">Hier gelöscht.</td></tr>}
-                        {c.server?.deleted && <tr><td colSpan={3} className="py-1 text-ink-400">Auf dem Server gelöscht.</td></tr>}
+                        {c.local === null && <tr><td colSpan={3} className="py-1 text-ink-400">{t('account.sy.deletedHere')}</td></tr>}
+                        {c.server?.deleted && <tr><td colSpan={3} className="py-1 text-ink-400">{t('account.sy.deletedServer')}</td></tr>}
                         {d.map((r) => (
                           <tr key={r.key} className={`border-t border-white/[0.04] align-top ${c.fields?.some((f) => f === r.key || f.startsWith(`${r.key}.`)) ? 'bg-amber-400/[0.06]' : ''}`}>
                             <td className="py-1.5 pr-3 font-mono text-[11.5px] text-ink-400">{r.key}</td>
@@ -138,7 +138,7 @@ export function SyncPage() {
                           setBusy(null);
                         }}
                       >
-                        Meine Version behalten
+                        {t('account.sy.keepMine')}
                       </button>
                       <button
                         type="button"
@@ -150,12 +150,12 @@ export function SyncPage() {
                           setBusy(null);
                         }}
                       >
-                        Server-Version übernehmen
+                        {t('account.sy.takeServer')}
                       </button>
                     </>
                   ) : (
                     <button type="button" className="btn-ghost" onClick={() => engine?.dismiss(c.key)}>
-                      Hinweis schließen
+                      {t('account.sy.closeHint')}
                     </button>
                   )}
                 </div>
@@ -164,13 +164,11 @@ export function SyncPage() {
           })}
         </section>
       ) : (
-        <p className="text-[13px] text-ink-500">Keine Konflikte.</p>
+        <p className="text-[13px] text-ink-500">{t('account.sy.noConflicts')}</p>
       )}
 
-      <Callout tone="info" title="So funktioniert die Synchronisation">
-        Jede Änderung wird zuerst auf diesem Gerät gespeichert und dann an deinen Server übertragen. Als „synchronisiert“ gilt sie erst, wenn der Server sie bestätigt hat. Fotos und
-        Dokumente werden auf anderen Geräten bei Bedarf nachgeladen. Die Daten liegen auf dem Server verschlüsselt (der Server-Betreiber könnte technisch entschlüsseln – keine
-        Ende-zu-Ende-Verschlüsselung).
+      <Callout tone="info" title={t('account.sy.how')}>
+        {t('account.sy.howText')}
       </Callout>
     </div>
   );
