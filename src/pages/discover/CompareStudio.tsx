@@ -20,7 +20,7 @@ import { SAMPLE_TERPENES } from '../../lib/catalog/samples';
 import type { CatalogImage, CatalogStrain, EvidenceState, TypeClass, ValueRange } from '../../lib/catalog/types';
 import type { Strain } from '../../lib/db/types';
 import { CLAIM_SOURCE_LABEL } from '../../lib/grow/labels';
-import { intlLocale } from '../../i18n';
+import { t, intlLocale } from '../../i18n';
 
 /** Gemeinsames Vergleichsmodell für Online- und eigene Sorten. */
 interface CompareItem {
@@ -59,7 +59,7 @@ function fromCatalog(s: CatalogStrain): CompareItem {
     aroma: s.aroma,
     image: s.image,
     evidence: s.evidence,
-    source: s.provider === 'cisp' ? 'CI-Strains-Pro (Seedbank-Angaben)' : 'StrainAPI',
+    source: s.provider === 'cisp' ? t('discover.cs.cisp') : 'StrainAPI',
     link: strainLink(s),
   };
 }
@@ -77,11 +77,11 @@ function fromMine(s: Strain): CompareItem {
     cbd: v(s.cbd),
     thcNote: s.thc ? CLAIM_SOURCE_LABEL[s.thc.source] : undefined,
     cbdNote: s.cbd ? CLAIM_SOURCE_LABEL[s.cbd.source] : undefined,
-    terpenes: s.terpenes.map((t) => t.name),
+    terpenes: s.terpenes.map((tv) => tv.name),
     aroma: s.aromas,
     photoId: s.coverPhotoId,
     evidence: {},
-    source: s.external ? 'Meine Sorten (verknüpft)' : 'Meine Sorten',
+    source: s.external ? t('discover.cs.mineLinked') : t('discover.cs.mine'),
     link: `strains/${s.id}`,
   };
 }
@@ -115,7 +115,7 @@ function useCompareItems(keys: string[]) {
   return keys.map((k) => {
     if (k.startsWith('mine:')) {
       const s = data.strains.find((x) => x.id === k.slice(5));
-      return s ? { key: k, item: fromMine(s) } : { key: k, error: 'Eigene Sorte nicht mehr vorhanden' };
+      return s ? { key: k, item: fromMine(s) } : { key: k, error: t('discover.cs.gone') };
     }
     const o = online[k];
     if (!o) return { key: k, loading: true as const };
@@ -135,9 +135,9 @@ function AddDialog({ onClose }: { onClose: () => void }) {
     if (tab !== 'online' || !q.trim()) return setItems([]);
     const c = new AbortController();
     setLoading(true);
-    const t = window.setTimeout(() => catalog.search(q, 1, 12, c.signal).then((p) => setItems(p.items)).catch(() => setItems([])).finally(() => setLoading(false)), 300);
+    const tv = window.setTimeout(() => catalog.search(q, 1, 12, c.signal).then((p) => setItems(p.items)).catch(() => setItems([])).finally(() => setLoading(false)), 300);
     return () => {
-      window.clearTimeout(t);
+      window.clearTimeout(tv);
       c.abort();
     };
   }, [q, tab]);
@@ -149,25 +149,25 @@ function AddDialog({ onClose }: { onClose: () => void }) {
           <span className="block truncate text-[13px] text-ink-100">{name}</span>
           <span className="block truncate text-[11px] text-ink-500">{sub}</span>
         </span>
-        <span className={`shrink-0 text-xs ${compare.has(k) ? 'text-sky-300' : 'text-ink-500'}`}>{compare.has(k) ? 'ausgewählt' : 'hinzufügen'}</span>
+        <span className={`shrink-0 text-xs ${compare.has(k) ? 'text-sky-300' : 'text-ink-500'}`}>{compare.has(k) ? t('discover.cs.selected') : t('discover.cs.add')}</span>
       </button>
     </li>
   );
   return (
-    <Modal open onClose={onClose} title="Sorten zum Vergleich" subtitle={`${compare.keys.length} von ${MAX_COMPARE} gewählt`} size="md" footer={<button type="button" className="btn-primary" onClick={onClose}>Fertig</button>}>
+    <Modal open onClose={onClose} title={t('discover.cs.pickTitle')} subtitle={t('discover.cs.picked', { n: compare.keys.length, max: MAX_COMPARE })} size="md" footer={<button type="button" className="btn-primary" onClick={onClose}>{t('discover.cs.done')}</button>}>
       <div className="space-y-3">
-        <Segmented value={tab} onChange={setTab} options={[{ value: 'online', label: 'Online-Katalog' }, { value: 'mine', label: 'Eigene Sorten' }]} />
+        <Segmented value={tab} onChange={setTab} options={[{ value: 'online', label: t('discover.cs.online') }, { value: 'mine', label: t('discover.cs.own') }]} />
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-500" />
-          <input className="input-base pl-9" placeholder="Suchen …" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Sorte suchen" autoFocus />
+          <input className="input-base pl-9" placeholder={t('discover.cs.searchPh')} value={q} onChange={(e) => setQ(e.target.value)} aria-label={t('discover.cs.searchAria')} autoFocus />
           {loading && <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-leaf-400" />}
         </div>
         <ul className="max-h-80 overflow-y-auto">
           {tab === 'online'
             ? items.map((s) => <Row key={s.key} k={s.key} name={s.name} sub={[s.breeder, s.genetics].filter(Boolean).join(' · ')} />)
-            : mine.map((s) => <Row key={s.id} k={`mine:${s.id}`} name={s.name} sub={s.breeder ?? 'eigener Eintrag'} />)}
+            : mine.map((s) => <Row key={s.id} k={`mine:${s.id}`} name={s.name} sub={s.breeder ?? t('discover.cs.ownEntry')} />)}
         </ul>
-        {tab === 'mine' && <p className="hint">Mit dem Online-Katalog verknüpfte Sorten werden über „Online-Katalog“ verglichen.</p>}
+        {tab === 'mine' && <p className="hint">{t('discover.cs.linkedHint')}</p>}
       </div>
     </Modal>
   );
@@ -189,10 +189,10 @@ function RangeBars({ items, field }: { items: CompareItem[]; field: 'thc' | 'cbd
             <span className="truncate text-[12px] text-ink-300">{it.name}</span>
             <div className="relative h-2 rounded-full bg-ink-700">
               {lo !== undefined && hi !== undefined && (
-                <div className="absolute inset-y-0 rounded-full" style={{ left: `${Math.min(100, (lo / max) * 100)}%`, width: `${Math.max(1.5, Math.min(100 - (lo / max) * 100, ((hi - lo) / max) * 100))}%`, background: field === 'thc' ? '#5fe39a' : '#38bdf8', opacity: upperOnly ? 0.35 : 1 }} title={upperOnly ? 'nur Obergrenze angegeben' : undefined} />
+                <div className="absolute inset-y-0 rounded-full" style={{ left: `${Math.min(100, (lo / max) * 100)}%`, width: `${Math.max(1.5, Math.min(100 - (lo / max) * 100, ((hi - lo) / max) * 100))}%`, background: field === 'thc' ? '#5fe39a' : '#38bdf8', opacity: upperOnly ? 0.35 : 1 }} title={upperOnly ? t('discover.cs.onlyMax') : undefined} />
               )}
             </div>
-            <span className={`text-right font-mono text-[12px] ${r ? 'text-ink-100' : 'text-ink-600'}`}>{rangeText(r) ?? 'k. A.'}</span>
+            <span className={`text-right font-mono text-[12px] ${r ? 'text-ink-100' : 'text-ink-600'}`}>{rangeText(r) ?? t('discover.cs.na')}</span>
           </div>
         );
       })}
@@ -215,17 +215,17 @@ export function CompareStudio() {
   const [diffOnly, setDiffOnly] = useState(false);
 
   const allTerps = useMemo(() => {
-    const sets = items.map((i) => new Set(i.terpenes.map((t) => matchTerpene(t)?.id ?? t.toLowerCase())));
-    const common = sets.length ? [...sets[0]!].filter((t) => sets.every((s) => s.has(t))) : [];
+    const sets = items.map((i) => new Set(i.terpenes.map((tv) => matchTerpene(tv)?.id ?? tv.toLowerCase())));
+    const common = sets.length ? [...sets[0]!].filter((tv) => sets.every((s) => s.has(tv))) : [];
     return new Set(common);
   }, [items]);
 
   type Row = { label: string; render: (i: CompareItem) => React.ReactNode; value: (i: CompareItem) => string };
   const rows: Row[] = [
     { label: 'Breeder', render: (i) => i.breeder ?? <NoData />, value: (i) => (i.breeder ?? '').toLowerCase() },
-    { label: 'Typ (laut Quelle)', render: (i) => <TypeBadge type={i.typeClass} label={i.type} />, value: (i) => i.typeClass },
+    { get label() { return t('discover.cs.type'); }, render: (i) => <TypeBadge type={i.typeClass} label={i.type} />, value: (i) => i.typeClass },
     {
-      label: 'Genetik',
+      get label() { return t('discover.cs.genetics'); },
       render: (i) =>
         i.genetics ? (
           <span>
@@ -263,15 +263,15 @@ export function CompareStudio() {
       value: (i) => rangeText(i.cbd) ?? '',
     },
     {
-      label: 'Terpene',
+      get label() { return t('discover.cs.terps'); },
       render: (i) =>
         i.terpenes.length ? (
           <div className="flex flex-wrap gap-1">
-            {i.terpenes.map((t) => {
-              const shared = allTerps.has(matchTerpene(t)?.id ?? t.toLowerCase());
+            {i.terpenes.map((tv) => {
+              const shared = allTerps.has(matchTerpene(tv)?.id ?? tv.toLowerCase());
               return (
-                <span key={t} className={`rounded-full px-2 py-0.5 text-[11px] ${shared && items.length > 1 ? 'bg-leaf-500/15 text-leaf-200' : 'bg-white/[0.04] text-ink-300'}`} title={shared ? 'bei allen genannt' : undefined}>
-                  {matchTerpene(t)?.name ?? t}
+                <span key={tv} className={`rounded-full px-2 py-0.5 text-[11px] ${shared && items.length > 1 ? 'bg-leaf-500/15 text-leaf-200' : 'bg-white/[0.04] text-ink-300'}`} title={shared ? t('discover.cs.all') : undefined}>
+                  {matchTerpene(tv)?.name ?? tv}
                 </span>
               );
             })}
@@ -279,10 +279,10 @@ export function CompareStudio() {
         ) : (
           <NoData />
         ),
-      value: (i) => i.terpenes.map((t) => matchTerpene(t)?.id ?? t).sort().join(','),
+      value: (i) => i.terpenes.map((tv) => matchTerpene(tv)?.id ?? tv).sort().join(','),
     },
     {
-      label: 'Laborproben (gleichnamig)',
+      get label() { return t('discover.cs.samples'); },
       render: (i) =>
         i.samples ? (
           <span className="text-[12px] text-ink-300">
@@ -293,7 +293,7 @@ export function CompareStudio() {
                 · Gesamt-THC Median <span className="font-mono tabular text-ink-100">{i.samples.stats.thc_total.median.toLocaleString(intlLocale(), { maximumFractionDigits: 1 })} %</span>
               </>
             )}
-            <span className="block text-[10.5px] text-amber-200/80">ohne Breeder-Zuordnung{i.samples.sameNameBreeders > 1 ? ` · Name bei ${i.samples.sameNameBreeders} Breedern` : ''}</span>
+            <span className="block text-[10.5px] text-amber-200/80">{t('discover.cs.noBreeder')}{i.samples.sameNameBreeders > 1 ? t('discover.cs.nameAt', { n: i.samples.sameNameBreeders }) : ''}</span>
           </span>
         ) : (
           <NoData />
@@ -301,27 +301,27 @@ export function CompareStudio() {
       value: (i) => (i.samples ? String(i.samples.stats.thc_total?.median ?? '') : ''),
     },
     {
-      label: 'Terpene laut Proben (Median)',
+      get label() { return t('discover.cs.sampleTerps'); },
       render: (i) => {
         const top = i.samples
-          ? SAMPLE_TERPENES.map((t) => ({ t, st: i.samples!.stats[t.column] }))
+          ? SAMPLE_TERPENES.map((tv) => ({ tv, st: i.samples!.stats[tv.column] }))
               .filter((x) => x.st && x.st.median > 0)
               .sort((a, b) => b.st!.median - a.st!.median)
               .slice(0, 3)
           : [];
         return top.length ? (
           <span className="text-[12px] text-ink-300">
-            {top.map((x) => `${x.t.label}${x.t.isomerSum ? ' (Σ)' : ''} ${x.st!.median.toLocaleString(intlLocale(), { maximumFractionDigits: 2 })} %`).join(' · ')}
+            {top.map((x) => `${x.tv.label}${x.tv.isomerSum ? ' (Σ)' : ''} ${x.st!.median.toLocaleString(intlLocale(), { maximumFractionDigits: 2 })} %`).join(' · ')}
           </span>
         ) : (
           <NoData />
         );
       },
-      value: (i) => (i.samples ? SAMPLE_TERPENES.map((t) => i.samples!.stats[t.column]?.median ?? '').join(',') : ''),
+      value: (i) => (i.samples ? SAMPLE_TERPENES.map((tv) => i.samples!.stats[tv.column]?.median ?? '').join(',') : ''),
     },
-    { label: 'Aroma', render: (i) => (i.aroma.length ? <span className="text-ink-300">{i.aroma.join(', ')}</span> : <NoData />), value: (i) => i.aroma.map((a) => a.toLowerCase()).sort().join(',') },
+    { get label() { return t('discover.cs.aroma'); }, render: (i) => (i.aroma.length ? <span className="text-ink-300">{i.aroma.join(', ')}</span> : <NoData />), value: (i) => i.aroma.map((a) => a.toLowerCase()).sort().join(',') },
     {
-      label: 'Quelle',
+      get label() { return t('discover.cs.source'); },
       render: (i) => (
         <a href={href(i.link)} className="text-[12px] text-leaf-300 hover:underline">
           {i.source}
@@ -339,17 +339,17 @@ export function CompareStudio() {
       <DiscoverNav />
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between animate-fade-up">
         <div>
-          <h1 className="page-title mt-2">Sorten vergleichen</h1>
-          <p className="mt-1 text-sm text-ink-400">2–4 Sorten aus dem Online-Katalog oder deinen eigenen Einträgen. Keine erfundenen Scores – nur belegte Angaben.</p>
+          <h1 className="page-title mt-2">{t('discover.cs.title')}</h1>
+          <p className="mt-1 text-sm text-ink-400">{t('discover.cs.subtitle')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {items.length > 1 && (
             <button type="button" className={`btn-ghost ${diffOnly ? 'border-amber-400/30 text-amber-200' : ''}`} aria-pressed={diffOnly} onClick={() => setDiffOnly((d) => !d)}>
-              Nur Unterschiede
+              {t('discover.cs.diffOnly')}
             </button>
           )}
           <button type="button" className="btn-primary" onClick={() => setAdding(true)} disabled={compare.keys.length >= MAX_COMPARE}>
-            <Plus className="size-4" /> Sorte
+            <Plus className="size-4" /> {t('discover.cs.strain')}
           </button>
         </div>
       </div>
@@ -358,15 +358,15 @@ export function CompareStudio() {
         <div className="card">
           <EmptyState
             icon={<GitCompare />}
-            title="Noch nichts zum Vergleichen"
-            text="Über das Vergleichs-Symbol auf Sortenkarten oder hier Sorten hinzufügen."
+            title={t('discover.cs.empty')}
+            text={t('discover.cs.emptyText')}
             action={
               <>
                 <button type="button" className="btn-primary" onClick={() => setAdding(true)}>
-                  <Plus className="size-4" /> Sorten wählen
+                  <Plus className="size-4" /> {t('discover.cs.pick')}
                 </button>
                 <a className="btn-ghost" href={href('discover')}>
-                  Zu Discover
+                  {t('discover.cs.toDiscover')}
                 </a>
               </>
             }
@@ -380,7 +380,7 @@ export function CompareStudio() {
                 <div />
                 {resolved.map((r) => (
                   <div key={r.key} className="relative min-w-0">
-                    <button type="button" onClick={() => compare.remove(r.key)} aria-label="Aus Vergleich entfernen" className="absolute right-1.5 top-1.5 z-10 grid size-7 place-items-center rounded-full bg-black/60 text-ink-200 backdrop-blur hover:bg-black/80">
+                    <button type="button" onClick={() => compare.remove(r.key)} aria-label={t('discover.cs.remove')} className="absolute right-1.5 top-1.5 z-10 grid size-7 place-items-center rounded-full bg-black/60 text-ink-200 backdrop-blur hover:bg-black/80">
                       <X className="size-3.5" />
                     </button>
                     {'item' in r && r.item ? (
@@ -406,7 +406,7 @@ export function CompareStudio() {
                   <div key={row.label} className={`grid gap-3 border-b border-white/[0.04] px-4 py-3 last:border-0 ${diff && diffOnly === false ? 'bg-amber-400/[0.025]' : ''}`} style={{ gridTemplateColumns: cols }}>
                     <div className="flex items-start gap-1.5 text-[12px] text-ink-500">
                       {row.label}
-                      {diff && <span className="mt-1 size-1.5 shrink-0 rounded-full bg-amber-300/70" title="Werte unterscheiden sich" />}
+                      {diff && <span className="mt-1 size-1.5 shrink-0 rounded-full bg-amber-300/70" title={t('discover.cs.differs')} />}
                     </div>
                     {resolved.map((r) => (
                       <div key={r.key} className="min-w-0 text-[13px] text-ink-200">
@@ -421,22 +421,22 @@ export function CompareStudio() {
 
           {items.length > 0 && (
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-              <Card title="THC-Spannen" subtitle="laut Quelle bzw. eigener Angabe, gemeinsame Skala">
+              <Card title={t('discover.cs.thcRanges')} subtitle={t('discover.cs.scale')}>
                 <RangeBars items={items} field="thc" />
               </Card>
-              <Card title="CBD-Spannen" subtitle="laut Quelle bzw. eigener Angabe, gemeinsame Skala">
+              <Card title={t('discover.cs.cbdRanges')} subtitle={t('discover.cs.scale')}>
                 <RangeBars items={items} field="cbd" />
               </Card>
             </div>
           )}
           {items.length > 1 && (
-            <Card title="Gemeinsame Terpene" subtitle="Bei allen gewählten Sorten genannt (ohne Mengen)">
-              {allTerps.size ? <TerpeneChips names={[...allTerps]} max={10} /> : <p className="hint">Keine gemeinsamen Terpen-Nennungen.</p>}
-              <p className="hint mt-3">Ein Radar-Diagramm wird bewusst nicht gezeigt: Außer THC/CBD liefern die Quellen keine vergleichbaren numerischen Werte.</p>
+            <Card title={t('discover.cs.common')} subtitle={t('discover.cs.commonSub')}>
+              {allTerps.size ? <TerpeneChips names={[...allTerps]} max={10} /> : <p className="hint">{t('discover.cs.noCommon')}</p>}
+              <p className="hint mt-3">{t('discover.cs.noRadar')}</p>
             </Card>
           )}
           <p className="text-[11px] text-ink-600">
-            Online-Daten: StrainAPI. Eigene Werte sind mit ihrer Herkunft gekennzeichnet ({Object.values(CLAIM_SOURCE_LABEL).join(', ')}). Typen: {Object.values(TYPE_META).map((t) => t.label).join(', ')}.
+            {t('discover.cs.footer', { origins: Object.values(CLAIM_SOURCE_LABEL).join(', '), types: Object.values(TYPE_META).map((tv) => tv.label).join(', ') })}
           </p>
         </div>
       )}
