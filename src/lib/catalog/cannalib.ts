@@ -9,6 +9,7 @@ import type { LineageParent, ResearchMatch, ResearchProfile, ValueRange } from '
 import { CatalogError } from './types';
 
 import { cannalibBase } from './endpoint';
+import { t } from '../../i18n';
 
 export const CANNALIB_ATTRIBUTION = { provider: 'cannalib' as const, name: 'CannaLib', url: 'https://cannalib.org/' };
 
@@ -32,7 +33,7 @@ function range(r: unknown, basis?: unknown, n?: unknown): (ValueRange & { n?: nu
 }
 
 export function describeBasis(basis: string, samples?: number): string {
-  if (basis === 'p10_p90_of_flower_lab_samples') return `10.–90. Perzentil aus ${samples ?? '?'} Laborproben (Blüte)`;
+  if (basis === 'p10_p90_of_flower_lab_samples') return t('discover.cl.basis', { n: samples ?? '?' });
   return basis.replace(/_/g, ' ');
 }
 
@@ -40,12 +41,12 @@ export function searchUrl(q: string): string {
   return `${cannalibBase()}/v1/catalogs/strains?q=${encodeURIComponent(q.trim().slice(0, 80))}`;
 }
 export function detailUrl(id: string): string {
-  if (!/^[a-z0-9_-]{1,160}$/i.test(id)) throw new CatalogError('Ungültige CannaLib-Kennung.', 'bad_request');
+  if (!/^[a-z0-9_-]{1,160}$/i.test(id)) throw new CatalogError(t('discover.err.badCannalib'), 'bad_request');
   return `${cannalibBase()}/v1/catalogs/strains/${encodeURIComponent(id)}`;
 }
 
 export function normalizeSearch(raw: unknown): ResearchMatch[] {
-  if (!isObj(raw) || !Array.isArray(raw.items)) throw new CatalogError('Unerwartete Antwort von CannaLib.', 'invalid_response');
+  if (!isObj(raw) || !Array.isArray(raw.items)) throw new CatalogError(t('discover.err.cannalib'), 'invalid_response');
   return raw.items
     .filter(isObj)
     .map((it) => ({
@@ -60,7 +61,7 @@ export function normalizeSearch(raw: unknown): ResearchMatch[] {
 }
 
 export function normalizeDetail(raw: unknown, fetchedAt = new Date().toISOString()): ResearchProfile {
-  if (!isObj(raw) || typeof raw.id !== 'string' || !isObj(raw.evidence)) throw new CatalogError('Unerwartete Antwort von CannaLib.', 'invalid_response');
+  if (!isObj(raw) || typeof raw.id !== 'string' || !isObj(raw.evidence)) throw new CatalogError(t('discover.err.cannalib'), 'invalid_response');
   const ev = raw.evidence;
   const lineage = isObj(ev.lineage) ? ev.lineage : {};
   const parents: LineageParent[] = Array.isArray(lineage.parents)
@@ -83,7 +84,7 @@ export function normalizeDetail(raw: unknown, fetchedAt = new Date().toISOString
   };
   const gen = isObj(ev.genetics) ? ev.genetics : {};
   const datasets = Array.isArray(gen.datasets)
-    ? gen.datasets.filter(isObj).map((d) => ({ name: str(d.dataset_name) ?? str(d.dataset) ?? 'Datensatz', url: typeof d.url === 'string' && d.url.startsWith('https://') ? d.url : '', samples: finite(d.n_samples) }))
+    ? gen.datasets.filter(isObj).map((d) => ({ name: str(d.dataset_name) ?? str(d.dataset) ?? t('discover.cl.dataset'), url: typeof d.url === 'string' && d.url.startsWith('https://') ? d.url : '', samples: finite(d.n_samples) }))
     : [];
   return {
     provider: 'cannalib',

@@ -1,5 +1,6 @@
 import { catalogCredentials } from './endpoint';
 import { CatalogError, type RateInfo } from './types';
+import { t } from '../../i18n';
 
 /**
  * Höflicher HTTP-Client für öffentliche APIs:
@@ -63,7 +64,7 @@ export class PoliteClient {
         s.queue.push(go);
         signal?.addEventListener('abort', () => {
           s.queue = s.queue.filter((q) => q !== go);
-          reject(new CatalogError('Anfrage abgebrochen', 'aborted'));
+          reject(new CatalogError(t('discover.err.aborted'), 'aborted'));
         });
       });
     }
@@ -81,8 +82,8 @@ export class PoliteClient {
   async getJson<T>(url: string, opts: { signal?: AbortSignal; headers?: Record<string, string> } = {}): Promise<{ data: T; headers: Headers }> {
     const s = this.host(url);
     const blocked = this.blockedFor(url);
-    if (blocked > 0) throw new CatalogError(`Anfragelimit erreicht – bitte in ${blocked} s erneut versuchen.`, 'rate_limited', blocked);
-    if (opts.signal?.aborted) throw new CatalogError('Anfrage abgebrochen', 'aborted');
+    if (blocked > 0) throw new CatalogError(t('discover.err.rate', { n: blocked }), 'rate_limited', blocked);
+    if (opts.signal?.aborted) throw new CatalogError(t('discover.err.aborted'), 'aborted');
     await this.acquire(s, opts.signal);
     const ctrl = new AbortController();
     const onAbort = () => ctrl.abort();
@@ -100,25 +101,25 @@ export class PoliteClient {
           signal: ctrl.signal,
         });
       } catch (e) {
-        if (opts.signal?.aborted) throw new CatalogError('Anfrage abgebrochen', 'aborted');
-        if (ctrl.signal.aborted) throw new CatalogError('Zeitüberschreitung – die Quelle antwortet nicht.', 'offline');
-        throw new CatalogError('Keine Verbindung zur Datenquelle (offline oder blockiert).', 'offline');
+        if (opts.signal?.aborted) throw new CatalogError(t('discover.err.aborted'), 'aborted');
+        if (ctrl.signal.aborted) throw new CatalogError(t('discover.err.timeout'), 'offline');
+        throw new CatalogError(t('discover.err.offline'), 'offline');
       }
       this.lastRate = readRate(res.headers);
       if (res.status === 429) {
         const retry = Number(res.headers.get('Retry-After')) || this.lastRate.resetSeconds || 60;
         s.blockedUntil = this.now() + retry * 1000;
-        throw new CatalogError(`Anfragelimit der Quelle erreicht – bitte in ${retry} s erneut versuchen.`, 'rate_limited', retry);
+        throw new CatalogError(t('discover.err.rateSource', { n: retry }), 'rate_limited', retry);
       }
-      if (res.status === 404) throw new CatalogError('Eintrag nicht gefunden.', 'not_found');
-      if (res.status === 400) throw new CatalogError('Die Quelle hat diese Anfrage abgelehnt (z. B. wegen Sonderzeichen). Bitte einen anderen Suchbegriff verwenden.', 'bad_request');
-      if (res.status === 403) throw new CatalogError('Die Quelle hat diese Anfrage abgelehnt. Bitte einen anderen Suchbegriff verwenden.', 'bad_request');
-      if (!res.ok) throw new CatalogError(`Die Quelle meldet einen Fehler (HTTP ${res.status}).`, 'server');
+      if (res.status === 404) throw new CatalogError(t('discover.err.notFound'), 'not_found');
+      if (res.status === 400) throw new CatalogError(t('discover.err.bad400'), 'bad_request');
+      if (res.status === 403) throw new CatalogError(t('discover.err.bad403'), 'bad_request');
+      if (!res.ok) throw new CatalogError(t('discover.err.server', { n: String(res.status) }), 'server');
       let data: T;
       try {
         data = (await res.json()) as T;
       } catch {
-        throw new CatalogError('Unerwartete Antwort der Quelle.', 'invalid_response');
+        throw new CatalogError(t('discover.err.invalid'), 'invalid_response');
       }
       if (this.lastRate.remaining === 0 && this.lastRate.resetSeconds) s.blockedUntil = this.now() + this.lastRate.resetSeconds * 1000;
       return { data, headers: res.headers };

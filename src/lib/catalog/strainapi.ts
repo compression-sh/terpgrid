@@ -7,6 +7,7 @@ import { htmlToBlocks, stripTags } from './html';
 import { CatalogError, type CatalogPage, type CatalogStrain, type EvidenceState, type TypeClass, type ValueRange } from './types';
 
 import { strainapiBase } from './endpoint';
+import { t } from '../../i18n';
 
 export const STRAINAPI_BASE = 'https://www.strainapi.com/wp-json/strainapi/v1';
 export const STRAINAPI_HOME = 'https://www.strainapi.com/';
@@ -180,7 +181,7 @@ export function normalizeStrain(raw: RawStrain, withDetail = false): CatalogStra
 }
 
 export function normalizeCollection(raw: unknown, headers?: Headers, fromCache = false, fetchedAt = new Date().toISOString()): CatalogPage {
-  if (!raw || typeof raw !== 'object' || !Array.isArray((raw as RawCollection).data)) throw new CatalogError('Unerwartete Antwort von StrainAPI.', 'invalid_response');
+  if (!raw || typeof raw !== 'object' || !Array.isArray((raw as RawCollection).data)) throw new CatalogError(t('discover.err.strainapi'), 'invalid_response');
   const c = raw as RawCollection;
   const items = c.data!.map((r) => normalizeStrain(r)).filter((x): x is CatalogStrain => !!x);
   const hTotal = Number(headers?.get('X-WP-Total'));
@@ -207,6 +208,6 @@ export function searchUrl(q: string, page: number, perPage: number): string {
   return `${strainapiBase()}/search?q=${encodeURIComponent(q.trim().slice(0, 80))}&page=${Math.max(1, Math.floor(page))}&per_page=${Math.min(100, Math.max(1, Math.floor(perPage)))}`;
 }
 export function detailUrl(slug: string): string {
-  if (!/^[a-z0-9][a-z0-9-]{0,120}$/i.test(slug)) throw new CatalogError('Ungültige Sorten-Kennung.', 'bad_request');
+  if (!/^[a-z0-9][a-z0-9-]{0,120}$/i.test(slug)) throw new CatalogError(t('discover.err.badId'), 'bad_request');
   return `${strainapiBase()}/strains/${encodeURIComponent(slug)}`;
 }

@@ -748,6 +748,29 @@
   "listAlt": "Abstammung als Liste (Textalternative)",
   "pickNodeText2": "Einen Knoten antippen oder per Tab-Taste fokussieren und Enter drücken, um Details zu sehen und zu verwandten Sorten zu navigieren.",
   "nodes": "{n} Knoten",
-  "withLineage": "{n} Sorten mit dokumentierter Abstammung"
+  "withLineage": "{n} Sorten mit dokumentierter Abstammung",
+  "cross": "Kreuzung"
+ },
+ "err": {
+  "aborted": "Anfrage abgebrochen",
+  "timeout": "Zeitüberschreitung – die Quelle antwortet nicht.",
+  "offline": "Keine Verbindung zur Datenquelle (offline oder blockiert).",
+  "notFound": "Eintrag nicht gefunden.",
+  "bad400": "Die Quelle hat diese Anfrage abgelehnt (z. B. wegen Sonderzeichen). Bitte einen anderen Suchbegriff verwenden.",
+  "bad403": "Die Quelle hat diese Anfrage abgelehnt. Bitte einen anderen Suchbegriff verwenden.",
+  "invalid": "Unerwartete Antwort der Quelle.",
+  "rate": "Anfragelimit erreicht – bitte in {n} s erneut versuchen.",
+  "rateSource": "Anfragelimit der Quelle erreicht – bitte in {n} s erneut versuchen.",
+  "server": "Die Quelle meldet einen Fehler (HTTP {n}).",
+  "disabled": "Online-Sortendaten sind in den Einstellungen deaktiviert.",
+  "strainapi": "Unerwartete Antwort von StrainAPI.",
+  "onlineOff": "Online-Abrufe sind deaktiviert.",
+  "badId": "Ungültige Sorten-Kennung.",
+  "badCannalib": "Ungültige CannaLib-Kennung.",
+  "cannalib": "Unerwartete Antwort von CannaLib."
+ },
+ "cl": {
+  "dataset": "Datensatz",
+  "basis": "10.–90. Perzentil aus {n} Laborproben (Blüte)"
  }
 }

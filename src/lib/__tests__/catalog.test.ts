@@ -91,7 +91,7 @@ describe('CannaLib-Normalisierung (echte Antworten)', () => {
   it('Suche', () => {
     const m = CL.normalizeSearch(cannalibSearch);
     expect(m[0]).toMatchObject({ id: 'strain_gelato', name: 'Gelato', breeder: 'Bog Seeds' });
-    expect(m[0]!.thc?.basis).toMatch(/3013 Laborproben/);
+    expect(m[0]!.thc?.basis).toMatch(/3\.013 Laborproben/);
   });
   it('Detail: Elternangaben mit Konfidenz, Laborpotenz, DNA-Datensätze', () => {
     const d = CL.normalizeDetail(cannalibDetail);

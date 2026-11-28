@@ -748,6 +748,29 @@
   "listAlt": "Lineage as a list (text alternative)",
   "pickNodeText2": "Tap a node or focus it with the Tab key and press Enter to see details and navigate to related strains.",
   "nodes": "{n} nodes",
-  "withLineage": "{n} strains with documented lineage"
+  "withLineage": "{n} strains with documented lineage",
+  "cross": "Cross"
+ },
+ "err": {
+  "aborted": "Request cancelled",
+  "timeout": "Timeout – the source is not responding.",
+  "offline": "No connection to the data source (offline or blocked).",
+  "notFound": "Entry not found.",
+  "bad400": "The source rejected this request (e.g. because of special characters). Please use a different search term.",
+  "bad403": "The source rejected this request. Please use a different search term.",
+  "invalid": "Unexpected response from the source.",
+  "rate": "Request limit reached – please try again in {n} s.",
+  "rateSource": "The source’s request limit has been reached – please try again in {n} s.",
+  "server": "The source reports an error (HTTP {n}).",
+  "disabled": "Online strain data is turned off in the settings.",
+  "strainapi": "Unexpected response from StrainAPI.",
+  "onlineOff": "Online requests are turned off.",
+  "badId": "Invalid strain ID.",
+  "badCannalib": "Invalid CannaLib ID.",
+  "cannalib": "Unexpected response from CannaLib."
+ },
+ "cl": {
+  "dataset": "Dataset",
+  "basis": "10th–90th percentile from {n} lab samples (flower)"
  }
 }

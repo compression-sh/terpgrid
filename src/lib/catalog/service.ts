@@ -14,6 +14,7 @@ import * as CL from './cannalib';
 import { PoliteClient } from './http';
 import * as SA from './strainapi';
 import { CatalogError, type CatalogPage, type CatalogStrain, type RateInfo, type ResearchMatch, type ResearchProfile } from './types';
+import { t } from '../../i18n';
 
 const MIN = 60_000;
 export const TTL = { list: 30 * MIN, detail: 6 * 60 * MIN, stale: 7 * 24 * 60 * MIN };
@@ -112,7 +113,7 @@ export class CatalogService {
     if (cached?.fresh) return map(cached.data.raw, hdrs(cached.data.headers), false, cached.fetchedAt);
     if (!this.online()) {
       if (cached) return map(cached.data.raw, hdrs(cached.data.headers), true, cached.fetchedAt);
-      throw new CatalogError('Online-Sortendaten sind in den Einstellungen deaktiviert.', 'offline');
+      throw new CatalogError(t('discover.err.disabled'), 'offline');
     }
     try {
       const { data, headers } = await this.sa.getJson<Raw>(url, { signal });
@@ -167,7 +168,7 @@ export class CatalogService {
   detail(slug: string, signal?: AbortSignal): Promise<{ strain: CatalogStrain; fromCache: boolean; fetchedAt: string }> {
     return this.cachedFetch(`sa:detail:${slug}`, SA.detailUrl(slug), TTL.detail, signal, (raw: { data?: SA.RawStrain }, _h, fromCache, fetchedAt) => {
       const s = raw && typeof raw === 'object' && raw.data ? SA.normalizeStrain(raw.data, true) : undefined;
-      if (!s) throw new CatalogError('Unerwartete Antwort von StrainAPI.', 'invalid_response');
+      if (!s) throw new CatalogError(t('discover.err.strainapi'), 'invalid_response');
       return { strain: s, fromCache, fetchedAt };
     });
   }
@@ -214,7 +215,7 @@ export class CatalogService {
   }
 
   async researchSearch(name: string, signal?: AbortSignal): Promise<ResearchMatch[]> {
-    if (!this.online()) throw new CatalogError('Online-Abrufe sind deaktiviert.', 'offline');
+    if (!this.online()) throw new CatalogError(t('discover.err.onlineOff'), 'offline');
     const key = `cl:search:${name.toLowerCase()}`;
     const hit = this.mem<ResearchMatch[]>(key);
     if (hit) return hit;
@@ -229,7 +230,7 @@ export class CatalogService {
   }
 
   async researchDetail(id: string, signal?: AbortSignal): Promise<ResearchProfile> {
-    if (!this.online()) throw new CatalogError('Online-Abrufe sind deaktiviert.', 'offline');
+    if (!this.online()) throw new CatalogError(t('discover.err.onlineOff'), 'offline');
     const key = `cl:detail:${id}`;
     const hit = this.mem<ResearchProfile>(key);
     if (hit) return hit;

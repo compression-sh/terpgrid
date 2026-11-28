@@ -7,6 +7,7 @@
  */
 import { type LineageNode, normalizeName, parseGenetics } from './genetics';
 import type { CatalogStrain, LineageParent } from './types';
+import { t } from '../../i18n';
 
 export type GNodeKind = 'root' | 'strain' | 'unresolved' | 'ambiguous' | 'cross' | 'unknown';
 export type GEdgeKind = 'documented' | 'alternative' | 'research';
@@ -91,7 +92,7 @@ export async function buildLineage(root: CatalogStrain, resolve: Resolver, opts:
     }
     if (expr.kind === 'cross') {
       const id = `cross:${childId}:${depth}:${edges.length}`;
-      nodes.set(id, { id, kind: 'cross', label: 'Kreuzung', depth, flags: [], expanded: true });
+      nodes.set(id, { id, kind: 'cross', get label() { return t('discover.ge.cross'); }, depth, flags: [], expanded: true });
       addEdge({ from: id, to: childId, kind });
       for (const p of expr.parents) await place(p, id, depth + 1, kind, queue);
       return;
