@@ -13,25 +13,25 @@ import { Toggle } from '../../components/ui/Toggle';
 import { type Identity, type NotificationCategory, collab } from '../../lib/collab/api';
 import { ACCENT_CLASS, CATEGORY_HINT, CATEGORY_LABEL, nameOf } from '../../lib/collab/labels';
 import { TogetherTabs } from './TogetherTabs';
-import { intlLocale } from '../../i18n';
+import { t, intlLocale } from '../../i18n';
 
 /** Profil eines Freundes bzw. Bereichsmitglieds – nur freigegebene Felder. */
 export function FriendProfilePage({ refId }: { refId: string }) {
   const r = useLoad(() => collab.user(refId), [refId]);
   if (r.error)
-    return <EmptyState icon={<Lock />} title="Profil nicht verfügbar" text="Dieses Profil ist nicht (mehr) für dich freigegeben." action={<a className="btn-primary" href={href('together/friends')}>Zu den Freunden</a>} />;
+    return <EmptyState icon={<Lock />} title={t('collab.pp.unavailable')} text={t('collab.pp.unavailableText')} action={<a className="btn-primary" href={href('together/friends')}>{t('collab.pp.toFriends')}</a>} />;
   if (!r.data) return <div className="skeleton h-64" />;
   const p = r.data.profile;
   const f = r.data.friend;
   const a = ACCENT_CLASS[(p.accent as keyof typeof ACCENT_CLASS) ?? 'emerald'];
   const lists: [string, string[] | undefined][] = [
-    ['Lieblingssorten', p.favoriteStrains],
-    ['Lieblingsterpene', p.favoriteTerpenes],
-    ['Interessen', p.interests],
+    [t('collab.pp.favStrains'), p.favoriteStrains],
+    [t('collab.pp.favTerps'), p.favoriteTerpenes],
+    [t('collab.pp.interests'), p.interests],
   ];
   return (
     <div className="space-y-6">
-      <PageHeader title={nameOf(p, f?.nickname)} crumbs={[{ label: 'Gemeinsam', to: 'together' }, { label: 'Freunde', to: 'together/friends' }, { label: nameOf(p, f?.nickname) }]} />
+      <PageHeader title={nameOf(p, f?.nickname)} crumbs={[{ label: t('collab.pp.together'), to: 'together' }, { label: t('collab.pp.friends'), to: 'together/friends' }, { label: nameOf(p, f?.nickname) }]} />
       <section className={`card overflow-hidden`}>
         <div className={`h-20 ${a.soft}`} />
         <div className="-mt-10 space-y-4 p-5">
@@ -41,9 +41,9 @@ export function FriendProfilePage({ refId }: { refId: string }) {
             <div className="text-[13px] text-ink-400">
               {p.handle && `@${p.handle} · `}
               <span className="font-mono">{p.socialId}</span>
-              {f?.nickname && ` · dein Spitzname: ${f.nickname}`}
+              {f?.nickname && t('collab.pp.nickname', { name: f.nickname })}
             </div>
-            {f && <div className="mt-1 text-[12px] text-ink-500">Befreundet seit {new Date(f.since).toLocaleDateString(intlLocale())}</div>}
+            {f && <div className="mt-1 text-[12px] text-ink-500">{t('collab.pp.friendsSince', { date: new Date(f.since).toLocaleDateString(intlLocale()) })}</div>}
           </div>
           {p.bio && <p className="max-w-2xl whitespace-pre-wrap text-[13.5px] leading-relaxed text-ink-200">{p.bio}</p>}
           {lists
@@ -60,8 +60,8 @@ export function FriendProfilePage({ refId }: { refId: string }) {
                 </div>
               </div>
             ))}
-          {!p.bio && !lists.some(([, v]) => v?.length) && <p className="text-[12.5px] text-ink-400">Keine weiteren Profilangaben für dich freigegeben.</p>}
-          <p className="hint">Du siehst nur Angaben, die diese Person ausdrücklich für Freunde freigegeben hat. Freundschaft gewährt keinen Zugriff auf private Daten.</p>
+          {!p.bio && !lists.some(([, v]) => v?.length) && <p className="text-[12.5px] text-ink-400">{t('collab.pp.noMore')}</p>}
+          <p className="hint">{t('collab.pp.onlyShared')}</p>
         </div>
       </section>
     </div>
@@ -83,7 +83,7 @@ export function InvitePage({ token }: { token: string }) {
     setBusy(true);
     try {
       const r = await collab.redeemInvite(token);
-      toast(`Du bist jetzt mit ${nameOf(r.friend)} befreundet`);
+      toast(t('collab.pp.nowFriends', { name: nameOf(r.friend) }));
       navigate('together/friends', { replace: true });
     } catch (e) {
       toast(errorText(e), { tone: 'error' });
@@ -97,11 +97,11 @@ export function InvitePage({ token }: { token: string }) {
     return (
       <EmptyState
         icon={<ShieldAlert />}
-        title="Einladung ungültig"
-        text="Diese Einladung ist ungültig, abgelaufen oder wurde bereits verwendet. Bitte um einen neuen Link."
+        title={t('collab.pp.invalid')}
+        text={t('collab.pp.invalidText')}
         action={
           <a className="btn-primary" href={href('together/friends')}>
-            Zu den Freunden
+            {t('collab.pp.toFriends')}
           </a>
         }
       />
@@ -116,23 +116,23 @@ export function InvitePage({ token }: { token: string }) {
           <div className="text-lg font-semibold text-ink-50">{nameOf(state.inviter)}</div>
           <div className="text-[13px] text-ink-400">{state.inviter.handle ? `@${state.inviter.handle}` : state.inviter.socialId}</div>
         </div>
-        <p className="text-[13.5px] text-ink-300">lädt dich ein, auf dieser TERPGRID-Instanz befreundet zu sein.</p>
+        <p className="text-[13.5px] text-ink-300">{t('collab.pp.invites')}</p>
         {state.alreadyFriends ? (
-          <Callout tone="ok">Ihr seid bereits befreundet.</Callout>
+          <Callout tone="ok">{t('collab.pp.already')}</Callout>
         ) : (
           <button type="button" className="btn-primary w-full" disabled={busy} onClick={accept}>
-            {busy ? <Loader2 className="size-4 animate-spin" /> : <UserPlus className="size-4" />} Einladung annehmen
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <UserPlus className="size-4" />} {t('collab.pp.accept')}
           </button>
         )}
         <ul className="space-y-1 text-left text-[12px] text-ink-400">
           <li className="flex gap-1.5">
-            <Check className="mt-0.5 size-3.5 shrink-0 text-leaf-400" /> Freunde sehen nur Profilangaben, die du freigibst.
+            <Check className="mt-0.5 size-3.5 shrink-0 text-leaf-400" /> {t('collab.pp.f1')}
           </li>
           <li className="flex gap-1.5">
-            <Check className="mt-0.5 size-3.5 shrink-0 text-leaf-400" /> Kein Zugriff auf private Daten – geteilt wird nur, was ihr bewusst in einen Bereich legt.
+            <Check className="mt-0.5 size-3.5 shrink-0 text-leaf-400" /> {t('collab.pp.f2')}
           </li>
           <li className="flex gap-1.5">
-            <Check className="mt-0.5 size-3.5 shrink-0 text-leaf-400" /> Jederzeit lösbar oder blockierbar.
+            <Check className="mt-0.5 size-3.5 shrink-0 text-leaf-400" /> {t('collab.pp.f3')}
           </li>
         </ul>
       </div>
@@ -149,7 +149,7 @@ export function NotificationsPage({ tab }: { tab?: string }) {
     try {
       await collab.setPrefs({ ...prefs.data!.prefs, [k]: v });
       await prefs.reload();
-      toast('Einstellung gespeichert');
+      toast(t('collab.pp.prefSaved'));
     } catch (e) {
       toast(errorText(e), { tone: 'error' });
     }
@@ -157,14 +157,14 @@ export function NotificationsPage({ tab }: { tab?: string }) {
   const cats: NotificationCategory[] = ['friends', 'invites', 'comments', 'updates', 'access'];
   return (
     <div className="space-y-6">
-      <PageHeader title="Benachrichtigungen" subtitle="Nur in der App – keine Push-Dienste Dritter, keine E-Mails. Vorschauen enthalten keine Inhalte." />
+      <PageHeader title={t('collab.pp.notifs')} subtitle={t('collab.pp.notifsSub')} />
       <TogetherTabs active="notifications" />
       <Segmented
         value={view}
         onChange={setView}
         options={[
-          { value: 'all', label: 'Alle' },
-          { value: 'prefs', label: 'Einstellungen' },
+          { value: 'all', label: t('collab.pp.all') },
+          { value: 'prefs', label: t('collab.pp.settings') },
         ]}
       />
       {view === 'all' ? (
@@ -178,23 +178,23 @@ export function NotificationsPage({ tab }: { tab?: string }) {
                 onClick={() => setCategory(c)}
                 className={`min-h-7 shrink-0 rounded-full px-3 text-[12px] ${category === c ? 'bg-leaf-500/15 text-leaf-200' : 'text-ink-400 hover:text-ink-100'}`}
               >
-                {c === 'all' ? 'Alle Kategorien' : CATEGORY_LABEL[c]}
+                {c === 'all' ? t('collab.pp.allCats') : CATEGORY_LABEL[c]}
               </button>
             ))}
           </div>
           <NotificationList key={category} category={category === 'all' ? undefined : category} />
         </section>
       ) : (
-        <section className="card space-y-4 p-4 sm:p-5" aria-label="Benachrichtigungseinstellungen">
+        <section className="card space-y-4 p-4 sm:p-5" aria-label={t('collab.pp.prefs')}>
           {!prefs.data ? (
             <div className="skeleton h-40" />
           ) : (
             cats.map((c) => (
-              <Toggle key={c} label={CATEGORY_LABEL[c]} hint={CATEGORY_HINT[c]} checked={prefs.data!.prefs[c]} onChange={(v) => (c === 'access' ? toast('Rechte- und Zugriffsmeldungen bleiben aus Sicherheitsgründen immer an.', { tone: 'info' }) : save(c, v))} />
+              <Toggle key={c} label={CATEGORY_LABEL[c]} hint={CATEGORY_HINT[c]} checked={prefs.data!.prefs[c]} onChange={(v) => (c === 'access' ? toast(t('collab.pp.alwaysOn'), { tone: 'info' }) : save(c, v))} />
             ))
           )}
           <p className="hint border-t border-white/[0.06] pt-3">
-            Benachrichtigungen werden nur in TERPGRID angezeigt und nach 90 Tagen (gelesen) bzw. 30 Tagen (entfernt) gelöscht. Betreiber-Meldungen (z. B. Backup-Fehler) sind davon vollständig getrennt.
+            {t('collab.pp.retention')}
           </p>
         </section>
       )}
