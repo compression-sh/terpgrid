@@ -19,6 +19,7 @@ import { socialRoutes } from './routes/social.js';
 import { spaceRoutes } from './routes/spaces.js';
 import { notificationRoutes } from './routes/notifications.js';
 import { loadSession, sessionCookieName } from './sessions.js';
+import { errorCode } from './error-codes.js';
 
 /** Entfernt Query-Strings und Geheimnisse im Pfad (Einladungs-Token) aus Log-Ausgaben. */
 export function redactUrl(url: string): string {
@@ -108,6 +109,15 @@ export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
   });
 
   app.setNotFoundHandler((_req, reply) => reply.code(404).send({ error: 'Nicht gefunden' }));
+
+  // Fehlerantworten erhalten zusätzlich einen stabilen Code, den das Frontend übersetzt (6.1).
+  app.addHook('preSerialization', async (_req, reply, payload) => {
+    if (reply.statusCode < 400 || !payload || typeof payload !== 'object' || Array.isArray(payload)) return payload;
+    const body = payload as Record<string, unknown>;
+    if ('code' in body) return payload;
+    const code = errorCode(body.error);
+    return code ? { ...body, code } : payload;
+  });
 
   app.get('/api/health', async () => ({ status: 'ok' }));
   app.get('/api/health/ready', async (_req, reply) => {

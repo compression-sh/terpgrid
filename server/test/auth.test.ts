@@ -106,6 +106,8 @@ describe.skipIf(!hasDb)('Authentifizierung (echte PostgreSQL-DB)', () => {
     expect(a.status).toBe(401);
     expect(b.status).toBe(401);
     expect(a.json).toEqual(b.json);
+    // 6.1: stabiler Fehlercode zusätzlich zur Meldung
+    expect((a.json as { code?: string }).code).toBe('anmeldung_fehlgeschlagen_kennung_oder_passwo');
   });
 
   it('bremst wiederholte Fehlversuche je Konto (progressives Backoff) ohne dauerhafte Sperre', async () => {

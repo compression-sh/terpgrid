@@ -1,5 +1,6 @@
+import { t } from '../../i18n';
 
-import { t } from '../../i18n';/** Eingabevalidierung – rein funktional, UI-unabhängig. */
+/** Eingabevalidierung – rein funktional, UI-unabhängig. */
 
 export interface FieldRule {
   min: number;

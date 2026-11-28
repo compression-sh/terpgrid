@@ -1,4 +1,3 @@
-
 import { t } from '../i18n';export interface Source {
   id: string;
   short: string;

@@ -1,6 +1,6 @@
+import { intlLocale, t } from '../i18n';
 
-import { t } from '../i18n';
-import { intlLocale } from '../i18n';/**
+/**
  * Export von Ergebnissen als JSON, CSV oder Text – erzeugt lokal eine Datei
  * (Blob-Download). Keine Netzwerkanfrage.
  */

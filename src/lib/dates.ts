@@ -1,6 +1,6 @@
+import { intlLocale, t } from '../i18n';
 
-import { t } from '../i18n';
-import { intlLocale } from '../i18n';/**
+/**
  * Datumshilfen für Kalendertage. Gerechnet wird in UTC mit "YYYY-MM-DD",
  * damit Sommerzeitwechsel keine Tageszählungen verfälschen.
  */

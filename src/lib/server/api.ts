@@ -1,5 +1,6 @@
+import { t, tDynamic } from '../../i18n';
 
-import { t } from '../../i18n';/**
+/**
  * Client für die eigene TERPGRID-Instanz. Session nur als HttpOnly-Cookie
  * (nie in localStorage/URL); CSRF-Token nur im Arbeitsspeicher.
  */
@@ -69,7 +70,10 @@ export async function api<T = unknown>(method: string, path: string, body?: unkn
   if (!res.ok) {
     if (res.status === 401 && !path.startsWith('/api/auth/')) onUnauthorized?.();
     const { error, ...extra } = json ?? {};
-    throw new ApiError(res.status, typeof error === 'string' ? error : t('common.srv.error', { n: String(res.status) }), extra);
+    // Bekannte Meldungen werden über ihren Code übersetzt; unbekannte erscheinen unverändert.
+    const code = typeof extra.code === 'string' ? extra.code : undefined;
+    const message = typeof error === 'string' ? (code ? tDynamic(`errors.${code}`, error) : error) : t('common.srv.error', { n: String(res.status) });
+    throw new ApiError(res.status, message, extra);
   }
   if (json && typeof json.csrfToken === 'string') setCsrfToken(json.csrfToken);
   return json as T;

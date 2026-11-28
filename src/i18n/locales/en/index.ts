@@ -9,6 +9,7 @@ import common from './common.json';
 import dashboard from './dashboard.json';
 import data from './data.json';
 import discover from './discover.json';
+import errors from './errors.json';
 import grow from './grow.json';
 import lab from './lab.json';
 import labels from './labels.json';
@@ -18,5 +19,5 @@ import settings from './settings.json';
 import shell from './shell.json';
 import tools from './tools.json';
 
-const en: DeepMessages<Messages> = { academy, account, admin, atlas, collab, common, dashboard, data, discover, grow, lab, labels, mine, photos, settings, shell, tools };
+const en: DeepMessages<Messages> = { academy, account, admin, atlas, collab, common, dashboard, data, discover, errors, grow, lab, labels, mine, photos, settings, shell, tools };
 export default en;
