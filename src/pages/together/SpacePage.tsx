@@ -41,7 +41,7 @@ import { ACCENTS, ACCENT_CLASS, ACCENT_LABEL, KIND_LABEL, ROLE_LABEL, STORE_LABE
 import { type SpaceEntry, type SpaceSession, forgetSpaceSession } from '../../lib/collab/spaceSync';
 import { formatBytes } from '../../lib/media/images';
 import { EntryEditor } from './SharedResource';
-import { intlLocale } from '../../i18n';
+import { t, intlLocale } from '../../i18n';
 
 type Tab = 'content' | 'members' | 'activity' | 'settings';
 
@@ -64,15 +64,15 @@ export function SpacePage({ spaceId }: { spaceId: string }) {
       <div className="space-y-4">
         <EmptyState
           icon={<CloudOff />}
-          title={st?.phase === 'revoked' && st.hadAccess ? 'Zugriff widerrufen' : 'Kein Zugriff'}
+          title={st?.phase === 'revoked' && st.hadAccess ? t('collab.sp.revoked') : t('collab.sp.noAccess')}
           text={
             st?.phase === 'revoked' && st.hadAccess
-              ? 'Du bist kein Mitglied dieses Bereichs mehr. Zwischengespeicherte Inhalte wurden aus diesem Browser entfernt.'
-              : 'Dieser Bereich existiert nicht oder du bist kein Mitglied.'
+              ? t('collab.sp.revokedText')
+              : t('collab.sp.noAccessText')
           }
           action={
             <a className="btn-primary" href={href('together')}>
-              Zur Übersicht
+              {t('collab.sp.toOverview')}
             </a>
           }
         />
@@ -83,15 +83,15 @@ export function SpacePage({ spaceId }: { spaceId: string }) {
   const d = detail.data;
   const a = ACCENT_CLASS[d.space.accent ?? 'emerald'];
   const tabs: { id: Tab; label: string }[] = [
-    { id: 'content', label: 'Inhalte' },
-    { id: 'members', label: `Mitglieder (${d.members.length})` },
-    { id: 'activity', label: 'Aktivität' },
-    { id: 'settings', label: 'Einstellungen' },
+    { id: 'content', label: t('collab.sp.content') },
+    { id: 'members', label: t('collab.sp.membersN', { n: d.members.length }) },
+    { id: 'activity', label: t('collab.sp.activity') },
+    { id: 'settings', label: t('collab.sp.settings') },
   ];
   return (
     <div className="space-y-5">
       <PageHeader
-        crumbs={[{ label: 'Gemeinsam', to: 'together' }, { label: d.space.name }]}
+        crumbs={[{ label: t('collab.sp.together'), to: 'together' }, { label: d.space.name }]}
         title={
           <span className="inline-flex items-center gap-3">
             <span className={`grid size-10 place-items-center rounded-xl ring-1 ${a.soft} ${a.text} ${a.ring}`}>
@@ -116,17 +116,17 @@ export function SpacePage({ spaceId }: { spaceId: string }) {
         }
       />
       {d.space.pendingTransferToMe && <TransferOffer d={d} onDone={detail.reload} />}
-      <nav aria-label="Bereich" className="-mx-1 flex gap-1 overflow-x-auto border-b border-white/[0.06] px-1 [scrollbar-width:none]">
-        {tabs.map((t) => (
+      <nav aria-label={t('collab.sp.space')} className="-mx-1 flex gap-1 overflow-x-auto border-b border-white/[0.06] px-1 [scrollbar-width:none]">
+        {tabs.map((tb) => (
           <button
-            key={t.id}
+            key={tb.id}
             type="button"
-            aria-current={tab === t.id ? 'page' : undefined}
-            onClick={() => setQuery(route, { tab: t.id === 'content' ? undefined : t.id })}
-            className={`relative min-h-10 shrink-0 px-3 text-[13px] font-medium ${tab === t.id ? 'text-ink-50' : 'text-ink-400 hover:text-ink-100'}`}
+            aria-current={tab === tb.id ? 'page' : undefined}
+            onClick={() => setQuery(route, { tab: tb.id === 'content' ? undefined : tb.id })}
+            className={`relative min-h-10 shrink-0 px-3 text-[13px] font-medium ${tab === tb.id ? 'text-ink-50' : 'text-ink-400 hover:text-ink-100'}`}
           >
-            {t.label}
-            {tab === t.id && <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-leaf-400" />}
+            {tb.label}
+            {tab === tb.id && <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-leaf-400" />}
           </button>
         ))}
       </nav>
@@ -144,7 +144,7 @@ function SyncPill({ session }: { session: SpaceSession }) {
   const label = syncStateText({ phase: st.phase, pending: st.pending, conflicts: st.conflicts.length });
   const Icon = st.phase === 'offline' || st.phase === 'error' ? CloudOff : st.phase === 'syncing' || st.phase === 'loading' ? Loader2 : Cloud;
   return (
-    <button type="button" onClick={() => session.schedule(0)} title="Jetzt abgleichen" className="inline-flex min-h-6 items-center gap-1.5 rounded-full border border-white/[0.08] px-2 py-0.5 text-[11.5px] text-ink-300 hover:text-ink-100">
+    <button type="button" onClick={() => session.schedule(0)} title={t('collab.sp.syncNow')} className="inline-flex min-h-6 items-center gap-1.5 rounded-full border border-white/[0.08] px-2 py-0.5 text-[11.5px] text-ink-300 hover:text-ink-100">
       <Icon className={`size-3.5 ${st.phase === 'syncing' || st.phase === 'loading' ? 'animate-spin' : ''} ${st.phase === 'error' ? 'text-rose-300' : st.phase === 'offline' ? 'text-amber-300' : 'text-leaf-400'}`} /> {label}
     </button>
   );
@@ -155,29 +155,29 @@ function SyncNotices({ session }: { session: SpaceSession }) {
   return (
     <>
       {st.conflicts.map((c) => (
-        <Callout key={c.key} tone="warn" title={`Konflikt: ${STORE_LABEL[c.store]} „${entryTitle(c.store, c.local ?? c.server.data ?? {})}“`}>
-          <p>Jemand anderes hat diesen Eintrag gleichzeitig geändert{c.fields.length && c.fields[0] !== '(gesamt)' ? ` (Felder: ${c.fields.join(', ')})` : ''}. Nichts wurde überschrieben – entscheide bewusst.</p>
+        <Callout key={c.key} tone="warn" title={t('collab.sp.conflict', { store: STORE_LABEL[c.store], title: entryTitle(c.store, c.local ?? c.server.data ?? {}) })}>
+          <p>{t('collab.sp.conflictA')}{c.fields.length && c.fields[0] !== '(gesamt)' ? t('collab.sp.fields', { list: c.fields.join(', ') }) : ''}. {t('collab.sp.conflictB')}</p>
           <div className="mt-2 flex flex-wrap gap-2">
             <button type="button" className="btn-ghost py-1 text-[12px]" onClick={() => session.resolve(c.key, 'server')}>
-              Andere Version übernehmen
+              {t('collab.sp.takeOther')}
             </button>
             {c.local && (
               <button type="button" className="btn-ghost py-1 text-[12px]" onClick={() => session.resolve(c.key, 'mine')}>
-                Meine Version behalten
+                {t('collab.sp.keepMine')}
               </button>
             )}
           </div>
         </Callout>
       ))}
       {st.rejected.length > 0 && (
-        <Callout tone="danger" title="Änderungen abgelehnt">
+        <Callout tone="danger" title={t('collab.sp.rejected')}>
           <ul className="ml-4 list-disc">
             {st.rejected.slice(0, 5).map((r, i) => (
               <li key={i}>{r.error}</li>
             ))}
           </ul>
           <button type="button" className="mt-2 text-[12px] underline" onClick={() => session.dismissRejected()}>
-            Ausblenden
+            {t('collab.sp.hide')}
           </button>
         </Callout>
       )}
@@ -197,10 +197,10 @@ function OrphanedDownload({ items, onDone }: { items: unknown[]; onDone: () => v
     onDone();
   };
   return (
-    <Callout tone="warn" title={`${items.length} eigene Änderungen wurden nicht übertragen`}>
-      Dein Zugriff endete, bevor diese Änderungen gesendet wurden. Sie werden nicht mehr übertragen. Du kannst sie als Datei für dich sichern.
+    <Callout tone="warn" title={t('collab.sp.notSent', { count: items.length })}>
+      {t('collab.sp.notSentText')}
       <button type="button" className="btn-ghost mt-2 text-[12.5px]" onClick={download}>
-        <Download className="size-4" /> Als Datei sichern
+        <Download className="size-4" /> {t('collab.sp.saveFile')}
       </button>
     </Callout>
   );
@@ -211,7 +211,7 @@ function TransferOffer({ d, onDone }: { d: SpaceDetail; onDone: () => Promise<vo
   const reauth = useReauth();
   const owner = d.members.find((m) => m.role === 'owner');
   return (
-    <Callout tone="info" title="Eigentumsübertragung angeboten">
+    <Callout tone="info" title={t('collab.sp.transferOffered')}>
       {nameOf(owner)} möchte dir das Eigentum an diesem Bereich übertragen. Als Eigentümer verwaltest du Mitglieder und Rechte; die Dateien des Bereichs zählen dann zu deinem Speicherkontingent. {nameOf(owner)} wird „Bearbeiten“.
       <div className="mt-2 flex gap-2">
         <button
@@ -220,14 +220,14 @@ function TransferOffer({ d, onDone }: { d: SpaceDetail; onDone: () => Promise<vo
           onClick={async () => {
             try {
               await reauth(() => collab.acceptTransfer(d.space.id));
-              toast('Du bist jetzt Eigentümer');
+              toast(t('collab.sp.nowOwner'));
               await onDone();
             } catch (e) {
               toast(errorText(e), { tone: 'error' });
             }
           }}
         >
-          <Crown className="size-3.5" /> Annehmen
+          <Crown className="size-3.5" /> {t('collab.sp.accept')}
         </button>
         <button
           type="button"
@@ -237,7 +237,7 @@ function TransferOffer({ d, onDone }: { d: SpaceDetail; onDone: () => Promise<vo
             await onDone();
           }}
         >
-          Ablehnen
+          {t('collab.sp.decline')}
         </button>
       </div>
     </Callout>
@@ -247,13 +247,13 @@ function TransferOffer({ d, onDone }: { d: SpaceDetail; onDone: () => Promise<vo
 /* ───────────── Inhalte ───────────── */
 
 const ROOTS: { store: SpaceStore; icon: typeof Sprout; create?: string }[] = [
-  { store: 'grows', icon: Sprout, create: 'Grow' },
+  { store: 'grows', icon: Sprout, get create() { return t('collab.sp.cGrow'); } },
   { store: 'plants', icon: Leaf },
-  { store: 'tasks', icon: CheckSquare, create: 'Aufgabe' },
-  { store: 'notes', icon: StickyNote, create: 'Notiz' },
-  { store: 'strains', icon: Leaf, create: 'Sorte' },
-  { store: 'journal', icon: FileText, create: 'Journal-Eintrag' },
-  { store: 'inventory', icon: Package, create: 'Sammlungsstück' },
+  { store: 'tasks', icon: CheckSquare, get create() { return t('collab.sp.cTask'); } },
+  { store: 'notes', icon: StickyNote, get create() { return t('collab.sp.cNote'); } },
+  { store: 'strains', icon: Leaf, get create() { return t('collab.sp.cStrain'); } },
+  { store: 'journal', icon: FileText, get create() { return t('collab.sp.cJournal'); } },
+  { store: 'inventory', icon: Package, get create() { return t('collab.sp.cInventory'); } },
   { store: 'labReports', icon: FlaskRound },
 ];
 
@@ -289,14 +289,14 @@ function ContentTab({ d, session }: { d: SpaceDetail; session: SpaceSession }) {
       ) : empty ? (
         <EmptyState
           icon={<ArrowRightLeft />}
-          title="Noch keine Inhalte"
+          title={t('collab.sp.noContent')}
           text={
             canCreate ? (
               <>
-                Lege hier direkt etwas an – oder teile gezielt private Einträge über „Teilen“ auf der Seite eines Grows, einer Sorte, eines Journal-Eintrags, Sammlungsstücks oder Laborberichts.
+                {t('collab.sp.noContentOwner')}
               </>
             ) : (
-              'Sobald Mitglieder mit Bearbeitungsrecht Inhalte hinzufügen, erscheinen sie hier.'
+              t('collab.sp.noContentMember')
             )
           }
         />
@@ -341,10 +341,10 @@ function EntryCard({ e, spaceId, session }: { e: SpaceEntry; spaceId: string; se
     if (e.store === 'grows') {
       const plants = session.list('plants').filter((p) => p.data.growId === e.id).length;
       const acts = session.list('activities').filter((a) => a.data.growId === e.id).length;
-      return `${plants} Pflanzen · ${acts} Einträge`;
+      return t('collab.sp.growSub', { p: plants, a: acts });
     }
     if (e.store === 'journal') return String(e.data.date ?? '').slice(0, 10);
-    if (e.store === 'strains') return [e.data.breeder, e.data.genetics].filter(Boolean).join(' · ') || 'Sorte';
+    if (e.store === 'strains') return [e.data.breeder, e.data.genetics].filter(Boolean).join(' · ') || t('collab.sp.cStrain');
     if (e.store === 'labReports') return [e.data.labName, String(e.data.testDate ?? '')].filter(Boolean).join(' · ') || 'Laborbericht';
     if (e.store === 'notes') return String(e.data.text ?? '').slice(0, 80);
     return '';
@@ -370,22 +370,22 @@ function TaskList({ items, session, canEdit, spaceId }: { items: SpaceEntry[]; s
     <ul className="card divide-y divide-white/[0.05]">
       {items
         .sort((a, b) => String(a.data.date ?? '').localeCompare(String(b.data.date ?? '')))
-        .map((t) => {
-          const done = ((t.data.completedDates as string[]) ?? []).length > 0;
+        .map((tb) => {
+          const done = ((tb.data.completedDates as string[]) ?? []).length > 0;
           return (
-            <li key={t.id} className="flex items-center gap-3 px-3.5 py-2.5">
+            <li key={tb.id} className="flex items-center gap-3 px-3.5 py-2.5">
               <input
                 type="checkbox"
-                aria-label={`${entryTitle('tasks', t.data)} erledigt`}
+                aria-label={t('collab.sp.taskDone', { title: entryTitle('tasks', tb.data) })}
                 className="size-4 accent-[var(--color-leaf-400)]"
                 checked={done}
                 disabled={!canEdit}
-                onChange={() => session.save('tasks', { ...t.data, id: t.id, completedDates: done ? [] : [today] })}
+                onChange={() => session.save('tasks', { ...tb.data, id: tb.id, completedDates: done ? [] : [today] })}
               />
-              <a href={href(`together/spaces/${spaceId}/tasks/${encodeURIComponent(t.id)}`)} className={`min-w-0 flex-1 truncate text-[13px] ${done ? 'text-ink-500 line-through' : 'text-ink-100'}`}>
-                {entryTitle('tasks', t.data)}
+              <a href={href(`together/spaces/${spaceId}/tasks/${encodeURIComponent(tb.id)}`)} className={`min-w-0 flex-1 truncate text-[13px] ${done ? 'text-ink-500 line-through' : 'text-ink-100'}`}>
+                {entryTitle('tasks', tb.data)}
               </a>
-              {typeof t.data.date === 'string' && <span className="shrink-0 text-[12px] text-ink-400">{new Date(t.data.date).toLocaleDateString(intlLocale())}</span>}
+              {typeof tb.data.date === 'string' && <span className="shrink-0 text-[12px] text-ink-400">{new Date(tb.data.date).toLocaleDateString(intlLocale())}</span>}
             </li>
           );
         })}
@@ -412,25 +412,25 @@ function MembersTab({ d, reload }: { d: SpaceDetail; reload: () => Promise<void>
   };
   const remove = async (m: Member) => {
     const ok = await confirm({
-      title: `${nameOf(m)} entfernen?`,
-      message: 'Der Zugriff endet sofort – auch auf allen Geräten dieser Person; nicht gesendete Änderungen werden abgelehnt. Bereits heruntergeladene Kopien (z. B. Exporte) können nicht aus der Ferne gelöscht werden. Inhalte und Kommentare der Person bleiben im Bereich.',
-      confirmLabel: 'Entfernen',
+      title: t('collab.sp.removeTitle', { name: nameOf(m) }),
+      message: t('collab.sp.removeMsg'),
+      confirmLabel: t('collab.sp.remove'),
       tone: 'danger',
     });
-    if (ok) await run(() => collab.removeMember(d.space.id, m.ref), 'Mitglied entfernt');
+    if (ok) await run(() => collab.removeMember(d.space.id, m.ref), t('collab.sp.removed'));
   };
   const leave = async () => {
     const me = d.members.find((m) => m.isMe)!;
     const ok = await confirm({
-      title: 'Bereich verlassen?',
-      message: 'Du verlierst sofort den Zugriff auf alle Inhalte. Deine Beiträge und Kommentare bleiben im Bereich (sie gehören zum Bereich). Exportiere vorher, was du behalten möchtest. Wieder beitreten kannst du nur mit neuer Einladung.',
-      confirmLabel: 'Verlassen',
+      title: t('collab.sp.leaveTitle'),
+      message: t('collab.sp.leaveMsg'),
+      confirmLabel: t('collab.sp.leave'),
       tone: 'danger',
     });
     if (!ok) return;
     try {
       await collab.removeMember(d.space.id, me.ref);
-      toast('Bereich verlassen');
+      toast(t('collab.sp.left'));
       navigate('together');
     } catch (e) {
       toast(errorText(e), { tone: 'error' });
@@ -438,40 +438,40 @@ function MembersTab({ d, reload }: { d: SpaceDetail; reload: () => Promise<void>
   };
   const transfer = async (m: Member) => {
     const ok = await confirm({
-      title: `Eigentum an ${nameOf(m)} übertragen?`,
-      message: `${nameOf(m)} muss die Übertragung annehmen. Danach verwaltet ${nameOf(m)} Mitglieder und Rechte, du wirst „Bearbeiten“. Die Dateien des Bereichs zählen dann zum Kontingent von ${nameOf(m)}.`,
-      confirmLabel: 'Übertragung anbieten',
+      title: t('collab.sp.transferTitle', { name: nameOf(m) }),
+      message: t('collab.sp.transferMsg', { name: nameOf(m) }),
+      confirmLabel: t('collab.sp.offer'),
     });
-    if (ok) await run(() => reauth(() => collab.offerTransfer(d.space.id, m.ref)), 'Übertragung angeboten – wartet auf Annahme');
+    if (ok) await run(() => reauth(() => collab.offerTransfer(d.space.id, m.ref)), t('collab.sp.offered'));
   };
   return (
     <div className="space-y-5">
-      <section className="card p-4 sm:p-5" aria-label="Mitglieder">
+      <section className="card p-4 sm:p-5" aria-label={t('collab.sp.members')}>
         <SectionTitle
           action={
             owner && (
               <button type="button" className="btn-primary py-1.5 text-[12.5px]" onClick={() => setInviting(true)}>
-                <UserPlus className="size-3.5" /> Freund einladen
+                <UserPlus className="size-3.5" /> {t('collab.sp.invite')}
               </button>
             )
           }
         >
-          Mitglieder
+          {t('collab.sp.members')}
         </SectionTitle>
         <div className="divide-y divide-white/[0.05]">
           {d.members.map((m) => (
             <PersonRow
               key={m.ref}
               identity={m}
-              meta={m.isMe ? 'du' : `seit ${new Date(m.since).toLocaleDateString(intlLocale())}`}
+              meta={m.isMe ? t('collab.sp.you') : t('collab.fr.since', { date: new Date(m.since).toLocaleDateString(intlLocale()) })}
               actions={
                 <>
                   {owner && m.role !== 'owner' ? (
                     <select
-                      aria-label={`Rolle von ${nameOf(m)}`}
+                      aria-label={t('collab.sp.roleOf', { name: nameOf(m) })}
                       className="input-base w-auto py-1 text-[12.5px]"
                       value={m.role}
-                      onChange={(e) => run(() => collab.changeRole(d.space.id, m.ref, e.target.value as Role), 'Rolle geändert')}
+                      onChange={(e) => run(() => collab.changeRole(d.space.id, m.ref, e.target.value as Role), t('collab.sp.roleChanged'))}
                     >
                       {(['editor', 'commenter', 'viewer'] as Role[]).map((r) => (
                         <option key={r} value={r}>
@@ -484,10 +484,10 @@ function MembersTab({ d, reload }: { d: SpaceDetail; reload: () => Promise<void>
                   )}
                   {owner && m.role !== 'owner' && (
                     <>
-                      <button type="button" className="btn-ghost p-1.5" title="Eigentum übertragen" aria-label={`Eigentum an ${nameOf(m)} übertragen`} onClick={() => transfer(m)}>
+                      <button type="button" className="btn-ghost p-1.5" title={t('collab.sp.transferOwn')} aria-label={t('collab.sp.transferTo', { name: nameOf(m) })} onClick={() => transfer(m)}>
                         <Crown className="size-3.5" />
                       </button>
-                      <button type="button" className="btn-ghost p-1.5" title="Entfernen" aria-label={`${nameOf(m)} entfernen`} onClick={() => remove(m)}>
+                      <button type="button" className="btn-ghost p-1.5" title={t('collab.sp.remove')} aria-label={t('collab.sp.removeX', { name: nameOf(m) })} onClick={() => remove(m)}>
                         <X className="size-3.5" />
                       </button>
                     </>
@@ -500,24 +500,24 @@ function MembersTab({ d, reload }: { d: SpaceDetail; reload: () => Promise<void>
         {d.space.pendingOwner && owner && (
           <p className="mt-3 flex items-center justify-between gap-2 rounded-lg bg-amber-500/10 px-3 py-2 text-[12.5px] text-amber-200">
             Übertragung an {nameOf(d.space.pendingOwner)} angeboten – wartet auf Annahme.
-            <button type="button" className="underline" onClick={() => run(() => collab.cancelTransfer(d.space.id), 'Übertragung zurückgezogen')}>
-              Zurückziehen
+            <button type="button" className="underline" onClick={() => run(() => collab.cancelTransfer(d.space.id), t('collab.sp.withdrawn'))}>
+              {t('collab.sp.withdraw')}
             </button>
           </p>
         )}
       </section>
       {owner && d.invites.length > 0 && (
-        <section className="card p-4 sm:p-5" aria-label="Offene Einladungen">
-          <SectionTitle>Offene Einladungen</SectionTitle>
+        <section className="card p-4 sm:p-5" aria-label={t('collab.sp.openInvites')}>
+          <SectionTitle>{t('collab.sp.openInvites')}</SectionTitle>
           <div className="divide-y divide-white/[0.05]">
             {d.invites.map((i) => (
               <PersonRow
                 key={i.id}
                 identity={i.invitee}
-                meta={`${ROLE_LABEL[i.role]} · läuft ${relTime(i.expiresAt).replace('vor', 'in')} ab`}
+                meta={t('collab.sp.inviteMeta', { role: ROLE_LABEL[i.role], date: new Date(i.expiresAt).toLocaleDateString(intlLocale()) })}
                 actions={
-                  <button type="button" className="btn-ghost py-1 text-[12px]" onClick={() => run(() => collab.revokeSpaceInvite(d.space.id, i.id), 'Einladung widerrufen')}>
-                    Widerrufen
+                  <button type="button" className="btn-ghost py-1 text-[12px]" onClick={() => run(() => collab.revokeSpaceInvite(d.space.id, i.id), t('collab.sp.revokeInvite'))}>
+                    {t('collab.sp.revoke')}
                   </button>
                 }
               />
@@ -527,7 +527,7 @@ function MembersTab({ d, reload }: { d: SpaceDetail; reload: () => Promise<void>
       )}
       {!owner && (
         <button type="button" className="btn-ghost text-rose-200" onClick={leave}>
-          <LogOut className="size-4" /> Bereich verlassen
+          <LogOut className="size-4" /> {t('collab.sp.left')}
         </button>
       )}
       {inviting && <InviteModal d={d} onClose={() => setInviting(false)} onDone={reload} />}
@@ -546,7 +546,7 @@ function InviteModal({ d, onClose, onDone }: { d: SpaceDetail; onClose: () => vo
     setBusy(true);
     try {
       await collab.invite(d.space.id, ref, role);
-      toast('Einladung gesendet');
+      toast(t('collab.sp.inviteSent'));
       await onDone();
       onClose();
     } catch (e) {
@@ -559,15 +559,15 @@ function InviteModal({ d, onClose, onDone }: { d: SpaceDetail; onClose: () => vo
     <Modal
       open
       onClose={onClose}
-      title="Freund einladen"
-      subtitle="Nur bestätigte Freunde. Die Einladung gilt 14 Tage und kann widerrufen werden."
+      title={t('collab.sp.invite')}
+      subtitle={t('collab.sp.inviteSub')}
       footer={
         <>
           <button type="button" className="btn-ghost" onClick={onClose}>
-            Abbrechen
+            {t('common.cancel')}
           </button>
           <button type="button" className="btn-primary" disabled={!ref || busy} onClick={submit}>
-            {busy ? <Loader2 className="size-4 animate-spin" /> : <UserPlus className="size-4" />} Einladen
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <UserPlus className="size-4" />} {t('collab.sp.inviteBtn')}
           </button>
         </>
       }
@@ -577,11 +577,11 @@ function InviteModal({ d, onClose, onDone }: { d: SpaceDetail; onClose: () => vo
           <div className="skeleton h-24" />
         ) : candidates.length === 0 ? (
           <p className="text-[13px] text-ink-400">
-            Keine weiteren Freunde zum Einladen. <a className="text-leaf-300 hover:underline" href={href('together/friends')}>Freunde hinzufügen</a>
+            Keine weiteren Freunde zum Einladen. <a className="text-leaf-300 hover:underline" href={href('together/friends')}>{t('collab.sp.addFriends')}</a>
           </p>
         ) : (
           <fieldset className="max-h-56 space-y-1 overflow-y-auto">
-            <legend className="label mb-1.5">Freund</legend>
+            <legend className="label mb-1.5">{t('collab.sp.friend')}</legend>
             {candidates.map((f) => (
               <label key={f.ref} className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 ${ref === f.ref ? 'border-leaf-500/40 bg-leaf-500/[0.07]' : 'border-white/[0.06] hover:border-white/[0.12]'}`}>
                 <input type="radio" name="invite-friend" className="accent-[var(--color-leaf-400)]" checked={ref === f.ref} onChange={() => setRef(f.ref)} />
@@ -619,9 +619,9 @@ function ActivityTab({ spaceId, session }: { spaceId: string; session: SpaceSess
   };
   if (!items) return <div className="skeleton h-40" />;
   return (
-    <section className="card p-4 sm:p-5" aria-label="Aktivitätsverlauf">
+    <section className="card p-4 sm:p-5" aria-label={t('collab.sp.history')}>
       {items.length === 0 ? (
-        <p className="text-[13px] text-ink-400">Noch keine Aktivität.</p>
+        <p className="text-[13px] text-ink-400">{t('collab.sp.noActivity')}</p>
       ) : (
         <ol className="relative space-y-3 border-l border-white/[0.06] pl-5">
           {items.map((a) => (
@@ -637,10 +637,10 @@ function ActivityTab({ spaceId, session }: { spaceId: string; session: SpaceSess
       )}
       {more && (
         <button type="button" className="btn-ghost mt-3 text-[12.5px]" onClick={() => load(items[items.length - 1]?.id)}>
-          Ältere laden
+          {t('collab.sp.older')}
         </button>
       )}
-      <p className="hint mt-4">Der Verlauf enthält nur, wer was wann getan hat – keine Inhalte. Einträge zu Inhalten, die du nicht sehen darfst, sind ausgeblendet.</p>
+      <p className="hint mt-4">{t('collab.sp.historyNote')}</p>
     </section>
   );
 }
@@ -687,81 +687,80 @@ function SettingsTab({ d, reload }: { d: SpaceDetail; reload: () => Promise<void
   return (
     <div className="space-y-5">
       {owner && (
-        <section className="card space-y-4 p-4 sm:p-5" aria-label="Bereich bearbeiten">
-          <SectionTitle>Bereich</SectionTitle>
+        <section className="card space-y-4 p-4 sm:p-5" aria-label={t('collab.sp.edit')}>
+          <SectionTitle>{t('collab.sp.space')}</SectionTitle>
           <label className="block space-y-1.5">
-            <span className="label">Name</span>
+            <span className="label">{t('collab.sp.name')}</span>
             <input className="input-base" maxLength={60} value={name} onChange={(e) => setName(e.target.value)} />
           </label>
           <label className="block space-y-1.5">
-            <span className="label">Beschreibung</span>
+            <span className="label">{t('collab.sp.desc')}</span>
             <textarea className="input-base min-h-20 resize-y" maxLength={600} value={description} onChange={(e) => setDescription(e.target.value)} />
           </label>
           <fieldset>
-            <legend className="label mb-1.5">Akzentfarbe</legend>
+            <legend className="label mb-1.5">{t('collab.sp.accent')}</legend>
             <div className="flex flex-wrap gap-2">
               {ACCENTS.map((a) => (
                 <button key={a} type="button" aria-label={ACCENT_LABEL[a]} aria-pressed={accent === a} onClick={() => setAccent(a)} className={`size-8 rounded-full ${ACCENT_CLASS[a].dot} ring-offset-2 ring-offset-ink-900 ${accent === a ? 'ring-2 ring-white/80' : 'opacity-70 hover:opacity-100'}`} />
               ))}
             </div>
           </fieldset>
-          <button type="button" className="btn-primary" disabled={busy === 'meta' || name.trim().length < 2} onClick={() => run('meta', () => collab.updateSpace(d.space.id, { name: name.trim(), description: description.trim(), accent }), 'Gespeichert')}>
-            <Settings className="size-4" /> Speichern
+          <button type="button" className="btn-primary" disabled={busy === 'meta' || name.trim().length < 2} onClick={() => run('meta', () => collab.updateSpace(d.space.id, { name: name.trim(), description: description.trim(), accent }), t('collab.sp.saved'))}>
+            <Settings className="size-4" /> {t('common.save.button')}
           </button>
           <div className="border-t border-white/[0.06] pt-4">
             <Toggle
-              label="Export für „Kommentieren“ und „Ansehen“ erlauben"
-              hint="Eigentümer und Bearbeitende können immer exportieren. Bildschirmfotos oder Abschriften lassen sich technisch nie verhindern."
+              label={t('collab.sp.allowExport')}
+              hint={t('collab.sp.exportHint')}
               checked={d.space.allowExport}
-              onChange={(v) => run('export-opt', () => collab.updateSpace(d.space.id, { allowExport: v }), 'Gespeichert')}
+              onChange={(v) => run('export-opt', () => collab.updateSpace(d.space.id, { allowExport: v }), t('collab.sp.saved'))}
             />
           </div>
         </section>
       )}
 
-      <section className="card space-y-3 p-4 sm:p-5" aria-label="Export">
-        <SectionTitle>Export</SectionTitle>
-        <p className="text-[12.5px] text-ink-400">ZIP mit allen Inhalten, die deine Rolle sehen darf (inkl. Fotos und Dokumente). Exporte liegen danach unverschlüsselt auf deinem Gerät und können nicht aus der Ferne widerrufen werden.</p>
+      <section className="card space-y-3 p-4 sm:p-5" aria-label={t('collab.sp.export')}>
+        <SectionTitle>{t('collab.sp.export')}</SectionTitle>
+        <p className="text-[12.5px] text-ink-400">{t('collab.sp.exportText')}</p>
         <button type="button" className="btn-ghost" disabled={!d.permissions['space.export'] || busy === 'export'} onClick={exportZip}>
-          {busy === 'export' ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />} Bereich exportieren
+          {busy === 'export' ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />} {t('collab.sp.exportBtn')}
         </button>
-        {!d.permissions['space.export'] && <p className="hint">Der Eigentümer hat den Export für deine Rolle nicht freigegeben.</p>}
+        {!d.permissions['space.export'] && <p className="hint">{t('collab.sp.exportDenied')}</p>}
       </section>
 
-      <section className="card space-y-2 p-4 sm:p-5" aria-label="Sicherheit">
-        <SectionTitle>Sicherheit</SectionTitle>
+      <section className="card space-y-2 p-4 sm:p-5" aria-label={t('collab.sp.security')}>
+        <SectionTitle>{t('collab.sp.security')}</SectionTitle>
         <ul className="space-y-1 text-[12.5px] text-ink-300">
-          <li>Eigener Bereichsschlüssel, Generation {d.space.keyGeneration} – serverseitig verschlüsselt (AES-256-GCM), getrennt von allen Kontoschlüsseln.</li>
-          <li>Keine Ende-zu-Ende-Verschlüsselung: Der Server-Betreiber könnte technisch entschlüsseln.</li>
-          <li>Speicher der Bereichsdateien: {formatBytes(d.space.storageBytes)} (zählt zum Kontingent des Eigentümers).</li>
+          <li>{t('collab.sp.keyGen', { n: d.space.keyGeneration })}</li>
+          <li>{t('collab.sp.noE2ee')}</li>
+          <li>{t('collab.sp.storage', { size: formatBytes(d.space.storageBytes) })}</li>
         </ul>
         {owner && (
-          <button type="button" className="btn-ghost mt-2 text-[12.5px]" disabled={busy === 'rotate'} onClick={() => run('rotate', () => reauth(() => collab.rotateKey(d.space.id)), 'Bereichsschlüssel erneuert')}>
-            {busy === 'rotate' ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} Bereichsschlüssel erneuern
+          <button type="button" className="btn-ghost mt-2 text-[12.5px]" disabled={busy === 'rotate'} onClick={() => run('rotate', () => reauth(() => collab.rotateKey(d.space.id)), t('collab.sp.keyRenewed'))}>
+            {busy === 'rotate' ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} {t('collab.sp.rotate')}
           </button>
         )}
       </section>
 
       {owner && (
-        <section className="card space-y-3 border-rose-500/20 p-4 sm:p-5" aria-label="Bereich löschen">
-          <SectionTitle>Bereich löschen</SectionTitle>
+        <section className="card space-y-3 border-rose-500/20 p-4 sm:p-5" aria-label={t('collab.sp.delete')}>
+          <SectionTitle>{t('collab.sp.delete')}</SectionTitle>
           {!deleting ? (
             <button type="button" className="btn-ghost text-rose-200" onClick={() => setDeleting(true)}>
-              <Trash2 className="size-4" /> Bereich löschen …
+              <Trash2 className="size-4" /> {t('collab.sp.deleteDots')}
             </button>
           ) : (
             <div className="space-y-3">
-              <Callout tone="danger" title="Endgültig für alle Mitglieder">
-                Alle Inhalte, Fotos, Kommentare und der Verlauf werden gelöscht – auch Beiträge anderer Mitglieder ({d.members.length - 1} weitere). Mitglieder werden benachrichtigt. Exportierte Kopien bleiben bei ihren Besitzern. Der Bereichsschlüssel wird vernichtet;
-                verschlüsselte Reste in Backups sind danach nicht mehr lesbar.
+              <Callout tone="danger" title={t('collab.sp.final')}>
+                {t('collab.sp.deleteWarn', { n: d.members.length - 1 })}
               </Callout>
               <label className="block space-y-1.5">
-                <span className="label">Zur Bestätigung den Namen „{d.space.name}“ eingeben</span>
+                <span className="label">{t('collab.sp.typeName', { name: d.space.name })}</span>
                 <input className="input-base" value={confirmName} onChange={(e) => setConfirmName(e.target.value)} />
               </label>
               <div className="flex gap-2">
                 <button type="button" className="btn-ghost" onClick={() => setDeleting(false)}>
-                  Abbrechen
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="button"
@@ -771,7 +770,7 @@ function SettingsTab({ d, reload }: { d: SpaceDetail; reload: () => Promise<void
                     setBusy('delete');
                     try {
                       await reauth(() => collab.deleteSpace(d.space.id, confirmName.trim()));
-                      toast('Bereich gelöscht');
+                      toast(t('collab.sp.deleted'));
                       navigate('together');
                     } catch (e) {
                       toast(errorText(e), { tone: 'error' });
@@ -780,7 +779,7 @@ function SettingsTab({ d, reload }: { d: SpaceDetail; reload: () => Promise<void
                     }
                   }}
                 >
-                  <Trash2 className="size-4" /> Endgültig löschen
+                  <Trash2 className="size-4" /> {t('collab.sp.deleteFinal')}
                 </button>
               </div>
             </div>
@@ -788,7 +787,7 @@ function SettingsTab({ d, reload }: { d: SpaceDetail; reload: () => Promise<void
         </section>
       )}
       <p className="flex items-center gap-1.5 text-[11.5px] text-ink-500">
-        <AlertTriangle className="size-3.5" /> Angelegt {new Date(d.space.createdAt).toLocaleDateString(intlLocale())} · <RefreshCw className="size-3" /> Rechte werden bei jeder Aktion serverseitig geprüft.
+        <AlertTriangle className="size-3.5" /> {t('collab.sp.created')} {new Date(d.space.createdAt).toLocaleDateString(intlLocale())} · <RefreshCw className="size-3" /> {t('collab.sp.rightsChecked')}
       </p>
     </div>
   );
