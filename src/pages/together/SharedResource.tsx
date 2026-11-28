@@ -1,4 +1,5 @@
 import { Camera, Download, EyeOff, FileText, ImageOff, Loader2, Lock, Pencil, Plus, Trash2, Users } from 'lucide-react';
+import { unitLabel } from '../../lib/vocab';
 import { type ReactNode, useEffect, useState } from 'react';
 import { useConfirm } from '../../app/Confirm';
 import { useLoad, useSpaceSession } from '../../app/collab';
@@ -17,7 +18,7 @@ import type { Activity, ActivityType } from '../../lib/db/types';
 import { ACTIVITY_TYPES } from '../../lib/db/types';
 import { ACTIVITY_LABEL, INVENTORY_CATEGORY_LABEL, SETTING_LABEL } from '../../lib/grow/labels';
 import { processImage } from '../../lib/media/images';
-import { intlLocale } from '../../i18n';
+import { t, intlLocale } from '../../i18n';
 
 /* ───────────── Fotos (autorisiert, nur im Arbeitsspeicher) ───────────── */
 
@@ -47,7 +48,7 @@ function SpacePhoto({ spaceId, id, alt, variant = 'thumb', className = '' }: { s
   }, [spaceId, id, variant]);
   if (failed)
     return (
-      <span className={`grid place-items-center bg-ink-800 text-ink-500 ${className}`} role="img" aria-label="Foto nicht verfügbar">
+      <span className={`grid place-items-center bg-ink-800 text-ink-500 ${className}`} role="img" aria-label={t('collab.sr.photoNA')}>
         <ImageOff className="size-5" />
       </span>
     );
@@ -60,51 +61,51 @@ function SpacePhoto({ spaceId, id, alt, variant = 'thumb', className = '' }: { s
 type F = { key: string; label: string; type?: 'text' | 'textarea' | 'date' | 'number' | 'select'; options?: [string, string][]; required?: boolean };
 const FIELDS: Partial<Record<SpaceStore, F[]>> = {
   grows: [
-    { key: 'name', label: 'Name', required: true },
-    { key: 'description', label: 'Beschreibung', type: 'textarea' },
-    { key: 'startDate', label: 'Start', type: 'date' },
-    { key: 'setting', label: 'Umgebung', type: 'select', options: Object.entries(SETTING_LABEL) },
-    { key: 'medium', label: 'Medium' },
-    { key: 'notes', label: 'Notizen', type: 'textarea' },
+    { key: 'name', get label() { return t('collab.f.name'); }, required: true },
+    { key: 'description', get label() { return t('collab.f.description'); }, type: 'textarea' },
+    { key: 'startDate', get label() { return t('collab.f.start'); }, type: 'date' },
+    { key: 'setting', get label() { return t('collab.f.setting'); }, type: 'select', options: Object.entries(SETTING_LABEL) },
+    { key: 'medium', get label() { return t('collab.f.medium'); } },
+    { key: 'notes', get label() { return t('collab.f.notes'); }, type: 'textarea' },
   ],
   plants: [
-    { key: 'name', label: 'Name', required: true },
-    { key: 'strainName', label: 'Sorte' },
-    { key: 'startDate', label: 'Start', type: 'date' },
-    { key: 'notes', label: 'Notizen', type: 'textarea' },
+    { key: 'name', get label() { return t('collab.f.name'); }, required: true },
+    { key: 'strainName', get label() { return t('collab.f.strain'); } },
+    { key: 'startDate', get label() { return t('collab.f.start'); }, type: 'date' },
+    { key: 'notes', get label() { return t('collab.f.notes'); }, type: 'textarea' },
   ],
   strains: [
-    { key: 'name', label: 'Name', required: true },
-    { key: 'breeder', label: 'Breeder' },
-    { key: 'genetics', label: 'Genetik' },
-    { key: 'flavorNotes', label: 'Aroma & Geschmack', type: 'textarea' },
-    { key: 'observations', label: 'Beobachtungen', type: 'textarea' },
+    { key: 'name', get label() { return t('collab.f.name'); }, required: true },
+    { key: 'breeder', get label() { return t('collab.f.breeder'); } },
+    { key: 'genetics', get label() { return t('collab.f.genetics'); } },
+    { key: 'flavorNotes', get label() { return t('collab.f.flavor'); }, type: 'textarea' },
+    { key: 'observations', get label() { return t('collab.f.observations'); }, type: 'textarea' },
   ],
   journal: [
-    { key: 'date', label: 'Datum', type: 'date', required: true },
-    { key: 'strainName', label: 'Sorte' },
-    { key: 'notes', label: 'Notizen', type: 'textarea' },
+    { key: 'date', get label() { return t('collab.f.date'); }, type: 'date', required: true },
+    { key: 'strainName', get label() { return t('collab.f.strain'); } },
+    { key: 'notes', get label() { return t('collab.f.notes'); }, type: 'textarea' },
   ],
   inventory: [
-    { key: 'name', label: 'Name', required: true },
-    { key: 'category', label: 'Kategorie', type: 'select', options: Object.entries(INVENTORY_CATEGORY_LABEL) },
-    { key: 'manufacturer', label: 'Hersteller' },
-    { key: 'notes', label: 'Notizen', type: 'textarea' },
+    { key: 'name', get label() { return t('collab.f.name'); }, required: true },
+    { key: 'category', get label() { return t('collab.f.category'); }, type: 'select', options: Object.entries(INVENTORY_CATEGORY_LABEL) },
+    { key: 'manufacturer', get label() { return t('collab.f.maker'); } },
+    { key: 'notes', get label() { return t('collab.f.notes'); }, type: 'textarea' },
   ],
   notes: [
-    { key: 'title', label: 'Titel', required: true },
-    { key: 'text', label: 'Notiz', type: 'textarea' },
+    { key: 'title', get label() { return t('collab.f.title'); }, required: true },
+    { key: 'text', get label() { return t('collab.f.note'); }, type: 'textarea' },
   ],
   tasks: [
-    { key: 'title', label: 'Aufgabe', required: true },
-    { key: 'date', label: 'Fällig am', type: 'date' },
-    { key: 'notes', label: 'Details', type: 'textarea' },
+    { key: 'title', get label() { return t('collab.f.task'); }, required: true },
+    { key: 'date', get label() { return t('collab.f.due'); }, type: 'date' },
+    { key: 'notes', get label() { return t('collab.f.details'); }, type: 'textarea' },
   ],
   labReports: [
-    { key: 'title', label: 'Titel', required: true },
-    { key: 'labName', label: 'Labor' },
-    { key: 'testDate', label: 'Testdatum', type: 'date' },
-    { key: 'notes', label: 'Notizen', type: 'textarea' },
+    { key: 'title', get label() { return t('collab.f.title'); }, required: true },
+    { key: 'labName', get label() { return t('collab.f.lab'); } },
+    { key: 'testDate', get label() { return t('collab.f.testDate'); }, type: 'date' },
+    { key: 'notes', get label() { return t('collab.f.notes'); }, type: 'textarea' },
   ],
 };
 const DEFAULTS: Partial<Record<SpaceStore, Record<string, unknown>>> = {
@@ -112,7 +113,7 @@ const DEFAULTS: Partial<Record<SpaceStore, Record<string, unknown>>> = {
   plants: { type: 'unknown', phaseDates: {}, notes: '' },
   strains: { terpenes: [], aromas: [], flavorNotes: '', observations: '', favorite: false },
   journal: { method: 'other', moods: [], durationNote: '', notes: '' },
-  inventory: { category: 'other', unit: 'Stück', notes: '' },
+  inventory: { category: 'other', unit: unitLabel('Stück'), notes: '' },
   tasks: { category: 'other', repeat: { kind: 'none' }, completedDates: [], notes: '' },
   notes: { text: '' },
   labReports: { unit: 'percent', origin: 'lab', terpenes: [], notes: '' },
@@ -155,15 +156,15 @@ export function EntryEditor({
     <Modal
       open
       onClose={onClose}
-      title={`${STORE_SINGULAR[store]} ${entry ? 'bearbeiten' : 'anlegen'}`}
-      subtitle="Wird im Bereich mit dem Bereichsschlüssel gespeichert – nicht in deinen privaten Daten."
+      title={entry ? t('collab.sr.editX', { what: STORE_SINGULAR[store] }) : t('collab.sr.createX', { what: STORE_SINGULAR[store] })}
+      subtitle={t('collab.sr.editorHint')}
       footer={
         <>
           <button type="button" className="btn-ghost" onClick={onClose}>
-            Abbrechen
+            {t('common.cancel')}
           </button>
           <button type="button" className="btn-primary" disabled={!valid} onClick={save}>
-            Speichern
+            {t('common.save.button')}
           </button>
         </>
       }
@@ -223,15 +224,15 @@ function ActivityEditor({ session, parent, onClose }: { session: SpaceSession; p
     <Modal
       open
       onClose={onClose}
-      title="Eintrag hinzufügen"
-      subtitle="Beobachtung, Messung oder Pflege – sichtbar für alle, die diesen Grow sehen dürfen."
+      title={t('collab.sr.addEntry')}
+      subtitle={t('collab.sr.addEntryHint')}
       footer={
         <>
           <button type="button" className="btn-ghost" onClick={onClose}>
-            Abbrechen
+            {t('common.cancel')}
           </button>
           <button type="button" className="btn-primary" onClick={save}>
-            Speichern
+            {t('common.save.button')}
           </button>
         </>
       }
@@ -240,9 +241,9 @@ function ActivityEditor({ session, parent, onClose }: { session: SpaceSession; p
         <label className="block space-y-1.5">
           <span className="label">Art</span>
           <select className="input-base" value={type} onChange={(e) => setType(e.target.value as ActivityType)}>
-            {ACTIVITY_TYPES.filter((t) => t !== 'photo').map((t) => (
-              <option key={t} value={t}>
-                {ACTIVITY_LABEL[t]}
+            {ACTIVITY_TYPES.filter((ty) => ty !== 'photo').map((ty) => (
+              <option key={ty} value={ty}>
+                {ACTIVITY_LABEL[ty]}
               </option>
             ))}
           </select>
@@ -258,9 +259,9 @@ function ActivityEditor({ session, parent, onClose }: { session: SpaceSession; p
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
           {(
             [
-              ['heightCm', 'Höhe cm'],
-              ['temperatureC', 'Temp. °C'],
-              ['humidityPct', 'rF %'],
+              ['heightCm', t('collab.sr.height')],
+              ['temperatureC', t('collab.sr.temp')],
+              ['humidityPct', t('collab.sr.rhL')],
               ['ph', 'pH'],
               ['ecMsCm', 'EC mS/cm'],
             ] as const
@@ -299,16 +300,16 @@ export function SharedResourcePage({ spaceId, store, id }: { spaceId: string; st
   const notes = session && store === 'grows' ? [...session.list('notes'), ...session.list('tasks')].filter((n) => n.data.growId === id) : [];
 
   if (!session || session.state.phase === 'loading' || !detail.data) return <div className="skeleton h-72" />;
-  if (session.state.phase === 'revoked' || detail.error) return <EmptyState icon={<Lock />} title="Kein Zugriff" text="Dieser Eintrag ist für dich nicht (mehr) sichtbar." action={<a className="btn-primary" href={href('together')}>Zur Übersicht</a>} />;
+  if (session.state.phase === 'revoked' || detail.error) return <EmptyState icon={<Lock />} title={t('collab.sr.noAccess')} text={t('collab.sr.noAccessText')} action={<a className="btn-primary" href={href('together')}>{t('collab.sr.toOverview')}</a>} />;
   if (!e)
     return (
       <EmptyState
         icon={<EyeOff />}
-        title="Eintrag nicht verfügbar"
-        text="Dieser Eintrag wurde gelöscht oder ist für deine Rolle nicht freigegeben."
+        title={t('collab.sr.unavailable')}
+        text={t('collab.sr.unavailableText')}
         action={
           <a className="btn-primary" href={href(`together/spaces/${spaceId}`)}>
-            Zum Bereich
+            {t('collab.sr.toSpace')}
           </a>
         }
       />
@@ -316,9 +317,9 @@ export function SharedResourcePage({ spaceId, store, id }: { spaceId: string; st
 
   const remove = async () => {
     const ok = await confirm({
-      title: `${STORE_SINGULAR[store]} löschen?`,
-      message: `„${entryTitle(store, e.data)}“ wird für alle Mitglieder gelöscht${store === 'grows' || store === 'plants' ? ' – einschließlich zugehöriger Pflanzen, Einträge und Fotos' : ''}. Kommentare werden ausgeblendet. Exportierte Kopien anderer Mitglieder bleiben bei ihnen.`,
-      confirmLabel: 'Löschen',
+      title: t('collab.sr.deleteTitle', { what: STORE_SINGULAR[store] }),
+      message: t('collab.sr.deleteMsg', { title: entryTitle(store, e.data), incl: store === 'grows' || store === 'plants' ? t('collab.sr.deleteIncl') : '' }),
+      confirmLabel: t('common.delete'),
       tone: 'danger',
     });
     if (!ok) return;
@@ -329,7 +330,7 @@ export function SharedResourcePage({ spaceId, store, id }: { spaceId: string; st
     try {
       await collab.setAccess(spaceId, store, id, access);
       await session.syncNow();
-      toast(`Zugriffsstufe: ${ACCESS_LABEL[access]}`);
+      toast(t('collab.sr.accessToast', { a: ACCESS_LABEL[access] }));
     } catch (err) {
       toast(errorText(err), { tone: 'error' });
     }
@@ -344,11 +345,11 @@ export function SharedResourcePage({ spaceId, store, id }: { spaceId: string; st
         const link = store === 'grows' ? { growId: id } : store === 'plants' ? { plantId: id, ...(e.data.growId ? { growId: e.data.growId as string } : {}) } : store === 'journal' ? { journalId: id } : store === 'strains' ? { strainId: id } : { inventoryId: id };
         session.save('photos', { id: pid, ...link, takenAt: img.takenAt, note: '', width: img.width, height: img.height, size: img.full.byteLength, mime: img.mime });
         await session.syncNow();
-        if (session.get('photos', pid)?.pending) throw new Error('Foto-Eintrag konnte nicht gespeichert werden (offline?).');
+        if (session.get('photos', pid)?.pending) throw new Error(t('collab.sr.photoFail'));
         await collab.uploadFile(spaceId, 'photo', pid, 'full', img.full, img.mime);
         await collab.uploadFile(spaceId, 'photo', pid, 'thumb', img.thumb, img.mime);
       }
-      toast('Fotos hochgeladen');
+      toast(t('collab.sr.uploaded'));
     } catch (err) {
       toast(errorText(err), { tone: 'error' });
     } finally {
@@ -361,50 +362,50 @@ export function SharedResourcePage({ spaceId, store, id }: { spaceId: string; st
   return (
     <div className="space-y-5">
       <PageHeader
-        crumbs={[{ label: 'Gemeinsam', to: 'together' }, { label: detail.data.space.name, to: `together/spaces/${spaceId}` }, ...(parentGrow ? [{ label: entryTitle('grows', parentGrow.data), to: `together/spaces/${spaceId}/grows/${parentGrow.id}` }] : []), { label: entryTitle(store, e.data) }]}
+        crumbs={[{ label: t('collab.sr.together'), to: 'together' }, { label: detail.data.space.name, to: `together/spaces/${spaceId}` }, ...(parentGrow ? [{ label: entryTitle('grows', parentGrow.data), to: `together/spaces/${spaceId}/grows/${parentGrow.id}` }] : []), { label: entryTitle(store, e.data) }]}
         title={entryTitle(store, e.data)}
         subtitle={STORE_SINGULAR[store]}
         meta={
           <div className="flex flex-wrap gap-1.5">
             <OriginBadge origin={e.origin} />
             <AccessBadge access={e.access} />
-            {e.updatedAt && <span className="text-[11.5px] text-ink-500">geändert {relTime(e.updatedAt)}</span>}
-            {e.pending && <span className="text-[11.5px] text-amber-300">wartet auf Abgleich</span>}
+            {e.updatedAt && <span className="text-[11.5px] text-ink-500">{t('collab.sr.changed', { when: relTime(e.updatedAt) })}</span>}
+            {e.pending && <span className="text-[11.5px] text-amber-300">{t('collab.sr.pendingSync')}</span>}
           </div>
         }
         actions={
           canWrite && (
             <div className="flex gap-2">
               <button type="button" className="btn-ghost" onClick={() => setEditing(true)}>
-                <Pencil className="size-4" /> Bearbeiten
+                <Pencil className="size-4" /> {t('common.edit')}
               </button>
-              <button type="button" className="btn-ghost p-2" aria-label="Löschen" onClick={remove}>
+              <button type="button" className="btn-ghost p-2" aria-label={t('common.delete')} onClick={remove}>
                 <Trash2 className="size-4" />
               </button>
             </div>
           )
         }
       />
-      {e.origin === 'copy' && <p className="text-[12px] text-ink-400">Geteilte Kopie: unabhängig vom privaten Original – spätere private Änderungen werden nicht übertragen.</p>}
+      {e.origin === 'copy' && <p className="text-[12px] text-ink-400">{t('collab.sr.copyHint')}</p>}
 
       <div className="grid gap-5 lg:grid-cols-[1.6fr_1fr]">
         <div className="space-y-5">
-          <section className="card p-4 sm:p-5" aria-label="Details">
+          <section className="card p-4 sm:p-5" aria-label={t('collab.f.details')}>
             <Details store={store} data={e.data} spaceId={spaceId} />
           </section>
 
           {store === 'grows' && (
-            <section className="card p-4 sm:p-5" aria-label="Pflanzen">
-              <SectionTitle action={canWrite && <button type="button" className="btn-ghost py-1 text-[12px]" onClick={() => setChild('plants')}><Plus className="size-3.5" /> Pflanze</button>}>Pflanzen ({plants.length})</SectionTitle>
+            <section className="card p-4 sm:p-5" aria-label={t('collab.sr.plants')}>
+              <SectionTitle action={canWrite && <button type="button" className="btn-ghost py-1 text-[12px]" onClick={() => setChild('plants')}><Plus className="size-3.5" /> {t('collab.sr.plant')}</button>}>{t('collab.sr.plantsN', { n: plants.length })}</SectionTitle>
               {plants.length === 0 ? (
-                <p className="text-[12.5px] text-ink-400">Keine Pflanzen.</p>
+                <p className="text-[12.5px] text-ink-400">{t('collab.sr.noPlants')}</p>
               ) : (
                 <ul className="grid gap-2 sm:grid-cols-2">
                   {plants.map((p) => (
                     <li key={p.id}>
                       <a className="block rounded-xl border border-white/[0.06] px-3 py-2 hover:border-white/[0.12]" href={href(`together/spaces/${spaceId}/plants/${encodeURIComponent(p.id)}`)}>
                         <span className="block truncate text-[13px] font-medium text-ink-100">{entryTitle('plants', p.data)}</span>
-                        <span className="block truncate text-[11.5px] text-ink-400">{(p.data.strainName as string) || 'Sorte unbekannt'}</span>
+                        <span className="block truncate text-[11.5px] text-ink-400">{(p.data.strainName as string) || t('collab.sr.strainUnknown')}</span>
                       </a>
                     </li>
                   ))}
@@ -414,15 +415,15 @@ export function SharedResourcePage({ spaceId, store, id }: { spaceId: string; st
           )}
 
           {(store === 'grows' || store === 'plants') && (
-            <section className="card p-4 sm:p-5" aria-label="Einträge">
-              <SectionTitle action={canWrite && <button type="button" className="btn-ghost py-1 text-[12px]" onClick={() => setChild('activity')}><Plus className="size-3.5" /> Eintrag</button>}>Einträge ({activities.length})</SectionTitle>
+            <section className="card p-4 sm:p-5" aria-label={t('collab.sr.entries')}>
+              <SectionTitle action={canWrite && <button type="button" className="btn-ghost py-1 text-[12px]" onClick={() => setChild('activity')}><Plus className="size-3.5" /> {t('collab.sr.entry')}</button>}>{t('collab.sr.entriesN', { n: activities.length })}</SectionTitle>
               {activities.some((a) => (a.data as unknown as Activity).measurements) && (
                 <div className="mb-4">
                   <MeasurementCharts activities={activities.map((a) => a.data as unknown as Activity)} splitByPlant={store === 'grows'} fileName="messwerte-bereich" plantName={(pid) => (session.get('plants', pid) ? entryTitle('plants', session.get('plants', pid)!.data) : undefined)} />
                 </div>
               )}
               {activities.length === 0 ? (
-                <p className="text-[12.5px] text-ink-400">Noch keine Einträge.</p>
+                <p className="text-[12.5px] text-ink-400">{t('collab.sr.noEntries')}</p>
               ) : (
                 <ol className="space-y-2">
                   {activities
@@ -440,13 +441,13 @@ export function SharedResourcePage({ spaceId, store, id }: { spaceId: string; st
                           {act.notes && <p className="mt-0.5 whitespace-pre-wrap text-[12.5px] text-ink-300">{act.notes}</p>}
                           {meas && (
                             <p className="mt-1 font-mono text-[11.5px] tabular text-ink-400">
-                              {[meas.heightCm !== undefined && `${meas.heightCm} cm`, meas.temperatureC !== undefined && `${meas.temperatureC} °C`, meas.humidityPct !== undefined && `${meas.humidityPct} % rF`, meas.ph !== undefined && `pH ${meas.ph}`, meas.ecMsCm !== undefined && `EC ${meas.ecMsCm}`]
+                              {[meas.heightCm !== undefined && `${meas.heightCm} cm`, meas.temperatureC !== undefined && `${meas.temperatureC} °C`, meas.humidityPct !== undefined && t('collab.sr.rh', { v: meas.humidityPct }), meas.ph !== undefined && `pH ${meas.ph}`, meas.ecMsCm !== undefined && `EC ${meas.ecMsCm}`]
                                 .filter(Boolean)
                                 .join(' · ')}
                             </p>
                           )}
                           <a href={href(`together/spaces/${spaceId}/activities/${encodeURIComponent(a.id)}`)} className="mt-1 inline-flex text-[11.5px] text-leaf-300 hover:underline">
-                            Kommentare
+                            {t('collab.sr.comments')}
                           </a>
                         </li>
                       );
@@ -457,12 +458,12 @@ export function SharedResourcePage({ spaceId, store, id }: { spaceId: string; st
           )}
 
           {canPhotos && (
-            <section className="card p-4 sm:p-5" aria-label="Fotos">
+            <section className="card p-4 sm:p-5" aria-label={t('collab.sr.photos')}>
               <SectionTitle
                 action={
                   canWrite && (
                     <label className="btn-ghost cursor-pointer py-1 text-[12px]">
-                      {uploading ? <Loader2 className="size-3.5 animate-spin" /> : <Camera className="size-3.5" />} Fotos hinzufügen
+                      {uploading ? <Loader2 className="size-3.5 animate-spin" /> : <Camera className="size-3.5" />} {t('collab.sr.addPhotos')}
                       <input type="file" accept="image/*" multiple className="sr-only" disabled={uploading} onChange={(ev) => void upload(ev.target.files)} />
                     </label>
                   )
@@ -471,12 +472,12 @@ export function SharedResourcePage({ spaceId, store, id }: { spaceId: string; st
                 Fotos ({photos.length})
               </SectionTitle>
               {photos.length === 0 ? (
-                <p className="text-[12.5px] text-ink-400">Keine Fotos.</p>
+                <p className="text-[12.5px] text-ink-400">{t('collab.sr.noPhotos')}</p>
               ) : (
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                   {photos.map((p) => (
                     <a key={p.id} href={href(`together/spaces/${spaceId}/photos/${encodeURIComponent(p.id)}`)} className="block overflow-hidden rounded-lg border border-white/[0.06]">
-                      <SpacePhoto spaceId={spaceId} id={p.id} alt={(p.data.note as string) || 'Foto'} className="aspect-square w-full" />
+                      <SpacePhoto spaceId={spaceId} id={p.id} alt={(p.data.note as string) || t('collab.sr.photo')} className="aspect-square w-full" />
                     </a>
                   ))}
                 </div>
@@ -485,8 +486,8 @@ export function SharedResourcePage({ spaceId, store, id }: { spaceId: string; st
           )}
 
           {store === 'grows' && notes.length > 0 && (
-            <section className="card p-4 sm:p-5" aria-label="Notizen und Aufgaben">
-              <SectionTitle>Notizen & Aufgaben</SectionTitle>
+            <section className="card p-4 sm:p-5" aria-label={t('collab.sr.notesTasks')}>
+              <SectionTitle>{t('collab.sr.notesTasksShort')}</SectionTitle>
               <ul className="space-y-1.5">
                 {notes.map((n) => (
                   <li key={n.id}>
@@ -502,8 +503,8 @@ export function SharedResourcePage({ spaceId, store, id }: { spaceId: string; st
 
         <div className="space-y-5">
           {role === 'owner' && !e.data.growId && !e.data.plantId && store !== 'activities' && store !== 'photos' && (
-            <section className="card space-y-2 p-4" aria-label="Zugriffsstufe">
-              <SectionTitle>Zugriffsstufe</SectionTitle>
+            <section className="card space-y-2 p-4" aria-label={t('collab.sr.access')}>
+              <SectionTitle>{t('collab.sr.access')}</SectionTitle>
               {(['members', 'editors', 'readonly'] as Access[]).map((a) => (
                 <label key={a} className={`flex cursor-pointer items-start gap-2.5 rounded-xl border px-3 py-2 ${e.access === a ? 'border-leaf-500/40 bg-leaf-500/[0.07]' : 'border-white/[0.06] hover:border-white/[0.12]'}`}>
                   <input type="radio" name="access" className="mt-1 accent-[var(--color-leaf-400)]" checked={e.access === a} onChange={() => void setAccess(a)} />
@@ -515,7 +516,7 @@ export function SharedResourcePage({ spaceId, store, id }: { spaceId: string; st
                   </span>
                 </label>
               ))}
-              <p className="hint">Gilt auch für alle zugehörigen Pflanzen, Einträge, Fotos und Kommentare.</p>
+              <p className="hint">{t('collab.sr.accessNote')}</p>
             </section>
           )}
           <section className="card p-4 sm:p-5">
@@ -546,7 +547,7 @@ function Details({ store, data, spaceId }: { store: SpaceStore; data: Record<str
   if (store === 'photos')
     return (
       <div className="space-y-3">
-        <SpacePhoto spaceId={spaceId} id={String(data.id)} alt={s('note') ?? 'Foto'} variant="full" className="max-h-[70vh] w-full rounded-lg object-contain" />
+        <SpacePhoto spaceId={spaceId} id={String(data.id)} alt={s('note') ?? t('collab.sr.photo')} variant="full" className="max-h-[70vh] w-full rounded-lg object-contain" />
         {s('note') && <p className="text-[13px] text-ink-200">{s('note')}</p>}
         <p className="text-[12px] text-ink-500">{date('takenAt')}</p>
       </div>
@@ -555,52 +556,52 @@ function Details({ store, data, spaceId }: { store: SpaceStore; data: Record<str
   const add = (label: string, v: ReactNode) => v !== null && v !== undefined && v !== '' && rows.push([label, v]);
   switch (store) {
     case 'grows':
-      add('Beschreibung', s('description'));
-      add('Start', date('startDate'));
-      add('Umgebung', s('setting') && SETTING_LABEL[s('setting') as keyof typeof SETTING_LABEL]);
-      add('Medium', s('medium'));
-      add('Notizen', s('notes'));
+      add(t('collab.f.description'), s('description'));
+      add(t('collab.f.start'), date('startDate'));
+      add(t('collab.f.setting'), s('setting') && SETTING_LABEL[s('setting') as keyof typeof SETTING_LABEL]);
+      add(t('collab.f.medium'), s('medium'));
+      add(t('collab.f.notes'), s('notes'));
       break;
     case 'plants':
-      add('Sorte', s('strainName'));
-      add('Start', date('startDate'));
-      add('Notizen', s('notes'));
+      add(t('collab.f.strain'), s('strainName'));
+      add(t('collab.f.start'), date('startDate'));
+      add(t('collab.f.notes'), s('notes'));
       break;
     case 'activities':
-      add('Art', s('type') && ACTIVITY_LABEL[s('type') as ActivityType]);
-      add('Datum', date('date'));
-      add('Notizen', s('notes'));
+      add(t('collab.f.kind'), s('type') && ACTIVITY_LABEL[s('type') as ActivityType]);
+      add(t('collab.f.date'), date('date'));
+      add(t('collab.f.notes'), s('notes'));
       break;
     case 'strains':
-      add('Breeder', s('breeder'));
-      add('Genetik', s('genetics'));
-      add('Terpene', Array.isArray(data.terpenes) && data.terpenes.length ? (data.terpenes as { name: string }[]).map((t) => t.name).join(', ') : null);
-      add('Aromen', Array.isArray(data.aromas) && data.aromas.length ? (data.aromas as string[]).join(', ') : null);
-      add('Aroma & Geschmack', s('flavorNotes'));
-      add('Beobachtungen', s('observations'));
+      add(t('collab.f.breeder'), s('breeder'));
+      add(t('collab.f.genetics'), s('genetics'));
+      add(t('collab.f.terpenes'), Array.isArray(data.terpenes) && data.terpenes.length ? (data.terpenes as { name: string }[]).map((tp) => tp.name).join(', ') : null);
+      add(t('collab.f.aromas'), Array.isArray(data.aromas) && data.aromas.length ? (data.aromas as string[]).join(', ') : null);
+      add(t('collab.f.flavor'), s('flavorNotes'));
+      add(t('collab.f.observations'), s('observations'));
       break;
     case 'journal':
-      add('Datum', date('date'));
-      add('Sorte', s('strainName'));
-      add('Notizen', s('notes'));
+      add(t('collab.f.date'), date('date'));
+      add(t('collab.f.strain'), s('strainName'));
+      add(t('collab.f.notes'), s('notes'));
       break;
     case 'inventory':
-      add('Kategorie', s('category') && INVENTORY_CATEGORY_LABEL[s('category') as keyof typeof INVENTORY_CATEGORY_LABEL]);
-      add('Hersteller', s('manufacturer'));
-      add('Modell', s('model'));
-      add('Menge', typeof data.quantity === 'number' ? `${data.quantity} ${s('unit') ?? ''}` : null);
-      add('Notizen', s('notes'));
+      add(t('collab.f.category'), s('category') && INVENTORY_CATEGORY_LABEL[s('category') as keyof typeof INVENTORY_CATEGORY_LABEL]);
+      add(t('collab.f.maker'), s('manufacturer'));
+      add(t('collab.f.model'), s('model'));
+      add(t('collab.f.quantity'), typeof data.quantity === 'number' ? `${data.quantity} ${s('unit') ?? ''}` : null);
+      add(t('collab.f.notes'), s('notes'));
       break;
     case 'labReports':
-      add('Labor', s('labName'));
-      add('Testdatum', date('testDate'));
+      add(t('collab.f.lab'), s('labName'));
+      add(t('collab.f.testDate'), date('testDate'));
       add('THC / THCA', [data.thc, data.thca].some((x) => typeof x === 'number') ? `${data.thc ?? '–'} / ${data.thca ?? '–'}` : null);
       add('CBD / CBDA', [data.cbd, data.cbda].some((x) => typeof x === 'number') ? `${data.cbd ?? '–'} / ${data.cbda ?? '–'}` : null);
-      add('Terpene', Array.isArray(data.terpenes) && data.terpenes.length ? (data.terpenes as { name: string; value: number }[]).map((t) => `${t.name} ${t.value}`).join(', ') : null);
-      add('Notizen', s('notes'));
+      add(t('collab.f.terpenes'), Array.isArray(data.terpenes) && data.terpenes.length ? (data.terpenes as { name: string; value: number }[]).map((tp) => `${tp.name} ${tp.value}`).join(', ') : null);
+      add(t('collab.f.notes'), s('notes'));
       if (s('documentId'))
         add(
-          'Dokument',
+          t('collab.f.document'),
           <button
             type="button"
             className="inline-flex items-center gap-1 text-leaf-300 hover:underline"
@@ -613,20 +614,20 @@ function Details({ store, data, spaceId }: { store: SpaceStore; data: Record<str
               setTimeout(() => URL.revokeObjectURL(a.href), 2000);
             }}
           >
-            <Download className="size-3.5" /> {s('documentName') ?? 'Herunterladen'}
+            <Download className="size-3.5" /> {s('documentName') ?? t('collab.sr.download')}
           </button>,
         );
       break;
     case 'notes':
-      add('Notiz', s('text'));
+      add(t('collab.f.note'), s('text'));
       break;
     case 'tasks':
-      add('Fällig', date('date'));
-      add('Erledigt', Array.isArray(data.completedDates) && data.completedDates.length ? 'ja' : 'nein');
-      add('Details', s('notes'));
+      add(t('collab.f.dueShort'), date('date'));
+      add(t('collab.f.done'), Array.isArray(data.completedDates) && data.completedDates.length ? 'ja' : 'nein');
+      add(t('collab.f.details'), s('notes'));
       break;
   }
-  if (!rows.length) return <p className="flex items-center gap-2 text-[12.5px] text-ink-400"><FileText className="size-4" /> Keine weiteren Angaben.</p>;
+  if (!rows.length) return <p className="flex items-center gap-2 text-[12.5px] text-ink-400"><FileText className="size-4" /> {t('collab.sr.noMore')}</p>;
   return (
     <dl className="divide-y divide-white/[0.04]">
       {rows.map(([l, v]) => (
