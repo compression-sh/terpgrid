@@ -1,8 +1,9 @@
 import { Check, Database, Loader2, Play, RefreshCw, X } from 'lucide-react';
+import { fmtPercent } from '../../lib/format';
 import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '../../app/Toasts';
 import { ApiError, api } from '../../lib/server/api';
-import { intlLocale } from '../../i18n';
+import { intlLocale, labels, t } from '../../i18n';
 
 interface FieldStat {
   field: string;
@@ -60,10 +61,10 @@ interface Match {
   cultivar_breeder: string | null;
 }
 
-const pct = (n: number, t: number) => (t ? `${((n / t) * 100).toFixed(1).replace('.', ',')} %` : '–');
+const pct = (n: number, t: number) => (t ? fmtPercent(n / t, 1) : '–');
 const dt = (s: string | null) => (s ? new Date(s).toLocaleString(intlLocale(), { dateStyle: 'short', timeStyle: 'short' }) : '–');
-const STATUS: Record<string, string> = { probable: 'Zu prüfen', ambiguous: 'Mehrdeutig', exact: 'Bestätigt', rejected: 'Abgelehnt' };
-const RUN: Record<string, string> = { running: 'läuft', done: 'fertig', failed: 'fehlgeschlagen', aborted: 'abgebrochen' };
+const STATUS: Record<string, string> = labels('admin.cat.status', ['probable', 'ambiguous', 'exact', 'rejected']);
+const RUN: Record<string, string> = labels('admin.cat.run', ['running', 'done', 'failed', 'aborted']);
 
 /** Katalogqualität, Anreicherungsläufe und Prüfliste – nur öffentliche Katalog-Metadaten. */
 export function CatalogAdmin() {
@@ -74,7 +75,7 @@ export function CatalogAdmin() {
   const [matches, setMatches] = useState<{ items: Match[]; total: number } | null>(null);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ provider: 'strainapi', limit: 10, dryRun: true });
-  const err = (e: unknown) => toast(e instanceof ApiError ? e.message : 'Unerwarteter Fehler.', { tone: 'error' });
+  const err = (e: unknown) => toast(e instanceof ApiError ? e.message : t('admin.cat.unexpected'), { tone: 'error' });
 
   const loadRuns = useCallback(() => api<Runs>('GET', '/api/admin/catalog/runs').then(setRuns).catch(() => setRuns(null)), []);
   const loadMatches = useCallback(() => api<{ items: Match[]; total: number }>('GET', `/api/admin/catalog/matches?status=${status}`).then(setMatches).catch(() => setMatches(null)), [status]);
@@ -96,14 +97,14 @@ export function CatalogAdmin() {
   // Fortschritt eines laufenden Batches nachladen
   useEffect(() => {
     if (!runs?.running) return;
-    const t = setInterval(() => void loadRuns(), 3000);
-    return () => clearInterval(t);
+    const timer = setInterval(() => void loadRuns(), 3000);
+    return () => clearInterval(timer);
   }, [runs?.running, loadRuns]);
 
   const decide = async (m: Match, action: 'accept' | 'reject', cultivarId?: string) => {
     try {
       await api('POST', `/api/admin/catalog/matches/${m.provider}/${encodeURIComponent(m.provider_id)}`, { action, ...(cultivarId ? { cultivarId } : {}) });
-      toast(action === 'accept' ? 'Zuordnung bestätigt.' : 'Zuordnung abgelehnt.', { tone: 'ok' });
+      toast(action === 'accept' ? t('admin.cat.accepted') : t('admin.cat.rejected'), { tone: 'ok' });
       void loadMatches();
     } catch (e) {
       err(e);
@@ -117,34 +118,34 @@ export function CatalogAdmin() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 id="cat-h" className="flex items-center gap-2 text-[15px] font-semibold text-ink-50">
-            <Database className="size-4" /> Sortenkatalog – Vollständigkeit & Anreicherung
+            <Database className="size-4" /> {t('admin.cat.title')}
           </h2>
           <p className="hint mt-0.5">
-            {q ? `${q.cultivars.toLocaleString(intlLocale())} Sorten · ${q.breeders.toLocaleString(intlLocale())} Breeder · ${q.listings.toLocaleString(intlLocale())} Angebote` : 'Wird berechnet …'}
-            {q?.dataset && ` · Datensatz ${q.dataset.version} (Parser v${q.dataset.parser ?? '1'})`}
+            {q ? t('admin.cat.counts', { c: q.cultivars, b: q.breeders, l: q.listings }) : t('admin.cat.computing')}
+            {q?.dataset && t('admin.cat.dataset', { v: q.dataset.version, p: q.dataset.parser ?? '1' })}
           </p>
         </div>
         <button type="button" className="btn-ghost" onClick={() => void loadQuality(true)}>
-          <RefreshCw className="size-4" /> Neu berechnen
+          <RefreshCw className="size-4" /> {t('admin.cat.recompute')}
         </button>
       </div>
 
       {q && (
-        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Feldabdeckung (horizontal scrollbar)">
+        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={t('admin.cat.coverageAria')}>
           <table className="w-full min-w-[640px] text-left text-[12.5px]">
-            <caption className="sr-only">Feldabdeckung des Sortenkatalogs nach Belegart</caption>
+            <caption className="sr-only">{t('admin.cat.coverageCaption')}</caption>
             <thead className="text-[11px] text-ink-500">
               <tr>
-                <th className="py-1.5 pr-3 font-medium">Feld</th>
-                <th className="py-1.5 pr-3 font-medium">Abdeckung</th>
-                <th className="py-1.5 pr-3 text-right font-medium">Vorhanden</th>
-                <th className="py-1.5 pr-3 text-right font-medium">Fehlt</th>
-                <th className="py-1.5 pr-3 text-right font-medium">Breeder</th>
-                <th className="py-1.5 pr-3 text-right font-medium">Seedbank</th>
-                <th className="py-1.5 pr-3 text-right font-medium">Datenbank</th>
-                <th className="py-1.5 pr-3 text-right font-medium">Labor</th>
-                <th className="py-1.5 pr-3 text-right font-medium">Wissenschaft</th>
-                <th className="py-1.5 text-right font-medium">Widersprüchlich</th>
+                <th className="py-1.5 pr-3 font-medium">{t('admin.cat.field')}</th>
+                <th className="py-1.5 pr-3 font-medium">{t('admin.cat.coverage')}</th>
+                <th className="py-1.5 pr-3 text-right font-medium">{t('admin.cat.present')}</th>
+                <th className="py-1.5 pr-3 text-right font-medium">{t('admin.cat.missing')}</th>
+                <th className="py-1.5 pr-3 text-right font-medium">{t('admin.cat.breeder')}</th>
+                <th className="py-1.5 pr-3 text-right font-medium">{t('admin.cat.seedbank')}</th>
+                <th className="py-1.5 pr-3 text-right font-medium">{t('admin.cat.database')}</th>
+                <th className="py-1.5 pr-3 text-right font-medium">{t('admin.cat.lab')}</th>
+                <th className="py-1.5 pr-3 text-right font-medium">{t('admin.cat.science')}</th>
+                <th className="py-1.5 text-right font-medium">{t('admin.cat.conflict')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -152,7 +153,7 @@ export function CatalogAdmin() {
                 <tr key={f.field}>
                   <td className="py-1.5 pr-3 text-ink-200">
                     {f.label}
-                    {f.nameOnly && <span className="ml-1 text-[10.5px] text-amber-300/90">nur Namensgleichheit</span>}
+                    {f.nameOnly && <span className="ml-1 text-[10.5px] text-amber-300/90">{t('admin.cat.nameOnly')}</span>}
                   </td>
                   <td className="py-1.5 pr-3">
                     <span className="flex items-center gap-2">
@@ -190,7 +191,7 @@ export function CatalogAdmin() {
 
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="space-y-3">
-          <h3 className="text-[13px] font-semibold text-ink-100">Anreicherung starten</h3>
+          <h3 className="text-[13px] font-semibold text-ink-100">{t('admin.cat.enrich')}</h3>
           <form
             className="flex flex-wrap items-end gap-3"
             onSubmit={async (e) => {
@@ -198,7 +199,7 @@ export function CatalogAdmin() {
               setBusy(true);
               try {
                 await api('POST', '/api/admin/catalog/enrich', form);
-                toast(form.dryRun ? 'Probelauf gestartet.' : 'Anreicherung gestartet.', { tone: 'ok' });
+                toast(form.dryRun ? t('admin.cat.dryStarted') : t('admin.cat.started'), { tone: 'ok' });
                 void loadRuns();
               } catch (e2) {
                 err(e2);
@@ -209,7 +210,7 @@ export function CatalogAdmin() {
           >
             <div className="space-y-1.5">
               <label className="label" htmlFor="enr-p">
-                Quelle
+                {t('admin.cat.source')}
               </label>
               <select id="enr-p" className="input-base" value={form.provider} onChange={(e) => setForm((f) => ({ ...f, provider: e.target.value }))}>
                 {runs?.providers.map((p) => (
@@ -221,7 +222,7 @@ export function CatalogAdmin() {
             </div>
             <div className="space-y-1.5">
               <label className="label" htmlFor="enr-n">
-                Sorten (max. {runs?.maxBatch ?? 25})
+                {t('admin.cat.batch', { n: runs?.maxBatch ?? 25 })}
               </label>
               <input
                 id="enr-n"
@@ -234,10 +235,10 @@ export function CatalogAdmin() {
               />
             </div>
             <label className="flex items-center gap-2 pb-2 text-[12.5px] text-ink-300">
-              <input type="checkbox" checked={form.dryRun} onChange={(e) => setForm((f) => ({ ...f, dryRun: e.target.checked }))} /> Probelauf (nichts speichern)
+              <input type="checkbox" checked={form.dryRun} onChange={(e) => setForm((f) => ({ ...f, dryRun: e.target.checked }))} /> {t('admin.cat.dryRun')}
             </label>
             <button type="submit" className="btn-primary" disabled={busy || runs?.running}>
-              {busy || runs?.running ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />} Starten
+              {busy || runs?.running ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />} {t('admin.cat.start')}
             </button>
           </form>
           {provider && <p className="hint">{provider.license} Zwischenspeicher läuft nach {provider.ttlDays} Tagen ab. Anfragen werden gedrosselt; es werden keine Nutzerdaten übertragen.</p>}
@@ -246,21 +247,21 @@ export function CatalogAdmin() {
               <li key={r.id} className="flex flex-wrap justify-between gap-2 text-ink-300">
                 <span>
                   #{r.id} {r.provider}
-                  {r.dry_run ? ' · Probelauf' : ''} · {RUN[r.status] ?? r.status}
+                  {r.dry_run ? t('admin.cat.dryRunSuffix') : ''} · {RUN[r.status] ?? r.status}
                 </span>
                 <span className="tabular text-ink-500">
-                  {r.processed}/{r.requested} geprüft · {r.matched} zugeordnet · {r.claims} Angaben{r.errors.length ? ` · ${r.errors.length} Fehler` : ''} · {dt(r.started_at)}
+                  {t('admin.cat.runStats', { p: r.processed, r: r.requested, m: r.matched, c: r.claims })}{r.errors.length ? t('admin.cat.errors', { n: r.errors.length }) : ''} · {dt(r.started_at)}
                 </span>
               </li>
             ))}
-            {runs && runs.runs.length === 0 && <li className="text-ink-500">Noch keine Läufe.</li>}
+            {runs && runs.runs.length === 0 && <li className="text-ink-500">{t('admin.cat.noRuns')}</li>}
           </ul>
         </div>
 
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-[13px] font-semibold text-ink-100">Prüfliste der Zuordnungen</h3>
-            <div className="flex gap-1" role="group" aria-label="Status filtern">
+            <h3 className="text-[13px] font-semibold text-ink-100">{t('admin.cat.review')}</h3>
+            <div className="flex gap-1" role="group" aria-label={t('admin.cat.filter')}>
               {Object.entries(STATUS).map(([k, v]) => (
                 <button key={k} type="button" aria-pressed={status === k} className={`rounded-lg border px-2 py-0.5 text-[11.5px] ${status === k ? "border-leaf-500/40 bg-leaf-500/15 text-leaf-100" : "border-white/[0.08] text-ink-400"}`} onClick={() => setStatus(k)}>
                   {v}
@@ -268,7 +269,7 @@ export function CatalogAdmin() {
               ))}
             </div>
           </div>
-          <p className="hint">Gleiche Namen werden nie automatisch zusammengeführt. Bestätigt werden kann nur eine Sorte aus den Kandidaten.</p>
+          <p className="hint">{t('admin.cat.never')}</p>
           <ul className="max-h-96 space-y-2 overflow-y-auto pr-1">
             {matches?.items.map((m) => (
               <li key={`${m.provider}-${m.provider_id}`} className="rounded-lg border border-white/5 bg-ink-900/60 p-3 text-[12.5px]">
@@ -290,18 +291,18 @@ export function CatalogAdmin() {
                 {status !== 'rejected' && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {m.candidates.map((c) => (
-                      <button key={c} type="button" className="btn-ghost h-7 px-2 text-[11.5px]" onClick={() => void decide(m, 'accept', c)} title="Diese Sorte bestätigen">
+                      <button key={c} type="button" className="btn-ghost h-7 px-2 text-[11.5px]" onClick={() => void decide(m, 'accept', c)} title={t('admin.cat.confirmThis')}>
                         <Check className="size-3.5" /> {c}
                       </button>
                     ))}
                     <button type="button" className="btn-ghost h-7 px-2 text-[11.5px] text-rose-200" onClick={() => void decide(m, 'reject')}>
-                      <X className="size-3.5" /> Ablehnen
+                      <X className="size-3.5" /> {t('admin.cat.decline')}
                     </button>
                   </div>
                 )}
               </li>
             ))}
-            {matches && matches.items.length === 0 && <li className="text-[12.5px] text-ink-500">Keine Einträge.</li>}
+            {matches && matches.items.length === 0 && <li className="text-[12.5px] text-ink-500">{t('admin.cat.none')}</li>}
           </ul>
           {matches && matches.total > matches.items.length && <p className="hint">{matches.total} insgesamt – die neuesten 30 werden angezeigt.</p>}
         </div>

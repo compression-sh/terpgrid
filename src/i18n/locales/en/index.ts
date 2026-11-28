@@ -1,6 +1,7 @@
 /** English dictionary – structure checked against the German template. */
 import type { DeepMessages, Messages } from '../../core';
 import account from './account.json';
+import admin from './admin.json';
 import collab from './collab.json';
 import common from './common.json';
 import dashboard from './dashboard.json';
@@ -15,5 +16,5 @@ import settings from './settings.json';
 import shell from './shell.json';
 import tools from './tools.json';
 
-const en: DeepMessages<Messages> = { account, collab, common, dashboard, data, discover, grow, lab, labels, mine, photos, settings, shell, tools };
+const en: DeepMessages<Messages> = { account, admin, collab, common, dashboard, data, discover, grow, lab, labels, mine, photos, settings, shell, tools };
 export default en;
