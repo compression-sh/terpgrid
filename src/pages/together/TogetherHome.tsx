@@ -12,6 +12,7 @@ import { Segmented } from '../../components/ui/Segmented';
 import { type Accent, type SpaceKind, type SpaceSummary, collab } from '../../lib/collab/api';
 import { ACCENTS, ACCENT_CLASS, ACCENT_LABEL, KIND_LABEL, ROLE_LABEL, nameOf } from '../../lib/collab/labels';
 import { TogetherTabs } from './TogetherTabs';
+import { t } from '../../i18n';
 
 export function TogetherHome() {
   const toast = useToast();
@@ -22,7 +23,7 @@ export function TogetherHome() {
   const answer = async (id: string, action: 'accept' | 'decline', spaceId?: string) => {
     try {
       await collab.answerSpaceInvite(id, action);
-      toast(action === 'accept' ? 'Einladung angenommen' : 'Einladung abgelehnt', { tone: 'ok' });
+      toast(action === 'accept' ? t('collab.th.accepted') : t('collab.th.declined'), { tone: 'ok' });
       if (action === 'accept' && spaceId) navigate(`together/spaces/${spaceId}`);
       else await spaces.reload();
     } catch (e) {
@@ -32,7 +33,7 @@ export function TogetherHome() {
   const answerFriend = async (id: string, action: 'accept' | 'decline') => {
     try {
       await collab.answerRequest(id, action);
-      toast(action === 'accept' ? 'Ihr seid jetzt befreundet' : 'Anfrage abgelehnt');
+      toast(action === 'accept' ? t('collab.th.friends') : t('collab.th.reqDeclined'));
       await social.reload();
     } catch (e) {
       toast(errorText(e), { tone: 'error' });
@@ -47,11 +48,11 @@ export function TogetherHome() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Gemeinsam"
-        subtitle="Private Bereiche für vertraute Freunde – nur innerhalb dieser TERPGRID-Instanz, nichts ist öffentlich."
+        title={t('collab.th.title')}
+        subtitle={t('collab.th.subtitle')}
         actions={
           <button type="button" className="btn-primary" onClick={() => setCreate(true)}>
-            <FolderPlus className="size-4" /> Neuer Bereich
+            <FolderPlus className="size-4" /> {t('collab.th.newSpace')}
           </button>
         }
       />
@@ -60,10 +61,10 @@ export function TogetherHome() {
       {(spaces.error || social.error) && <Callout tone="danger">{spaces.error ?? social.error}</Callout>}
 
       {(invites.length > 0 || requests.length > 0) && (
-        <section className="card p-4 sm:p-5" aria-label="Offene Einladungen und Anfragen">
+        <section className="card p-4 sm:p-5" aria-label={t('collab.th.open')}>
           <SectionTitle>
             <span className="inline-flex items-center gap-1.5">
-              <Inbox className="size-3.5" /> Wartet auf dich
+              <Inbox className="size-3.5" /> {t('collab.th.waiting')}
             </span>
           </SectionTitle>
           <ul className="divide-y divide-white/[0.05]">
@@ -80,10 +81,10 @@ export function TogetherHome() {
                 </div>
                 <div className="flex gap-1.5">
                   <button type="button" className="btn-primary py-1.5 text-[12.5px]" onClick={() => answer(i.id, 'accept', i.spaceId)}>
-                    <Check className="size-3.5" /> Beitreten
+                    <Check className="size-3.5" /> {t('collab.th.join')}
                   </button>
                   <button type="button" className="btn-ghost py-1.5 text-[12.5px]" onClick={() => answer(i.id, 'decline')}>
-                    Ablehnen
+                    {t('collab.th.decline')}
                   </button>
                 </div>
               </li>
@@ -97,9 +98,9 @@ export function TogetherHome() {
                 </div>
                 <div className="flex gap-1.5">
                   <button type="button" className="btn-primary py-1.5 text-[12.5px]" onClick={() => answerFriend(r.id, 'accept')}>
-                    <Check className="size-3.5" /> Annehmen
+                    <Check className="size-3.5" /> {t('collab.th.accept')}
                   </button>
-                  <button type="button" className="btn-ghost py-1.5 text-[12.5px]" onClick={() => answerFriend(r.id, 'decline')} aria-label={`Anfrage von ${nameOf(r.from)} ablehnen`}>
+                  <button type="button" className="btn-ghost py-1.5 text-[12.5px]" onClick={() => answerFriend(r.id, 'decline')} aria-label={t('collab.th.declineFrom', { name: nameOf(r.from) })}>
                     <X className="size-3.5" />
                   </button>
                 </div>
@@ -116,8 +117,8 @@ export function TogetherHome() {
         </div>
       ) : (
         <>
-          <section aria-label="Meine Bereiche">
-            <SectionTitle>Meine Bereiche</SectionTitle>
+          <section aria-label={t('collab.th.mine')}>
+            <SectionTitle>{t('collab.th.mine')}</SectionTitle>
             {mine.length ? (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {mine.map((s) => (
@@ -128,18 +129,18 @@ export function TogetherHome() {
               <EmptyState
                 compact
                 icon={<FolderPlus />}
-                title="Noch kein eigener Bereich"
-                text="Lege einen Bereich an, teile gezielt einen Grow, Sorten oder Laborberichte und lade Freunde mit einer passenden Rolle ein."
+                title={t('collab.th.noneOwn')}
+                text={t('collab.th.noneOwnText')}
                 action={
                   <button type="button" className="btn-primary" onClick={() => setCreate(true)}>
-                    <Plus className="size-4" /> Bereich anlegen
+                    <Plus className="size-4" /> {t('collab.th.create')}
                   </button>
                 }
               />
             )}
           </section>
-          <section aria-label="Mit mir geteilt">
-            <SectionTitle>Mit mir geteilt</SectionTitle>
+          <section aria-label={t('collab.th.shared')}>
+            <SectionTitle>{t('collab.th.shared')}</SectionTitle>
             {shared.length ? (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {shared.map((s) => (
@@ -148,22 +149,22 @@ export function TogetherHome() {
               </div>
             ) : (
               <p className="rounded-xl border border-dashed border-white/[0.08] px-4 py-5 text-[13px] text-ink-400">
-                Noch nichts. Wenn dich Freunde in einen Bereich einladen, erscheint die Einladung oben – du entscheidest, ob du beitrittst.
+                {t('collab.th.sharedNone')}
               </p>
             )}
           </section>
         </>
       )}
 
-      <section className="grid gap-3 sm:grid-cols-3" aria-label="So funktioniert's">
+      <section className="grid gap-3 sm:grid-cols-3" aria-label={t('collab.th.how')}>
         {[
-          { icon: <Lock className="size-4" />, t: 'Privat als Standard', d: 'Nichts wird automatisch geteilt. Du wählst jeden Eintrag einzeln und siehst vorher eine Vorschau.' },
-          { icon: <ShieldCheck className="size-4" />, t: 'Eigener Schlüssel je Bereich', d: 'Inhalte sind serverseitig mit einem eigenen Bereichsschlüssel verschlüsselt – getrennt von deinem Konto. Keine Ende-zu-Ende-Verschlüsselung.' },
-          { icon: <UserPlus className="size-4" />, t: 'Nur Freunde, nur diese Instanz', d: 'Kein Verzeichnis, keine öffentlichen Profile oder Links. Freunde findest du über Handle, Social-ID oder Einladungscode.' },
+          { icon: <Lock className="size-4" />, get ti() { return t('collab.th.p1'); }, get d() { return t('collab.th.p1d'); } },
+          { icon: <ShieldCheck className="size-4" />, get ti() { return t('collab.th.p2'); }, get d() { return t('collab.th.p2d'); } },
+          { icon: <UserPlus className="size-4" />, get ti() { return t('collab.th.p3'); }, get d() { return t('collab.th.p3d'); } },
         ].map((x) => (
-          <div key={x.t} className="rounded-xl border border-white/[0.05] bg-white/[0.015] p-4">
+          <div key={x.ti} className="rounded-xl border border-white/[0.05] bg-white/[0.015] p-4">
             <div className="mb-1.5 flex items-center gap-2 text-[13px] font-semibold text-ink-100">
-              <span className="text-leaf-400">{x.icon}</span> {x.t}
+              <span className="text-leaf-400">{x.icon}</span> {x.ti}
             </div>
             <p className="text-[12.5px] leading-relaxed text-ink-400">{x.d}</p>
           </div>
@@ -191,12 +192,12 @@ function SpaceCard({ s }: { s: SpaceSummary }) {
       </div>
       <div className="mt-auto flex items-center justify-between text-[11.5px] text-ink-500">
         <span>
-          {s.members} {s.members === 1 ? 'Mitglied' : 'Mitglieder'} · {s.resources} Einträge
-          {s.role !== 'owner' && ` · von ${nameOf(s.owner)}`}
+          {t('collab.th.members', { count: s.members })} · {t('collab.th.entries', { count: s.resources })}
+          {s.role !== 'owner' && t('collab.th.byOwner', { name: nameOf(s.owner) })}
         </span>
         <ArrowRight className="size-3.5 text-ink-500 transition-transform group-hover:translate-x-0.5 group-hover:text-leaf-300" />
       </div>
-      {s.pendingTransferToMe && <span className="rounded-lg bg-amber-500/10 px-2 py-1 text-[11.5px] text-amber-200">Eigentumsübertragung an dich angeboten</span>}
+      {s.pendingTransferToMe && <span className="rounded-lg bg-amber-500/10 px-2 py-1 text-[11.5px] text-amber-200">{t('collab.th.transfer')}</span>}
     </a>
   );
 }
@@ -212,7 +213,7 @@ export function CreateSpaceModal({ onClose }: { onClose: () => void }) {
     setBusy(true);
     try {
       const r = await collab.createSpace({ name: name.trim(), description: description.trim() || undefined, kind, accent });
-      toast('Bereich angelegt', { tone: 'ok' });
+      toast(t('collab.th.created'), { tone: 'ok' });
       onClose();
       navigate(`together/spaces/${r.id}`);
     } catch (e) {
@@ -225,31 +226,31 @@ export function CreateSpaceModal({ onClose }: { onClose: () => void }) {
     <Modal
       open
       onClose={onClose}
-      title="Neuer gemeinsamer Bereich"
-      subtitle="Du wirst Eigentümer. Der Bereich erhält einen eigenen Schlüssel."
+      title={t('collab.th.newTitle')}
+      subtitle={t('collab.th.newSub')}
       footer={
         <>
           <button type="button" className="btn-ghost" onClick={onClose}>
-            Abbrechen
+            {t('common.cancel')}
           </button>
           <button type="button" className="btn-primary" disabled={busy || name.trim().length < 2} onClick={submit}>
-            {busy ? <Loader2 className="size-4 animate-spin" /> : <FolderPlus className="size-4" />} Anlegen
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <FolderPlus className="size-4" />} {t('collab.th.createBtn')}
           </button>
         </>
       }
     >
       <div className="space-y-4">
         <label className="block space-y-1.5">
-          <span className="label">Name</span>
-          <input className="input-base" autoFocus maxLength={60} value={name} onChange={(e) => setName(e.target.value)} placeholder="z. B. Gemeinsames Zelt" />
+          <span className="label">{t('collab.th.name')}</span>
+          <input className="input-base" autoFocus maxLength={60} value={name} onChange={(e) => setName(e.target.value)} placeholder={t('collab.th.namePh')} />
         </label>
         <label className="block space-y-1.5">
-          <span className="label">Beschreibung (optional)</span>
-          <textarea className="input-base min-h-20 resize-y" maxLength={600} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Wofür ist dieser Bereich?" />
+          <span className="label">{t('collab.th.desc')}</span>
+          <textarea className="input-base min-h-20 resize-y" maxLength={600} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t('collab.th.descPh')} />
         </label>
-        <Segmented label="Art" value={kind} onChange={setKind} options={(['project', 'collection', 'general'] as SpaceKind[]).map((k) => ({ value: k, label: KIND_LABEL[k] }))} />
+        <Segmented label={t('collab.th.kind')} value={kind} onChange={setKind} options={(['project', 'collection', 'general'] as SpaceKind[]).map((k) => ({ value: k, label: KIND_LABEL[k] }))} />
         <fieldset>
-          <legend className="label mb-1.5">Akzentfarbe</legend>
+          <legend className="label mb-1.5">{t('collab.th.accent')}</legend>
           <div className="flex flex-wrap gap-2">
             {ACCENTS.map((a) => (
               <button
