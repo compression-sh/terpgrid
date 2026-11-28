@@ -26,12 +26,12 @@ import {
 import { fmtDate } from '../../lib/dates';
 import { fmt } from '../../lib/format';
 import { toPercent } from '../../lib/lab';
-import { intlLocale } from '../../i18n';
+import { t, intlLocale } from '../../i18n';
 
 const ext = { target: '_blank', rel: 'noopener noreferrer nofollow', referrerPolicy: 'no-referrer' } as const;
 const isPubchem = (url: string) => url.includes('pubchem.ncbi.nlm.nih.gov');
 /** Literaturbelege für ein Vorkommen in Cannabis: nur Quellen, deren Volltext für diesen Atlas geprüft wurde */
-const cannabisSources = (t: TerpeneInfo) => t.sources.filter((s) => !isPubchem(s.url) && s.label.includes('Volltext geprüft'));
+const cannabisSources = (tp: TerpeneInfo) => tp.sources.filter((s) => !isPubchem(s.url) && s.label.includes('Volltext geprüft'));
 const groupsOf = (id: string) => TERPENE_GROUPS.filter((g) => g.members.includes(id));
 
 /**
@@ -49,13 +49,13 @@ function TerpeneWheel({ items, active, onSelect }: { items: TerpeneInfo[]; activ
     const p = (r: number, a: number) => `${(cx + r * Math.cos(a)).toFixed(1)} ${(cy + r * Math.sin(a)).toFixed(1)}`;
     return `M ${p(r1, a0)} A ${r1} ${r1} 0 0 1 ${p(r1, a1)} L ${p(r0, a1)} A ${r0} ${r0} 0 0 0 ${p(r0, a0)} Z`;
   };
-  const pos = items.map((t, i) => {
+  const pos = items.map((tp, i) => {
     const a = (i / items.length) * Math.PI * 2 - Math.PI / 2;
-    return { t, x: cx + 92 * Math.cos(a), y: cy + 92 * Math.sin(a) };
+    return { tp, x: cx + 92 * Math.cos(a), y: cy + 92 * Math.sin(a) };
   });
   const act = active ? terpeneById(active) : undefined;
   return (
-    <svg viewBox="0 0 360 360" className="mx-auto w-full max-w-[380px]" role="group" aria-label="Terpen-Rad: Zuordnung der Terpene zu Aromafamilien">
+    <svg viewBox="0 0 360 360" className="mx-auto w-full max-w-[380px]" role="group" aria-label={t('atlas.wheelAria')}>
       {AROMA_FAMILIES.map((f, i) => {
         const a0 = famAngle(i) + 0.02;
         const a1 = famAngle(i + 1) - 0.02;
@@ -70,27 +70,27 @@ function TerpeneWheel({ items, active, onSelect }: { items: TerpeneInfo[]; activ
           </g>
         );
       })}
-      {pos.map(({ t, x, y }) =>
-        t.families.map((fam) => {
+      {pos.map(({ tp, x, y }) =>
+        tp.families.map((fam) => {
           const fi = AROMA_FAMILIES.findIndex((f) => f.id === fam);
           const mid = famAngle(fi) + step / 2;
-          const show = active === t.id || hover === fam;
-          return <line key={`${t.id}-${fam}`} x1={x} y1={y} x2={cx + 130 * Math.cos(mid)} y2={cy + 130 * Math.sin(mid)} stroke={t.color} strokeOpacity={show ? 0.85 : 0.09} strokeWidth={show ? 1.4 : 1} />;
+          const show = active === tp.id || hover === fam;
+          return <line key={`${tp.id}-${fam}`} x1={x} y1={y} x2={cx + 130 * Math.cos(mid)} y2={cy + 130 * Math.sin(mid)} stroke={tp.color} strokeOpacity={show ? 0.85 : 0.09} strokeWidth={show ? 1.4 : 1} />;
         }),
       )}
-      {pos.map(({ t, x, y }) => (
+      {pos.map(({ tp, x, y }) => (
         <g
-          key={t.id}
+          key={tp.id}
           role="button"
           tabIndex={0}
-          aria-pressed={active === t.id}
-          aria-label={`${t.name}${t.families.length ? '' : ' (keine Geruchsbeschreibung belegt)'}`}
-          onClick={() => onSelect(t.id)}
-          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onSelect(t.id))}
+          aria-pressed={active === tp.id}
+          aria-label={`${tp.name}${tp.families.length ? '' : t('atlas.noSmellSuffix')}`}
+          onClick={() => onSelect(tp.id)}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onSelect(tp.id))}
           className="cursor-pointer outline-none [&:focus-visible_circle]:stroke-white"
         >
-          <title>{t.name}</title>
-          <circle cx={x} cy={y} r={active === t.id ? 10 : 7.5} fill="#0a0d0c" stroke={t.color} strokeWidth={active === t.id ? 2.5 : 1.6} strokeDasharray={t.families.length ? undefined : '2 2'} />
+          <title>{tp.name}</title>
+          <circle cx={x} cy={y} r={active === tp.id ? 10 : 7.5} fill="#0a0d0c" stroke={tp.color} strokeWidth={active === tp.id ? 2.5 : 1.6} strokeDasharray={tp.families.length ? undefined : '2 2'} />
         </g>
       ))}
       <circle cx={cx} cy={cy} r={58} fill="#0e1211" stroke="rgb(255 255 255 / 0.08)" />
@@ -98,7 +98,7 @@ function TerpeneWheel({ items, active, onSelect }: { items: TerpeneInfo[]; activ
         {act ? act.name.replace(/ \(.*\)$/, '') : 'Aroma-'}
       </text>
       <text x={cx} y={cy + 10} fill="#8c9a95" fontSize="10" textAnchor="middle" fontFamily="Inter Variable, sans-serif">
-        {act ? (act.families.join(' · ') || 'keine Angabe') : 'familien'}
+        {act ? (act.families.join(' · ') || t('atlas.noValue')) : 'familien'}
       </text>
     </svg>
   );
@@ -121,26 +121,25 @@ function CatalogMentions({ id, label }: { id: string; label: string }) {
   const [page, setPage] = useState(1);
   const res = useAsync((signal) => (lib ? library.terpeneCultivars(id, page, signal) : Promise.resolve(null)), [id, page, !!lib]);
   const measuredRef = useRef<LibMeasuredTerpene | undefined>(undefined);
-  if (lib === null) return <p className="hint">Der lokale Sortenkatalog ist nur mit TERPGRID-Server verfügbar.</p>;
+  if (lib === null) return <p className="hint">{t('atlas.serverOnly')}</p>;
   const d = res.data;
   // Messwerte kommen nur mit Seite 1 – beim Blättern behalten
   if (d && d.page === 1) measuredRef.current = d.measured;
   const measured = measuredRef.current;
-  if (res.loading && !d) return <p className="hint">Wird geladen …</p>;
+  if (res.loading && !d) return <p className="hint">{t('atlas.loading')}</p>;
   if (res.error) return <p className="hint text-rose-300">{res.error}</p>;
   if (!d || d.total === 0)
     return (
       <div className="space-y-4">
         {measured && <MeasuredSamples m={measured} label={label} />}
-        <p className="text-[13px] text-ink-300">Keine Sorte im Katalog nennt {label}.</p>
+        <p className="text-[13px] text-ink-300">{t('atlas.noneNames', { label })}</p>
       </div>
     );
   return (
     <div className="space-y-3">
       {measured && <MeasuredSamples m={measured} label={label} />}
       <p className="text-[13px] text-ink-300">
-        <span className="font-mono text-ink-50">{d.total.toLocaleString(intlLocale())}</span> Sorten nennen {label} in Seedbank-Texten oder Datenbank-Angaben. Nennungen sind keine Mengen und gelten für die
-        jeweilige Quelle, nicht für jede Charge.
+        <span className="font-mono text-ink-50">{d.total.toLocaleString(intlLocale())}</span> {t('atlas.mentions', { label })}
       </p>
       <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {d.items.map((c) => (
@@ -159,15 +158,15 @@ function CatalogMentions({ id, label }: { id: string; label: string }) {
         ))}
       </ul>
       {d.totalPages > 1 && (
-        <nav className="flex items-center justify-between text-[12px]" aria-label="Seiten">
+        <nav className="flex items-center justify-between text-[12px]" aria-label={t('atlas.pages')}>
           <button type="button" className="btn-ghost py-1 text-xs" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-            Zurück
+            {t('atlas.back')}
           </button>
           <span className="tabular text-ink-500">
             Seite {d.page} von {d.totalPages}
           </span>
           <button type="button" className="btn-ghost py-1 text-xs" disabled={page >= d.totalPages} onClick={() => setPage((p) => p + 1)}>
-            Weiter
+            {t('atlas.next')}
           </button>
         </nav>
       )}
@@ -179,24 +178,24 @@ function CatalogMentions({ id, label }: { id: string; label: string }) {
 function MeasuredSamples({ m, label }: { m: LibMeasuredTerpene; label: string }) {
   const max = Math.max(...m.topNames.map((n) => n.median), 0.0001);
   return (
-    <section aria-label="Messwerte in Laborproben" className="rounded-xl border border-teal-400/15 bg-teal-400/[0.03] p-3">
+    <section aria-label={t('atlas.samples')} className="rounded-xl border border-teal-400/15 bg-teal-400/[0.03] p-3">
       <div className="mb-2 flex flex-wrap items-center gap-1.5">
         <EvidenceTag kind="science" source="Smith et al. 2022" />
         {m.isomerSum && <span className="rounded-full border border-amber-400/25 px-1.5 py-px text-[10.5px] text-amber-200">{m.isomerSum}</span>}
       </div>
       <p className="text-[13px] text-ink-300">
-        In <span className="font-mono text-ink-50">{m.samples.toLocaleString(intlLocale())}</span> US-Blütenproben gemessen, nachgewiesen in{' '}
+        {t('atlas.inA')} <span className="font-mono text-ink-50">{m.samples.toLocaleString(intlLocale())}</span> {t('atlas.inB')}{' '}
         <span className="font-mono text-ink-50">{Math.round((m.detected / m.samples) * 100)} %</span>
         {m.median !== null && (
           <>
-            ; Median über alle Proben <span className="font-mono text-ink-50">{m.median.toLocaleString(intlLocale(), { maximumFractionDigits: 3 })} %</span>
+            {t('atlas.medianAll')} <span className="font-mono text-ink-50">{m.median.toLocaleString(intlLocale(), { maximumFractionDigits: 3 })} %</span>
           </>
         )}
         .
       </p>
       {m.topNames.length > 0 && (
         <>
-          <h4 className="mb-1.5 mt-3 text-[12px] font-semibold text-ink-200">Produktnamen mit dem höchsten Median ({label}, mind. 20 Proben)</h4>
+          <h4 className="mb-1.5 mt-3 text-[12px] font-semibold text-ink-200">{t('atlas.topProducts', { label })}</h4>
           <ul className="space-y-1">
             {m.topNames.map((n) => (
               <li key={n.nameKey} className="grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)_auto] items-center gap-2 text-[12px]">
@@ -215,7 +214,7 @@ function MeasuredSamples({ m, label }: { m: LibMeasuredTerpene; label: string })
         </>
       )}
       <p className="mt-2 text-[11px] leading-relaxed text-ink-500">
-        Werte gelten für die gemessenen Proben gleichnamiger Handelsware ohne Breeder-Angabe – nicht für eine bestimmte Sorte oder Pflanze. Quelle: {m.source.citation} Lizenz {m.source.license}.
+        {t('atlas.samplesNote', { citation: m.source.citation, license: m.source.license })}
       </p>
     </section>
   );
@@ -236,42 +235,42 @@ function SourceList({ sources }: { sources: TerpeneInfo['sources'] }) {
   );
 }
 
-function TerpeneDetail({ t }: { t: TerpeneInfo }) {
+function TerpeneDetail({ tp }: { tp: TerpeneInfo }) {
   const { data } = useData();
-  const chem = terpeneChem(t.id);
-  const lit = cannabisSources(t);
-  const groups = groupsOf(t.id);
-  const mine = data.strains.filter((s) => s.terpenes.some((x) => matchTerpene(x.name)?.id === t.id));
+  const chem = terpeneChem(tp.id);
+  const lit = cannabisSources(tp);
+  const groups = groupsOf(tp.id);
+  const mine = data.strains.filter((s) => s.terpenes.some((x) => matchTerpene(x.name)?.id === tp.id));
   const labs = data.labReports
-    .map((r) => ({ r, v: r.terpenes.find((x) => matchTerpene(x.name)?.id === t.id) }))
+    .map((r) => ({ r, v: r.terpenes.find((x) => matchTerpene(x.name)?.id === tp.id) }))
     .filter((x): x is { r: (typeof data.labReports)[number]; v: { name: string; value: number } } => !!x.v);
-  const isomers = TERPENES.filter((o) => o.id !== t.id && o.formula === t.formula).slice(0, 8);
+  const isomers = TERPENES.filter((o) => o.id !== tp.id && o.formula === tp.formula).slice(0, 8);
 
   return (
     <div className="space-y-5">
       <a href={href('discover/terpenes')} className="inline-flex items-center gap-1.5 text-[12px] text-ink-400 hover:text-ink-100">
-        <ArrowLeft className="size-3.5" /> Terpen-Atlas
+        <ArrowLeft className="size-3.5" /> {t('atlas.atlas')}
       </a>
-      <section className="relative overflow-hidden rounded-3xl border border-white/[0.06] p-6 sm:p-8" style={{ background: `radial-gradient(600px 240px at 0% 0%, ${t.color}22, transparent 70%)` }}>
+      <section className="relative overflow-hidden rounded-3xl border border-white/[0.06] p-6 sm:p-8" style={{ background: `radial-gradient(600px 240px at 0% 0%, ${tp.color}22, transparent 70%)` }}>
         <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_260px] md:items-center">
           <div className="min-w-0">
-            <div className="text-[11px] uppercase tracking-[0.14em]" style={{ color: t.color }}>
-              {t.className}
+            <div className="text-[11px] uppercase tracking-[0.14em]" style={{ color: tp.color }}>
+              {tp.className}
             </div>
-            <h1 className="page-title mt-2">{t.name}</h1>
-            <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-ink-300">{t.summary}</p>
+            <h1 className="page-title mt-2">{tp.name}</h1>
+            <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-ink-300">{tp.summary}</p>
             {lit.length === 0 && (
               <p className="mt-3 inline-flex items-start gap-2 rounded-lg border border-amber-400/20 bg-amber-400/[0.06] px-3 py-2 text-[12px] text-amber-100">
-                <AlertTriangle className="mt-0.5 size-3.5 shrink-0" /> Vorkommen in Cannabis in den geprüften Quellen nicht belegt. Aufgeführt, weil Seedbank- oder Datenbanktexte den Namen nennen.
+                <AlertTriangle className="mt-0.5 size-3.5 shrink-0" /> {t('atlas.notInSources')}
               </p>
             )}
           </div>
           {chem && (
             <figure className="rounded-2xl border border-white/[0.06] bg-ink-950/60 p-3">
               <div className="aspect-[4/3]">
-                <MoleculeView chem={chem} color={t.color} size="lg" label={t.name} />
+                <MoleculeView chem={chem} color={tp.color} size="lg" label={tp.name} />
               </div>
-              <figcaption className="mt-1 text-center text-[10.5px] text-ink-500">2D-Struktur nach PubChem · ohne Stereo-Keile</figcaption>
+              <figcaption className="mt-1 text-center text-[10.5px] text-ink-500">{t('atlas.structure')}</figcaption>
             </figure>
           )}
         </div>
@@ -279,19 +278,19 @@ function TerpeneDetail({ t }: { t: TerpeneInfo }) {
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
         <div className="min-w-0 space-y-5">
-          <Card title="Chemische Identität" subtitle={`Laut PubChem, abgerufen am ${fmtDate(CHEM_META.retrieved)}`} icon={<BadgeCheck className="size-4" />}>
+          <Card title={t('atlas.identity')} subtitle={t('atlas.perPubchem', { date: fmtDate(CHEM_META.retrieved) })} icon={<BadgeCheck className="size-4" />}>
             {chem ? (
               <dl className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-                <Fact k="Summenformel" v={t.formula} />
-                <Fact k="Molare Masse" v={`${t.molarMass.toLocaleString(intlLocale())} g/mol`} />
-                <Fact k="PubChem CID" v={String(chem.cid)} />
-                <Fact k="CAS-Nr." v={chem.cas ?? '–'} note={chem.casListed > 1 ? `Erste von ${chem.casListed} bei PubChem gelisteten Nummern (Isomere/Gemische)` : undefined} />
-                <Fact className="col-span-2" k="PubChem-Eintrag" v={chem.title} mono={false} note="Der Titel zeigt, ob eine bestimmte Stereoform gemeint ist." />
-                <Fact className="col-span-2 sm:col-span-3" k="IUPAC-Name" v={chem.iupac} />
+                <Fact k={t('atlas.formula')} v={tp.formula} />
+                <Fact k={t('atlas.cmp.mass')} v={`${tp.molarMass.toLocaleString(intlLocale())} g/mol`} />
+                <Fact k={t('atlas.cid')} v={String(chem.cid)} />
+                <Fact k={t('atlas.cmp.cas')} v={chem.cas ?? '–'} note={chem.casListed > 1 ? t('atlas.casFirst', { n: chem.casListed }) : undefined} />
+                <Fact className="col-span-2" k={t('atlas.entry')} v={chem.title} mono={false} note={t('atlas.entryNote')} />
+                <Fact className="col-span-2 sm:col-span-3" k={t('atlas.iupac')} v={chem.iupac} />
                 <Fact className="col-span-2 sm:col-span-3" k="InChIKey" v={chem.inchikey} />
               </dl>
             ) : (
-              <p className="hint">Keine PubChem-Daten hinterlegt.</p>
+              <p className="hint">{t('atlas.noPubchem')}</p>
             )}
             {chem && (
               <a href={`https://pubchem.ncbi.nlm.nih.gov/compound/${chem.cid}`} {...ext} className="mt-3 inline-flex items-center gap-1 text-[12px] text-leaf-300 hover:underline">
@@ -300,8 +299,8 @@ function TerpeneDetail({ t }: { t: TerpeneInfo }) {
             )}
           </Card>
 
-          <Card title="Sorten im Katalog" subtitle="Nennungen in Seedbank-Texten und Datenbank-Angaben – keine Mengen">
-            <CatalogMentions id={t.id} label={t.name} />
+          <Card title={t('atlas.inCatalog')} subtitle={t('atlas.inCatalogSub')}>
+            <CatalogMentions id={tp.id} label={tp.name} />
             {groups.length > 0 && (
               <p className="hint mt-3">
                 Nennungen ohne Isomerangabe stehen gesondert unter{' '}
@@ -318,9 +317,9 @@ function TerpeneDetail({ t }: { t: TerpeneInfo }) {
             )}
           </Card>
 
-          <Card title="Deine Daten" subtitle="Privat, nur in deinem Konto" icon={<FlaskRound className="size-4" />}>
+          <Card title={t('atlas.yourData')} subtitle={t('atlas.yourDataSub')} icon={<FlaskRound className="size-4" />}>
             {labs.length === 0 && mine.length === 0 ? (
-              <p className="hint">Keine eigenen Sorten oder Laborberichte mit {t.name}.</p>
+              <p className="hint">{t('atlas.noOwn', { name: tp.name })}</p>
             ) : (
               <div className="space-y-3">
                 {labs.length > 0 && (
@@ -349,18 +348,18 @@ function TerpeneDetail({ t }: { t: TerpeneInfo }) {
                     ))}
                   </div>
                 )}
-                <p className="hint">Messwerte gelten für die jeweilige Probe und werden nie in den Katalog übertragen.</p>
+                <p className="hint">{t('atlas.perSample')}</p>
               </div>
             )}
           </Card>
         </div>
 
         <div className="min-w-0 space-y-5">
-          <Card title="Geruch" subtitle="Belegte Beschreibungen, Originalwortlaut">
-            {t.aroma.length > 0 && (
+          <Card title={t('atlas.cmp.smell')} subtitle={t('atlas.smellSub')}>
+            {tp.aroma.length > 0 && (
               <div className="mb-3 flex flex-wrap gap-1.5">
-                {t.aroma.map((a) => (
-                  <span key={a} className="rounded-full px-2.5 py-1 text-[12px]" style={{ background: `${t.color}1f`, color: t.color }}>
+                {tp.aroma.map((a) => (
+                  <span key={a} className="rounded-full px-2.5 py-1 text-[12px]" style={{ background: `${tp.color}1f`, color: tp.color }}>
                     {a}
                   </span>
                 ))}
@@ -376,27 +375,27 @@ function TerpeneDetail({ t }: { t: TerpeneInfo }) {
               </ul>
             ) : (
               <p className="text-[12.5px] text-ink-400">
-                {t.aroma.length ? 'Stichworte nach den unten genannten Übersichtsarbeiten.' : 'PubChem enthält keine Geruchsbeschreibung; der Atlas ergänzt keine.'}
+                {tp.aroma.length ? t('atlas.smellKeywords') : t('atlas.noSmellPubchem')}
               </p>
             )}
           </Card>
 
-          <Card title="Vorkommen in Cannabis" subtitle="Nur Quellen, deren Volltext geprüft wurde">
+          <Card title={t('atlas.occurrence')} subtitle={t('atlas.occurrenceSub')}>
             {lit.length ? (
               <SourceList sources={lit} />
             ) : (
-              <p className="text-[12.5px] text-ink-400">In den geprüften Quellen nicht belegt.</p>
+              <p className="text-[12.5px] text-ink-400">{t('atlas.notInChecked')}</p>
             )}
-            {t.occurrences.length > 0 && (
+            {tp.occurrences.length > 0 && (
               <>
-                <p className="mb-1.5 mt-4 text-[11px] uppercase tracking-wider text-ink-500">Weitere Pflanzen (laut Übersichtsarbeiten)</p>
-                <p className="text-[12.5px] text-ink-300">{t.occurrences.join(', ')}</p>
+                <p className="mb-1.5 mt-4 text-[11px] uppercase tracking-wider text-ink-500">{t('atlas.otherPlants')}</p>
+                <p className="text-[12.5px] text-ink-300">{tp.occurrences.join(', ')}</p>
               </>
             )}
           </Card>
 
           {(groups.length > 0 || isomers.length > 0) && (
-            <Card title="Isomere & Sammelnamen" icon={<Layers className="size-4" />}>
+            <Card title={t('atlas.isomers')} icon={<Layers className="size-4" />}>
               {groups.map((g) => (
                 <p key={g.id} className="mb-2 text-[12.5px] text-ink-300">
                   <a className="text-leaf-300 hover:underline" href={href(`discover/terpenes/${g.id}`)}>
@@ -407,7 +406,7 @@ function TerpeneDetail({ t }: { t: TerpeneInfo }) {
               ))}
               {isomers.length > 0 && (
                 <>
-                  <p className="mb-1.5 text-[11px] uppercase tracking-wider text-ink-500">Gleiche Summenformel {t.formula}</p>
+                  <p className="mb-1.5 text-[11px] uppercase tracking-wider text-ink-500">{t('atlas.sameFormula')} {tp.formula}</p>
                   <div className="flex flex-wrap gap-1.5">
                     {isomers.map((o) => (
                       <a key={o.id} href={href(`discover/terpenes/${o.id}`)} className="rounded-full border border-white/[0.08] px-2.5 py-1 text-[12px] text-ink-200 hover:border-white/20">
@@ -420,10 +419,10 @@ function TerpeneDetail({ t }: { t: TerpeneInfo }) {
             </Card>
           )}
 
-          <Card title="Alle Quellen">
-            <SourceList sources={t.sources} />
+          <Card title={t('atlas.allSources')}>
+            <SourceList sources={tp.sources} />
           </Card>
-          <p className="text-[11px] leading-relaxed text-ink-500">Das Vorkommen eines Terpens in einer Sorte ist keine Aussage über gesundheitliche oder psychoaktive Wirkungen.</p>
+          <p className="text-[11px] leading-relaxed text-ink-500">{t('atlas.noHealth')}</p>
         </div>
       </div>
     </div>
@@ -434,10 +433,10 @@ function GroupDetail({ g }: { g: TerpeneGroup }) {
   return (
     <div className="space-y-5">
       <a href={href('discover/terpenes')} className="inline-flex items-center gap-1.5 text-[12px] text-ink-400 hover:text-ink-100">
-        <ArrowLeft className="size-3.5" /> Terpen-Atlas
+        <ArrowLeft className="size-3.5" /> {t('atlas.atlas')}
       </a>
       <section className="rounded-3xl border border-white/[0.06] p-6 sm:p-8">
-        <div className="text-[11px] uppercase tracking-[0.14em] text-ink-400">Sammelname</div>
+        <div className="text-[11px] uppercase tracking-[0.14em] text-ink-400">{t('atlas.collective')}</div>
         <h1 className="page-title mt-2">{g.name}</h1>
         <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-ink-300">
           {g.note} TERPGRID ordnet solche Nennungen bewusst keinem bestimmten Isomer zu – die Quelle gibt nicht an, welches gemeint ist.
@@ -445,36 +444,36 @@ function GroupDetail({ g }: { g: TerpeneGroup }) {
         {g.members.length > 0 && (
           <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {g.members.map((id) => {
-              const t = terpeneById(id)!;
+              const tp = terpeneById(id)!;
               const c = terpeneChem(id);
               return (
                 <a key={id} href={href(`discover/terpenes/${id}`)} className="rounded-2xl border border-white/[0.06] bg-ink-900/70 p-3 hover:border-white/[0.14]">
                   {c && (
                     <div className="aspect-[4/3]">
-                      <MoleculeView chem={c} color={t.color} size="sm" label={t.name} />
+                      <MoleculeView chem={c} color={tp.color} size="sm" label={tp.name} />
                     </div>
                   )}
-                  <div className="mt-1 text-[13px] font-medium text-ink-100">{t.name}</div>
+                  <div className="mt-1 text-[13px] font-medium text-ink-100">{tp.name}</div>
                 </a>
               );
             })}
           </div>
         )}
       </section>
-      <Card title="Sorten mit dieser Nennung" subtitle="Ohne Isomerangabe in Seedbank-Texten oder Datenbank-Angaben">
-        <CatalogMentions id={g.id} label={`„${g.name.replace(' (Isomer nicht angegeben)', '')}“`} />
+      <Card title={t('atlas.withMention')} subtitle={t('atlas.withMentionSub')}>
+        <CatalogMentions id={g.id} label={t('atlas.quoted', { name: g.name.replace(' (Isomer nicht angegeben)', '') })} />
       </Card>
     </div>
   );
 }
 
-const CLASSES = [...new Set(TERPENES.map((t) => t.className))];
+const CLASSES = [...new Set(TERPENES.map((tp) => tp.className))];
 /** Gliederung: Monoterpene C10 (2 Isopren-Einheiten), Sesquiterpene C15 (3 Einheiten); Terpenoide tragen Sauerstoff */
 const TAXONOMY: { title: string; hint: string; classes: TerpeneInfo['className'][] }[] = [
-  { title: 'Monoterpene', hint: 'C₁₀-Kohlenwasserstoffe ohne Sauerstoff', classes: ['Monoterpen', 'Aromatischer Monoterpen-Kohlenwasserstoff'] },
-  { title: 'Monoterpenoide', hint: 'C₁₀ mit Sauerstoff (Alkohol, Ether, Keton)', classes: ['Monoterpenoid (Alkohol)', 'Monoterpenoid (Ether)', 'Monoterpenoid (Keton)'] },
-  { title: 'Sesquiterpene', hint: 'C₁₅-Kohlenwasserstoffe', classes: ['Sesquiterpen'] },
-  { title: 'Sesquiterpenoide', hint: 'C₁₅ mit Sauerstoff (Alkohol, Epoxid)', classes: ['Sesquiterpenoid (Alkohol)', 'Sesquiterpenoid (Epoxid)'] },
+  { get title() { return t('atlas.cl.mono'); }, get hint() { return t('atlas.cl.monoH'); }, classes: ['Monoterpen', 'Aromatischer Monoterpen-Kohlenwasserstoff'] },
+  { get title() { return t('atlas.cl.monoid'); }, get hint() { return t('atlas.cl.monoidH'); }, classes: ['Monoterpenoid (Alkohol)', 'Monoterpenoid (Ether)', 'Monoterpenoid (Keton)'] },
+  { get title() { return t('atlas.cl.sesq'); }, get hint() { return t('atlas.cl.sesqH'); }, classes: ['Sesquiterpen'] },
+  { get title() { return t('atlas.cl.sesqid'); }, get hint() { return t('atlas.cl.sesqidH'); }, classes: ['Sesquiterpenoid (Alkohol)', 'Sesquiterpenoid (Epoxid)'] },
 ];
 
 export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
@@ -491,31 +490,31 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
   const filtered = useMemo(() => {
     const k = q.trim().toLowerCase();
     return TERPENES.filter(
-      (t) =>
-        (!fam || t.families.includes(fam)) &&
-        (!cls || t.className === cls) &&
-        (!evidence || (evidence === 'lit') === cannabisSources(t).length > 0) &&
-        (!k || [t.name, t.id, ...t.aliases].some((a) => a.toLowerCase().includes(k))),
+      (tp) =>
+        (!fam || tp.families.includes(fam)) &&
+        (!cls || tp.className === cls) &&
+        (!evidence || (evidence === 'lit') === cannabisSources(tp).length > 0) &&
+        (!k || [tp.name, tp.id, ...tp.aliases].some((a) => a.toLowerCase().includes(k))),
     );
   }, [fam, cls, q, evidence]);
 
   if (terpeneId) {
     // Alte Links „…/pinene“ meinten α-Pinen; „pinene“ allein ist jetzt der Sammelname
-    const t = terpeneById(terpeneId);
-    const g = terpeneGroupById(terpeneId) ?? (!t ? matchTerpeneGroup(terpeneId) : undefined);
+    const tp = terpeneById(terpeneId);
+    const g = terpeneGroupById(terpeneId) ?? (!tp ? matchTerpeneGroup(terpeneId) : undefined);
     return (
       <div>
         <DiscoverNav />
-        {t ? (
-          <TerpeneDetail key={t.id} t={t} />
+        {tp ? (
+          <TerpeneDetail key={tp.id} tp={tp} />
         ) : g ? (
           <GroupDetail g={g} />
         ) : (
           <EmptyState
-            title="Terpen nicht im Atlas"
+            title={t('atlas.notFound')}
             action={
               <a className="btn-primary" href={href('discover/terpenes')}>
-                Zum Atlas
+                {t('atlas.toAtlas')}
               </a>
             }
           />
@@ -525,97 +524,96 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
   }
 
   const labReports = data.labReports.filter((r) => r.terpenes.length > 0);
-  const compared = compare.map((id) => terpeneById(id)).filter((t): t is TerpeneInfo => !!t);
+  const compared = compare.map((id) => terpeneById(id)).filter((tp): tp is TerpeneInfo => !!tp);
   const counts = new Map((index.data?.terpenes ?? []).map((r) => [r.id, r]));
   const ranked = (index.data?.terpenes ?? []).filter((r) => r.cisp + r.database > 0).slice(0, 16);
   const maxCount = Math.max(1, ...ranked.map((r) => r.cisp + r.database));
-  const nameOf = (id: string, fallback: string[]) => terpeneById(id)?.name ?? terpeneGroupById(id)?.name ?? (id.startsWith('unbekannt:') ? `${fallback[0]} (nicht im Atlas)` : id);
-  const withLit = TERPENES.filter((t) => cannabisSources(t).length > 0).length;
+  const nameOf = (id: string, fallback: string[]) => terpeneById(id)?.name ?? terpeneGroupById(id)?.name ?? (id.startsWith('unbekannt:') ? t('atlas.notInAtlas', { name: fallback[0] ?? '' }) : id);
+  const withLit = TERPENES.filter((tp) => cannabisSources(tp).length > 0).length;
 
   return (
     <div>
       <DiscoverNav />
       <div className="mb-6 animate-fade-up">
-        <h1 className="page-title">Terpen-Atlas</h1>
+        <h1 className="page-title">{t('atlas.atlas')}</h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-400">
-          {TERPENES.length} Verbindungen mit chemischer Identität aus PubChem (abgerufen am {fmtDate(CHEM_META.retrieved)}), 2D-Struktur und belegten Geruchsbeschreibungen. Bei {withLit} ist das
-          Vorkommen in Cannabis mit Literatur belegt. Keine Wirkungsversprechen.
+          {t('atlas.intro', { n: TERPENES.length, date: fmtDate(CHEM_META.retrieved), lit: withLit })} {t('atlas.subtitle')}
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <Card title="Terpen-Rad" subtitle="Belegte Geruchsbeschreibungen nach Aromafamilien">
+        <Card title={t('atlas.wheel')} subtitle={t('atlas.wheelSub')}>
           <TerpeneWheel items={TERPENES} active={focus} onSelect={(id) => setFocus(id === focus ? undefined : id)} />
           {focus && terpeneById(focus) && (
             <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-white/[0.06] px-3 py-2">
               <div className="min-w-0">
                 <div className="text-[13px] font-medium text-ink-50">{terpeneById(focus)!.name}</div>
-                <div className="truncate text-[11px] text-ink-500">{terpeneById(focus)!.aroma.join(', ') || 'Keine Geruchsbeschreibung belegt'}</div>
+                <div className="truncate text-[11px] text-ink-500">{terpeneById(focus)!.aroma.join(', ') || t('atlas.noSmellDoc')}</div>
               </div>
               <a href={href(`discover/terpenes/${focus}`)} className="btn-ghost shrink-0 py-1.5 text-xs">
-                Details
+                {t('atlas.details')}
               </a>
             </div>
           )}
-          <p className="hint mt-3">Gestrichelte Punkte: keine belegte Geruchsbeschreibung. Familien sind eine grobe Einordnung der Originalbeschreibungen.</p>
+          <p className="hint mt-3">{t('atlas.dashed')}</p>
         </Card>
 
         <div className="min-w-0 space-y-3">
           <div className="flex flex-wrap items-end gap-2">
             <label className="relative min-w-[12rem] flex-1">
-              <span className="sr-only">Terpen suchen</span>
+              <span className="sr-only">{t('atlas.search')}</span>
               <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-500" />
-              <input className="input-base pl-9" placeholder="Name oder Schreibweise …" value={q} onChange={(e) => setQ(e.target.value)} />
+              <input className="input-base pl-9" placeholder={t('atlas.searchPh')} value={q} onChange={(e) => setQ(e.target.value)} />
             </label>
-            <select aria-label="Aromafamilie" className="input-base w-auto max-w-full" value={fam} onChange={(e) => setFam(e.target.value as AromaFamily | '')}>
-              <option value="">Alle Aromafamilien</option>
+            <select aria-label={t('atlas.family')} className="input-base w-auto max-w-full" value={fam} onChange={(e) => setFam(e.target.value as AromaFamily | '')}>
+              <option value="">{t('atlas.allFamilies')}</option>
               {AROMA_FAMILIES.map((f) => (
                 <option key={f.id} value={f.id}>
                   {f.id}
                 </option>
               ))}
             </select>
-            <select aria-label="Stoffklasse" className="input-base w-auto max-w-full" value={cls} onChange={(e) => setCls(e.target.value)}>
-              <option value="">Alle Stoffklassen</option>
+            <select aria-label={t('atlas.class')} className="input-base w-auto max-w-full" value={cls} onChange={(e) => setCls(e.target.value)}>
+              <option value="">{t('atlas.allClasses')}</option>
               {CLASSES.map((c) => (
                 <option key={c}>{c}</option>
               ))}
             </select>
-            <select aria-label="Beleg für Cannabis" className="input-base w-auto max-w-full" value={evidence} onChange={(e) => setEvidence(e.target.value as '' | 'lit' | 'none')}>
-              <option value="">Alle Belege</option>
-              <option value="lit">In Cannabis belegt</option>
-              <option value="none">Nicht belegt</option>
+            <select aria-label={t('atlas.evidence')} className="input-base w-auto max-w-full" value={evidence} onChange={(e) => setEvidence(e.target.value as '' | 'lit' | 'none')}>
+              <option value="">{t('atlas.allEvidence')}</option>
+              <option value="lit">{t('atlas.docCannabis')}</option>
+              <option value="none">{t('atlas.notDocShort')}</option>
             </select>
           </div>
           <p className="text-[12px] text-ink-500" aria-live="polite">
-            {filtered.length} von {TERPENES.length} Verbindungen
+            {t('atlas.filteredN', { a: filtered.length, b: TERPENES.length })}
           </p>
           {filtered.length === 0 ? (
-            <EmptyState compact title="Keine Treffer" text="Filter zurücksetzen oder anders schreiben." />
+            <EmptyState compact title={t('atlas.noHits')} text={t('atlas.noHitsText')} />
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {filtered.map((t) => {
-                const c = terpeneChem(t.id);
-                const n = counts.get(t.id);
+              {filtered.map((tp) => {
+                const c = terpeneChem(tp.id);
+                const n = counts.get(tp.id);
                 return (
-                  <a key={t.id} href={href(`discover/terpenes/${t.id}`)} className="group flex gap-3 overflow-hidden rounded-2xl border border-white/[0.06] bg-ink-900/70 p-3 transition-colors hover:border-white/[0.14]">
+                  <a key={tp.id} href={href(`discover/terpenes/${tp.id}`)} className="group flex gap-3 overflow-hidden rounded-2xl border border-white/[0.06] bg-ink-900/70 p-3 transition-colors hover:border-white/[0.14]">
                     {c && (
                       <div className="h-16 w-20 shrink-0 rounded-lg bg-ink-950/60 p-1">
-                        <MoleculeView chem={c} color={t.color} size="sm" label={t.name} />
+                        <MoleculeView chem={c} color={tp.color} size="sm" label={tp.name} />
                       </div>
                     )}
                     <div className="min-w-0">
                       <div className="flex items-baseline gap-2">
-                        <h3 className="truncate text-[14px] font-semibold text-ink-50">{t.name}</h3>
-                        <span className="font-mono text-[10.5px] text-ink-500">{t.formula}</span>
+                        <h3 className="truncate text-[14px] font-semibold text-ink-50">{tp.name}</h3>
+                        <span className="font-mono text-[10.5px] text-ink-500">{tp.formula}</span>
                       </div>
-                      <p className="truncate text-[11px] text-ink-500">{t.className}</p>
-                      <p className="mt-1 truncate text-[11.5px]" style={{ color: t.color }}>
-                        {t.aroma.slice(0, 3).join(' · ') || <span className="text-ink-500">keine Geruchsangabe</span>}
+                      <p className="truncate text-[11px] text-ink-500">{tp.className}</p>
+                      <p className="mt-1 truncate text-[11.5px]" style={{ color: tp.color }}>
+                        {tp.aroma.slice(0, 3).join(' · ') || <span className="text-ink-500">{t('atlas.noSmell')}</span>}
                       </p>
                       <p className="mt-0.5 text-[10.5px] text-ink-500">
-                        {cannabisSources(t).length ? 'In Cannabis belegt' : 'In Cannabis nicht belegt'}
-                        {n ? ` · ${(n.cisp + n.database).toLocaleString(intlLocale())} Katalog-Nennungen` : ''}
+                        {cannabisSources(tp).length ? t('atlas.inCannabis') : t('atlas.notInCannabis')}
+                        {n ? t('atlas.catMentions', { n: n.cisp + n.database }) : ''}
                       </p>
                     </div>
                   </a>
@@ -624,7 +622,7 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
             </div>
           )}
           <div className="flex flex-wrap gap-1.5 pt-1">
-            <span className="text-[11px] text-ink-500">Sammelnamen:</span>
+            <span className="text-[11px] text-ink-500">{t('atlas.collectives')}</span>
             {TERPENE_GROUPS.map((g) => (
               <a key={g.id} href={href(`discover/terpenes/${g.id}`)} className="rounded-full border border-dashed border-white/[0.12] inline-flex min-h-6 items-center px-2 py-0.5 text-[11px] text-ink-300 hover:border-white/25">
                 {g.name.replace(' (Isomer nicht angegeben)', '')}
@@ -634,14 +632,14 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
         </div>
       </div>
 
-      <Card title="Chemische Systematik" subtitle="Grundgerüst (Isopren-Einheiten) und funktionelle Gruppe – nach PubChem-Summenformel" className="mt-5">
+      <Card title={t('atlas.systematics')} subtitle={t('atlas.systematicsSub')} className="mt-5">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {TAXONOMY.map((grp) => (
             <section key={grp.title} aria-label={grp.title}>
               <h3 className="text-[13px] font-semibold text-ink-100">{grp.title}</h3>
               <p className="text-[11px] text-ink-500">{grp.hint}</p>
               {grp.classes.map((cl) => {
-                const items = TERPENES.filter((t) => t.className === cl);
+                const items = TERPENES.filter((tp) => tp.className === cl);
                 if (!items.length) return null;
                 return (
                   <div key={cl} className="mt-2.5">
@@ -649,9 +647,9 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
                       {cl.replace(/^(Mono|Sesqui)terpen(oid)? ?/, '').replace(/[()]/g, '') || 'Kohlenwasserstoff'} · {items.length}
                     </p>
                     <div className="mt-1 flex flex-wrap gap-1">
-                      {items.map((t) => (
-                        <a key={t.id} href={href(`discover/terpenes/${t.id}`)} className="rounded-full border border-white/[0.08] inline-flex min-h-6 items-center px-2 py-0.5 text-[11.5px] text-ink-200 hover:border-white/20" style={{ boxShadow: `inset 3px 0 0 ${t.color}` }}>
-                          {t.name}
+                      {items.map((tp) => (
+                        <a key={tp.id} href={href(`discover/terpenes/${tp.id}`)} className="rounded-full border border-white/[0.08] inline-flex min-h-6 items-center px-2 py-0.5 text-[11.5px] text-ink-200 hover:border-white/20" style={{ boxShadow: `inset 3px 0 0 ${tp.color}` }}>
+                          {tp.name}
                         </a>
                       ))}
                     </div>
@@ -664,41 +662,41 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
       </Card>
 
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <Card title="Terpene vergleichen" subtitle="Bis zu drei Verbindungen nebeneinander">
+        <Card title={t('atlas.compare')} subtitle={t('atlas.compareSub')}>
           <label className="mb-3 block">
-            <span className="sr-only">Terpen zum Vergleich hinzufügen</span>
+            <span className="sr-only">{t('atlas.addAria')}</span>
             <select
               className="input-base"
               value=""
               onChange={(e) => e.target.value && setCompare((c) => (c.includes(e.target.value) ? c : c.length >= 3 ? [...c.slice(1), e.target.value] : [...c, e.target.value]))}
             >
-              <option value="">Terpen hinzufügen …</option>
-              {TERPENES.filter((t) => !compare.includes(t.id)).map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
+              <option value="">{t('atlas.addPh')}</option>
+              {TERPENES.filter((tp) => !compare.includes(tp.id)).map((tp) => (
+                <option key={tp.id} value={tp.id}>
+                  {tp.name}
                 </option>
               ))}
             </select>
           </label>
           {compared.length < 2 ? (
-            <p className="hint">Mindestens zwei Terpene wählen.</p>
+            <p className="hint">{t('atlas.needTwo')}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[420px] table-fixed text-left text-[12px]">
                 <thead>
                   <tr className="text-ink-500">
                     <th className="w-24 py-1.5 pr-3 font-medium" />
-                    {compared.map((t) => (
-                      <th key={t.id} className="py-1.5 pr-3 align-top font-semibold" style={{ color: t.color }}>
+                    {compared.map((tp) => (
+                      <th key={tp.id} className="py-1.5 pr-3 align-top font-semibold" style={{ color: tp.color }}>
                         <div className="flex items-start justify-between gap-1">
-                          {t.name}
-                          <button type="button" aria-label={`${t.name} entfernen`} className="-m-1 inline-grid size-6 shrink-0 place-items-center rounded text-ink-500 hover:text-ink-100" onClick={() => setCompare((c) => c.filter((x) => x !== t.id))}>
+                          {tp.name}
+                          <button type="button" aria-label={t('atlas.remove', { name: tp.name })} className="-m-1 inline-grid size-6 shrink-0 place-items-center rounded text-ink-500 hover:text-ink-100" onClick={() => setCompare((c) => c.filter((x) => x !== tp.id))}>
                             ×
                           </button>
                         </div>
-                        {terpeneChem(t.id) && (
+                        {terpeneChem(tp.id) && (
                           <div className="mt-1 h-16">
-                            <MoleculeView chem={terpeneChem(t.id)!} color={t.color} size="sm" label={t.name} />
+                            <MoleculeView chem={terpeneChem(tp.id)!} color={tp.color} size="sm" label={tp.name} />
                           </div>
                         )}
                       </th>
@@ -708,20 +706,20 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
                 <tbody className="text-ink-200">
                   {(
                     [
-                      ['Klasse', (t: TerpeneInfo) => t.className],
-                      ['Formel', (t: TerpeneInfo) => t.formula],
-                      ['Molare Masse', (t: TerpeneInfo) => `${t.molarMass.toLocaleString(intlLocale())} g/mol`],
-                      ['CAS-Nr.', (t: TerpeneInfo) => t.cas || '–'],
-                      ['Geruch', (t: TerpeneInfo) => t.aroma.join(', ') || 'nicht belegt'],
-                      ['Cannabis', (t: TerpeneInfo) => (cannabisSources(t).length ? 'belegt' : 'nicht belegt')],
-                      ['Katalog', (t: TerpeneInfo) => (counts.get(t.id) ? `${(counts.get(t.id)!.cisp + counts.get(t.id)!.database).toLocaleString(intlLocale())} Nennungen` : '–')],
+                      [t('atlas.cmp.class'), (tp: TerpeneInfo) => tp.className],
+                      [t('atlas.cmp.formula'), (tp: TerpeneInfo) => tp.formula],
+                      [t('atlas.cmp.mass'), (tp: TerpeneInfo) => `${tp.molarMass.toLocaleString(intlLocale())} g/mol`],
+                      [t('atlas.cmp.cas'), (tp: TerpeneInfo) => tp.cas || '–'],
+                      [t('atlas.cmp.smell'), (tp: TerpeneInfo) => tp.aroma.join(', ') || t('atlas.notDoc')],
+                      [t('atlas.cmp.cannabis'), (tp: TerpeneInfo) => (cannabisSources(tp).length ? t('atlas.doc') : t('atlas.notDoc'))],
+                      [t('atlas.cmp.catalog'), (tp: TerpeneInfo) => (counts.get(tp.id) ? t('atlas.nMentions', { n: counts.get(tp.id)!.cisp + counts.get(tp.id)!.database }) : '–')],
                     ] as const
                   ).map(([label, get]) => (
                     <tr key={label} className="border-t border-white/[0.05] align-top">
                       <td className="py-2 pr-3 text-ink-500">{label}</td>
-                      {compared.map((t) => (
-                        <td key={t.id} className="break-words py-2 pr-3">
-                          {get(t)}
+                      {compared.map((tp) => (
+                        <td key={tp.id} className="break-words py-2 pr-3">
+                          {get(tp)}
                         </td>
                       ))}
                     </tr>
@@ -732,18 +730,18 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
           )}
         </Card>
 
-        <Card title="Nennungen im Sortenkatalog" subtitle="Wie viele Sorten ein Terpen nennen – keine Konzentrationen">
+        <Card title={t('atlas.catMentionsTitle')} subtitle={t('atlas.catMentionsSub')}>
           {lib === null ? (
-            <p className="hint">Der lokale Sortenkatalog ist nur mit TERPGRID-Server verfügbar.</p>
+            <p className="hint">{t('atlas.serverOnly')}</p>
           ) : !index.data ? (
-            <p className="hint">{index.error ?? 'Wird geladen …'}</p>
+            <p className="hint">{index.error ?? t('atlas.loading')}</p>
           ) : (
             <>
-              <ul className="space-y-1.5" aria-label="Sorten je genanntem Terpen">
+              <ul className="space-y-1.5" aria-label={t('atlas.perTerp')}>
                 {ranked.map((r) => {
-                  const t = terpeneById(r.id);
+                  const tp = terpeneById(r.id);
                   const total = r.cisp + r.database;
-                  const linkable = t || terpeneGroupById(r.id);
+                  const linkable = tp || terpeneGroupById(r.id);
                   return (
                     <li key={r.id} className="grid grid-cols-[9.5rem_minmax(0,1fr)_3.5rem] items-center gap-2 text-[12px]">
                       {linkable ? (
@@ -754,7 +752,7 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
                         <span className="truncate text-ink-400">{nameOf(r.id, r.names)}</span>
                       )}
                       <span className="h-2 rounded-full bg-ink-700" aria-hidden>
-                        <span className="block h-full rounded-full" style={{ width: `${(total / maxCount) * 100}%`, background: t?.color ?? '#6b7a75', opacity: t ? 0.85 : 0.5 }} />
+                        <span className="block h-full rounded-full" style={{ width: `${(total / maxCount) * 100}%`, background: tp?.color ?? '#6b7a75', opacity: tp ? 0.85 : 0.5 }} />
                       </span>
                       <span className="text-right font-mono tabular text-ink-300">{total.toLocaleString(intlLocale())}</span>
                     </li>
@@ -762,24 +760,23 @@ export function TerpeneAtlas({ terpeneId }: { terpeneId?: string }) {
                 })}
               </ul>
               <p className="hint mt-3">
-                Basis: {index.data.cultivarsWithTerpenes.toLocaleString(intlLocale())} Sorten mit Terpen-Nennung in Seedbank-Texten (CI-Strains-Pro) plus freigegebene Datenbank-Angaben. Sammelnamen wie „Pinen“
-                werden nicht auf ein Isomer verteilt.
+                {t('atlas.basis', { n: index.data.cultivarsWithTerpenes })}
               </p>
             </>
           )}
         </Card>
       </div>
 
-      <Card title="Gemessene Zusammensetzungen" subtitle="Nur aus deinen eigenen Laborberichten – je Probe" className="mt-5">
+      <Card title={t('atlas.measured')} subtitle={t('atlas.measuredSub')} className="mt-5">
         {labReports.length === 0 ? (
           <EmptyState
             compact
             icon={<FlaskRound />}
-            title="Keine quantitativen Daten"
-            text="Mengenanteile werden nur aus Laborberichten mit Messwerten dargestellt. Katalogdaten enthalten keine Mengen."
+            title={t('atlas.noQuant')}
+            text={t('atlas.noQuantText')}
             action={
               <a href={href('lab-reports')} className="btn-ghost">
-                Laborbericht erfassen
+                {t('atlas.addReport')}
               </a>
             }
           />

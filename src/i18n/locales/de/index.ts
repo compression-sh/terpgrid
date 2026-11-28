@@ -2,6 +2,7 @@
 import academy from './academy.json';
 import account from './account.json';
 import admin from './admin.json';
+import atlas from './atlas.json';
 import collab from './collab.json';
 import common from './common.json';
 import dashboard from './dashboard.json';
@@ -16,4 +17,4 @@ import settings from './settings.json';
 import shell from './shell.json';
 import tools from './tools.json';
 
-export default { academy, account, admin, collab, common, dashboard, data, discover, grow, lab, labels, mine, photos, settings, shell, tools };
+export default { academy, account, admin, atlas, collab, common, dashboard, data, discover, grow, lab, labels, mine, photos, settings, shell, tools };
