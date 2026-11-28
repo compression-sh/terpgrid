@@ -19,6 +19,7 @@
 import { ApiError } from '../server/api';
 import { merge3 } from '../sync/merge';
 import { type Access, type Role, type SpaceRemoteChange, type SpaceStore, collab } from './api';
+import { t } from '../../i18n';
 
 export interface SpaceEntry {
   store: SpaceStore;
@@ -135,7 +136,7 @@ export class SpaceSession {
   /* ───────────── Schreiben (lokal + Warteschlange) ───────────── */
 
   save(store: SpaceStore, data: Record<string, unknown> & { id: string }): void {
-    if (this.state.phase === 'revoked') throw new Error('Kein Zugriff mehr auf diesen Bereich.');
+    if (this.state.phase === 'revoked') throw new Error(t('collab.ss.noAccess'));
     const key = k(store, data.id);
     const cur = this.records.get(key);
     const existing = this.outbox.get(key);
@@ -149,7 +150,7 @@ export class SpaceSession {
   }
 
   remove(store: SpaceStore, id: string): void {
-    if (this.state.phase === 'revoked') throw new Error('Kein Zugriff mehr auf diesen Bereich.');
+    if (this.state.phase === 'revoked') throw new Error(t('collab.ss.noAccess'));
     const key = k(store, id);
     const cur = this.records.get(key);
     const existing = this.outbox.get(key);
@@ -205,7 +206,7 @@ export class SpaceSession {
     } catch (e) {
       if (e instanceof ApiError && e.status === 404) this.revoke();
       else if (e instanceof ApiError && e.status === 0) this.emit({ phase: 'offline', message: e.message });
-      else this.emit({ phase: 'error', message: e instanceof Error ? e.message : 'Synchronisation fehlgeschlagen' });
+      else this.emit({ phase: 'error', message: e instanceof Error ? e.message : t('collab.ss.failed') });
     } finally {
       this.running = false;
       if (this.again && (this.state.phase as SpacePhase) !== 'revoked') {
@@ -224,7 +225,7 @@ export class SpaceSession {
     this.outbox.clear();
     this.cursor = '0';
     this.persistOutbox();
-    this.emit({ phase: 'revoked', role: null, conflicts: [], orphaned, hadAccess, message: 'Du hast keinen Zugriff (mehr) auf diesen Bereich.' });
+    this.emit({ phase: 'revoked', role: null, conflicts: [], orphaned, hadAccess, get message() { return t('collab.ss.noAccess2'); } });
   }
 
   private async pull(): Promise<void> {

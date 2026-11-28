@@ -1,4 +1,5 @@
-/**
+
+import { t } from '../../i18n';/**
  * Client für die eigene TERPGRID-Instanz. Session nur als HttpOnly-Cookie
  * (nie in localStorage/URL); CSRF-Token nur im Arbeitsspeicher.
  */
@@ -47,7 +48,7 @@ export async function api<T = unknown>(method: string, path: string, body?: unkn
     res = await fetchImpl(path, { method, headers, body: payload, credentials: 'same-origin', cache: 'no-store', signal: opts.signal, referrerPolicy: 'no-referrer' });
   } catch (e) {
     if ((e as Error).name === 'AbortError') throw e;
-    throw new ApiError(0, 'Server nicht erreichbar – Änderungen bleiben auf diesem Gerät gespeichert.');
+    throw new ApiError(0, t('common.srv.unreachable'));
   }
   if (opts.binary && res.ok) return (await res.arrayBuffer()) as T;
   // Abgebrochenes Lesen (Verbindung weg, Seite wird neu geladen) ist ein Verbindungsfehler – nicht „leere Antwort“:
@@ -57,7 +58,7 @@ export async function api<T = unknown>(method: string, path: string, body?: unkn
     text = await res.text();
   } catch (e) {
     if ((e as Error).name === 'AbortError') throw e;
-    throw new ApiError(0, 'Server nicht erreichbar – Änderungen bleiben auf diesem Gerät gespeichert.');
+    throw new ApiError(0, t('common.srv.unreachable'));
   }
   let json: Record<string, unknown> | null = null;
   try {
@@ -68,7 +69,7 @@ export async function api<T = unknown>(method: string, path: string, body?: unkn
   if (!res.ok) {
     if (res.status === 401 && !path.startsWith('/api/auth/')) onUnauthorized?.();
     const { error, ...extra } = json ?? {};
-    throw new ApiError(res.status, typeof error === 'string' ? error : `Fehler ${res.status}`, extra);
+    throw new ApiError(res.status, typeof error === 'string' ? error : t('common.srv.error', { n: String(res.status) }), extra);
   }
   if (json && typeof json.csrfToken === 'string') setCsrfToken(json.csrfToken);
   return json as T;

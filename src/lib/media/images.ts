@@ -10,7 +10,7 @@
  */
 import { nowLocal } from '../dates';
 import { readExif } from './exif';
-import { intlLocale } from '../../i18n';
+import { t, intlLocale } from '../../i18n';
 
 export const MAX_EDGE = 2048;
 export const THUMB_EDGE = 480;
@@ -27,8 +27,8 @@ export type ImageQuality = 'standard' | 'original';
 /** Formate, die Browser je nach Plattform unterschiedlich dekodieren (für Hinweise). */
 export function formatSupportNote(file: { name: string; type: string }): string | null {
   if (/\.(heic|heif)$/i.test(file.name) || /image\/hei[cf]/.test(file.type))
-    return 'HEIC/HEIF wird nur von Safari (iPhone, iPad, Mac) dekodiert. In anderen Browsern bitte als JPEG exportieren (iOS: Einstellungen → Kamera → Formate → „Maximale Kompatibilität“).';
-  if (/\.(tiff?|dng|cr2|nef|arw|raw|psd|svg)$/i.test(file.name)) return 'RAW-, TIFF-, PSD- und SVG-Dateien werden nicht unterstützt. Bitte als JPEG, PNG oder WebP exportieren.';
+    return t('photos.img.heicSafari');
+  if (/\.(tiff?|dng|cr2|nef|arw|raw|psd|svg)$/i.test(file.name)) return t('photos.img.raw');
   return null;
 }
 
@@ -86,22 +86,22 @@ async function encode(source: CanvasImageSource, w: number, h: number, maxEdge: 
   canvas.width = size.width;
   canvas.height = size.height;
   const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Canvas wird nicht unterstützt.');
+  if (!ctx) throw new Error(t('photos.img.canvas'));
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(source, 0, 0, size.width, size.height);
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
-  if (!blob) throw new Error('Bild konnte nicht kodiert werden.');
+  if (!blob) throw new Error(t('photos.img.encode'));
   return { buf: await blob.arrayBuffer(), mime: blob.type || 'image/jpeg', width: size.width, height: size.height };
 }
 
 export async function processImage(file: File, opts: { quality?: ImageQuality } = {}): Promise<ProcessedImage & { downgraded?: boolean }> {
   if (!file.type.startsWith('image/') && !/\.(jpe?g|png|webp|gif|avif|heic|heif)$/i.test(file.name)) {
-    throw new Error(`„${file.name}“ ist keine Bilddatei.`);
+    throw new Error(t('photos.img.notImage', { name: file.name }));
   }
   const unsupported = /\.(tiff?|dng|cr2|nef|arw|raw|psd|svg)$/i.test(file.name) ? formatSupportNote(file) : null;
-  if (unsupported) throw new Error(`„${file.name}“: ${unsupported}`);
-  if (file.size > MAX_INPUT_BYTES) throw new Error(`„${file.name}“ ist größer als 40 MB.`);
+  if (unsupported) throw new Error(t('photos.img.prefix', { name: file.name, msg: unsupported }));
+  if (file.size > MAX_INPUT_BYTES) throw new Error(t('photos.img.tooBig', { name: file.name }));
   const raw = await file.arrayBuffer();
   const exif = readExif(raw);
   let bitmap: ImageBitmap | HTMLImageElement;
@@ -110,8 +110,8 @@ export async function processImage(file: File, opts: { quality?: ImageQuality } 
   } catch {
     throw new Error(
       /\.(heic|heif)$/i.test(file.name)
-        ? `„${file.name}“: HEIC wird von diesem Browser nicht unterstützt. Bitte als JPEG exportieren (iOS: Einstellungen → Kamera → Formate → „Maximale Kompatibilität“).`
-        : `„${file.name}“ konnte nicht gelesen werden.`,
+        ? t('photos.img.heicBrowser', { name: file.name })
+        : t('photos.img.unreadable', { name: file.name }),
     );
   }
   const w = 'naturalWidth' in bitmap ? bitmap.naturalWidth : bitmap.width;

@@ -22,6 +22,7 @@ import type {
   SettingRow,
   Strain,
 } from './types';
+import { t } from '../../i18n';
 
 /** Ausstehende Änderung (Sync-Outbox). Inhalt wird beim Hochladen frisch gelesen. */
 export interface OutboxEntry {
@@ -194,11 +195,11 @@ export function openDatabase(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise;
   dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
     if (!isIndexedDbAvailable()) {
-      reject(new Error('IndexedDB ist in diesem Browser nicht verfügbar (z. B. privater Modus).'));
+      reject(new Error(t('common.db.noIdb')));
       return;
     }
     if (deletedNames.has(dbName)) {
-      reject(new Error('Die lokale Arbeitskopie wurde entfernt.'));
+      reject(new Error(t('common.db.removed')));
       return;
     }
     const req = indexedDB.open(dbName, DB_VERSION);
@@ -215,8 +216,8 @@ export function openDatabase(): Promise<IDBDatabase> {
       };
       resolve(db);
     };
-    req.onerror = () => reject(req.error ?? new Error('Datenbank konnte nicht geöffnet werden.'));
-    req.onblocked = () => reject(new Error('Die Datenbank wird in einem anderen Tab verwendet. Bitte andere TERPGRID-Tabs schließen.'));
+    req.onerror = () => reject(req.error ?? new Error(t('common.db.openFail')));
+    req.onblocked = () => reject(new Error(t('common.db.otherTab')));
   });
   dbPromise.catch(() => {
     dbPromise = null;
@@ -252,8 +253,8 @@ function promisify<T>(req: IDBRequest<T>): Promise<T> {
 function txDone(tx: IDBTransaction): Promise<void> {
   return new Promise((resolve, reject) => {
     tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error ?? new Error('Transaktion fehlgeschlagen'));
-    tx.onabort = () => reject(tx.error ?? new Error('Transaktion abgebrochen (evtl. Speicher voll)'));
+    tx.onerror = () => reject(tx.error ?? new Error(t('common.db.txFail')));
+    tx.onabort = () => reject(tx.error ?? new Error(t('common.db.txAbort')));
   });
 }
 

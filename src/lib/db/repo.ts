@@ -23,6 +23,7 @@ import {
   type Reminder,
   type Strain,
 } from './types';
+import { t } from '../../i18n';
 
 type EntityStore = Exclude<StoreName, 'settings' | 'photoData' | 'labDocs' | 'apiCache' | 'outbox' | 'syncState' | 'syncConflicts'>;
 type Entity<S extends EntityStore> = StoreMap[S];
@@ -40,7 +41,7 @@ export async function updateRecord<S extends EntityStore>(
   patch: Partial<Omit<Entity<S>, 'id' | 'createdAt'>>,
 ): Promise<Entity<S>> {
   const current = await getOne(store, id);
-  if (!current) throw new Error('Datensatz nicht gefunden – evtl. wurde er bereits gelöscht.');
+  if (!current) throw new Error(t('common.db.notFound'));
   const next = { ...current, ...patch, id, updatedAt: nowIso() } as Entity<S>;
   return putOne(store, next);
 }

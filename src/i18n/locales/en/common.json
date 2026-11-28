@@ -118,5 +118,18 @@
   "notes": "Notes",
   "disclaimer": "All values are calculated estimates and not dosing advice.",
   "local": "Calculated locally in the browser – no data was transmitted."
+ },
+ "db": {
+  "noIdb": "IndexedDB is not available in this browser (e.g. private mode).",
+  "removed": "The local working copy has been removed.",
+  "openFail": "The database could not be opened.",
+  "otherTab": "The database is in use in another tab. Please close other TERPGRID tabs.",
+  "txFail": "Transaction failed",
+  "txAbort": "Transaction aborted (storage may be full)",
+  "notFound": "Record not found – it may already have been deleted."
+ },
+ "srv": {
+  "unreachable": "Server unreachable – changes remain stored on this device.",
+  "error": "Error {n}"
  }
 }

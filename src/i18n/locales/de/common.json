@@ -118,5 +118,18 @@
   "notes": "Hinweise",
   "disclaimer": "Alle Werte sind rechnerische Schätzungen und keine Dosierungsempfehlung.",
   "local": "Berechnet lokal im Browser – es wurden keine Daten übertragen."
+ },
+ "db": {
+  "noIdb": "IndexedDB ist in diesem Browser nicht verfügbar (z. B. privater Modus).",
+  "removed": "Die lokale Arbeitskopie wurde entfernt.",
+  "openFail": "Datenbank konnte nicht geöffnet werden.",
+  "otherTab": "Die Datenbank wird in einem anderen Tab verwendet. Bitte andere TERPGRID-Tabs schließen.",
+  "txFail": "Transaktion fehlgeschlagen",
+  "txAbort": "Transaktion abgebrochen (evtl. Speicher voll)",
+  "notFound": "Datensatz nicht gefunden – evtl. wurde er bereits gelöscht."
+ },
+ "srv": {
+  "unreachable": "Server nicht erreichbar – Änderungen bleiben auf diesem Gerät gespeichert.",
+  "error": "Fehler {n}"
  }
 }

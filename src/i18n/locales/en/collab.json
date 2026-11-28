@@ -616,5 +616,10 @@
   "noMore": "No further details.",
   "addPhotos": "Add photos",
   "photoNA": "Photo not available"
+ },
+ "ss": {
+  "noAccess": "No more access to this space.",
+  "failed": "Sync failed",
+  "noAccess2": "You no longer have access to this space."
  }
 }

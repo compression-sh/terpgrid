@@ -15,7 +15,16 @@
   "unavailable": "Foto nicht verfügbar",
   "placeholder": "Kein Foto (Platzhalter)",
   "placeholder2": "Platzhalter – noch kein Foto",
-  "loading": "Foto wird geladen"
+  "loading": "Foto wird geladen",
+  "notImage": "„{name}“ ist keine Bilddatei.",
+  "tooBig": "„{name}“ ist größer als 40 MB.",
+  "unreadable": "„{name}“ konnte nicht gelesen werden.",
+  "prefix": "„{name}“: {msg}",
+  "canvas": "Canvas wird nicht unterstützt.",
+  "encode": "Bild konnte nicht kodiert werden.",
+  "raw": "RAW-, TIFF-, PSD- und SVG-Dateien werden nicht unterstützt. Bitte als JPEG, PNG oder WebP exportieren.",
+  "heicSafari": "HEIC/HEIF wird nur von Safari (iPhone, iPad, Mac) dekodiert. In anderen Browsern bitte als JPEG exportieren (iOS: Einstellungen → Kamera → Formate → „Maximale Kompatibilität“).",
+  "heicBrowser": "„{name}“: HEIC wird von diesem Browser nicht unterstützt. Bitte als JPEG exportieren (iOS: Einstellungen → Kamera → Formate → „Maximale Kompatibilität“)."
  },
  "up": {
   "added": {

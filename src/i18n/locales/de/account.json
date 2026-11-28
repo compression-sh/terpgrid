@@ -377,5 +377,14 @@
   "cleanupText": "Die bisherige Datenbank liegt unverschlüsselt in diesem Browser. Du kannst sie jetzt löschen – oder behalten, bis du alles geprüft hast.",
   "cleanupLater": "Da nicht alles bestätigt wurde, ist das Löschen erst nach einem vollständig erfolgreichen Durchlauf möglich.",
   "deleteOld": "Alte lokale Datenbank löschen"
+ },
+ "pk": {
+  "offline": "Keine Verbindung zum Server – für die Anmeldung mit Passkey ist eine Verbindung nötig.",
+  "aborted": "Der Vorgang wurde abgebrochen oder ist abgelaufen. Bitte erneut versuchen.",
+  "exists": "Dieser Passkey ist auf diesem Gerät bereits registriert.",
+  "unsupported": "Dieser Browser oder dieses Gerät unterstützt die angeforderte Passkey-Art nicht. Passwort-Anmeldung bleibt möglich.",
+  "https": "Passkeys funktionieren nur über HTTPS mit der richtigen Domain.",
+  "failed": "Passkey konnte nicht verwendet werden.",
+  "device": "Gerät"
  }
 }

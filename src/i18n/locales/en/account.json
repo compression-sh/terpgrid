@@ -377,5 +377,14 @@
   "cleanupText": "The previous database is stored unencrypted in this browser. You can delete it now – or keep it until you have checked everything.",
   "cleanupLater": "Since not everything was confirmed, deleting is only possible after a fully successful run.",
   "deleteOld": "Delete old local database"
+ },
+ "pk": {
+  "offline": "No connection to the server – signing in with a passkey requires a connection.",
+  "aborted": "The operation was cancelled or timed out. Please try again.",
+  "exists": "This passkey is already registered on this device.",
+  "unsupported": "This browser or device does not support the requested passkey type. Signing in with a password remains possible.",
+  "https": "Passkeys only work over HTTPS with the correct domain.",
+  "failed": "The passkey could not be used.",
+  "device": "Device"
  }
 }

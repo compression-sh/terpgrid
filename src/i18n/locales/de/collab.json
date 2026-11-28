@@ -616,5 +616,10 @@
   "noMore": "Keine weiteren Angaben.",
   "addPhotos": "Fotos hinzufügen",
   "photoNA": "Foto nicht verfügbar"
+ },
+ "ss": {
+  "noAccess": "Kein Zugriff mehr auf diesen Bereich.",
+  "failed": "Synchronisation fehlgeschlagen",
+  "noAccess2": "Du hast keinen Zugriff (mehr) auf diesen Bereich."
  }
 }

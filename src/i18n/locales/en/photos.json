@@ -15,7 +15,16 @@
   "unavailable": "Photo unavailable",
   "placeholder": "No photo (placeholder)",
   "placeholder2": "Placeholder – no photo yet",
-  "loading": "Photo loading"
+  "loading": "Photo loading",
+  "notImage": "“{name}” is not an image file.",
+  "tooBig": "“{name}” is larger than 40 MB.",
+  "unreadable": "“{name}” could not be read.",
+  "prefix": "“{name}”: {msg}",
+  "canvas": "Canvas is not supported.",
+  "encode": "The image could not be encoded.",
+  "raw": "RAW, TIFF, PSD and SVG files are not supported. Please export as JPEG, PNG or WebP.",
+  "heicSafari": "HEIC/HEIF is only decoded by Safari (iPhone, iPad, Mac). In other browsers, please export as JPEG (iOS: Settings → Camera → Formats → “Most Compatible”).",
+  "heicBrowser": "“{name}”: HEIC is not supported by this browser. Please export as JPEG (iOS: Settings → Camera → Formats → “Most Compatible”)."
  },
  "up": {
   "added": {

@@ -4,6 +4,7 @@
  */
 import { WebAuthnError, browserSupportsWebAuthn, startAuthentication, startRegistration } from '@simplewebauthn/browser';
 import { ApiError, type ServerUser, api } from './api';
+import { t } from '../../i18n';
 
 export interface PasskeyInfo {
   id: string;
@@ -24,14 +25,14 @@ export const passkeysSupported = (): boolean => {
 
 /** Verständliche Meldung für Browser-/Authenticator-Fehler (z. B. abgebrochen). */
 export function passkeyErrorText(e: unknown): string {
-  if (e instanceof ApiError) return e.status === 0 ? 'Keine Verbindung zum Server – für die Anmeldung mit Passkey ist eine Verbindung nötig.' : e.message;
+  if (e instanceof ApiError) return e.status === 0 ? t('account.pk.offline') : e.message;
   const name = (e as { name?: string })?.name;
   if (e instanceof WebAuthnError || name === 'NotAllowedError' || name === 'AbortError')
-    return 'Der Vorgang wurde abgebrochen oder ist abgelaufen. Bitte erneut versuchen.';
-  if (name === 'InvalidStateError') return 'Dieser Passkey ist auf diesem Gerät bereits registriert.';
-  if (name === 'NotSupportedError') return 'Dieser Browser oder dieses Gerät unterstützt die angeforderte Passkey-Art nicht. Passwort-Anmeldung bleibt möglich.';
-  if (name === 'SecurityError') return 'Passkeys funktionieren nur über HTTPS mit der richtigen Domain.';
-  return 'Passkey konnte nicht verwendet werden.';
+    return t('account.pk.aborted');
+  if (name === 'InvalidStateError') return t('account.pk.exists');
+  if (name === 'NotSupportedError') return t('account.pk.unsupported');
+  if (name === 'SecurityError') return t('account.pk.https');
+  return t('account.pk.failed');
 }
 
 export async function loginWithPasskey(): Promise<{ user: ServerUser }> {
@@ -50,7 +51,7 @@ export async function registerPasskey(name: string): Promise<PasskeyInfo[]> {
 /** Vorschlag für den Passkey-Namen aus dem Browser (nur lokal, editierbar). */
 export function suggestPasskeyName(): string {
   const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
-  const os = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Mac OS X/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : 'Gerät';
+  const os = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Mac OS X/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : t('account.pk.device');
   const browser = /Edg\//.test(ua) ? 'Edge' : /Firefox\//.test(ua) ? 'Firefox' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : '';
   return browser ? `${os} · ${browser}` : os;
 }
