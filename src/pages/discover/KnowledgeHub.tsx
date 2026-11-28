@@ -8,9 +8,10 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { GLOSSARY, searchGlossary } from '../../lib/academy/glossary';
 import { LEARNING_PATHS, pathProgress } from '../../lib/academy/paths';
 import { fmtDateLong } from '../../lib/dates';
-import { KB_ARTICLES, KB_CATEGORIES, type KbArticle, type KbCategory, type KbReview, kbSearch, readingMinutes } from '../../lib/knowledge';
+import { KB_ARTICLES, KB_CATEGORIES, type KbArticle, type KbCategory, type KbReview, categoryLabel, kbSearch, levelLabel, readingMinutes } from '../../lib/knowledge';
+import { labels, t } from '../../i18n';
 
-const REVIEW_LABEL: Record<KbReview['level'], string> = { volltext: 'Quellen im Volltext geprüft', teilweise: 'Quellen teilweise im Volltext geprüft', bibliografisch: 'Quellen nur bibliografisch geprüft' };
+const REVIEW_LABEL: Record<KbReview['level'], string> = labels('academy.review', ['volltext', 'teilweise', 'bibliografisch']);
 const REVIEW_TONE: Record<KbReview['level'], string> = {
   volltext: 'border-leaf-500/25 bg-leaf-500/[0.05] text-leaf-100/90',
   teilweise: 'border-sky-400/25 bg-sky-400/[0.05] text-sky-100/90',
@@ -19,10 +20,10 @@ const REVIEW_TONE: Record<KbReview['level'], string> = {
 
 function ReviewNotice({ r }: { r: KbReview }) {
   return (
-    <aside className={`mt-5 rounded-xl border px-4 py-3 text-[13px] leading-relaxed ${REVIEW_TONE[r.level]}`} aria-label="Prüfstatus">
+    <aside className={`mt-5 rounded-xl border px-4 py-3 text-[13px] leading-relaxed ${REVIEW_TONE[r.level]}`} aria-label={t('academy.reviewStatus')}>
       <p className="font-medium">{REVIEW_LABEL[r.level]} · Stand {fmtDateLong(r.checked)}</p>
       {r.note && <p className="mt-0.5 opacity-90">{r.note}</p>}
-      <p className="mt-0.5 opacity-90">Eine externe fachliche Begutachtung steht noch aus.</p>
+      <p className="mt-0.5 opacity-90">{t('academy.reviewPending')}</p>
     </aside>
   );
 }
@@ -60,7 +61,7 @@ function ProgressRing({ value }: { value: number }) {
   const c = 2 * Math.PI * r;
   if (value >= 0.98) return <CheckCircle2 className="size-5 text-leaf-400" aria-label="gelesen" />;
   return (
-    <svg width="22" height="22" viewBox="0 0 22 22" aria-label={`${Math.round(value * 100)} % gelesen`}>
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-label={t('academy.readPct', { n: Math.round(value * 100) })}>
       <circle cx="11" cy="11" r={r} fill="none" stroke="rgb(255 255 255 / 0.1)" strokeWidth="2" />
       <circle cx="11" cy="11" r={r} fill="none" stroke="#5fe39a" strokeWidth="2" strokeDasharray={`${c * value} ${c}`} transform="rotate(-90 11 11)" strokeLinecap="round" />
     </svg>
@@ -95,11 +96,11 @@ function ArticleView({ a }: { a: KbArticle }) {
   // Fortschritt gedrosselt in den Kontoeinstellungen speichern (je Konto, wird synchronisiert)
   useEffect(() => {
     if (progress - saved.current < 0.1 && !(progress >= 0.98 && saved.current < 0.98)) return;
-    const t = window.setTimeout(() => {
+    const tv = window.setTimeout(() => {
       saved.current = progress;
       updateSettings({ kbProgress: { ...settings.kbProgress, [a.id]: Math.round(progress * 100) / 100 } });
     }, 600);
-    return () => window.clearTimeout(t);
+    return () => window.clearTimeout(tv);
   }, [progress]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const related = a.related.map(byId).filter((x): x is KbArticle => !!x);
@@ -113,11 +114,11 @@ function ArticleView({ a }: { a: KbArticle }) {
       <div className="mx-auto grid max-w-[64rem] gap-10 xl:grid-cols-[minmax(0,44rem)_13rem]">
         <article ref={ref} className="min-w-0 animate-fade-up">
           <a href={href('discover/learn')} className="mb-6 inline-flex items-center gap-1.5 text-[12px] text-ink-400 hover:text-ink-100">
-            <ArrowLeft className="size-3.5" /> Academy
+            <ArrowLeft className="size-3.5" /> {t('academy.academy')}
           </a>
           <div className="flex flex-wrap items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.16em]" style={{ color: CAT_COLOR[a.category] }}>
             <a href={href(`discover/learn?cat=${encodeURIComponent(a.category)}`)} className="hover:underline">
-              {a.category}
+              {categoryLabel(a.category)}
             </a>
             {a.level && <span className="rounded-full border border-white/[0.1] px-2 py-0.5 text-[10px] tracking-[0.1em] text-ink-300">{a.level}</span>}
           </div>
@@ -127,15 +128,15 @@ function ArticleView({ a }: { a: KbArticle }) {
             <span className="flex items-center gap-1.5">
               <Clock className="size-3.5" /> {readingMinutes(a)} Min. Lesezeit
             </span>
-            <span>Aktualisiert am {fmtDateLong(a.updated)}</span>
-            <span>{a.sources.length} Quellen</span>
+            <span>{t('academy.updated')} {fmtDateLong(a.updated)}</span>
+            <span>{a.sources.length} {t('academy.sources')}</span>
             <button
               type="button"
               aria-pressed={fav}
               onClick={() => updateSettings({ kbFavorites: fav ? settings.kbFavorites.filter((x) => x !== a.id) : [...settings.kbFavorites, a.id] })}
               className={`ml-auto inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 ${fav ? 'border-leaf-500/30 text-leaf-200' : 'border-white/[0.08] text-ink-300 hover:text-ink-100'}`}
             >
-              <Bookmark className={`size-3.5 ${fav ? 'fill-current' : ''}`} /> {fav ? 'Gemerkt' : 'Merken'}
+              <Bookmark className={`size-3.5 ${fav ? 'fill-current' : ''}`} /> {fav ? t('academy.saved') : t('academy.remember')}
             </button>
           </div>
 
@@ -151,11 +152,11 @@ function ArticleView({ a }: { a: KbArticle }) {
                 window.scrollTo({ top: top + resumeAt * Math.max(0, el.offsetHeight - window.innerHeight * 0.6) });
               }}
             >
-              <ArrowRight className="size-3.5" /> An der letzten Stelle weiterlesen ({Math.round(resumeAt * 100)} %)
+              <ArrowRight className="size-3.5" /> {t('academy.resume', { n: Math.round(resumeAt * 100) })}
             </button>
           )}
           <details className="mt-5 rounded-xl border border-white/[0.06] bg-white/[0.015] px-4 py-2.5 xl:hidden">
-            <summary className="cursor-pointer text-[13px] font-medium text-ink-200">Inhalt ({a.sections.length} Abschnitte)</summary>
+            <summary className="cursor-pointer text-[13px] font-medium text-ink-200">{t('academy.contentsN', { count: a.sections.length })}</summary>
             <ol className="mt-2 space-y-0.5 pb-1">
               {a.sections.map((s, i) => (
                 <li key={s.heading}>
@@ -195,7 +196,7 @@ function ArticleView({ a }: { a: KbArticle }) {
 
           {terms.length > 0 && (
             <section className="mt-10 rounded-2xl border border-white/[0.06] p-5">
-              <h2 className="text-[13px] font-semibold uppercase tracking-[0.12em] text-ink-400">Begriffe</h2>
+              <h2 className="text-[13px] font-semibold uppercase tracking-[0.12em] text-ink-400">{t('academy.terms')}</h2>
               <dl className="mt-3 space-y-2">
                 {terms.map((g) => (
                   <div key={g.id} className="text-[13.5px] leading-relaxed">
@@ -208,7 +209,7 @@ function ArticleView({ a }: { a: KbArticle }) {
           )}
 
           <section className="mt-10 rounded-2xl border border-white/[0.06] bg-ink-900/60 p-5">
-            <h2 className="text-[13px] font-semibold uppercase tracking-[0.12em] text-ink-400">Quellen</h2>
+            <h2 className="text-[13px] font-semibold uppercase tracking-[0.12em] text-ink-400">{t('academy.sources')}</h2>
             <ol className="mt-3 space-y-2.5">
               {a.sources.map((s, i) => (
                 <li key={s.url} className="grid grid-cols-[1.5rem_1fr] gap-1 text-[13px] leading-relaxed">
@@ -219,7 +220,7 @@ function ArticleView({ a }: { a: KbArticle }) {
                 </li>
               ))}
             </ol>
-            <p className="hint mt-4">Informationsangebot ohne medizinische oder rechtliche Beratung. Zahlen aus Studien beschreiben deren Versuchsbedingungen und sind keine allgemeingültigen Sollwerte.</p>
+            <p className="hint mt-4">{t('academy.disclaimer')}</p>
           </section>
 
           {paths.map((p) => {
@@ -238,7 +239,7 @@ function ArticleView({ a }: { a: KbArticle }) {
                     Weiter: {next.title} <ArrowRight className="size-3.5" />
                   </a>
                 ) : (
-                  <span className="text-[12.5px] text-leaf-200">Letzter Schritt des Pfads</span>
+                  <span className="text-[12.5px] text-leaf-200">{t('academy.lastStep')}</span>
                 )}
               </section>
             );
@@ -246,7 +247,7 @@ function ArticleView({ a }: { a: KbArticle }) {
 
           {related.length > 0 && (
             <section className="mt-10">
-              <h2 className="text-[13px] font-semibold uppercase tracking-[0.12em] text-ink-400">Weiterlesen</h2>
+              <h2 className="text-[13px] font-semibold uppercase tracking-[0.12em] text-ink-400">{t('academy.readOn')}</h2>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
                 {related.map((r) => (
                   <a key={r.id} href={href(`discover/learn/${r.id}`)} className="rounded-xl border border-white/[0.06] p-4 transition-colors hover:border-white/[0.14]">
@@ -260,9 +261,9 @@ function ArticleView({ a }: { a: KbArticle }) {
             </section>
           )}
         </article>
-        <nav aria-label="Inhalt" className="hidden xl:block">
+        <nav aria-label={t('academy.contents')} className="hidden xl:block">
           <div className="sticky top-20 space-y-1.5 border-l border-white/[0.06] pl-4 text-[12px]">
-            <p className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-ink-500">Inhalt</p>
+            <p className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-ink-500">{t('academy.contents')}</p>
             {a.sections.map((s) => (
               <a key={s.heading} href={`#${anchor(s.heading)}`} onClick={(e) => (e.preventDefault(), document.getElementById(anchor(s.heading))?.scrollIntoView({ behavior: 'smooth' }))} className="block text-ink-400 hover:text-ink-100">
                 {s.heading}
@@ -283,18 +284,18 @@ function Glossary() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 id="glossar-h" className="flex items-center gap-2 text-[20px] font-semibold tracking-tight text-ink-50">
-            <Library className="size-5 text-ink-400" /> Glossar
+            <Library className="size-5 text-ink-400" /> {t('academy.glossary')}
           </h2>
           <p className="mt-1 text-[13px] text-ink-400">{GLOSSARY.length} Begriffe – auch über die Suche (Strg+K) erreichbar.</p>
         </div>
         <label className="relative w-full sm:w-64">
-          <span className="sr-only">Glossar durchsuchen</span>
+          <span className="sr-only">{t('academy.glossarySearch')}</span>
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-500" />
-          <input className="input-base pl-9" placeholder="Begriff suchen …" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input className="input-base pl-9" placeholder={t('academy.termPh')} value={q} onChange={(e) => setQ(e.target.value)} />
         </label>
       </div>
       {list.length === 0 ? (
-        <p className="hint mt-4">Kein Begriff gefunden.</p>
+        <p className="hint mt-4">{t('academy.noTerm')}</p>
       ) : (
         <dl className="mt-4 grid gap-2 sm:grid-cols-2">
           {list.map((g) => (
@@ -306,7 +307,7 @@ function Glossary() {
               <dd className="mt-1 text-[13px] leading-relaxed text-ink-300">{g.definition}</dd>
               <dd className="mt-1.5">
                 <a href={href(`discover/learn/${g.article}`)} className="inline-flex min-h-6 items-center text-[12px] text-leaf-300 hover:underline">
-                  {byId(g.article)?.title ?? 'Artikel'} →
+                  {byId(g.article)?.title ?? t('academy.article')} →
                 </a>
               </dd>
             </div>
@@ -344,10 +345,10 @@ export function KnowledgeHub({ articleId }: { articleId?: string }) {
           <ArticleView key={article.id} a={article} />
         ) : (
           <EmptyState
-            title="Artikel nicht gefunden"
+            title={t('academy.notFound')}
             action={
               <a href={href('discover/learn')} className="btn-primary">
-                Zur Übersicht
+                {t('academy.toOverview')}
               </a>
             }
           />
@@ -361,7 +362,7 @@ export function KnowledgeHub({ articleId }: { articleId?: string }) {
       <DiscoverNav />
       <div className="mb-6 grid gap-3 animate-fade-up lg:grid-cols-[1fr_auto] lg:items-end">
         <div>
-          <h1 className="page-title">Cannabis 101</h1>
+          <h1 className="page-title">{t('academy.title')}</h1>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-400">
             {KB_ARTICLES.length} belegte Artikel und Leitfäden – vom Licht bis zur Trocknung, von Cannabinoiden bis zu Risiken. Jede Zahl mit Quelle, jede Studie als das gekennzeichnet, was sie ist.
           </p>
@@ -374,7 +375,7 @@ export function KnowledgeHub({ articleId }: { articleId?: string }) {
       {!filtering && (
         <section aria-labelledby="paths-h" className="mb-10">
           <h2 id="paths-h" className="mb-3 flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.12em] text-ink-400">
-            <Route className="size-4" /> Lernpfade
+            <Route className="size-4" /> {t('academy.paths')}
           </h2>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {LEARNING_PATHS.map((p) => {
@@ -385,14 +386,14 @@ export function KnowledgeHub({ articleId }: { articleId?: string }) {
                   <span className="text-[15px] font-semibold text-ink-50">{p.title}</span>
                   <span className="mt-1 text-[12.5px] leading-relaxed text-ink-400">{p.description}</span>
                   <span className="mt-auto pt-4">
-                    <span className="block h-1.5 rounded-full bg-ink-700" role="progressbar" aria-valuemin={0} aria-valuemax={pr.total} aria-valuenow={pr.done} aria-label={`${p.title}: ${pr.done} von ${pr.total} gelesen`}>
+                    <span className="block h-1.5 rounded-full bg-ink-700" role="progressbar" aria-valuemin={0} aria-valuemax={pr.total} aria-valuenow={pr.done} aria-label={t('academy.pathProgress', { title: p.title, a: pr.done, b: pr.total })}>
                       <span className="block h-full rounded-full" style={{ width: `${pr.ratio * 100}%`, background: p.color }} />
                     </span>
                     <span className="mt-1.5 flex min-w-0 justify-between gap-2 text-[11px] text-ink-500">
                       <span className="shrink-0">
                         {pr.done}/{pr.total} gelesen
                       </span>
-                      <span className="truncate text-ink-300 group-hover:text-ink-100">{next ? `Weiter: ${next.title}` : 'Abgeschlossen ✓'}</span>
+                      <span className="truncate text-ink-300 group-hover:text-ink-100">{next ? t('academy.next', { title: next.title }) : t('academy.completed')}</span>
                     </span>
                   </span>
                 </a>
@@ -404,38 +405,38 @@ export function KnowledgeHub({ articleId }: { articleId?: string }) {
 
       <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center">
         <label className="relative block flex-1">
-          <span className="sr-only">Artikel durchsuchen</span>
+          <span className="sr-only">{t('academy.searchArticles')}</span>
           <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-500" />
-          <input className="input-base h-11 pl-10" placeholder="Suchen, z. B. VPD, Mehltau, THCA, Erntezeitpunkt …" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input className="input-base h-11 pl-10" placeholder={t('academy.searchPh')} value={q} onChange={(e) => setQ(e.target.value)} />
         </label>
         <div className="flex flex-wrap gap-2">
-          <select aria-label="Kategorie" className="input-base h-11 w-auto" value={cat} onChange={(e) => setCat(e.target.value)}>
-            <option value="">Alle Kategorien</option>
+          <select aria-label={t('academy.category')} className="input-base h-11 w-auto" value={cat} onChange={(e) => setCat(e.target.value)}>
+            <option value="">{t('academy.allCats')}</option>
             {KB_CATEGORIES.map((c) => (
               <option key={c} value={c}>
-                {c} ({KB_ARTICLES.filter((a) => a.category === c).length})
+                {categoryLabel(c)} ({KB_ARTICLES.filter((a) => a.category === c).length})
               </option>
             ))}
           </select>
-          <select aria-label="Niveau" className="input-base h-11 w-auto" value={level} onChange={(e) => setLevel(e.target.value)}>
-            <option value="">Alle Niveaus</option>
-            <option>Einsteiger</option>
-            <option>Fortgeschritten</option>
+          <select aria-label={t('academy.level')} className="input-base h-11 w-auto" value={level} onChange={(e) => setLevel(e.target.value)}>
+            <option value="">{t('academy.allLevels')}</option>
+            <option>{t('academy.beginner')}</option>
+            <option>{t('academy.advanced')}</option>
           </select>
           <button type="button" aria-pressed={onlyFav} onClick={() => setOnlyFav((f) => !f)} className={`flex h-11 shrink-0 items-center gap-1 rounded-xl border px-3 text-xs ${onlyFav ? 'border-leaf-500/30 text-leaf-200' : 'border-white/[0.08] text-ink-400'}`}>
-            <Bookmark className={`size-3.5 ${onlyFav ? 'fill-current' : ''}`} /> Gemerkt
+            <Bookmark className={`size-3.5 ${onlyFav ? 'fill-current' : ''}`} /> {t('academy.saved')}
           </button>
         </div>
       </div>
 
       {!filtering && (
-        <section aria-label="Kategorien" className="mb-8 flex flex-wrap gap-1.5">
+        <section aria-label={t('academy.categories')} className="mb-8 flex flex-wrap gap-1.5">
           {KB_CATEGORIES.map((c) => {
             const n = KB_ARTICLES.filter((a) => a.category === c).length;
             return (
               <button key={c} type="button" onClick={() => setCat(c)} className="flex items-center gap-1.5 rounded-full border border-white/[0.06] px-3 py-1.5 text-[12px] text-ink-300 hover:border-white/[0.16] hover:text-ink-100">
                 <span className="size-2 rounded-full" style={{ background: CAT_COLOR[c] }} />
-                {c} <span className="text-ink-500">{n}</span>
+                {categoryLabel(c)} <span className="text-ink-500">{n}</span>
               </button>
             );
           })}
@@ -443,12 +444,12 @@ export function KnowledgeHub({ articleId }: { articleId?: string }) {
       )}
 
       <p className="mb-3 text-[12px] text-ink-500" aria-live="polite">
-        {list.length} {list.length === 1 ? 'Artikel' : 'Artikel'}
-        {cat && ` in „${cat}“`}
+        {t('academy.articlesN', { count: list.length })}
+        {cat && ` ${t('academy.inCat', { cat: categoryLabel(cat) })}`}
       </p>
       {list.length === 0 ? (
         <div className="card">
-          <EmptyState icon={<BookOpen />} title="Keine Artikel gefunden" text={cat ? 'In dieser Kategorie gibt es mit diesen Filtern noch keine Artikel.' : undefined} />
+          <EmptyState icon={<BookOpen />} title={t('academy.noArticles')} text={cat ? t('academy.noArticlesText') : undefined} />
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -457,7 +458,7 @@ export function KnowledgeHub({ articleId }: { articleId?: string }) {
               <div className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full opacity-[0.12] blur-3xl transition-opacity group-hover:opacity-25" style={{ background: CAT_COLOR[a.category] }} />
               <div className="flex items-start justify-between gap-3">
                 <span className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: CAT_COLOR[a.category] }}>
-                  {a.category}
+                  {categoryLabel(a.category)}
                 </span>
                 <span className="flex items-center gap-2">
                   {settings.kbFavorites.includes(a.id) && <Bookmark className="size-3.5 fill-current text-leaf-300" aria-label="gemerkt" />}
@@ -468,10 +469,10 @@ export function KnowledgeHub({ articleId }: { articleId?: string }) {
               <p className="mt-2 line-clamp-3 text-[13px] leading-relaxed text-ink-400">{a.summary}</p>
               <div className="mt-auto flex items-center justify-between pt-5 text-[11px] text-ink-500">
                 <span className="flex items-center gap-1">
-                  <Clock className="size-3" /> {readingMinutes(a)} Min.{a.level ? ` · ${a.level}` : ''}
+                  <Clock className="size-3" /> {t('academy.minutes', { n: readingMinutes(a) })}{a.level ? ` · ${levelLabel(a.level)}` : ''}
                 </span>
                 <span title={a.review ? REVIEW_LABEL[a.review.level] : undefined}>
-                  {a.sources.length} Quellen{a.review ? ` · ${a.review.level === 'volltext' ? 'Volltext' : a.review.level === 'teilweise' ? 'teilw. Volltext' : 'bibliografisch'}` : ''}
+                  {t('academy.sourcesN', { count: a.sources.length })}{a.review ? ` · ${t(a.review.level === 'volltext' ? 'academy.rv.full' : a.review.level === 'teilweise' ? 'academy.rv.partial' : 'academy.rv.biblio')}` : ''}
                 </span>
               </div>
             </a>

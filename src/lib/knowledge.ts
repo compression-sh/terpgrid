@@ -1,3 +1,4 @@
+import { tDynamic } from '../i18n';
 /**
  * Cannabis 101 – redaktionelle Wissensartikel.
  * Grundsatz: sachlich, zurückhaltend, mit überprüfbaren Quellen. Keine Heil-
@@ -26,6 +27,29 @@ export const KB_CATEGORIES = [
 ] as const;
 export type KbCategory = (typeof KB_CATEGORIES)[number];
 export type KbLevel = 'Einsteiger' | 'Fortgeschritten';
+
+/** Stabile Schlüssel der Kategorien – gespeichert/verlinkt wird der deutsche Name, angezeigt die Übersetzung. */
+const CAT_KEY: Record<KbCategory, string> = {
+  'Grundlagen': 'basics',
+  'Pflanze & Botanik': 'botany',
+  'Genetik & Züchtung': 'genetics',
+  'Anbau-Grundlagen': 'growing',
+  'Substrat & Bewässerung': 'substrate',
+  'pH, EC & Nährstoffe': 'nutrients',
+  'Licht': 'light',
+  'Klima & VPD': 'climate',
+  'Pflanzengesundheit': 'health',
+  'Schädlinge': 'pests',
+  'Ernte': 'harvest',
+  'Trocknung & Lagerung': 'drying',
+  'Cannabinoide': 'cannabinoids',
+  'Terpene': 'terpenes',
+  'Labor & Analytik': 'lab',
+  'Konsum & Risiko': 'risk',
+  'Nachschlagen': 'reference',
+};
+export const categoryLabel = (c: KbCategory | string): string => tDynamic(`academy.cat.${CAT_KEY[c as KbCategory]}`, c);
+export const levelLabel = (l: KbLevel | string): string => tDynamic(`academy.lvl.${l}`, l);
 /** Interaktive Diagramme, die in einen Abschnitt eingebettet werden können */
 export type KbDiagram = 'vpd' | 'dli' | 'lifecycle' | 'stigma';
 

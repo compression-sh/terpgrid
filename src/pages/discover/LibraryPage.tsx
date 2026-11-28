@@ -13,15 +13,16 @@ import { type LibSearchParams, type LibSearchResult, type LibStatus, MATCH_LABEL
 import { TERPENES } from '../../lib/catalog/terpenes';
 import { fmt } from '../../lib/format';
 import { errorText } from '../../app/Toasts';
+import { t } from '../../i18n';
 
 const PER_PAGE = 24;
 const TIERS: MatchTier[] = ['exact', 'prefix', 'name', 'related', 'similar'];
 const SORTS = [
-  { id: 'relevance', label: 'Relevanz', needsQuery: true },
-  { id: 'name', label: 'Name A–Z' },
-  { id: 'breeder', label: 'Breeder A–Z' },
-  { id: 'thc', label: 'THC-Angabe (absteigend)' },
-  { id: 'listings', label: 'Meiste Seedbank-Angebote' },
+  { id: 'relevance', get label() { return t('discover.lb.sRel'); }, needsQuery: true },
+  { id: 'name', get label() { return t('discover.lb.sName'); } },
+  { id: 'breeder', get label() { return t('discover.lb.sBreeder'); } },
+  { id: 'thc', get label() { return t('discover.lb.sThc'); } },
+  { id: 'listings', get label() { return t('discover.lb.sListings'); } },
 ] as const;
 
 const FILTER_KEYS = ['type', 'auto', 'seed', 'lineage', 'thc', 'terpene', 'parent'] as const;
@@ -41,7 +42,7 @@ export function LibraryPage({ status }: { status: LibStatus }) {
   const params: LibSearchParams = useMemo(
     () => ({
       q: query || undefined,
-      type: (['indica', 'sativa', 'balanced'] as const).find((t) => t === q.get('type')),
+      type: (['indica', 'sativa', 'balanced'] as const).find((tv) => tv === q.get('type')),
       auto: q.get('auto') === '1' ? '1' : q.get('auto') === '0' ? '0' : undefined,
       seed: q.get('seed') === 'feminisiert' || q.get('seed') === 'regulär' ? (q.get('seed') as 'feminisiert' | 'regulär') : undefined,
       lineage: q.get('lineage') === '1' ? '1' : undefined,
@@ -59,10 +60,10 @@ export function LibraryPage({ status }: { status: LibStatus }) {
 
   // Suchfeld → URL (verzögert, verlinkbar)
   useEffect(() => {
-    const t = window.setTimeout(() => {
+    const tv = window.setTimeout(() => {
       if ((q.get('q') ?? '') !== text.trim()) setQuery(route, { q: text.trim() || undefined });
     }, 300);
-    return () => window.clearTimeout(t);
+    return () => window.clearTimeout(tv);
   }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if ((q.get('q') ?? '') !== text.trim()) setText(q.get('q') ?? '');
@@ -103,43 +104,43 @@ export function LibraryPage({ status }: { status: LibStatus }) {
   const activeFilters = ['type', 'auto', 'seed', 'terpene', 'lineage', 'thc', 'samples'].filter((k) => q.get(k)).length;
   const filterControls = (
     <>
-          <select className={field} aria-label="Genetischer Typ" value={q.get('type') ?? ''} onChange={(e) => set({ type: e.target.value || undefined })}>
-            <option value="">Typ: alle</option>
-            <option value="indica">Indica-dominant</option>
-            <option value="sativa">Sativa-dominant</option>
-            <option value="balanced">Ausgewogener Hybrid</option>
+          <select className={field} aria-label={t('discover.lb.gType')} value={q.get('type') ?? ''} onChange={(e) => set({ type: e.target.value || undefined })}>
+            <option value="">{t('discover.lb.typeAll')}</option>
+            <option value="indica">{t('discover.lb.indica')}</option>
+            <option value="sativa">{t('discover.lb.sativa')}</option>
+            <option value="balanced">{t('discover.lb.balanced')}</option>
           </select>
-          <select className={field} aria-label="Blüteverhalten" value={q.get('auto') ?? ''} onChange={(e) => set({ auto: e.target.value || undefined })}>
-            <option value="">Blüte: alle</option>
-            <option value="1">Nur Autoflowering</option>
-            <option value="0">Nur photoperiodisch</option>
+          <select className={field} aria-label={t('discover.lb.flowering')} value={q.get('auto') ?? ''} onChange={(e) => set({ auto: e.target.value || undefined })}>
+            <option value="">{t('discover.lb.flAll')}</option>
+            <option value="1">{t('discover.lb.onlyAuto')}</option>
+            <option value="0">{t('discover.lb.onlyPhoto')}</option>
           </select>
-          <select className={field} aria-label="Samentyp" value={q.get('seed') ?? ''} onChange={(e) => set({ seed: e.target.value || undefined })}>
-            <option value="">Samen: alle</option>
-            <option value="feminisiert">Feminisiert</option>
-            <option value="regulär">Regulär</option>
+          <select className={field} aria-label={t('discover.lb.seed')} value={q.get('seed') ?? ''} onChange={(e) => set({ seed: e.target.value || undefined })}>
+            <option value="">{t('discover.lb.seedAll')}</option>
+            <option value="feminisiert">{t('discover.lb.fem')}</option>
+            <option value="regulär">{t('discover.lb.reg')}</option>
           </select>
-          <select className={field} aria-label="Terpen-Nennung" value={q.get('terpene') ?? ''} onChange={(e) => set({ terpene: e.target.value || undefined })}>
-            <option value="">Terpen: alle</option>
-            {TERPENES.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
+          <select className={field} aria-label={t('discover.lb.terp')} value={q.get('terpene') ?? ''} onChange={(e) => set({ terpene: e.target.value || undefined })}>
+            <option value="">{t('discover.lb.terpAll')}</option>
+            {TERPENES.map((tv) => (
+              <option key={tv.id} value={tv.id}>
+                {tv.name}
               </option>
             ))}
           </select>
           <label className="flex items-center gap-2 rounded-lg border border-white/[0.06] px-2.5 text-[12px] text-ink-300">
-            <input type="checkbox" className="accent-leaf-500" checked={q.get('lineage') === '1'} onChange={(e) => set({ lineage: e.target.checked ? '1' : undefined })} /> Mit Abstammung
+            <input type="checkbox" className="accent-leaf-500" checked={q.get('lineage') === '1'} onChange={(e) => set({ lineage: e.target.checked ? '1' : undefined })} /> {t('discover.lb.withLineage')}
           </label>
           <label className="flex items-center gap-2 rounded-lg border border-white/[0.06] px-2.5 text-[12px] text-ink-300">
-            <input type="checkbox" className="accent-leaf-500" checked={q.get('thc') === '1'} onChange={(e) => set({ thc: e.target.checked ? '1' : undefined })} /> Mit THC-Angabe
+            <input type="checkbox" className="accent-leaf-500" checked={q.get('thc') === '1'} onChange={(e) => set({ thc: e.target.checked ? '1' : undefined })} /> {t('discover.lb.withThc')}
           </label>
           <label
             className="flex items-center gap-2 rounded-lg border border-white/[0.06] px-2.5 text-[12px] text-ink-300"
-            title="Öffentliche Laborproben gleichnamiger US-Handelsprodukte (Smith et al. 2022) – ohne Breeder-Zuordnung"
+            title={t('discover.lb.samplesHint')}
           >
-            <input type="checkbox" className="accent-leaf-500" checked={q.get('samples') === '1'} onChange={(e) => set({ samples: e.target.checked ? '1' : undefined })} /> Mit Laborproben
+            <input type="checkbox" className="accent-leaf-500" checked={q.get('samples') === '1'} onChange={(e) => set({ samples: e.target.checked ? '1' : undefined })} /> {t('discover.lb.withSamples')}
           </label>
-          <select className={field} aria-label="Sortierung" value={params.sort} onChange={(e) => set({ sort: e.target.value })}>
+          <select className={field} aria-label={t('discover.lb.sort')} value={params.sort} onChange={(e) => set({ sort: e.target.value })}>
             {SORTS.filter((s) => !('needsQuery' in s) || query).map((s) => (
               <option key={s.id} value={s.id}>
                 {s.label}
@@ -152,17 +153,17 @@ export function LibraryPage({ status }: { status: LibStatus }) {
     <div>
       {filtersOpen && (
         <BottomSheet
-          title="Filter & Sortierung"
+          title={t('discover.lb.filters')}
           onClose={() => setFiltersOpen(false)}
           footer={
             <>
               {activeFilters > 0 && (
                 <button type="button" className="btn-ghost mr-auto" onClick={() => set({ type: undefined, auto: undefined, seed: undefined, terpene: undefined, lineage: undefined, thc: undefined, samples: undefined })}>
-                  <RotateCcw className="size-4" /> Filter zurücksetzen
+                  <RotateCcw className="size-4" /> {t('discover.lb.reset')}
                 </button>
               )}
               <button type="button" className="btn-primary" onClick={() => setFiltersOpen(false)}>
-                {d ? `${fmt(d.total, 0)} ${d.total === 1 ? 'Sorte' : 'Sorten'} anzeigen` : 'Fertig'}
+                {d ? t('discover.lb.showN', { count: d.total }) : t('discover.lb.done')}
               </button>
             </>
           }
@@ -172,7 +173,7 @@ export function LibraryPage({ status }: { status: LibStatus }) {
       )}
       <DiscoverNav />
       <header className="mb-5 animate-fade-up">
-        <h1 className="page-title">Entdecken</h1>
+        <h1 className="page-title">{t('discover.lb.discover')}</h1>
         <p className="mt-1 max-w-2xl text-sm text-ink-400">
           {fmt(status.counts?.cultivars ?? 0, 0)} Sorten von {fmt(status.counts?.breeders ?? 0, 0)} Breedern – auf deinem Server indexiert, Suchanfragen verlassen deine Instanz nicht.
         </p>
@@ -184,14 +185,14 @@ export function LibraryPage({ status }: { status: LibStatus }) {
           <input
             type="search"
             className="input-base h-11 pl-9 pr-9 text-[15px] [&::-webkit-search-cancel-button]:hidden"
-            placeholder="Sorte, Alias, Breeder, Elternsorte, Terpen …"
-            aria-label="Katalog durchsuchen"
+            placeholder={t('discover.lb.searchPh')}
+            aria-label={t('discover.lb.searchAria')}
             value={text}
             onChange={(e) => setText(e.target.value)}
             enterKeyHint="search"
           />
           {text && (
-            <button type="button" className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-md text-ink-400 hover:bg-white/[0.06] hover:text-ink-100" aria-label="Suche leeren" onClick={() => setText('')}>
+            <button type="button" className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-md text-ink-400 hover:bg-white/[0.06] hover:text-ink-100" aria-label={t('discover.lb.clear')} onClick={() => setText('')}>
               <X className="size-4" />
             </button>
           )}
@@ -203,7 +204,7 @@ export function LibraryPage({ status }: { status: LibStatus }) {
           onClick={() => setFiltersOpen(true)}
         >
           <span className="flex items-center gap-2">
-            <SlidersHorizontal className="size-4 text-ink-400" /> Filter & Sortierung
+            <SlidersHorizontal className="size-4 text-ink-400" /> {t('discover.lb.filters')}
             {activeFilters > 0 && <span className="rounded-full bg-leaf-500/15 px-1.5 text-[11px] text-leaf-300">{activeFilters} aktiv</span>}
           </span>
           <ChevronDown className="size-4 text-ink-400" />
@@ -216,9 +217,9 @@ export function LibraryPage({ status }: { status: LibStatus }) {
       {!query && !active && (settings.recentCultivars.length > 0 || favBreeders.ids.length > 0) && (
         <div className="mb-5 grid gap-3 lg:grid-cols-2">
           {settings.recentCultivars.length > 0 && (
-            <section className="card p-3.5" aria-label="Zuletzt angesehen">
+            <section className="card p-3.5" aria-label={t('discover.lb.recent')}>
               <h2 className="flex items-center gap-2 text-[12px] font-medium text-ink-300">
-                <Clock className="size-3.5 text-ink-500" /> Zuletzt angesehen
+                <Clock className="size-3.5 text-ink-500" /> {t('discover.lb.recent')}
               </h2>
               <ul className="mt-2 flex flex-wrap gap-1.5">
                 {settings.recentCultivars.slice(0, 8).map((r) => (
@@ -233,9 +234,9 @@ export function LibraryPage({ status }: { status: LibStatus }) {
             </section>
           )}
           {favBreeders.ids.length > 0 && (
-            <section className="card p-3.5" aria-label="Gemerkte Breeder">
+            <section className="card p-3.5" aria-label={t('discover.lb.savedBreeders')}>
               <h2 className="flex items-center gap-2 text-[12px] font-medium text-ink-300">
-                <Bookmark className="size-3.5 text-ink-500" /> Gemerkte Breeder
+                <Bookmark className="size-3.5 text-ink-500" /> {t('discover.lb.savedBreeders')}
               </h2>
               <ul className="mt-2 flex flex-wrap gap-1.5">
                 {favBreeders.ids.slice(0, 12).map((id) => (
@@ -255,19 +256,19 @@ export function LibraryPage({ status }: { status: LibStatus }) {
         <p className="text-[13px] text-ink-300">
           {res.loading && !d ? (
             <span className="inline-flex items-center gap-2">
-              <Loader2 className="size-4 animate-spin" /> Suche …
+              <Loader2 className="size-4 animate-spin" /> {t('discover.lb.searching')}
             </span>
           ) : d ? (
             <>
-              <span className="font-semibold tabular text-ink-50">{fmt(d.total, 0)}</span> {d.total === 1 ? 'Sorte' : 'Sorten'}
-              {query ? <> für „{query}“</> : active ? ' mit diesen Filtern' : ' im Katalog'}
+              <span className="font-semibold tabular text-ink-50">{fmt(d.total, 0)}</span> {t('discover.lb.strainsWord', { count: d.total })}
+              {query ? <> {t('discover.lb.forQ', { q: query })}</> : active ? ` ${t('discover.lb.withFilters')}` : ` ${t('discover.lb.inCatalog')}`}
               {res.loading && <Loader2 className="ml-2 inline size-3.5 animate-spin text-ink-500" />}
             </>
           ) : null}
         </p>
         {(query || active > 0) && (
           <button type="button" className="btn-ghost h-8 px-2.5 text-[12px]" onClick={reset}>
-            <RotateCcw className="size-3.5" /> Zurücksetzen
+            <RotateCcw className="size-3.5" /> {t('discover.lb.resetShort')}
           </button>
         )}
       </div>
@@ -275,24 +276,24 @@ export function LibraryPage({ status }: { status: LibStatus }) {
       {params.parent && (
         <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-leaf-500/25 bg-leaf-500/10 px-3 py-1 text-[12px] text-leaf-200">
           Elternsorte: {params.parent.replace(/-/g, ' ')}
-          <button type="button" aria-label="Elternsorten-Filter entfernen" onClick={() => set({ parent: undefined })} className="text-leaf-300 hover:text-leaf-100">
+          <button type="button" aria-label={t('discover.lb.removeParent')} onClick={() => set({ parent: undefined })} className="text-leaf-300 hover:text-leaf-100">
             <X className="size-3.5" />
           </button>
         </p>
       )}
 
       {query && d && d.total > 0 && (
-        <ul className="mb-4 flex flex-wrap gap-1.5" aria-label="Trefferarten">
-          {TIERS.filter((t) => d.groups[t]).map((t) => (
-            <li key={t} className="rounded-full border border-white/[0.07] bg-white/[0.02] px-2.5 py-1 text-[11px] text-ink-300">
-              {MATCH_LABEL[t]}: <span className="tabular text-ink-100">{fmt(d.groups[t] ?? 0, 0)}</span>
+        <ul className="mb-4 flex flex-wrap gap-1.5" aria-label={t('discover.lb.tiers')}>
+          {TIERS.filter((tv) => d.groups[tv]).map((tv) => (
+            <li key={tv} className="rounded-full border border-white/[0.07] bg-white/[0.02] px-2.5 py-1 text-[11px] text-ink-300">
+              {MATCH_LABEL[tv]}: <span className="tabular text-ink-100">{fmt(d.groups[tv] ?? 0, 0)}</span>
             </li>
           ))}
         </ul>
       )}
 
       {res.error && (
-        <Callout tone="danger" title="Katalog nicht erreichbar">
+        <Callout tone="danger" title={t('discover.lb.unreachable')}>
           {res.error}
         </Callout>
       )}
@@ -300,11 +301,11 @@ export function LibraryPage({ status }: { status: LibStatus }) {
       {!res.error && d && d.total === 0 && (
         <EmptyState
           icon={<Sprout />}
-          title="Keine passenden Sorten"
-          text={query ? 'Kein Treffer im Namen, bei Aliassen, Breedern, Elternsorten oder Terpenen. Schreibweise prüfen oder Filter lockern.' : 'Keine Sorte erfüllt alle Filter.'}
+          title={t('discover.lb.none')}
+          text={query ? t('discover.lb.noneQuery') : t('discover.lb.noneFilter')}
           action={
             <button type="button" className="btn-ghost" onClick={reset}>
-              Filter zurücksetzen
+              {t('discover.lb.reset')}
             </button>
           }
         />
@@ -332,11 +333,11 @@ export function LibraryPage({ status }: { status: LibStatus }) {
         <DatasetNotice status={status} />
         <div className="card p-4 text-[12px] text-ink-400">
           <p className="flex items-center gap-2 font-medium text-ink-200">
-            <Database className="size-4 text-ink-500" /> Live-Katalog mit Bildern
+            <Database className="size-4 text-ink-500" /> {t('discover.lb.live')}
           </p>
-          <p className="mt-1">Fotos und Evidenzstatus liefert weiterhin StrainAPI (online, über deinen Server).</p>
+          <p className="mt-1">{t('discover.lb.liveHint')}</p>
           <a href={href(`discover/live${query ? `?q=${encodeURIComponent(query)}` : ''}`)} className="mt-2 inline-flex text-leaf-300 hover:underline">
-            {query ? `„${query}“ bei StrainAPI suchen` : 'StrainAPI öffnen'}
+            {query ? t('discover.lb.searchApi', { q: query }) : t('discover.lb.openApi')}
           </a>
         </div>
       </div>

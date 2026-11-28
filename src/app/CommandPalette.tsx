@@ -55,10 +55,14 @@ export function CommandPalette() {
   const lib = useLibraryStatus();
   // Wissensartikel erst beim Öffnen laden (hält das Start-Bundle klein)
   const [articles, setArticles] = useState<KbArticle[]>([]);
+  const catLabel = useRef<(c: string) => string>((c) => c);
   const [glossary, setGlossary] = useState<{ search: (q: string) => GlossaryTerm[] } | null>(null);
   const [terps, setTerps] = useState<{ id: string; name: string; aliases: string[]; className: string }[]>([]);
   useEffect(() => {
-    if (open && !articles.length) void import('../lib/knowledge').then((m) => setArticles(m.KB_ARTICLES));
+    if (open && !articles.length) void import('../lib/knowledge').then((m) => {
+      catLabel.current = m.categoryLabel;
+      setArticles(m.KB_ARTICLES);
+    });
     if (open && !glossary) void import('../lib/academy/glossary').then((m) => setGlossary({ search: m.searchGlossary }));
     if (open && !terps.length) void import('../lib/catalog/terpenes').then((m) => setTerps(m.TERPENES));
   }, [open, articles.length, glossary, terps.length]);
@@ -144,7 +148,7 @@ export function CommandPalette() {
     const catalogItems: Item[] = remote.q && remote.q === q.trim() ? remote.cultivars.map((c) => ({ id: `c-${c.id}`, group: 'catalog', label: c.version ? `${c.name} (${c.version})` : c.name, hint: c.breeder.name + (c.auto ? ' · Auto' : ''), icon: <Dna className="size-4" />, run: close(() => navigate(`discover/cultivar/${c.id}`)) })) : [];
     if (catalogItems.length && remote.q) catalogItems.push({ id: 'c-all', group: 'catalog', label: t('shell.palette.allMatches', { q: remote.q }), icon: <Search className="size-4" />, run: close(() => navigate(`discover?q=${encodeURIComponent(remote.q)}`)) });
     const breederItems: Item[] = remote.q && remote.q === q.trim() ? remote.breeders.map((b) => ({ id: `b-${b.id}`, group: 'breeders', label: b.name, hint: t('shell.palette.strainCount', { count: b.cultivarCount }), icon: <Users className="size-4" />, run: close(() => navigate(`discover/breeders/${b.id}`)) })) : [];
-    const knowledge: Item[] = query.length >= 2 ? articles.filter((a) => normalize(`${a.title} ${a.summary}`).includes(query)).slice(0, 4).map((a) => ({ id: `k-${a.id}`, group: 'knowledge', label: a.title, hint: `Academy · ${a.category}`, icon: <BookOpen className="size-4" />, run: close(() => navigate(`discover/learn/${a.id}`)) })) : [];
+    const knowledge: Item[] = query.length >= 2 ? articles.filter((a) => normalize(`${a.title} ${a.summary}`).includes(query)).slice(0, 4).map((a) => ({ id: `k-${a.id}`, group: 'knowledge', label: a.title, hint: `Academy · ${catLabel.current(a.category)}`, icon: <BookOpen className="size-4" />, run: close(() => navigate(`discover/learn/${a.id}`)) })) : [];
     const terms: Item[] = glossary
       ? glossary
           .search(q)

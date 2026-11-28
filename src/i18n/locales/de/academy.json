@@ -1,0 +1,86 @@
+{
+ "review": {
+  "volltext": "Quellen im Volltext geprüft",
+  "teilweise": "Quellen teilweise im Volltext geprüft",
+  "bibliografisch": "Quellen nur bibliografisch geprüft"
+ },
+ "readPct": "{n} % gelesen",
+ "resume": "An der letzten Stelle weiterlesen ({n} %)",
+ "pathProgress": "{title}: {a} von {b} gelesen",
+ "next": "Weiter: {title}",
+ "inCat": "in „{cat}“",
+ "minutes": "{n} Min.",
+ "completed": "Abgeschlossen ✓",
+ "contentsN": {
+  "one": "Inhalt ({count} Abschnitt)",
+  "other": "Inhalt ({count} Abschnitte)"
+ },
+ "articlesN": {
+  "one": "{count} Artikel",
+  "other": "{count} Artikel"
+ },
+ "sourcesN": {
+  "one": "{count} Quelle",
+  "other": "{count} Quellen"
+ },
+ "rv": {
+  "full": "Volltext",
+  "partial": "teilw. Volltext",
+  "biblio": "bibliografisch"
+ },
+ "reviewStatus": "Prüfstatus",
+ "reviewPending": "Eine externe fachliche Begutachtung steht noch aus.",
+ "academy": "Academy",
+ "updated": "Aktualisiert am",
+ "saved": "Gemerkt",
+ "remember": "Merken",
+ "terms": "Begriffe",
+ "sources": "Quellen",
+ "disclaimer": "Informationsangebot ohne medizinische oder rechtliche Beratung. Zahlen aus Studien beschreiben deren Versuchsbedingungen und sind keine allgemeingültigen Sollwerte.",
+ "lastStep": "Letzter Schritt des Pfads",
+ "readOn": "Weiterlesen",
+ "contents": "Inhalt",
+ "glossary": "Glossar",
+ "glossarySearch": "Glossar durchsuchen",
+ "termPh": "Begriff suchen …",
+ "noTerm": "Kein Begriff gefunden.",
+ "article": "Artikel",
+ "notFound": "Artikel nicht gefunden",
+ "toOverview": "Zur Übersicht",
+ "title": "Cannabis 101",
+ "paths": "Lernpfade",
+ "searchArticles": "Artikel durchsuchen",
+ "searchPh": "Suchen, z. B. VPD, Mehltau, THCA, Erntezeitpunkt …",
+ "category": "Kategorie",
+ "allCats": "Alle Kategorien",
+ "level": "Niveau",
+ "allLevels": "Alle Niveaus",
+ "beginner": "Einsteiger",
+ "advanced": "Fortgeschritten",
+ "categories": "Kategorien",
+ "noArticles": "Keine Artikel gefunden",
+ "noArticlesText": "In dieser Kategorie gibt es mit diesen Filtern noch keine Artikel.",
+ "cat": {
+  "basics": "Grundlagen",
+  "botany": "Pflanze & Botanik",
+  "genetics": "Genetik & Züchtung",
+  "growing": "Anbau-Grundlagen",
+  "substrate": "Substrat & Bewässerung",
+  "nutrients": "pH, EC & Nährstoffe",
+  "light": "Licht",
+  "climate": "Klima & VPD",
+  "health": "Pflanzengesundheit",
+  "pests": "Schädlinge",
+  "harvest": "Ernte",
+  "drying": "Trocknung & Lagerung",
+  "cannabinoids": "Cannabinoide",
+  "terpenes": "Terpene",
+  "lab": "Labor & Analytik",
+  "risk": "Konsum & Risiko",
+  "reference": "Nachschlagen"
+ },
+ "lvl": {
+  "Einsteiger": "Einsteiger",
+  "Fortgeschritten": "Fortgeschritten"
+ }
+}

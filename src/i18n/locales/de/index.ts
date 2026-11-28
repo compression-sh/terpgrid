@@ -1,4 +1,5 @@
 /** Deutsches Wörterbuch – Vorlage und Rückfall für alle anderen Sprachen (erzeugt, Bereiche je Datei). */
+import academy from './academy.json';
 import account from './account.json';
 import admin from './admin.json';
 import collab from './collab.json';
@@ -15,4 +16,4 @@ import settings from './settings.json';
 import shell from './shell.json';
 import tools from './tools.json';
 
-export default { account, admin, collab, common, dashboard, data, discover, grow, lab, labels, mine, photos, settings, shell, tools };
+export default { academy, account, admin, collab, common, dashboard, data, discover, grow, lab, labels, mine, photos, settings, shell, tools };

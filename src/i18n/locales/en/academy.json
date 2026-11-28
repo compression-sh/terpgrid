@@ -1,0 +1,86 @@
+{
+ "review": {
+  "volltext": "Sources checked in full text",
+  "teilweise": "Sources partly checked in full text",
+  "bibliografisch": "Sources checked bibliographically only"
+ },
+ "readPct": "{n} % read",
+ "resume": "Continue where you left off ({n} %)",
+ "pathProgress": "{title}: {a} of {b} read",
+ "next": "Next: {title}",
+ "inCat": "in “{cat}”",
+ "minutes": "{n} min",
+ "completed": "Completed ✓",
+ "contentsN": {
+  "one": "Contents ({count} section)",
+  "other": "Contents ({count} sections)"
+ },
+ "articlesN": {
+  "one": "{count} article",
+  "other": "{count} articles"
+ },
+ "sourcesN": {
+  "one": "{count} source",
+  "other": "{count} sources"
+ },
+ "rv": {
+  "full": "full text",
+  "partial": "partly full text",
+  "biblio": "bibliographic"
+ },
+ "reviewStatus": "Review status",
+ "reviewPending": "An external expert review is still pending.",
+ "academy": "Academy",
+ "updated": "Updated on",
+ "saved": "Saved",
+ "remember": "Save",
+ "terms": "Terms",
+ "sources": "Sources",
+ "disclaimer": "Information only, not medical or legal advice. Figures from studies describe their experimental conditions and are not generally valid targets.",
+ "lastStep": "Last step of the path",
+ "readOn": "Read on",
+ "contents": "Contents",
+ "glossary": "Glossary",
+ "glossarySearch": "Search glossary",
+ "termPh": "Search term …",
+ "noTerm": "No term found.",
+ "article": "Article",
+ "notFound": "Article not found",
+ "toOverview": "Go to overview",
+ "title": "Cannabis 101",
+ "paths": "Learning paths",
+ "searchArticles": "Search articles",
+ "searchPh": "Search, e.g. VPD, powdery mildew, THCA, harvest time …",
+ "category": "Category",
+ "allCats": "All categories",
+ "level": "Level",
+ "allLevels": "All levels",
+ "beginner": "Beginner",
+ "advanced": "Advanced",
+ "categories": "Categories",
+ "noArticles": "No articles found",
+ "noArticlesText": "There are no articles in this category with these filters yet.",
+ "cat": {
+  "basics": "Basics",
+  "botany": "Plant & botany",
+  "genetics": "Genetics & breeding",
+  "growing": "Growing basics",
+  "substrate": "Substrate & irrigation",
+  "nutrients": "pH, EC & nutrients",
+  "light": "Light",
+  "climate": "Climate & VPD",
+  "health": "Plant health",
+  "pests": "Pests",
+  "harvest": "Harvest",
+  "drying": "Drying & storage",
+  "cannabinoids": "Cannabinoids",
+  "terpenes": "Terpenes",
+  "lab": "Lab & analytics",
+  "risk": "Use & risk",
+  "reference": "Reference"
+ },
+ "lvl": {
+  "Einsteiger": "Beginner",
+  "Fortgeschritten": "Advanced"
+ }
+}
