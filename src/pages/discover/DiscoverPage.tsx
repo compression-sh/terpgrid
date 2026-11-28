@@ -14,16 +14,16 @@ import type { CatalogStrain, TypeClass } from '../../lib/catalog/types';
 import { fmtDateTime, nowLocal } from '../../lib/dates';
 import { parseLocaleNumber } from '../../lib/calc/validation';
 import { type RankedStrain, rankStrains, relevanceCounts } from '../../lib/catalog/rank';
-import { intlLocale } from '../../i18n';
+import { t, intlLocale } from '../../i18n';
 
 type SortKey = 'relevance' | 'source' | 'name' | 'thc' | 'cbd' | 'breeder';
 const SORTS: { id: SortKey; label: string }[] = [
-  { id: 'relevance', label: 'Relevanz (Suche)' },
-  { id: 'source', label: 'Reihenfolge der Quelle' },
-  { id: 'name', label: 'Name A–Z' },
-  { id: 'thc', label: 'THC (Obergrenze, absteigend)' },
-  { id: 'cbd', label: 'CBD (Obergrenze, absteigend)' },
-  { id: 'breeder', label: 'Breeder A–Z' },
+  { id: 'relevance', get label() { return t('discover.dp.sRel'); } },
+  { id: 'source', get label() { return t('discover.dp.sSource'); } },
+  { id: 'name', get label() { return t('discover.dp.sName'); } },
+  { id: 'thc', get label() { return t('discover.dp.sThc'); } },
+  { id: 'cbd', get label() { return t('discover.dp.sCbd'); } },
+  { id: 'breeder', get label() { return t('discover.dp.sBreeder'); } },
 ];
 
 export interface DiscoverFilters {
@@ -55,7 +55,7 @@ export function applyFilters(items: CatalogStrain[], f: DiscoverFilters, favKeys
     if (f.type && s.typeClass !== f.type) return false;
     if (f.breeder && !(s.breeder ?? '').toLowerCase().includes(f.breeder.toLowerCase())) return false;
     if (f.genetics && !(s.genetics ?? '').toLowerCase().includes(f.genetics.toLowerCase())) return false;
-    if (terp && !s.terpenes.some((t) => (matchTerpene(t)?.id ?? t.toLowerCase()) === terp)) return false;
+    if (terp && !s.terpenes.some((tv) => (matchTerpene(tv)?.id ?? tv.toLowerCase()) === terp)) return false;
     if (f.fav && !favKeys.has(s.key)) return false;
     // Spannen-Filter: Sorte muss Werte haben und sich mit dem gewünschten Bereich überschneiden.
     if (f.thcMin !== undefined || f.thcMax !== undefined) {
@@ -107,30 +107,30 @@ function FilterFields({ f, set, breeders }: { f: DiscoverFilters; set: (p: Recor
   return (
     <>
       <label className="space-y-1">
-        <span className="text-[11px] font-medium text-ink-400">Typ</span>
+        <span className="text-[11px] font-medium text-ink-400">{t('discover.dp.type')}</span>
         <select className={field} value={f.type} onChange={(e) => set({ type: e.target.value || undefined })}>
-          <option value="">Alle Typen</option>
-          {(['indica', 'sativa', 'hybrid', 'unknown'] as TypeClass[]).map((t) => (
-            <option key={t} value={t}>
-              {TYPE_META[t].label}
+          <option value="">{t('discover.dp.allTypes')}</option>
+          {(['indica', 'sativa', 'hybrid', 'unknown'] as TypeClass[]).map((tv) => (
+            <option key={tv} value={tv}>
+              {TYPE_META[tv].label}
             </option>
           ))}
         </select>
       </label>
       <label className="space-y-1">
-        <span className="text-[11px] font-medium text-ink-400">Terpen</span>
+        <span className="text-[11px] font-medium text-ink-400">{t('discover.dp.terpene')}</span>
         <select className={field} value={f.terp} onChange={(e) => set({ terp: e.target.value || undefined })}>
-          <option value="">Alle Terpene</option>
-          {TERPENES.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
+          <option value="">{t('discover.dp.allTerps')}</option>
+          {TERPENES.map((tv) => (
+            <option key={tv.id} value={tv.id}>
+              {tv.name}
             </option>
           ))}
         </select>
       </label>
       <label className="space-y-1">
-        <span className="text-[11px] font-medium text-ink-400">Breeder</span>
-        <input className={field} list="dc-breeders" placeholder="enthält …" value={f.breeder} onChange={(e) => set({ breeder: e.target.value || undefined })} />
+        <span className="text-[11px] font-medium text-ink-400">{t('discover.dp.breeder')}</span>
+        <input className={field} list="dc-breeders" placeholder={t('discover.dp.contains')} value={f.breeder} onChange={(e) => set({ breeder: e.target.value || undefined })} />
         <datalist id="dc-breeders">
           {breeders.map((b) => (
             <option key={b} value={b} />
@@ -138,23 +138,23 @@ function FilterFields({ f, set, breeders }: { f: DiscoverFilters; set: (p: Recor
         </datalist>
       </label>
       <label className="space-y-1">
-        <span className="text-[11px] font-medium text-ink-400">Genetik enthält</span>
-        <input className={field} placeholder="z. B. Gelato" value={f.genetics} onChange={(e) => set({ genetics: e.target.value || undefined })} />
+        <span className="text-[11px] font-medium text-ink-400">{t('discover.dp.genetics')}</span>
+        <input className={field} placeholder={t('discover.dp.geneticsPh')} value={f.genetics} onChange={(e) => set({ genetics: e.target.value || undefined })} />
       </label>
       <fieldset className="space-y-1">
         <legend className="text-[11px] font-medium text-ink-400">THC %</legend>
         <div className="flex items-center gap-1.5">
-          <input className={`${field} w-full`} inputMode="decimal" placeholder="min" aria-label="THC minimal" value={f.thcMin ?? ''} onChange={(e) => set({ thcMin: e.target.value || undefined })} />
+          <input className={`${field} w-full`} inputMode="decimal" placeholder="min" aria-label={t('discover.dp.thcMin')} value={f.thcMin ?? ''} onChange={(e) => set({ thcMin: e.target.value || undefined })} />
           <span className="text-ink-600">–</span>
-          <input className={`${field} w-full`} inputMode="decimal" placeholder="max" aria-label="THC maximal" value={f.thcMax ?? ''} onChange={(e) => set({ thcMax: e.target.value || undefined })} />
+          <input className={`${field} w-full`} inputMode="decimal" placeholder="max" aria-label={t('discover.dp.thcMax')} value={f.thcMax ?? ''} onChange={(e) => set({ thcMax: e.target.value || undefined })} />
         </div>
       </fieldset>
       <fieldset className="space-y-1">
         <legend className="text-[11px] font-medium text-ink-400">CBD %</legend>
         <div className="flex items-center gap-1.5">
-          <input className={`${field} w-full`} inputMode="decimal" placeholder="min" aria-label="CBD minimal" value={f.cbdMin ?? ''} onChange={(e) => set({ cbdMin: e.target.value || undefined })} />
+          <input className={`${field} w-full`} inputMode="decimal" placeholder="min" aria-label={t('discover.dp.cbdMin')} value={f.cbdMin ?? ''} onChange={(e) => set({ cbdMin: e.target.value || undefined })} />
           <span className="text-ink-600">–</span>
-          <input className={`${field} w-full`} inputMode="decimal" placeholder="max" aria-label="CBD maximal" value={f.cbdMax ?? ''} onChange={(e) => set({ cbdMax: e.target.value || undefined })} />
+          <input className={`${field} w-full`} inputMode="decimal" placeholder="max" aria-label={t('discover.dp.cbdMax')} value={f.cbdMax ?? ''} onChange={(e) => set({ cbdMax: e.target.value || undefined })} />
         </div>
       </fieldset>
     </>
@@ -176,11 +176,11 @@ export function DiscoverPage() {
   const latest = useRef({ route, urlQuery, text });
   latest.current = { route, urlQuery, text };
   useEffect(() => {
-    const t = window.setTimeout(() => {
+    const tv = window.setTimeout(() => {
       const { route: r, urlQuery: u } = latest.current;
       if (u !== text.trim()) setQuery(r, { q: text.trim() || undefined });
     }, 350);
-    return () => window.clearTimeout(t);
+    return () => window.clearTimeout(tv);
   }, [text]);
   useEffect(() => {
     if (urlQuery !== latest.current.text.trim()) setText(urlQuery);
@@ -239,22 +239,22 @@ export function DiscoverPage() {
             <path key={i} transform={`translate(100 120) rotate(${-60 + i * 20})`} d="M0 0 C 14 -25, 8 -60, 0 -80 C -8 -60, -14 -25, 0 0 Z M0 0 L0 -76" />
           ))}
         </svg>
-        <h1 className="page-title max-w-2xl">Live-Katalog</h1>
-        <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-400">Dokumentierte Sorten mit Genetik, Cannabinoid-Spannen und Terpenen – jede Angabe mit Quelle und Evidenzstatus.</p>
+        <h1 className="page-title max-w-2xl">{t('discover.dp.live')}</h1>
+        <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-400">{t('discover.dp.liveSub')}</p>
         <div className="relative mt-6 max-w-2xl">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-ink-500" />
           <input
             type="search"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Sorte, Breeder oder Kreuzung suchen …"
-            aria-label="Sorten suchen"
+            placeholder={t('discover.dp.searchPh')}
+            aria-label={t('discover.dp.searchAria')}
             className="h-13 w-full rounded-2xl border border-white/[0.1] bg-ink-900/90 pl-12 pr-24 text-[15px] text-ink-50 shadow-[0_12px_40px_-20px_rgb(0_0_0/0.8)] outline-none transition-colors placeholder:text-ink-500 hover:border-white/[0.16] focus:border-leaf-500/50 focus:ring-4 focus:ring-leaf-500/10"
           />
           <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
-            {search.loading && <Loader2 className="size-4 animate-spin text-leaf-400" aria-label="Lädt" />}
+            {search.loading && <Loader2 className="size-4 animate-spin text-leaf-400" aria-label={t('discover.dp.loading')} />}
             {text && (
-              <button type="button" onClick={() => setText('')} aria-label="Suche leeren" className="grid size-7 place-items-center rounded-lg text-ink-400 hover:bg-white/[0.06] hover:text-ink-100">
+              <button type="button" onClick={() => setText('')} aria-label={t('discover.dp.clear')} className="grid size-7 place-items-center rounded-lg text-ink-400 hover:bg-white/[0.06] hover:text-ink-100">
                 <X className="size-4" />
               </button>
             )}
@@ -268,7 +268,7 @@ export function DiscoverPage() {
           <a href="https://www.strainapi.com/" target="_blank" rel="noopener noreferrer nofollow" referrerPolicy="no-referrer" className="hover:text-ink-300">
             Data provided by StrainAPI ↗
           </a>
-          {search.fetchedAt && <span>Stand {fmtDateTime(nowLocal(new Date(search.fetchedAt)))}</span>}
+          {search.fetchedAt && <span>{t('discover.dp.asOf', { date: fmtDateTime(nowLocal(new Date(search.fetchedAt))) })}</span>}
           {search.fromCache && (
             <span className="flex items-center gap-1 text-amber-300/90">
               <CloudOff className="size-3.5" /> zwischengespeichert
@@ -281,14 +281,13 @@ export function DiscoverPage() {
         <div className="mb-5 flex gap-3 rounded-2xl border border-sky-400/15 bg-sky-400/[0.05] p-4 text-[13px] leading-relaxed text-sky-100 animate-fade-up">
           <Info className="mt-0.5 size-4 shrink-0 text-sky-300" />
           <div className="min-w-0 flex-1">
-            <strong className="font-semibold">Online-Daten.</strong> Dieser Bereich lädt Sortendaten und Bilder von StrainAPI. Der Anbieter sieht dabei deine IP-Adresse und Suchbegriffe – nicht deine
-            Growlogs, Fotos, dein Journal oder deine Sammlung. Antworten werden lokal zwischengespeichert. Online-Abrufe lassen sich in den{' '}
+            <strong className="font-semibold">{t('discover.dp.online')}</strong> {t('discover.dp.onlineText')}{' '}
             <a href={href('settings')} className="underline">
-              Einstellungen
+              {t('discover.dp.settings')}
             </a>{' '}
-            abschalten.
+            {t('discover.dp.turnOff')}
           </div>
-          <button type="button" className="btn-ghost h-fit p-1.5" aria-label="Hinweis schließen" onClick={() => updateSettings({ discoverNoticeSeen: true })}>
+          <button type="button" className="btn-ghost h-fit p-1.5" aria-label={t('discover.dp.closeHint')} onClick={() => updateSettings({ discoverNoticeSeen: true })}>
             <X className="size-4" />
           </button>
         </div>
@@ -297,15 +296,15 @@ export function DiscoverPage() {
       {/* Filterleiste */}
       <div className="mb-4 flex items-center justify-between gap-3 lg:hidden">
         <button type="button" className="btn-ghost" onClick={() => setDrawer(true)}>
-          <SlidersHorizontal className="size-4" /> Filter{activeFilters > 0 && <span className="rounded-full bg-leaf-500/20 px-1.5 text-[11px] text-leaf-200">{activeFilters}</span>}
+          <SlidersHorizontal className="size-4" /> {t('discover.dp.filter')}{activeFilters > 0 && <span className="rounded-full bg-leaf-500/20 px-1.5 text-[11px] text-leaf-200">{activeFilters}</span>}
         </button>
         <button type="button" aria-pressed={f.fav} className={`btn-ghost ${f.fav ? 'border-leaf-500/30 text-leaf-200' : ''}`} onClick={() => set({ fav: f.fav ? undefined : '1' })}>
-          <Bookmark className={`size-4 ${f.fav ? 'fill-current' : ''}`} /> Favoriten
+          <Bookmark className={`size-4 ${f.fav ? 'fill-current' : ''}`} /> {t('discover.dp.favs')}
         </button>
       </div>
       <div className="card mb-4 hidden grid-cols-[repeat(6,minmax(0,1fr))_auto] items-end gap-3 p-3.5 lg:grid">
         <FilterFields f={f} set={set} breeders={breeders} />
-        <button type="button" aria-pressed={f.fav} className={`btn-ghost h-[34px] ${f.fav ? 'border-leaf-500/30 text-leaf-200' : ''}`} onClick={() => set({ fav: f.fav ? undefined : '1' })} title="Nur Favoriten">
+        <button type="button" aria-pressed={f.fav} className={`btn-ghost h-[34px] ${f.fav ? 'border-leaf-500/30 text-leaf-200' : ''}`} onClick={() => set({ fav: f.fav ? undefined : '1' })} title={t('discover.dp.onlyFavs')}>
           <Bookmark className={`size-4 ${f.fav ? 'fill-current' : ''}`} />
         </button>
       </div>
@@ -313,13 +312,13 @@ export function DiscoverPage() {
       {counts && !search.loading && search.items.length > 0 && (
         <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-white/[0.05] bg-white/[0.015] px-3 py-2 text-[12px] text-ink-400">
           <span>
-            <span className="font-mono text-ink-100">{counts.name}</span> im Namen
+            <span className="font-mono text-ink-100">{counts.name}</span> {t('discover.dp.inName')}
           </span>
           <span>
-            <span className="font-mono text-ink-100">{counts.genetics + counts.description}</span> in Abstammung/Beschreibung
+            <span className="font-mono text-ink-100">{counts.genetics + counts.description}</span> {t('discover.dp.inDesc')}
           </span>
-          <span title="Die Volltextsuche der Quelle findet den Begriff auch in Feldern, die nicht ausgeliefert werden.">
-            <span className="font-mono text-ink-100">{counts.fulltext}</span> weitere Volltexttreffer der Quelle
+          <span title={t('discover.dp.fulltextHint')}>
+            <span className="font-mono text-ink-100">{counts.fulltext}</span> {t('discover.dp.fulltext')}
           </span>
           {!search.complete && <span className="text-amber-200/80">· sortiert über die ersten {search.items.length} von {search.total.toLocaleString(intlLocale())}</span>}
           <label className="ml-auto inline-flex items-center gap-1.5 text-ink-300">
@@ -327,7 +326,7 @@ export function DiscoverPage() {
                 setNameOnlyPending(e.target.checked);
                 set({ nameOnly: e.target.checked ? '1' : undefined });
               }} />
-            Nur Namenstreffer
+            {t('discover.dp.onlyName')}
           </label>
         </div>
       )}
@@ -336,21 +335,21 @@ export function DiscoverPage() {
         <div className="flex flex-wrap items-center gap-2 text-[12px] text-ink-400">
           {localOnly ? (
             <span>
-              <span className="font-mono text-ink-100">{results.length}</span> von {search.items.length} geladenen {search.complete ? '(vollständig)' : `– insgesamt ${search.total.toLocaleString(intlLocale())}`}
+              <span className="font-mono text-ink-100">{results.length}</span> {t('discover.dp.ofLoaded', { n: search.items.length })} {search.complete ? t('discover.dp.complete') : t('discover.dp.totalN', { n: search.total })}
             </span>
           ) : (
             <span>
-              <span className="font-mono text-ink-100">{search.items.length}</span> von {search.total.toLocaleString(intlLocale())} angezeigt
+              <span className="font-mono text-ink-100">{search.items.length}</span> {t('discover.dp.ofShown', { n: search.total })}
             </span>
           )}
           {(activeFilters > 0 || q.get('q') || sort !== 'source') && (
             <button type="button" className="text-leaf-300 hover:underline" onClick={resetAll}>
-              Alles zurücksetzen
+              {t('discover.dp.resetAll')}
             </button>
           )}
         </div>
         <label className="flex items-center gap-2 text-[12px] text-ink-400">
-          Sortierung
+          {t('discover.dp.sort')}
           <select className="input-base w-auto py-1.5 text-[12px]" value={sort} onChange={(e) => set({ sort: e.target.value === 'source' ? undefined : e.target.value })}>
             {SORTS.map((s) => (
               <option key={s.id} value={s.id}>
@@ -363,47 +362,46 @@ export function DiscoverPage() {
 
       {localOnly && !search.complete && !search.loading && search.items.length > 0 && (
         <div className="mb-5">
-          <Callout tone="warn" title="Filter und Sortierung gelten nur für bereits geladene Sorten">
+          <Callout tone="warn" title={t('discover.dp.localOnly')}>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <span>
-                Die Quelle unterstützt diese Filter nicht serverseitig. Für ein vollständiges Ergebnis alle {search.total.toLocaleString(intlLocale())} {q.get('q') ? 'Treffer' : 'Sorten'} laden ({requestsForAll}{' '}
-                {requestsForAll === 1 ? 'Anfrage' : 'Anfragen'}, werden zwischengespeichert).
+                {t('discover.dp.notServer', { n: search.total, what: q.get('q') ? t('discover.dp.hits') : t('discover.dp.strains'), req: t('discover.dp.requests', { count: requestsForAll }) })}
               </span>
               <button type="button" className="btn-ghost shrink-0" onClick={search.loadAll} disabled={search.loadingMore}>
                 {search.loadingMore ? <Loader2 className="size-4 animate-spin" /> : <Database className="size-4" />}
-                {search.progress ? `${search.progress.loaded}/${search.progress.total}` : 'Alle laden'}
+                {search.progress ? `${search.progress.loaded}/${search.progress.total}` : t('discover.dp.loadAll')}
               </button>
             </div>
           </Callout>
         </div>
       )}
-      {localOnly && search.complete && search.items.length > 0 && <p className="mb-4 text-[12px] text-leaf-300/80">✓ Filter auf alle {search.items.length} {q.get('q') ? 'Treffer' : 'Sorten'} der Quelle angewendet.</p>}
+      {localOnly && search.complete && search.items.length > 0 && <p className="mb-4 text-[12px] text-leaf-300/80">✓ {t('discover.dp.appliedAll', { n: search.items.length, what: q.get('q') ? t('discover.dp.hits') : t('discover.dp.strains') })}</p>}
 
       {search.error && search.items.length === 0 ? (
         <div className="card">
           <EmptyState
             icon={search.errorKind === 'offline' ? <WifiOff /> : <CloudOff />}
-            title={search.errorKind === 'rate_limited' ? 'Anfragelimit erreicht' : search.errorKind === 'offline' ? 'Keine Verbindung zur Datenquelle' : 'Daten konnten nicht geladen werden'}
+            title={search.errorKind === 'rate_limited' ? t('discover.dp.rateLimited') : search.errorKind === 'offline' ? t('discover.dp.offline') : t('discover.dp.loadFailed')}
             text={
               <>
                 {search.error}
-                {search.errorKind === 'offline' && ' Gespeicherte Favoriten findest du unter „Meine Sorten“.'}
+                {search.errorKind === 'offline' && ` ${t('discover.dp.favHint')}`}
               </>
             }
             action={
               <>
                 <button type="button" className="btn-primary" onClick={search.retry}>
-                  <RefreshCw className="size-4" /> Erneut versuchen
+                  <RefreshCw className="size-4" /> {t('discover.dp.retry')}
                 </button>
                 <a href={href('strains')} className="btn-ghost">
-                  Meine Sorten
+                  {t('discover.dp.mine')}
                 </a>
               </>
             }
           />
         </div>
       ) : search.loading && search.items.length === 0 ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-busy="true" aria-label="Sorten werden geladen">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-busy="true" aria-label={t('discover.dp.loadingStrains')}>
           {Array.from({ length: 8 }, (_, i) => (
             <StrainCardSkeleton key={i} />
           ))}
@@ -412,17 +410,17 @@ export function DiscoverPage() {
         <div className="card">
           <EmptyState
             icon={<Search />}
-            title={f.fav && favKeys.size === 0 ? 'Noch keine Favoriten' : 'Keine passenden Sorten'}
+            title={f.fav && favKeys.size === 0 ? t('discover.dp.noFavs') : t('discover.dp.noMatch')}
             text={
               f.fav && favKeys.size === 0
-                ? 'Mit dem Lesezeichen-Symbol gemerkte Sorten erscheinen hier und unter „Meine Sorten“.'
+                ? t('discover.dp.noFavsText')
                 : localOnly && !search.complete
-                  ? 'In den geladenen Sorten gibt es keine Treffer. Alle laden, um den gesamten Katalog zu durchsuchen.'
-                  : 'Suchbegriff oder Filter anpassen.'
+                  ? t('discover.dp.noMatchLoaded')
+                  : t('discover.dp.adjust')
             }
             action={
               <button type="button" className="btn-ghost" onClick={resetAll}>
-                Zurücksetzen
+                {t('discover.dp.reset')}
               </button>
             }
           />
@@ -437,7 +435,7 @@ export function DiscoverPage() {
           {results.length > visible && (
             <div className="mt-5 flex justify-center">
               <button type="button" className="btn-ghost" onClick={() => setVisible((v) => v + 48)}>
-                Weitere {Math.min(48, results.length - visible)} anzeigen ({results.length - visible} übrig)
+                {t('discover.dp.showMore', { n: Math.min(48, results.length - visible), left: results.length - visible })}
               </button>
             </div>
           )}
@@ -446,13 +444,12 @@ export function DiscoverPage() {
             {search.error && <p className="text-[12px] text-rose-300">{search.error}</p>}
             {!search.complete && !localOnly && (
               <button type="button" className="btn-ghost" onClick={search.loadMore} disabled={search.loadingMore}>
-                {search.loadingMore ? <Loader2 className="size-4 animate-spin" /> : null} Weitere laden
+                {search.loadingMore ? <Loader2 className="size-4 animate-spin" /> : null} {t('discover.dp.loadMore')}
               </button>
             )}
-            {search.complete && <p className="text-[12px] text-ink-500">Alle {search.items.length} Einträge geladen.</p>}
+            {search.complete && <p className="text-[12px] text-ink-500">{t('discover.dp.allLoaded', { n: search.items.length })}</p>}
             <p className="max-w-xl text-center text-[11px] leading-relaxed text-ink-600">
-              Sortenbilder und -daten: StrainAPI. Bildrechte liegen bei den jeweiligen Rechteinhabern; TERPGRID speichert Bilder nicht dauerhaft. Angaben zu THC/CBD sind Spannen laut Quelle,
-              keine Messung deiner Probe.
+              {t('discover.dp.footer')}
             </p>
           </div>
         </>
@@ -461,12 +458,12 @@ export function DiscoverPage() {
       <Modal
         open={drawer}
         onClose={() => setDrawer(false)}
-        title="Filter"
+        title={t('discover.dp.filter')}
         size="sm"
         footer={
           <>
             <button type="button" className="btn-ghost" onClick={resetAll}>
-              Zurücksetzen
+              {t('discover.dp.reset')}
             </button>
             <button type="button" className="btn-primary" onClick={() => setDrawer(false)}>
               {results.length} anzeigen
@@ -476,7 +473,7 @@ export function DiscoverPage() {
       >
         <div className="grid gap-4">
           <FilterFields f={f} set={set} breeders={breeders} />
-          <p className="hint">Filter werden auf die geladenen Sorten angewendet ({search.items.length} von {search.total}).</p>
+          <p className="hint">{t('discover.dp.appliedLoaded', { a: search.items.length, b: search.total })}</p>
         </div>
       </Modal>
     </div>
