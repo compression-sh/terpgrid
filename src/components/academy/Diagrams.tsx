@@ -3,12 +3,13 @@ import { SRC } from '../../lib/academy/sources';
 import { fmt } from '../../lib/format';
 import { dli, svpKPa, vpd } from '../../lib/grow/measure';
 import type { KbDiagram } from '../../lib/knowledge';
+import { t } from '../../i18n';
 
 /** VPD-Bänder laut Literaturübersicht in Corredor-Perilla et al. (2025) – Orientierung, keine geprüften Optima */
 const VPD_BANDS = [
-  { label: 'Steckling/Sämling', lo: 0.5, hi: 1.0, color: '#7cc7d9' },
-  { label: 'Wachstum', lo: 0.7, hi: 1.2, color: '#5fe39a' },
-  { label: 'Blüte', lo: 1.0, hi: 1.5, color: '#f5d061' },
+  { get label() { return t('academy.dg.seedling'); }, lo: 0.5, hi: 1.0, color: '#7cc7d9' },
+  { get label() { return t('academy.dg.veg'); }, lo: 0.7, hi: 1.2, color: '#5fe39a' },
+  { get label() { return t('academy.dg.flower'); }, lo: 1.0, hi: 1.5, color: '#f5d061' },
 ];
 
 function Slider({ label, value, min, max, step, unit, onChange }: { label: string; value: number; min: number; max: number; step: number; unit: string; onChange: (v: number) => void }) {
@@ -38,35 +39,35 @@ function Frame({ title, children, caption }: { title: string; children: React.Re
 
 /** Interaktives VPD-Diagramm: Temperatur × relative Feuchte, mit Orientierungsbändern */
 export function VpdDiagram() {
-  const [t, setT] = useState(25);
+  const [temp, setT] = useState(25);
   const [rh, setRh] = useState(60);
-  const v = vpd({ temperatureC: t, humidityPct: rh })!.value;
+  const v = vpd({ temperatureC: temp, humidityPct: rh })!.value;
   const temps = Array.from({ length: 11 }, (_, i) => 16 + i * 2); // 16–36 °C
   const rhs = Array.from({ length: 13 }, (_, i) => 30 + i * 5); // 30–90 %
   const near = (xs: number[], v: number) => xs.reduce((a, b) => (Math.abs(b - v) < Math.abs(a - v) ? b : a));
-  const nearT = near(temps, t);
+  const nearT = near(temps, temp);
   const nearRh = near(rhs, rh);
   const color = (x: number) => (x < 0.4 ? '#38bdf8' : x < 0.8 ? '#7cc7d9' : x < 1.2 ? '#5fe39a' : x < 1.6 ? '#f5d061' : '#f59e8b');
   return (
     <Frame
-      title="Dampfdruckdefizit (Luft-VPD)"
+      title={t('academy.dg.vpd')}
       caption={
         <>
-          VPD = SVP(T) × (1 − rF/100), SVP nach Tetens; Blatttemperatur = Lufttemperatur angenommen. Farbige Bänder: in der Literatur genannte Bereiche laut{' '}
+          {t('academy.dg.vpdCaption')}{' '}
           <a className="text-leaf-300 hover:underline" href={SRC.corredor2025.url} target="_blank" rel="noopener noreferrer nofollow" referrerPolicy="no-referrer">
             Corredor-Perilla et al. (2025)
           </a>{' '}
-          – Orientierung, keine für jede Sorte geprüften Optima.
+          {t('academy.dg.vpdCaption2')}
         </>
       }
     >
       <div className="flex flex-col gap-3 sm:flex-row">
-        <Slider label="Lufttemperatur" value={t} min={14} max={36} step={0.5} unit="°C" onChange={setT} />
-        <Slider label="Relative Feuchte" value={rh} min={20} max={95} step={1} unit="%" onChange={setRh} />
+        <Slider label={t('academy.dg.temp')} value={temp} min={14} max={36} step={0.5} unit="°C" onChange={setT} />
+        <Slider label={t('academy.dg.rh')} value={rh} min={20} max={95} step={1} unit="%" onChange={setRh} />
       </div>
       <p className="mt-3 text-[13px] text-ink-200" aria-live="polite">
-        VPD bei {fmt(t)} °C und {rh} %: <span className="font-mono text-[15px] font-semibold text-ink-50">{fmt(v)} kPa</span>
-        <span className="text-ink-500"> · Sättigungsdampfdruck {fmt(Math.round(svpKPa(t) * 100) / 100)} kPa</span>
+        {t('academy.dg.vpdAt', { t: fmt(temp), rh })} <span className="font-mono text-[15px] font-semibold text-ink-50">{fmt(v)} kPa</span>
+        <span className="text-ink-500">{t('academy.dg.svp')} {fmt(Math.round(svpKPa(temp) * 100) / 100)} kPa</span>
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         {VPD_BANDS.map((b) => {
@@ -80,10 +81,10 @@ export function VpdDiagram() {
         })}
       </div>
       <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[480px] border-separate border-spacing-0.5 text-center text-[10px]" aria-label="VPD-Tabelle in kPa">
+        <table className="w-full min-w-[480px] border-separate border-spacing-0.5 text-center text-[10px]" aria-label={t('academy.dg.table')}>
           <thead>
             <tr>
-              <th className="pr-1 text-right font-normal text-ink-500">°C / rF</th>
+              <th className="pr-1 text-right font-normal text-ink-500">{t('academy.dg.tableHead')}</th>
               {rhs.map((r) => (
                 <th key={r} scope="col" className="font-normal text-ink-500">
                   {r}
@@ -123,29 +124,29 @@ export function DliDiagram() {
   const max = (1800 * 18 * 3600) / 1e6;
   const marks = [
     { p: 600, label: '600' },
-    { p: 1000, label: '1.000' },
-    { p: 1800, label: '1.800' },
+    { p: 1000, get label() { return fmt(1000); } },
+    { p: 1800, get label() { return fmt(1800); } },
   ];
   return (
     <Frame
-      title="Tageslichtintegral (DLI)"
+      title={t('academy.dg.dli')}
       caption={
         <>
-          DLI = PPFD × Stunden × 3600 / 10⁶ (konstante PPFD angenommen). Markiert sind Lichtstufen aus den Studien von{' '}
+          {t('academy.dg.dliCaption')}{' '}
           <a className="text-leaf-300 hover:underline" href={SRC.llewellyn2022.url} target="_blank" rel="noopener noreferrer nofollow" referrerPolicy="no-referrer">
             Llewellyn et al. (2022)
           </a>{' '}
-          (600–1.000) und{' '}
+          {t('academy.dg.dliMid', { a: fmt(600), b: fmt(1000) })}{' '}
           <a className="text-leaf-300 hover:underline" href={SRC.rodriguez2021.url} target="_blank" rel="noopener noreferrer nofollow" referrerPolicy="no-referrer">
             Rodriguez-Morrison et al. (2021)
           </a>{' '}
-          (bis 1.800 µmol·m⁻²·s⁻¹) bei 12 Stunden.
+          {t('academy.dg.dliEnd', { v: fmt(1800) })}
         </>
       }
     >
       <div className="flex flex-col gap-3 sm:flex-row">
         <Slider label="PPFD" value={ppfd} min={100} max={1800} step={50} unit="µmol·m⁻²·s⁻¹" onChange={setPpfd} />
-        <Slider label="Lichtdauer" value={h} min={8} max={18} step={0.5} unit="h" onChange={setH} />
+        <Slider label={t('academy.dg.hours')} value={h} min={8} max={18} step={0.5} unit="h" onChange={setH} />
       </div>
       <p className="mt-3 text-[13px] text-ink-200" aria-live="polite">
         DLI: <span className="font-mono text-[15px] font-semibold text-ink-50">{fmt(value)} mol·m⁻²·d⁻¹</span>
@@ -172,14 +173,14 @@ export function DliDiagram() {
 /** Lebenszyklus photoperiodischer Pflanzen (schematisch, ohne Zeitangaben je Sorte) */
 export function LifecycleDiagram() {
   const steps = [
-    { t: 'Keimung / Steckling', d: 'Bewurzelung', c: '#7cc7d9' },
-    { t: 'Wachstum', d: 'langer Tag, z. B. 18 h', c: '#5fe39a' },
-    { t: 'Blüte', d: 'lange Nacht, üblich 12 h', c: '#f5d061' },
-    { t: 'Ernte', d: 'Narbenfarbe als Hinweis', c: '#f59e8b' },
-    { t: 'Trocknen & Curen', d: 'Feuchte senken, lagern', c: '#b39ddb' },
+    { get t() { return t('academy.dg.l1'); }, get d() { return t('academy.dg.l1d'); }, c: '#7cc7d9' },
+    { get t() { return t('academy.dg.veg'); }, get d() { return t('academy.dg.l2d'); }, c: '#5fe39a' },
+    { get t() { return t('academy.dg.flower'); }, get d() { return t('academy.dg.l3d'); }, c: '#f5d061' },
+    { get t() { return t('academy.dg.l4'); }, get d() { return t('academy.dg.l4d'); }, c: '#f59e8b' },
+    { get t() { return t('academy.dg.l5'); }, get d() { return t('academy.dg.l5d'); }, c: '#b39ddb' },
   ];
   return (
-    <Frame title="Ablauf (photoperiodische Sorten)" caption="Schema. Dauer je Phase hängt von Sorte, Umwelt und Zielen ab; Autoflowering-Sorten blühen weitgehend unabhängig von der Tageslänge.">
+    <Frame title={t('academy.dg.cycle')} caption={t('academy.dg.cycleSub')}>
       <ol className="grid gap-2 sm:grid-cols-5">
         {steps.map((s, i) => (
           <li key={s.t} className="relative rounded-xl border border-white/[0.07] p-3" style={{ background: `${s.c}12` }}>
@@ -198,10 +199,10 @@ export function LifecycleDiagram() {
 /** Vier Stufen der Narbenfarbe nach Tran et al. (2025) */
 export function StigmaDiagram() {
   const stages = [
-    { n: 1, label: 'ganz weiß', amber: 0 },
-    { n: 2, label: 'teilweise bernstein', amber: 0.35 },
-    { n: 3, label: 'überwiegend bernstein', amber: 0.7 },
-    { n: 4, label: 'ganz bernstein', amber: 1 },
+    { n: 1, get label() { return t('academy.dg.s1'); }, amber: 0 },
+    { n: 2, get label() { return t('academy.dg.s2'); }, amber: 0.35 },
+    { n: 3, get label() { return t('academy.dg.s3'); }, amber: 0.7 },
+    { n: 4, get label() { return t('academy.dg.s4'); }, amber: 1 },
   ];
   const mix = (a: number) => {
     const w = [236, 236, 228];
@@ -210,14 +211,14 @@ export function StigmaDiagram() {
   };
   return (
     <Frame
-      title="Narbenfarbe in vier Stufen"
+      title={t('academy.dg.stigma')}
       caption={
         <>
-          Einteilung nach{' '}
+          {t('academy.dg.stigmaBy')}{' '}
           <a className="text-leaf-300 hover:underline" href={SRC.tran2025.url} target="_blank" rel="noopener noreferrer nofollow" referrerPolicy="no-referrer">
             Tran et al. (2025)
           </a>
-          . Bei 22 von 25 Genotypen lag das Cannabinoid-Maximum zwischen Stufe 3 und 4; einige erreichten es früher. Schematische Darstellung, kein Foto.
+          {t('academy.dg.stigmaText')}
         </>
       }
     >
@@ -231,7 +232,7 @@ export function StigmaDiagram() {
                 return <path key={i} d={`M30 52 Q ${30 + 26 * Math.cos(a) * 0.5} ${40 + 22 * Math.sin(a) * 0.5} ${30 + 26 * Math.cos(a)} ${44 + 34 * Math.sin(a)}`} stroke={isAmber ? mix(1) : mix(0)} strokeWidth="2.2" fill="none" strokeLinecap="round" />;
               })}
             </svg>
-            <p className="font-mono text-[11px] text-ink-300">Stufe {s.n}</p>
+            <p className="font-mono text-[11px] text-ink-300">{t('academy.dg.stage', { n: s.n })}</p>
             <p className="text-[10.5px] text-ink-500">{s.label}</p>
           </div>
         ))}
