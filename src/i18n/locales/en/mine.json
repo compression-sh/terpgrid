@@ -459,5 +459,19 @@
   "ratings": "At least 3 rated entries needed.",
   "noExpenses": "No expenses in the last 12 months.",
   "deletedGrow": "Deleted grow"
+ },
+ "tle": {
+  "growStarted": "Grow started: {name}",
+  "milestone": "Milestone",
+  "entry": "Entry",
+  "photo": "Photo",
+  "journal": "Journal: {name}",
+  "strainSaved": "Strain saved: {name}",
+  "lab": "Lab report: {title}",
+  "collection": "Collection: {name}",
+  "done": "Done: {title}",
+  "journalEntry": "Journal entry",
+  "strainCreated": "Strain created: {name}",
+  "fromDiscover": "from Discover"
  }
 }

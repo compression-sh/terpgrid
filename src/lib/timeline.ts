@@ -7,6 +7,7 @@ import type { Activity, GrowPhase, GrowProject, InventoryItem, JournalEntry, Lab
 import { INVENTORY_CATEGORY_LABEL } from './grow/labels';
 import { ACTIVITY_LABEL } from './grow/labels';
 import { PHASE_LABEL } from './grow/phases';
+import { t } from '../i18n';
 
 export type TimelineKind = 'milestone' | 'activity' | 'measurement' | 'photo' | 'journal' | 'strain' | 'collection' | 'lab' | 'reminder';
 
@@ -45,9 +46,9 @@ export function buildTimeline(d: TimelineData, opts: { today?: string } = {}): T
   const growName = (id?: string) => (id ? grow.get(id)?.name : undefined);
 
   for (const g of d.grows) {
-    out.push({ id: `g-start-${g.id}`, kind: 'milestone', at: g.startDate, title: `Grow gestartet: ${g.name}`, to: `grows/${g.id}`, growId: g.id });
+    out.push({ id: `g-start-${g.id}`, kind: 'milestone', at: g.startDate, title: t('mine.tle.growStarted', { name: g.name }), to: `grows/${g.id}`, growId: g.id });
     for (const [phase, date] of Object.entries(g.phaseDates ?? {}) as [GrowPhase, string][]) {
-      if (date) out.push({ id: `g-${phase}-${g.id}`, kind: 'milestone', at: date, title: `${PHASE_LABEL[phase]} · ${g.name}`, subtitle: 'Meilenstein', to: `grows/${g.id}`, growId: g.id });
+      if (date) out.push({ id: `g-${phase}-${g.id}`, kind: 'milestone', at: date, title: `${PHASE_LABEL[phase]} · ${g.name}`, subtitle: t('mine.tle.milestone'), to: `grows/${g.id}`, growId: g.id });
     }
   }
   for (const p of d.plants) {
@@ -62,7 +63,7 @@ export function buildTimeline(d: TimelineData, opts: { today?: string } = {}): T
       id: `a-${a.id}`,
       kind: isMeasure ? 'measurement' : 'activity',
       at: a.date,
-      title: a.title || ACTIVITY_LABEL[a.type] || 'Eintrag',
+      title: a.title || ACTIVITY_LABEL[a.type] || t('mine.tle.entry'),
       subtitle: [ACTIVITY_LABEL[a.type], where].filter(Boolean).join(' · '),
       to: a.plantId ? `grows/${a.growId}/plants/${a.plantId}` : `grows/${a.growId}`,
       growId: a.growId,
@@ -70,25 +71,25 @@ export function buildTimeline(d: TimelineData, opts: { today?: string } = {}): T
   }
   for (const ph of d.photos) {
     const where = ph.plantId ? plant.get(ph.plantId)?.name : growName(ph.growId);
-    out.push({ id: `ph-${ph.id}`, kind: 'photo', at: ph.takenAt, title: ph.note || 'Foto', subtitle: where, to: ph.growId ? `grows/${ph.growId}?tab=photos` : 'photos', growId: ph.growId, photoId: ph.id });
+    out.push({ id: `ph-${ph.id}`, kind: 'photo', at: ph.takenAt, title: ph.note || t('mine.tle.photo'), subtitle: where, to: ph.growId ? `grows/${ph.growId}?tab=photos` : 'photos', growId: ph.growId, photoId: ph.id });
   }
   for (const j of d.journal) {
     const name = (j.strainId && strain.get(j.strainId)?.name) || j.strainName;
-    out.push({ id: `j-${j.id}`, kind: 'journal', at: j.date, title: name ? `Journal: ${name}` : 'Journal-Eintrag', subtitle: j.notes ? j.notes.slice(0, 80) : undefined, to: 'journal' });
+    out.push({ id: `j-${j.id}`, kind: 'journal', at: j.date, title: name ? t('mine.tle.journal', { name }) : t('mine.tle.journalEntry'), subtitle: j.notes ? j.notes.slice(0, 80) : undefined, to: 'journal' });
   }
   for (const s of d.strains) {
-    out.push({ id: `s-${s.id}`, kind: 'strain', at: s.createdAt, title: s.external ? `Sorte gespeichert: ${s.name}` : `Sorte angelegt: ${s.name}`, subtitle: s.external ? 'aus Discover' : undefined, to: `strains/${s.id}` });
+    out.push({ id: `s-${s.id}`, kind: 'strain', at: s.createdAt, title: s.external ? t('mine.tle.strainSaved', { name: s.name }) : t('mine.tle.strainCreated', { name: s.name }), subtitle: s.external ? t('mine.tle.fromDiscover') : undefined, to: `strains/${s.id}` });
   }
   for (const l of d.labReports) {
-    out.push({ id: `l-${l.id}`, kind: 'lab', at: l.testDate ?? l.createdAt, title: `Laborbericht: ${l.title}`, subtitle: l.labName, to: 'lab-reports' });
+    out.push({ id: `l-${l.id}`, kind: 'lab', at: l.testDate ?? l.createdAt, title: t('mine.tle.lab', { title: l.title }), subtitle: l.labName, to: 'lab-reports' });
   }
   for (const i of d.inventory ?? []) {
-    out.push({ id: `i-${i.id}`, kind: 'collection', at: i.purchaseDate ?? i.createdAt, title: `Sammlung: ${i.name}`, subtitle: INVENTORY_CATEGORY_LABEL[i.category], to: `collection?item=${encodeURIComponent(i.id)}` });
+    out.push({ id: `i-${i.id}`, kind: 'collection', at: i.purchaseDate ?? i.createdAt, title: t('mine.tle.collection', { name: i.name }), subtitle: INVENTORY_CATEGORY_LABEL[i.category], to: `collection?item=${encodeURIComponent(i.id)}` });
   }
   // Kalender: einmalige Erinnerungen und erledigte Termine (Wiederholungen werden nicht vervielfältigt)
   const today = opts.today;
   for (const r of d.reminders) {
-    for (const done of r.completedDates ?? []) out.push({ id: `r-${r.id}-${done}`, kind: 'reminder', at: done, title: `Erledigt: ${r.title}`, subtitle: growName(r.growId), to: 'calendar', growId: r.growId });
+    for (const done of r.completedDates ?? []) out.push({ id: `r-${r.id}-${done}`, kind: 'reminder', at: done, title: t('mine.tle.done', { title: r.title }), subtitle: growName(r.growId), to: 'calendar', growId: r.growId });
     if ((r.repeat?.kind ?? 'none') === 'none' && !(r.completedDates ?? []).includes(r.date) && (!today || r.date <= today))
       out.push({ id: `r-${r.id}`, kind: 'reminder', at: r.date, title: r.title, subtitle: growName(r.growId), to: 'calendar', growId: r.growId });
   }

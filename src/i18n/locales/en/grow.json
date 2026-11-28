@@ -620,5 +620,48 @@
   "trait": "Trait",
   "height": "Height (latest)",
   "hint": "Mark two to four plants with “Compare” to see their notes side by side. For photos: Photos → Compare."
+ },
+ "m": {
+  "height": "Height",
+  "temp": "Air temperature",
+  "rh": "Rel. humidity",
+  "leaf": "Leaf temperature",
+  "water": "Water temperature",
+  "subTemp": "Substrate temperature",
+  "subMoist": "Substrate moisture",
+  "photoperiod": "Light hours",
+  "hDay": "h/day",
+  "vpd": "VPD (calculated)",
+  "dli": "DLI (calculated)",
+  "molDay": "mol/m²/day",
+  "vpdNote": "From air temperature, humidity and, if available, leaf temperature of the same measurement. Without leaf temperature: leaf = air assumed.",
+  "dliNote": "PPFD × light hours × 3600 / 10⁶ – assumes constant PPFD over the whole light phase.",
+  "csvHead": "Time;Reference;Value;Unit;Context;Target range"
+ },
+ "cp": {
+  "phases": "Milestones",
+  "plants": "Plants with strain",
+  "measure": "Measurements per week",
+  "photos": "Photos per week",
+  "expenses": "Expenses",
+  "outcome": "Result per plant",
+  "noPlants": "no plants",
+  "none": "none recorded",
+  "of": "{a} of {b}",
+  "measureD": "{a} of {b} weeks with a measurement",
+  "photosD": "{a} of {b} weeks with a photo",
+  "items": "{n} items",
+  "phasesD": {
+   "one": "{count} phase with date",
+   "other": "{count} phases with dates"
+  }
+ },
+ "ec": {
+  "ms": "Millisiemens per centimetre (storage format)",
+  "p500": "ppm (500 scale)",
+  "p500h": "TDS meter with factor 0.5 (NaCl): 500 ppm = 1 mS/cm",
+  "p700": "ppm (700 scale)",
+  "p700h": "TDS meter with factor 0.7 (442): 700 ppm = 1 mS/cm",
+  "vpdFormula": "SVP(T_leaf) − SVP(T_air) × RH/100, SVP according to Tetens"
  }
 }

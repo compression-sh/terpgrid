@@ -1,4 +1,4 @@
-import { labels } from '../../i18n';
+import { t, labels } from '../../i18n';
 /**
  * Umrechnungen und abgeleitete Größen für Messwerte – alle Formeln offen gelegt.
  * Abgeleitete Werte (VPD, DLI) werden nie gespeichert, sondern aus den erfassten
@@ -9,10 +9,10 @@ import type { EcUnit, MeasureContext, Measurements } from '../db/types';
 export const CONTEXT_LABEL = labels('labels.measureContext', ['water', 'nutrient', 'runoff', 'substrate', 'other'] as MeasureContext[]);
 
 export const EC_UNITS: { id: EcUnit; label: string; hint: string }[] = [
-  { id: 'mS/cm', label: 'mS/cm', hint: 'Millisiemens pro Zentimeter (Speicherformat)' },
+  { id: 'mS/cm', label: 'mS/cm', get hint() { return t('grow.ec.ms'); } },
   { id: 'µS/cm', label: 'µS/cm', hint: '1000 µS/cm = 1 mS/cm' },
-  { id: 'ppm500', label: 'ppm (Skala 500)', hint: 'TDS-Messgerät mit Faktor 0,5 (NaCl): 500 ppm = 1 mS/cm' },
-  { id: 'ppm700', label: 'ppm (Skala 700)', hint: 'TDS-Messgerät mit Faktor 0,7 (442): 700 ppm = 1 mS/cm' },
+  { id: 'ppm500', get label() { return t('grow.ec.p500'); }, get hint() { return t('grow.ec.p500h'); } },
+  { id: 'ppm700', get label() { return t('grow.ec.p700'); }, get hint() { return t('grow.ec.p700h'); } },
 ];
 
 /** Umrechnung in mS/cm. ppm-Werte hängen von der Skala des Messgeräts ab – daher muss sie gewählt werden. */
@@ -46,16 +46,16 @@ export interface VpdResult {
  * Ohne Blatttemperatur wird T_Blatt = T_Luft angenommen (Luft-VPD) und so gekennzeichnet.
  */
 export function vpd(m: Pick<Measurements, 'temperatureC' | 'humidityPct' | 'leafTempC' | 'leafTempEstimated'>): VpdResult | undefined {
-  const t = m.temperatureC;
+  const tv = m.temperatureC;
   const rh = m.humidityPct;
-  if (t === undefined || rh === undefined || !Number.isFinite(t) || !Number.isFinite(rh) || rh < 0 || rh > 100) return undefined;
+  if (tv === undefined || rh === undefined || !Number.isFinite(tv) || !Number.isFinite(rh) || rh < 0 || rh > 100) return undefined;
   const leaf = m.leafTempC;
-  const tl = leaf !== undefined && Number.isFinite(leaf) ? leaf : t;
-  const value = Math.round((svpKPa(tl) - svpKPa(t) * (rh / 100)) * 100) / 100;
+  const tl = leaf !== undefined && Number.isFinite(leaf) ? leaf : tv;
+  const value = Math.round((svpKPa(tl) - svpKPa(tv) * (rh / 100)) * 100) / 100;
   return {
     value,
     basis: leaf === undefined ? 'air' : m.leafTempEstimated ? 'leaf-estimated' : 'leaf',
-    formula: 'SVP(T_Blatt) − SVP(T_Luft) × rF/100, SVP nach Tetens',
+    get formula() { return t('grow.ec.vpdFormula'); },
   };
 }
 

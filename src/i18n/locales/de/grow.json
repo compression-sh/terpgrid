@@ -620,5 +620,48 @@
   "trait": "Merkmal",
   "height": "Höhe (zuletzt)",
   "hint": "Zwei bis vier Pflanzen mit „Vergleichen“ markieren, um ihre Notizen nebeneinander zu sehen. Für Fotos: Fotos → Vergleich."
+ },
+ "m": {
+  "height": "Höhe",
+  "temp": "Lufttemperatur",
+  "rh": "Rel. Luftfeuchte",
+  "leaf": "Blatttemperatur",
+  "water": "Wassertemperatur",
+  "subTemp": "Substrattemperatur",
+  "subMoist": "Substratfeuchte",
+  "photoperiod": "Lichtstunden",
+  "hDay": "h/Tag",
+  "vpd": "VPD (berechnet)",
+  "dli": "DLI (berechnet)",
+  "molDay": "mol/m²/Tag",
+  "vpdNote": "Aus Lufttemperatur, Luftfeuchte und ggf. Blatttemperatur derselben Messung. Ohne Blatttemperatur: Blatt = Luft angenommen.",
+  "dliNote": "PPFD × Lichtstunden × 3600 / 10⁶ – nimmt konstante PPFD über die ganze Lichtphase an.",
+  "csvHead": "Zeitpunkt;Bezug;Wert;Einheit;Kontext;Zielbereich"
+ },
+ "cp": {
+  "phases": "Meilensteine",
+  "plants": "Pflanzen mit Sorte",
+  "measure": "Messwerte je Woche",
+  "photos": "Fotos je Woche",
+  "expenses": "Ausgaben",
+  "outcome": "Ergebnis je Pflanze",
+  "noPlants": "keine Pflanzen",
+  "none": "keine erfasst",
+  "of": "{a} von {b}",
+  "measureD": "{a} von {b} Wochen mit Messung",
+  "photosD": "{a} von {b} Wochen mit Foto",
+  "items": "{n} Posten",
+  "phasesD": {
+   "one": "{count} Phase mit Datum",
+   "other": "{count} Phasen mit Datum"
+  }
+ },
+ "ec": {
+  "ms": "Millisiemens pro Zentimeter (Speicherformat)",
+  "p500": "ppm (Skala 500)",
+  "p500h": "TDS-Messgerät mit Faktor 0,5 (NaCl): 500 ppm = 1 mS/cm",
+  "p700": "ppm (Skala 700)",
+  "p700h": "TDS-Messgerät mit Faktor 0,7 (442): 700 ppm = 1 mS/cm",
+  "vpdFormula": "SVP(T_Blatt) − SVP(T_Luft) × rF/100, SVP nach Tetens"
  }
 }

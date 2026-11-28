@@ -459,5 +459,19 @@
   "ratings": "Mindestens 3 bewertete Einträge nötig.",
   "noExpenses": "Keine Ausgaben in den letzten 12 Monaten.",
   "deletedGrow": "Gelöschter Grow"
+ },
+ "tle": {
+  "growStarted": "Grow gestartet: {name}",
+  "milestone": "Meilenstein",
+  "entry": "Eintrag",
+  "photo": "Foto",
+  "journal": "Journal: {name}",
+  "strainSaved": "Sorte gespeichert: {name}",
+  "lab": "Laborbericht: {title}",
+  "collection": "Sammlung: {name}",
+  "done": "Erledigt: {title}",
+  "journalEntry": "Journal-Eintrag",
+  "strainCreated": "Sorte angelegt: {name}",
+  "fromDiscover": "aus Discover"
  }
 }

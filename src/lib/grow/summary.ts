@@ -7,6 +7,7 @@ import type { Activity, Expense, GrowProject, MeasureContext, Photo, Plant } fro
 import { daysBetween, today as todayFn } from '../dates';
 import { currentPhase } from './phases';
 import { type DerivedKey, type MetricKey, type SeriesPoint, derivedSeries, metricSeries } from './series';
+import { t } from '../../i18n';
 
 export interface GrowSummary {
   grow: GrowProject;
@@ -114,12 +115,12 @@ export function growCompleteness(grow: GrowProject, d: GrowData, ref: string = t
   const strainLinked = d.plants.filter((p) => p.strainId || p.strainName).length;
   const st = (n: number, of: number): CompletenessItem['state'] => (of === 0 || n === 0 ? 'missing' : n >= of ? 'ok' : 'partial');
   const items: CompletenessItem[] = [
-    { id: 'phases', label: 'Meilensteine', state: phases === 0 ? 'missing' : phases >= 2 ? 'ok' : 'partial', detail: `${phases} Phase(n) mit Datum` },
-    { id: 'plants', label: 'Pflanzen mit Sorte', state: st(strainLinked, s.plants), detail: s.plants ? `${strainLinked} von ${s.plants}` : 'keine Pflanzen' },
-    { id: 'measure', label: 'Messwerte je Woche', state: st(measureWeeks, weeks), detail: `${measureWeeks} von ${weeks} Wochen mit Messung` },
-    { id: 'photos', label: 'Fotos je Woche', state: st(photoWeeks, weeks), detail: `${photoWeeks} von ${weeks} Wochen mit Foto` },
-    { id: 'expenses', label: 'Ausgaben', state: s.expenseCount ? 'ok' : 'missing', detail: s.expenseCount ? `${s.expenseCount} Posten` : 'keine erfasst' },
+    { id: 'phases', get label() { return t('grow.cp.phases'); }, state: phases === 0 ? 'missing' : phases >= 2 ? 'ok' : 'partial', detail: t('grow.cp.phasesD', { count: phases }) },
+    { id: 'plants', get label() { return t('grow.cp.plants'); }, state: st(strainLinked, s.plants), detail: s.plants ? t('grow.cp.of', { a: strainLinked, b: s.plants }) : t('grow.cp.noPlants') },
+    { id: 'measure', get label() { return t('grow.cp.measure'); }, state: st(measureWeeks, weeks), detail: t('grow.cp.measureD', { a: measureWeeks, b: weeks }) },
+    { id: 'photos', get label() { return t('grow.cp.photos'); }, state: st(photoWeeks, weeks), detail: t('grow.cp.photosD', { a: photoWeeks, b: weeks }) },
+    { id: 'expenses', get label() { return t('grow.cp.expenses'); }, state: s.expenseCount ? 'ok' : 'missing', detail: s.expenseCount ? t('grow.cp.items', { n: s.expenseCount }) : t('grow.cp.none') },
   ];
-  if (!s.running) items.push({ id: 'outcome', label: 'Ergebnis je Pflanze', state: st(s.plantsWithOutcome, s.plants), detail: s.plants ? `${s.plantsWithOutcome} von ${s.plants}` : 'keine Pflanzen' });
+  if (!s.running) items.push({ id: 'outcome', get label() { return t('grow.cp.outcome'); }, state: st(s.plantsWithOutcome, s.plants), detail: s.plants ? t('grow.cp.of', { a: s.plantsWithOutcome, b: s.plants }) : t('grow.cp.noPlants') });
   return items;
 }
